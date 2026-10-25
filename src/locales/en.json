@@ -1,0 +1,465 @@
+{
+  "Meta": {
+    "name": "ArchLab",
+    "title": "ArchLab: practise AWS architecture design for SAA-C03",
+    "description": "An AWS architecture lab: assemble designs by drag and drop, simulate load and incidents, tune for cost. Prepare for AWS Solutions Architect Associate (SAA-C03)."
+  },
+  "Menu": {
+    "open": "Open the menu",
+    "close": "Close the menu",
+    "learn": "Learn",
+    "sandbox": "Sandbox",
+    "lessons": "SAA-C03 lessons",
+    "practice": "Practice exam",
+    "flashcards": "Flashcards",
+    "progress": "Progress",
+    "how_to_play": "Guide",
+    "start_over": "Start over",
+    "start_over_confirm": "Delete all progress and saved boards?",
+    "credit": "Simulation-game idea inspired by gonnacrash.com. A personal study project, not affiliated with gonnacrash.com or AWS. Progress is kept in your browser.",
+    "switch_language": "Switch language",
+    "scenarios": "Design problems",
+    "compare": "Service comparisons"
+  },
+  "Game": {
+    "users": "Users",
+    "down": "DOWN",
+    "backlog": "{count} queued",
+    "connect_from": "Drag to connect",
+    "components": "Components",
+    "new": "NEW",
+    "clear_board": "Reset canvas",
+    "close": "Close",
+    "exam_tip": "SAA exam tip",
+    "read_lesson": "Read the lesson →",
+    "cost_per_month": "≈ ${cost}/month",
+    "delete": "Delete",
+    "live": "served {answered}% · {latency} ms",
+    "coach_passed": "Requirements met! Your architecture held.",
+    "coach_failed": "Requirements not met. Details below.",
+    "coach_drag": "Start by placing {name} on the canvas",
+    "coach_connect": "Link Users to your first component: pull a wire from the edge of the Users box",
+    "coach_ready": "Design done? Press Run to simulate the load.",
+    "hint": "Hint",
+    "show_fix": "Show the reference design",
+    "fix_loaded": "The reference design is on the canvas. Run it, then try to bring the cost down.",
+    "learn": "Learn",
+    "sandbox": "Sandbox",
+    "round": "STAGE",
+    "traffic": "TRAFFIC",
+    "budget": "BUDGET",
+    "twist": "INCIDENT",
+    "brief": "Briefing",
+    "run_title": "Run (Ctrl+Enter)",
+    "skip": "Fast-forward",
+    "run": "Run",
+    "paged": "Incident:",
+    "delete_connection": "Delete connection",
+    "undo": "Undo (Ctrl+Z)",
+    "redo": "Redo (Ctrl+Shift+Z)",
+    "zoom_out": "Zoom out",
+    "zoom_in": "Zoom in",
+    "fit": "Fit",
+    "per_month": "/mo",
+    "per_100": "/100 req/s",
+    "badge_api_cache": "API cache"
+  },
+  "Fields": {
+    "size": "Size",
+    "size_with_capacity": "Size · {capacity} units/s",
+    "size_small": "Small",
+    "size_medium": "Medium",
+    "size_large": "Large",
+    "size_xlarge": "XLarge",
+    "count": "Instances",
+    "min_count": "Min (desired)",
+    "max_count": "Max",
+    "auto_scaling": "Auto Scaling Group",
+    "auto_scaling_hint": "Target tracking ~60% CPU; new instances take ~2 ticks to boot.",
+    "az": "Availability Zone",
+    "az_spread": "AZ a+b",
+    "pricing": "Pricing",
+    "pricing_onDemand": "On-Demand",
+    "pricing_reserved": "Reserved",
+    "pricing_spot": "Spot",
+    "multi_az_rds": "Multi-AZ (standby)",
+    "multi_az_rds_hint": "Synchronous standby in another AZ with automatic failover. Costs ×2, serves no reads.",
+    "multi_az_cache": "Multi-AZ (replica)",
+    "multi_az_cache_hint": "A replica in another AZ takes over when the primary dies. Costs ×2.",
+    "provisioned_lambda": "Provisioned concurrency",
+    "provisioned_lambda_hint": "Keeps environments warm to avoid cold starts. +$15/month.",
+    "provisioned_dynamodb": "Provisioned capacity",
+    "provisioned_dynamodb_hint": "Pay a fixed price for RCU/WCU, cheaper for steady traffic. Off = on-demand, pay per request.",
+    "provisioned_dynamodb_short": "Provisioned",
+    "on_demand_short": "On-demand",
+    "cache_api": "Cache API responses",
+    "cache_api_hint": "CloudFront caches ~50% of dynamic reads at the edge.",
+    "encrypted": "Encryption at rest (KMS)",
+    "encrypted_hint": "Turn it on at creation. For an existing RDS: snapshot → encrypted copy → restore.",
+    "region": "Region",
+    "region_us-east-1": "us-east-1 (N. Virginia)",
+    "region_eu-west-1": "eu-west-1 (Ireland)"
+  },
+  "Components": {
+    "users": {
+      "desc": "Your users. Every request starts here.",
+      "tip": "\"Users around the world\" usually points to CloudFront, Global Accelerator or Route 53 latency routing."
+    },
+    "route53": {
+      "desc": "AWS DNS. Routes by latency, runs health checks and fails over to a standby Region.",
+      "tip": "Failover routing + health checks for active-passive DR; latency routing for global users; Alias records for the zone apex."
+    },
+    "globalAccelerator": {
+      "desc": "Two static anycast IPs that bring traffic onto the AWS backbone near users. Cuts far-user latency by ~50%.",
+      "tip": "Pick Global Accelerator for static IPs, non-HTTP TCP/UDP, or fast cross-Region failover. Pick CloudFront for cacheable content."
+    },
+    "waf": {
+      "desc": "Web Application Firewall: blocks ~98% of bot and attack traffic before it reaches servers.",
+      "tip": "WAF attaches to CloudFront, ALB, API Gateway and AppSync. Rate-based rules stop floods; Shield Advanced adds layer 3/4 DDoS protection and the SRT team."
+    },
+    "cloudfront": {
+      "desc": "CDN with 400+ edge locations. Serves ~95% of static files from the edge, cutting origin load and latency.",
+      "tip": "S3 + CloudFront with OAC is the textbook answer for static websites. Use signed URLs or cookies for paid content."
+    },
+    "alb": {
+      "desc": "Application Load Balancer: spreads HTTP requests across servers in many AZs and skips unhealthy ones.",
+      "tip": "ALB: layer 7, path and host routing. NLB: layer 4, static IPs, ultra low latency. GWLB: third-party security appliances."
+    },
+    "apiGateway": {
+      "desc": "Managed front door for REST, HTTP and WebSocket APIs, usually in front of Lambda. Pay per request.",
+      "tip": "Throttling, usage plans with API keys, caching, 29-second integration timeout."
+    },
+    "ec2": {
+      "desc": "Virtual servers that run your code. Set size, copies, AZ, pricing and Auto Scaling.",
+      "tip": "Stateless instances in a multi-AZ ASG behind an ALB is the classic HA pattern. Spot for interruptible work, Reserved or Savings Plans for steady base load."
+    },
+    "lambda": {
+      "desc": "Runs code without servers, scales to about 1,000 concurrent requests, billed per request.",
+      "tip": "Up to 15 minutes and 10 GB of memory. Cold starts → provisioned concurrency. More expensive than EC2 for high, steady traffic."
+    },
+    "elasticache": {
+      "desc": "In-memory cache (Redis/Valkey/Memcached). Answers ~85% of reads in 1–2 ms; the database only sees misses.",
+      "tip": "Store sessions to keep servers stateless. Redis has replicas, Multi-AZ and persistence; Memcached is simple, multi-threaded and has no replicas."
+    },
+    "rds": {
+      "desc": "Managed relational database (MySQL, PostgreSQL…). A write costs 3× a read.",
+      "tip": "Multi-AZ = high availability (the standby serves no reads). Read replicas = read scaling, can be cross-Region. RDS Proxy for many Lambda connections."
+    },
+    "aurora": {
+      "desc": "AWS MySQL/PostgreSQL-compatible database: 6 copies across 3 AZs, faster than RDS, survives an AZ loss on its own.",
+      "tip": "Aurora Global Database for cross-Region DR (RPO about 1 second), up to 15 Aurora Replicas, Serverless v2 for spiky load."
+    },
+    "readReplica": {
+      "desc": "Read-only, asynchronous copy of RDS. Takes reads, never writes.",
+      "tip": "Read replicas scale reads and reporting and can be promoted during DR. Do not confuse them with the Multi-AZ standby."
+    },
+    "dynamodb": {
+      "desc": "Serverless key-value NoSQL with single-digit ms latency, replicated across 3 AZs.",
+      "tip": "On-demand for unpredictable traffic, provisioned with auto scaling for steady traffic. DAX for microsecond caching, Global Tables for multi-Region."
+    },
+    "s3": {
+      "desc": "Virtually unlimited object storage with 11 nines of durability. Holds images, video and static files.",
+      "tip": "Storage classes and lifecycle rules to save money; versioning and replication for DR; presigned URLs for temporary uploads and downloads."
+    },
+    "sqs": {
+      "desc": "Managed queue. Accepts work instantly so users never wait, and lets workers process it at their own pace.",
+      "tip": "Decouple and smooth spikes. Standard: at-least-once; FIFO: ordered, exactly-once. DLQ for failing messages. Scale an ASG on queue depth."
+    },
+    "sns": {
+      "desc": "Pub/sub: one message is pushed to many subscribers at once (fan-out).",
+      "tip": "SNS → many SQS queues is the classic fan-out pattern. Use message filtering so each queue gets only the events it needs."
+    }
+  },
+  "Twists": {
+    "azOutage": {
+      "name": "AZ outage",
+      "heads_up": "Mid-round, AZ \"a\" may lose power. Anything that lives only there goes down with it.",
+      "page": "5xx errors spike and the us-east-1a dashboard turns red."
+    },
+    "regionOutage": {
+      "name": "Region outage",
+      "heads_up": "Word is {region} is about to have a long, major outage.",
+      "page": "Every endpoint in {region} stopped answering."
+    },
+    "spotInterruption": {
+      "name": "Spot interruption",
+      "heads_up": "AWS can take Spot capacity back with only a 2-minute notice.",
+      "page": "Spot instances got their interruption notice and shut down."
+    },
+    "flashSale": {
+      "name": "Flash sale",
+      "heads_up": "Marketing scheduled a flash sale: traffic triples for a short while.",
+      "page": "Traffic is surging and checkout is getting slow."
+    },
+    "ddos": {
+      "name": "Bot attack",
+      "heads_up": "A botnet is eyeing your API.",
+      "page": "Strange requests jump 6×, server CPU is pegged."
+    },
+    "cacheCrash": {
+      "name": "Cache crash",
+      "heads_up": "The cache node may die suddenly at peak time.",
+      "page": "The cache stopped answering; every read hits the database."
+    },
+    "viral": {
+      "name": "Going viral",
+      "heads_up": "Your post is spreading: traffic keeps climbing up to 4×.",
+      "page": "Traffic grows every minute."
+    }
+  },
+  "Requirements": {
+    "encryptData": {
+      "title": "Encrypt data",
+      "desc": "Every data store (DB, cache, S3, SQS) must have encryption at rest (KMS)."
+    },
+    "privateData": {
+      "title": "Private databases",
+      "desc": "Only servers (EC2/Lambda) may connect to databases and caches."
+    },
+    "noPublicServers": {
+      "title": "No public servers",
+      "desc": "EC2 must sit behind an ALB, CloudFront or API Gateway."
+    },
+    "fanOut": {
+      "title": "Fan-out",
+      "desc": "Every event must reach at least 2 systems through SNS → SQS → worker."
+    },
+    "drainQueue": {
+      "title": "Drain the queue",
+      "desc": "At the end of the round, no more than 5% of the work is still queued."
+    }
+  },
+  "Issues": {
+    "users_unconnected": "Users are not linked to anything: pull a wire from the Users box to a component.",
+    "loop": "There is a loop at {name}: requests go round in circles.",
+    "nowhere_read": "{name} receives read requests but has no data source: link it to a database or cache.",
+    "nowhere_write": "{name} receives write requests but nowhere to store them: link it to a database.",
+    "nowhere_static": "{name} receives file downloads but has no file store: link it to S3 or a server.",
+    "nowhere_job": "{name} receives background jobs but nothing can run them.",
+    "alb_target": "{name} only sends requests to servers (EC2/Lambda), not straight to databases.",
+    "replica_write": "{name}: a read replica is read-only; writes must go to the primary database.",
+    "queue_no_consumer": "Nobody consumes {name}: connect the queue to EC2 or Lambda.",
+    "down": "{name} failed during the incident and nothing replaced it.",
+    "overloaded": "{name} is past its capacity and rejects requests: scale it up, scale it out or offload it.",
+    "unencrypted": "{name} is not encrypted (KMS).",
+    "public_data": "{name} is exposed: only servers may talk to databases.",
+    "public_server": "{name} takes traffic straight from the internet: put an ALB, CloudFront or API Gateway in front.",
+    "no_fan_out": "You need SNS sending to at least 2 SQS queues, each with a worker.",
+    "backlog": "Queue {name} still has a backlog: add workers or bigger ones.",
+    "slow": "Average response time is over target; {name} adds the most delay.",
+    "cold_start": "{name} hits cold starts when traffic jumps: turn on provisioned concurrency.",
+    "over_budget": "Over budget: {name} costs the most. Find a cheaper option."
+  },
+  "Result": {
+    "passed": "Requirements met!",
+    "failed": "Requirements not met",
+    "stars": "{count} stars",
+    "answered": "Requests served",
+    "latency": "Avg response",
+    "cost": "Cost a month",
+    "cheaper": "Met! Cut the cost further for three stars.",
+    "chart_answered": "% served",
+    "chart_latency": "latency (ms)",
+    "chart_twist": "incident",
+    "all_issues": "Issues found",
+    "cost_breakdown": "Cost by part",
+    "next": "Next stage",
+    "edit": "Change design",
+    "see_what_happened": "Run details",
+    "hide_details": "Hide details"
+  },
+  "Intro": {
+    "round": "Stage {number}",
+    "traffic": "Traffic",
+    "latency": "Latency",
+    "budget": "Budget",
+    "audience": "Users by closest Region: {split}. Serving users from another Region adds ~150 ms unless the edge answers.",
+    "heads_up": "Expected incident:",
+    "rules": "Rules",
+    "concept": "Key idea:",
+    "start": "Open the canvas"
+  },
+  "Chapters": {
+    "basics": "One app",
+    "resilience": "Stay up",
+    "performance": "Go faster",
+    "decoupling": "Decouple",
+    "security": "Lock it down",
+    "cost": "Spend less",
+    "final": "Final boss"
+  },
+  "Sandbox": {
+    "settings": "Traffic settings",
+    "traffic": "Traffic",
+    "mix_read": "Reads",
+    "mix_write": "Writes",
+    "mix_static": "Static files",
+    "mix_job": "Background jobs",
+    "users_near": "Users near {region}",
+    "outage_region": "Region that goes down",
+    "twist": "Twist",
+    "no_twist": "None",
+    "rules": "Rules"
+  },
+  "Domains": {
+    "secure": "Design secure architectures",
+    "resilient": "Design resilient architectures",
+    "performance": "Design high-performing architectures",
+    "cost": "Design cost-optimized architectures"
+  },
+  "LessonsPage": {
+    "title": "SAA-C03 lessons",
+    "intro": "Organised by the four domains of the AWS Certified Solutions Architect – Associate exam. Each lesson has exam keywords, common traps and rounds to practise on the board.",
+    "weight": "{weight}% of the exam",
+    "minutes": "{minutes} min read",
+    "read": "Read",
+    "mark_read": "Mark as read",
+    "all_lessons": "All lessons",
+    "practice_on_board": "Practise this on the board:",
+    "keywords": "Exam keywords",
+    "keywords_intro": "See this phrase in a question → think of the answer on the right.",
+    "traps": "Common traps",
+    "practice_questions": "Try the {count} questions for this lesson"
+  },
+  "PracticePage": {
+    "title": "Practice exam",
+    "intro": "Scenario questions in English, like the real exam. Practise with explanations, or take a 65-question, 130-minute mock exam.",
+    "answered": "Answered",
+    "accuracy": "Accuracy",
+    "pass_mark": "Pass mark",
+    "filtered_by_lesson": "Filtered by lesson: {lesson}.",
+    "clear_filter": "Clear filter",
+    "all_domains": "All domains",
+    "only_missed": "Only questions I missed",
+    "practice_mode": "Practice",
+    "practice_mode_desc": "{count} questions with instant answers and explanations.",
+    "exam_mode": "Mock exam",
+    "exam_mode_desc": "{count} questions weighted by domain, {minutes} minutes, scored at the end.",
+    "result_title": "Mock exam result",
+    "scaled_note": "Approximate 100–1000 scaled score; the real exam needs 720.",
+    "review": "Review mistakes",
+    "back": "Back",
+    "question_of": "Question {index} of {total}",
+    "submit_exam": "Submit exam",
+    "quit": "Quit",
+    "correct": "Correct!",
+    "incorrect": "Not quite",
+    "previous": "Previous",
+    "check": "Check",
+    "done": "Done",
+    "next": "Next"
+  },
+  "FlashcardsPage": {
+    "title": "Flashcards",
+    "intro": "Quick review of concepts and numbers that show up in the exam. Cards you know come back less often (Leitner boxes).",
+    "all": "All",
+    "mastered": "Mastered {count} of {total} cards",
+    "back": "Back",
+    "front": "Front",
+    "box": "box {box}",
+    "tap_to_flip": "Tap to flip",
+    "again": "Again",
+    "got_it": "Got it",
+    "deck_done": "No more cards to review this round 🎉",
+    "again_round": "Start a new round"
+  },
+  "ProgressPage": {
+    "title": "Progress",
+    "stars": "Stars",
+    "lessons": "Lessons read",
+    "quiz": "Questions done",
+    "chapter": "Chapter {number}",
+    "play": "Play",
+    "rounds_passed": "Rounds passed",
+    "cards_line": "Mastered {count} of {total} flashcards.",
+    "learn_title": "Learn",
+    "tracks_title": "Design problems"
+  },
+  "HowToPlayPage": {
+    "title": "Guide",
+    "tagline": "Design. Load-test. Optimise.",
+    "intro": "Each stage is a business requirement: traffic, budget, latency and sometimes an incident. Assemble an AWS architecture, run the simulation and tune it until it meets the bar.",
+    "play": "Play",
+    "draw": {
+      "title": "Assemble the architecture",
+      "items": "Place AWS services from the Components panel onto the canvas (a single click drops one in the middle).\nLink two boxes by pulling a wire from a handle on one box to the other.\nSelect a box to set its size, instance count, AZ, pricing, Multi-AZ, encryption and Region.\nDrag the background to pan; hold Ctrl and scroll to zoom."
+    },
+    "run": {
+      "title": "Run the simulation",
+      "items": "A stage is met when at least 99% of requests are served, average latency is within target, monthly cost fits the budget and every rule is satisfied.\nThe colour bar under each box is its load: green is fine, orange is near the limit, red is over capacity.\nThe briefing names the expected incident; when it happens you only see symptoms and have to work out the cause.\nThe cheapest design that still meets the bar earns three stars."
+    },
+    "aws": {
+      "title": "More AWS aspects",
+      "items": "Multi-AZ and multi-Region: place instances in AZ a/b, RDS Multi-AZ, Route 53 failover to another Region.\nTarget-tracking Auto Scaling; new instances take ~2 ticks to boot.\nPricing: On-Demand, Reserved (−40%), Spot (−70% but can be interrupted).\nPay-per-request serverless: Lambda, API Gateway, DynamoDB on-demand. Cheap at low traffic, pricey at high traffic.\nSecurity: WAF, KMS encryption, databases reachable only from servers, servers behind an ALB, CloudFront or API Gateway.\nUsers served from a Region far from them pay ~150 ms extra unless served at the edge."
+    },
+    "fail": {
+      "title": "Read the results and improve",
+      "items": "The component at fault is circled in red with an explanation.\n\"Run details\" shows a timeline chart and the cost of each component.\nNeed help? Hints come in two steps: a pointer, then the reference design (the stage then caps at two stars)."
+    },
+    "study": {
+      "title": "Study for SAA-C03",
+      "items": "Every round links to lessons that explain the services and how the exam asks about them.\nPractice: English scenario questions with explanations, plus a 65-question, 130-minute mock exam.\nFlashcards for quick review of numbers and concepts."
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "run": "Ctrl+Enter (⌘ Enter): run, or fast-forward a running simulation.",
+      "undo": "Ctrl+Z (⌘ Z): undo.",
+      "redo": "Ctrl+Shift+Z or Ctrl+Y: redo.",
+      "delete": "Delete / Backspace: remove the selected box or wire."
+    }
+  },
+  "LessonTitles": {
+    "ec2-pricing-models": "EC2 pricing models: On-Demand, RI, Savings Plans, Spot, Dedicated",
+    "s3-storage-classes": "S3 Storage Classes, Lifecycle, and S3 cost analysis tools",
+    "cost-management-tools": "Cost management tools: Cost Explorer, Budgets, CUR, Tags, Anomaly Detection",
+    "cost-optimized-architectures": "Cost-optimized architectures: data transfer, network, serverless, scheduling",
+    "cost-database-storage-choices": "Choosing cheaper storage and databases: EBS/EFS/S3, FSx, Redshift, Athena, ElastiCache, Snow",
+    "cost-compute-serverless-containers": "Choosing the cheapest compute: EC2, ECS, Fargate, Lambda, Spot and Graviton",
+    "cost-network-transfer": "Network and data transfer cost in depth: AZ, Region, NAT, endpoints, hybrid, Transit Gateway",
+    "ec2-compute": "EC2: instance families, placement groups, and compute performance",
+    "containers-compute": "Container and serverless compute: ECS, EKS, Fargate, Lambda, Batch",
+    "block-file-storage": "Block and file storage: EBS, EFS, FSx",
+    "s3-performance": "Amazon S3 performance",
+    "relational-databases": "Relational databases: RDS, Aurora, and Redshift",
+    "nosql-caching": "NoSQL and caching: DynamoDB, ElastiCache, purpose-built databases",
+    "edge-networking": "Edge and high-performance networking: CloudFront, Global Accelerator, Direct Connect",
+    "data-analytics": "Streaming and analytics: Kinesis, Firehose, Athena, Glue, EMR, Redshift",
+    "data-migration": "Migrating data and workloads to AWS",
+    "ai-ml-services": "AI/ML services: picking the right service by use case",
+    "high-availability-multi-az": "High Availability and Multi-AZ",
+    "elastic-load-balancing": "Elastic Load Balancing: ALB, NLB, GWLB",
+    "auto-scaling": "EC2 Auto Scaling",
+    "decoupling-messaging": "Decoupling: SQS, SNS, EventBridge, Kinesis, Amazon MQ",
+    "serverless-workflows": "Serverless: Lambda, API Gateway, Step Functions, AppSync",
+    "route53-routing": "Route 53: DNS, routing policies, and health checks",
+    "disaster-recovery": "Disaster Recovery: RPO, RTO, and the 4 strategies",
+    "backup-replication": "Backup and Replication: AWS Backup, RDS, Aurora, DynamoDB, S3, EBS, EFS",
+    "management-iac": "Infrastructure as Code and operations: CloudFormation, Beanstalk, Systems Manager, CloudWatch",
+    "application-integration": "Advanced application integration: EventBridge, Step Functions, AppFlow, AppSync, MQ, SES, IoT Core",
+    "iam-fundamentals": "IAM Basics: Users, Groups, Roles and Policies",
+    "iam-organizations-scp": "AWS Organizations, SCPs and Cross-Account Access",
+    "identity-federation-cognito": "Federation, Amazon Cognito and Directory Service",
+    "vpc-networking-security": "VPC Security: Subnets, Security Groups, NACLs and NAT",
+    "vpc-connectivity": "VPC Connectivity: Peering, Transit Gateway, Endpoints, VPN and Direct Connect",
+    "data-encryption-kms": "Data Encryption: KMS, CloudHSM and Protecting S3/EBS/RDS",
+    "secrets-certificates": "Secrets, Parameter Store, ACM and CloudFront Content Protection",
+    "threat-detection-waf-shield": "Threat Detection: WAF, Shield, GuardDuty and Monitoring"
+  },
+  "ScenariosPage": {
+    "title": "Design problems",
+    "intro": "Each problem is one real product over several rounds: more traffic, new incidents, new requirements. Every component is available; you pick the architecture.",
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard",
+    "count": "{count, plural, one {# problem} other {# problems}}",
+    "rounds": "{count} stages",
+    "done": "{done}/{total} passed",
+    "play": "Play"
+  },
+  "ComparePage": {
+    "title": "Commonly confused services",
+    "intro": "Services the exam likes to put side by side to trip you up. Each entry has a comparison table, when to pick which, and the phrases in a question that give it away.",
+    "pick_when": "Pick when",
+    "jump_to": "Jump to"
+  }
+}

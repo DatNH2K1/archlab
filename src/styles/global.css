@@ -1,0 +1,98 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-ink: #1b2320;
+  --color-panel: #222c29;
+  --color-panel-2: #2a3632;
+  --color-line: #3a4843;
+  --color-chalk: #e9efe9;
+  --color-muted: #9aa9a2;
+  --color-accent: #a78bfa;
+  --color-good: #6fd08c;
+  --color-warn: #f2a65a;
+  --color-bad: #ef6f6c;
+  --color-info: #6cb4ef;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-face), ui-monospace, monospace;
+}
+
+html,
+body {
+  scrollbar-color: var(--color-line) transparent;
+  background: var(--color-ink);
+  color: var(--color-chalk);
+}
+
+.dot-grid {
+  background-color: var(--color-ink);
+  background-image: radial-gradient(circle, #34413c 1px, transparent 1px);
+}
+
+.prose-lesson h2 {
+  @apply mt-8 mb-3 text-xl font-bold text-chalk;
+}
+
+.prose-lesson h3 {
+  @apply mt-6 mb-2 text-lg font-semibold text-accent;
+}
+
+.prose-lesson p {
+  @apply my-3 leading-7 text-chalk/90;
+}
+
+.prose-lesson ul {
+  @apply my-3 list-disc space-y-1 pl-6;
+}
+
+.prose-lesson ol {
+  @apply my-3 list-decimal space-y-1 pl-6;
+}
+
+.prose-lesson li {
+  @apply leading-7 text-chalk/90;
+}
+
+.prose-lesson strong {
+  @apply text-chalk;
+}
+
+.prose-lesson code {
+  @apply rounded bg-panel-2 px-1 font-mono text-sm;
+}
+
+.prose-lesson table {
+  @apply my-4 block w-full overflow-x-auto text-sm;
+}
+
+.prose-lesson th {
+  @apply border border-line bg-panel-2 px-3 py-2 text-left font-semibold;
+}
+
+.prose-lesson td {
+  @apply border border-line px-3 py-2 align-top;
+}
+
+@keyframes flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.edge-flow {
+  stroke-dasharray: 4 8;
+  animation: flow 0.6s linear infinite;
+}
+
+@keyframes pulse-ring {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.pulse-ring {
+  animation: pulse-ring 1.2s ease-in-out infinite;
+}

@@ -1,0 +1,465 @@
+{
+  "Meta": {
+    "name": "ArchLab",
+    "title": "ArchLab: luyện thiết kế kiến trúc AWS cho kỳ thi SAA-C03",
+    "description": "Phòng thí nghiệm kiến trúc AWS: lắp thiết kế bằng kéo-thả, chạy mô phỏng tải và sự cố, tối ưu chi phí. Ôn thi AWS Solutions Architect Associate (SAA-C03)."
+  },
+  "Menu": {
+    "open": "Mở menu",
+    "close": "Đóng menu",
+    "learn": "Học qua từng màn",
+    "sandbox": "Chế độ tự do",
+    "lessons": "Bài học SAA-C03",
+    "practice": "Luyện đề",
+    "flashcards": "Thẻ ghi nhớ",
+    "progress": "Tiến độ",
+    "how_to_play": "Hướng dẫn",
+    "start_over": "Chơi lại từ đầu",
+    "start_over_confirm": "Xoá toàn bộ tiến độ và các thiết kế đã lưu?",
+    "credit": "Ý tưởng game mô phỏng lấy cảm hứng từ gonnacrash.com. Dự án học tập cá nhân, không liên kết với gonnacrash.com hay AWS. Tiến độ lưu trong trình duyệt.",
+    "switch_language": "Đổi ngôn ngữ",
+    "scenarios": "Bài toán thiết kế",
+    "compare": "So sánh dịch vụ"
+  },
+  "Game": {
+    "users": "Người dùng",
+    "down": "SẬP",
+    "backlog": "{count} đang chờ",
+    "connect_from": "Kéo để nối",
+    "components": "Thành phần",
+    "new": "MỚI",
+    "clear_board": "Làm lại từ đầu",
+    "close": "Đóng",
+    "exam_tip": "Mẹo thi SAA",
+    "read_lesson": "Đọc bài học →",
+    "cost_per_month": "≈ ${cost}/tháng",
+    "delete": "Xoá",
+    "live": "Phản hồi {answered}% · {latency} ms",
+    "coach_passed": "Đạt yêu cầu! Kiến trúc của bạn đứng vững.",
+    "coach_failed": "Chưa qua. Xem chi tiết bên dưới.",
+    "coach_drag": "Bắt đầu bằng cách thả {name} lên bảng thiết kế",
+    "coach_connect": "Kết nối Người dùng với thành phần đầu tiên: kéo một đường từ cạnh ô Người dùng",
+    "coach_ready": "Thiết kế xong? Bấm Chạy để mô phỏng tải.",
+    "hint": "Gợi ý",
+    "show_fix": "Xem lời giải mẫu",
+    "fix_loaded": "Lời giải mẫu đã được đặt lên bảng. Bấm Chạy để xem, rồi thử tối ưu cho rẻ hơn.",
+    "learn": "Học",
+    "sandbox": "Chế độ tự do",
+    "round": "MÀN",
+    "traffic": "LƯU LƯỢNG",
+    "budget": "CHI PHÍ",
+    "twist": "SỰ CỐ",
+    "brief": "Đề bài",
+    "run_title": "Chạy (Ctrl+Enter)",
+    "skip": "Tua hết",
+    "run": "Chạy",
+    "paged": "Sự cố:",
+    "delete_connection": "Xoá đường nối",
+    "undo": "Hoàn tác (Ctrl+Z)",
+    "redo": "Làm lại (Ctrl+Shift+Z)",
+    "zoom_out": "Thu nhỏ",
+    "zoom_in": "Phóng to",
+    "fit": "Vừa khung hình",
+    "per_month": "/tháng",
+    "per_100": "/100 req/s",
+    "badge_api_cache": "Cache API"
+  },
+  "Fields": {
+    "size": "Kích cỡ",
+    "size_with_capacity": "Kích cỡ · chịu {capacity} đơn vị/s",
+    "size_small": "Nhỏ",
+    "size_medium": "Vừa",
+    "size_large": "Lớn",
+    "size_xlarge": "Rất lớn",
+    "count": "Số máy",
+    "min_count": "Số máy tối thiểu",
+    "max_count": "Số máy tối đa",
+    "auto_scaling": "Auto Scaling Group",
+    "auto_scaling_hint": "Tự thêm/bớt máy để giữ tải quanh 60%. Máy mới cần khoảng 2 nhịp để khởi động.",
+    "az": "Availability Zone (AZ)",
+    "az_spread": "Cả a và b",
+    "pricing": "Hình thức tính giá",
+    "pricing_onDemand": "On-Demand",
+    "pricing_reserved": "Reserved",
+    "pricing_spot": "Spot",
+    "multi_az_rds": "Multi-AZ (bản dự phòng)",
+    "multi_az_rds_hint": "Bản dự phòng đồng bộ ở AZ khác, tự chuyển sang khi có sự cố. Giá ×2, bản dự phòng không phục vụ đọc.",
+    "multi_az_cache": "Multi-AZ (bản sao)",
+    "multi_az_cache_hint": "Bản sao ở AZ khác thay thế khi node chính chết. Giá ×2.",
+    "provisioned_lambda": "Provisioned concurrency",
+    "provisioned_lambda_hint": "Giữ sẵn môi trường chạy để không bị cold start. Thêm $15/tháng.",
+    "provisioned_dynamodb": "Provisioned capacity",
+    "provisioned_dynamodb_hint": "Trả cố định theo RCU/WCU, rẻ hơn khi lưu lượng đều. Tắt đi là On-demand, trả theo từng yêu cầu.",
+    "provisioned_dynamodb_short": "Provisioned",
+    "on_demand_short": "On-demand",
+    "cache_api": "Cache cả phản hồi API",
+    "cache_api_hint": "CloudFront giữ lại ~50% phản hồi đọc động ngay ở edge.",
+    "encrypted": "Mã hoá khi lưu trữ (KMS)",
+    "encrypted_hint": "Nên bật ngay khi tạo. RDS đã có sẵn thì phải: chụp snapshot → sao chép có mã hoá → khôi phục.",
+    "region": "Region",
+    "region_us-east-1": "us-east-1 (N. Virginia)",
+    "region_eu-west-1": "eu-west-1 (Ireland)"
+  },
+  "Components": {
+    "users": {
+      "desc": "Người dùng của bạn. Mọi yêu cầu bắt đầu từ đây.",
+      "tip": "Đề nhắc \"người dùng ở khắp thế giới\" thường hướng tới CloudFront, Global Accelerator hoặc Route 53 latency routing."
+    },
+    "route53": {
+      "desc": "Dịch vụ DNS của AWS. Định tuyến theo độ trễ, kiểm tra sức khoẻ (health check) và chuyển sang Region dự phòng khi cần.",
+      "tip": "Failover routing + health check cho DR active-passive; latency routing cho người dùng toàn cầu; Alias record cho apex domain."
+    },
+    "globalAccelerator": {
+      "desc": "Cấp 2 IP anycast cố định, đưa lưu lượng vào mạng backbone của AWS ngay gần người dùng. Giảm ~50% độ trễ cho người ở xa.",
+      "tip": "Chọn Global Accelerator khi cần IP cố định, giao thức TCP/UDP không phải HTTP, hoặc chuyển đổi nhanh giữa các Region. Nội dung cache được thì chọn CloudFront."
+    },
+    "waf": {
+      "desc": "Tường lửa ứng dụng web: chặn ~98% lưu lượng bot và tấn công trước khi tới máy chủ.",
+      "tip": "WAF gắn vào CloudFront, ALB, API Gateway, AppSync. Rate-based rule chống flood; Shield Advanced chống DDoS lớp 3/4 kèm hỗ trợ DRT."
+    },
+    "cloudfront": {
+      "desc": "CDN với hơn 400 điểm edge. Trả ~95% file tĩnh ngay tại edge, giảm tải cho origin và giảm độ trễ.",
+      "tip": "S3 + CloudFront với OAC là đáp án chuẩn cho website tĩnh. Dùng signed URL/cookie cho nội dung trả phí."
+    },
+    "alb": {
+      "desc": "Application Load Balancer: chia yêu cầu HTTP cho nhiều máy chủ ở nhiều AZ, tự bỏ qua máy hỏng nhờ health check.",
+      "tip": "ALB: tầng 7, định tuyến theo path/host. NLB: tầng 4, IP cố định, độ trễ cực thấp. GWLB: dùng cho thiết bị bảo mật bên thứ ba."
+    },
+    "apiGateway": {
+      "desc": "Cổng API REST/HTTP/WebSocket được AWS quản lý, thường đặt trước Lambda. Trả tiền theo từng yêu cầu.",
+      "tip": "Giới hạn tốc độ (throttling), usage plan + API key, cache, thời gian chờ tích hợp 29 giây."
+    },
+    "ec2": {
+      "desc": "Máy chủ ảo chạy code của bạn. Chỉnh được kích cỡ, số máy, AZ, hình thức tính giá và Auto Scaling.",
+      "tip": "Máy chủ stateless trong Auto Scaling Group trải nhiều AZ sau ALB là mẫu HA kinh điển. Spot cho việc chịu được gián đoạn, Reserved/Savings Plans cho tải nền ổn định."
+    },
+    "lambda": {
+      "desc": "Chạy code không cần quản lý máy chủ, tự mở rộng tới ~1.000 yêu cầu đồng thời, trả tiền theo từng yêu cầu.",
+      "tip": "Chạy tối đa 15 phút, 10 GB RAM. Bị cold start thì dùng provisioned concurrency. Lưu lượng cao và đều thì đắt hơn EC2."
+    },
+    "elasticache": {
+      "desc": "Cache trong bộ nhớ (Redis/Valkey/Memcached). Trả ~85% yêu cầu đọc trong 1–2 ms, database chỉ phải xử lý phần còn lại.",
+      "tip": "Lưu session để máy chủ stateless. Redis có bản sao, Multi-AZ, lưu bền; Memcached đơn giản, đa luồng, không có bản sao."
+    },
+    "rds": {
+      "desc": "Database quan hệ do AWS quản lý (MySQL, PostgreSQL…). Mỗi lần ghi tốn gấp 3 lần đọc.",
+      "tip": "Multi-AZ để sẵn sàng cao (bản dự phòng không phục vụ đọc). Read Replica để tăng sức đọc, đặt được ở Region khác. RDS Proxy khi Lambda mở quá nhiều kết nối."
+    },
+    "aurora": {
+      "desc": "Database của AWS tương thích MySQL/PostgreSQL: 6 bản sao trên 3 AZ, nhanh hơn RDS và tự trụ được khi mất một AZ.",
+      "tip": "Aurora Global Database cho DR giữa các Region (RPO ~1 giây), tối đa 15 Aurora Replica, Serverless v2 cho tải lên xuống thất thường."
+    },
+    "readReplica": {
+      "desc": "Bản sao chỉ đọc của RDS, được sao chép bất đồng bộ. Gánh yêu cầu đọc, không nhận ghi.",
+      "tip": "Read Replica dùng để tăng sức đọc và chạy báo cáo; có thể nâng thành database độc lập khi DR. Đừng nhầm với bản dự phòng của Multi-AZ."
+    },
+    "dynamodb": {
+      "desc": "NoSQL dạng key-value, serverless, độ trễ vài mili giây, tự nhân bản trên 3 AZ.",
+      "tip": "On-demand cho lưu lượng khó đoán, provisioned + auto scaling cho lưu lượng đều. DAX để cache cấp micro giây, Global Tables cho nhiều Region."
+    },
+    "s3": {
+      "desc": "Kho lưu trữ object gần như vô hạn, độ bền 11 số 9. Chứa ảnh, video và file tĩnh.",
+      "tip": "Storage class + lifecycle để tiết kiệm; versioning + replication cho DR; presigned URL để cho phép tải lên/tải xuống tạm thời."
+    },
+    "sqs": {
+      "desc": "Hàng đợi do AWS quản lý. Nhận việc ngay (người dùng không phải chờ) và để worker xử lý dần.",
+      "tip": "Tách rời các thành phần và làm phẳng đỉnh tải. Standard: giao ít nhất một lần; FIFO: đúng thứ tự, đúng một lần. DLQ cho message lỗi. Auto Scaling theo độ dài hàng đợi."
+    },
+    "sns": {
+      "desc": "Pub/sub: một message được đẩy tới nhiều nơi nhận cùng lúc (fan-out).",
+      "tip": "SNS → nhiều SQS là mẫu fan-out kinh điển. Dùng message filtering để mỗi hàng đợi chỉ nhận loại sự kiện nó cần."
+    }
+  },
+  "Twists": {
+    "azOutage": {
+      "name": "Mất một AZ",
+      "heads_up": "Giữa màn, AZ \"a\" có thể mất điện. Thứ gì chỉ đặt ở AZ đó sẽ sập theo.",
+      "page": "Lỗi 5xx tăng vọt, bảng theo dõi AZ us-east-1a chuyển đỏ."
+    },
+    "regionOutage": {
+      "name": "Mất cả Region",
+      "heads_up": "Có tin cả Region {region} sắp gặp sự cố lớn và kéo dài.",
+      "page": "Mọi endpoint ở {region} ngừng phản hồi."
+    },
+    "spotInterruption": {
+      "name": "Spot bị thu hồi",
+      "heads_up": "AWS có thể thu hồi máy Spot bất cứ lúc nào, chỉ báo trước 2 phút.",
+      "page": "Các máy Spot nhận thông báo thu hồi và tắt."
+    },
+    "flashSale": {
+      "name": "Flash sale",
+      "heads_up": "Bộ phận marketing vừa lên lịch flash sale: lưu lượng tăng gấp 3 trong một khoảng ngắn.",
+      "page": "Lưu lượng tăng vọt, trang thanh toán chậm dần."
+    },
+    "ddos": {
+      "name": "Bot tấn công",
+      "heads_up": "Có một mạng botnet đang nhắm vào API của bạn.",
+      "page": "Yêu cầu lạ tăng gấp 6, CPU máy chủ chạm trần."
+    },
+    "cacheCrash": {
+      "name": "Cache sập",
+      "heads_up": "Node cache có thể chết đột ngột đúng giờ cao điểm.",
+      "page": "Cache không phản hồi, mọi yêu cầu đọc dồn hết về database."
+    },
+    "viral": {
+      "name": "Lan truyền",
+      "heads_up": "Bài đăng của bạn đang lan nhanh: lưu lượng tăng liên tục, tới gấp 4.",
+      "page": "Lưu lượng tăng đều mỗi phút."
+    }
+  },
+  "Requirements": {
+    "encryptData": {
+      "title": "Mã hoá dữ liệu",
+      "desc": "Mọi nơi lưu dữ liệu (database, cache, S3, SQS) phải bật mã hoá khi lưu trữ (KMS)."
+    },
+    "privateData": {
+      "title": "Database ở private subnet",
+      "desc": "Chỉ máy chủ (EC2/Lambda) được kết nối tới database và cache."
+    },
+    "noPublicServers": {
+      "title": "Không để lộ máy chủ",
+      "desc": "EC2 phải đứng sau ALB, CloudFront hoặc API Gateway."
+    },
+    "fanOut": {
+      "title": "Fan-out",
+      "desc": "Mỗi sự kiện phải tới ít nhất 2 hệ thống qua SNS → SQS → worker."
+    },
+    "drainQueue": {
+      "title": "Xử lý hết hàng đợi",
+      "desc": "Khi hết màn, hàng đợi không được tồn quá 5% số việc."
+    }
+  },
+  "Issues": {
+    "users_unconnected": "Người dùng chưa kết nối tới đâu cả: kéo từ một chấm tròn quanh Người dùng sang một thành phần.",
+    "loop": "Có vòng lặp ở {name}: yêu cầu cứ đi vòng mà không tới đích.",
+    "nowhere_read": "{name} nhận yêu cầu đọc nhưng không có nơi lấy dữ liệu: nối nó tới một database hoặc cache.",
+    "nowhere_write": "{name} nhận yêu cầu ghi nhưng không có nơi lưu: nối nó tới một database.",
+    "nowhere_static": "{name} nhận yêu cầu tải file nhưng không có nơi chứa file: nối tới S3 hoặc máy chủ.",
+    "nowhere_job": "{name} nhận tác vụ nền nhưng không có nơi xử lý.",
+    "alb_target": "{name} chỉ chia yêu cầu cho máy chủ (EC2/Lambda), không gửi thẳng vào database.",
+    "replica_write": "{name}: Read Replica chỉ cho đọc, yêu cầu ghi phải tới database chính.",
+    "queue_no_consumer": "Không ai lấy việc từ {name}: nối hàng đợi tới EC2 hoặc Lambda.",
+    "down": "{name} sập trong sự cố và không có gì thay thế.",
+    "overloaded": "{name} quá tải nên bắt đầu từ chối yêu cầu: tăng kích cỡ, thêm máy hoặc san bớt tải.",
+    "unencrypted": "{name} chưa bật mã hoá (KMS).",
+    "public_data": "{name} đang bị lộ ra ngoài: chỉ máy chủ mới được kết nối tới database.",
+    "public_server": "{name} nhận lưu lượng thẳng từ Internet: đặt ALB, CloudFront hoặc API Gateway phía trước.",
+    "no_fan_out": "Cần SNS gửi tới ít nhất 2 hàng đợi SQS, mỗi hàng đợi có worker riêng.",
+    "backlog": "Hàng đợi {name} còn tồn việc: thêm worker hoặc dùng worker mạnh hơn.",
+    "slow": "Phản hồi quá chậm, chậm nhất ở {name}.",
+    "cold_start": "{name} bị cold start khi lưu lượng tăng đột ngột: bật Provisioned concurrency.",
+    "over_budget": "Vượt ngân sách: {name} tốn nhiều nhất. Tìm phương án rẻ hơn."
+  },
+  "Result": {
+    "passed": "Đạt yêu cầu!",
+    "failed": "Chưa đạt",
+    "stars": "{count} sao",
+    "answered": "Tỉ lệ phản hồi",
+    "latency": "Thời gian phản hồi TB",
+    "cost": "Chi phí/tháng",
+    "cheaper": "Đạt rồi! Giảm chi phí thêm để được 3 sao.",
+    "chart_answered": "% phản hồi",
+    "chart_latency": "độ trễ (ms)",
+    "chart_twist": "lúc có sự cố",
+    "all_issues": "Các vấn đề phát hiện",
+    "cost_breakdown": "Chi phí từng phần",
+    "next": "Màn tiếp theo",
+    "edit": "Sửa thiết kế",
+    "see_what_happened": "Xem diễn biến",
+    "hide_details": "Ẩn chi tiết"
+  },
+  "Intro": {
+    "round": "Màn {number}",
+    "traffic": "Lưu lượng",
+    "latency": "Độ trễ",
+    "budget": "Ngân sách",
+    "audience": "Người dùng theo Region gần nhất: {split}. Phục vụ từ Region khác sẽ chậm thêm ~150 ms nếu edge không trả lời thay.",
+    "heads_up": "Sự cố dự kiến:",
+    "rules": "Quy định",
+    "concept": "Ý chính:",
+    "start": "Mở bảng thiết kế"
+  },
+  "Chapters": {
+    "basics": "Một ứng dụng",
+    "resilience": "Không được sập",
+    "performance": "Nhanh hơn",
+    "decoupling": "Xử lý bất đồng bộ",
+    "security": "Bảo mật",
+    "cost": "Tiết kiệm chi phí",
+    "final": "Trùm cuối"
+  },
+  "Sandbox": {
+    "settings": "Thiết lập lưu lượng",
+    "traffic": "Lưu lượng",
+    "mix_read": "Đọc dữ liệu",
+    "mix_write": "Ghi dữ liệu",
+    "mix_static": "Tải file tĩnh",
+    "mix_job": "Tác vụ nền",
+    "users_near": "Người dùng gần {region}",
+    "outage_region": "Region bị sập",
+    "twist": "Sự cố",
+    "no_twist": "Không có",
+    "rules": "Quy định"
+  },
+  "Domains": {
+    "secure": "Thiết kế kiến trúc bảo mật",
+    "resilient": "Thiết kế kiến trúc có khả năng phục hồi",
+    "performance": "Thiết kế kiến trúc hiệu năng cao",
+    "cost": "Thiết kế kiến trúc tối ưu chi phí"
+  },
+  "LessonsPage": {
+    "title": "Bài học SAA-C03",
+    "intro": "Bám theo 4 domain của kỳ thi AWS Certified Solutions Architect – Associate. Mỗi bài có từ khoá hay gặp trong đề, các bẫy thường gặp và màn chơi để thực hành.",
+    "weight": "{weight}% đề thi",
+    "minutes": "{minutes} phút đọc",
+    "read": "Đã đọc",
+    "mark_read": "Đánh dấu đã đọc",
+    "all_lessons": "Tất cả bài học",
+    "practice_on_board": "Thực hành ý này trong game:",
+    "keywords": "Từ khoá đề thi",
+    "keywords_intro": "Gặp cụm từ này trong câu hỏi → nghĩ ngay tới đáp án bên phải.",
+    "traps": "Bẫy hay gặp",
+    "practice_questions": "Làm {count} câu hỏi của bài này"
+  },
+  "PracticePage": {
+    "title": "Luyện đề",
+    "intro": "Câu hỏi tình huống bằng tiếng Anh giống đề thật. Luyện từng câu kèm giải thích, hoặc thi thử 65 câu trong 130 phút.",
+    "answered": "Đã làm",
+    "accuracy": "Độ chính xác",
+    "pass_mark": "Điểm đậu",
+    "filtered_by_lesson": "Đang lọc theo bài: {lesson}.",
+    "clear_filter": "Bỏ lọc",
+    "all_domains": "Tất cả domain",
+    "only_missed": "Chỉ câu đã làm sai",
+    "practice_mode": "Luyện tập",
+    "practice_mode_desc": "{count} câu, xem đáp án và giải thích ngay.",
+    "exam_mode": "Thi thử",
+    "exam_mode_desc": "{count} câu theo tỉ lệ domain, {minutes} phút, chấm điểm cuối bài.",
+    "result_title": "Kết quả thi thử",
+    "scaled_note": "Điểm quy đổi gần đúng thang 100–1000; đề thật cần 720.",
+    "review": "Xem lại câu sai",
+    "back": "Quay lại",
+    "question_of": "Câu {index}/{total}",
+    "submit_exam": "Nộp bài",
+    "quit": "Thoát",
+    "correct": "Chính xác!",
+    "incorrect": "Chưa đúng",
+    "previous": "Câu trước",
+    "check": "Kiểm tra",
+    "done": "Xong",
+    "next": "Câu tiếp"
+  },
+  "FlashcardsPage": {
+    "title": "Thẻ ghi nhớ",
+    "intro": "Ôn nhanh khái niệm và con số hay ra thi. Thẻ nào đã nhớ sẽ ít lặp lại hơn (phương pháp hộp Leitner).",
+    "all": "Tất cả",
+    "mastered": "Đã thuộc {count}/{total} thẻ",
+    "back": "Mặt sau",
+    "front": "Mặt trước",
+    "box": "hộp {box}",
+    "tap_to_flip": "Bấm để lật",
+    "again": "Chưa nhớ",
+    "got_it": "Nhớ rồi",
+    "deck_done": "Hết thẻ cần ôn trong lượt này 🎉",
+    "again_round": "Ôn lượt mới"
+  },
+  "ProgressPage": {
+    "title": "Tiến độ",
+    "stars": "Sao",
+    "lessons": "Bài đã đọc",
+    "quiz": "Câu đã làm",
+    "chapter": "Chương {number}",
+    "play": "Chơi",
+    "rounds_passed": "Màn đã qua",
+    "cards_line": "Đã nhớ {count}/{total} thẻ ghi nhớ.",
+    "learn_title": "Học qua từng màn",
+    "tracks_title": "Bài toán thiết kế"
+  },
+  "HowToPlayPage": {
+    "title": "Hướng dẫn",
+    "tagline": "Thiết kế. Chạy thử. Tối ưu.",
+    "intro": "Mỗi màn là một yêu cầu kinh doanh: lưu lượng, ngân sách, độ trễ và đôi khi là một sự cố. Bạn lắp kiến trúc AWS, chạy mô phỏng và tinh chỉnh tới khi đạt.",
+    "play": "Chơi",
+    "draw": {
+      "title": "Lắp kiến trúc",
+      "items": "Thả dịch vụ AWS từ khung Thành phần lên bảng thiết kế (bấm một lần để thả vào giữa bảng).\nNối hai ô bằng cách kéo từ chấm tròn ở cạnh ô này sang ô kia.\nChọn một ô để chỉnh kích cỡ, số máy, AZ, hình thức tính giá, Multi-AZ, mã hoá và Region.\nKéo vùng trống để di chuyển, giữ Ctrl và cuộn để phóng to hoặc thu nhỏ."
+    },
+    "run": {
+      "title": "Chạy mô phỏng",
+      "items": "Màn đạt khi: phản hồi ít nhất 99% yêu cầu, độ trễ trung bình trong mục tiêu, chi phí trong ngân sách và thoả mọi quy định.\nThanh màu dưới mỗi ô là mức tải: xanh ổn, cam sát ngưỡng, đỏ vượt công suất.\nSự cố dự kiến được nêu trong đề bài; khi xảy ra bạn chỉ thấy triệu chứng, nguyên nhân phải tự suy luận.\nThiết kế rẻ nhất vẫn đạt sẽ được 3 sao."
+    },
+    "aws": {
+      "title": "Nhiều khía cạnh AWS hơn",
+      "items": "Multi-AZ và nhiều Region: đặt máy ở AZ a/b, bật RDS Multi-AZ, dùng Route 53 chuyển sang Region khác.\nAuto Scaling tự thêm máy theo tải; máy mới cần khoảng 2 nhịp để khởi động.\nHình thức tính giá: On-Demand, Reserved (rẻ hơn 40%), Spot (rẻ hơn 70% nhưng có thể bị thu hồi).\nServerless trả theo từng yêu cầu: Lambda, API Gateway, DynamoDB on-demand. Rẻ khi ít người dùng, đắt khi đông.\nBảo mật: WAF, mã hoá KMS, database chỉ nhận kết nối từ máy chủ, máy chủ phải đứng sau ALB/CloudFront/API Gateway.\nNgười dùng được phục vụ từ Region xa họ bị chậm thêm ~150 ms, trừ khi được phục vụ ngay ở edge."
+    },
+    "fail": {
+      "title": "Đọc kết quả và cải tiến",
+      "items": "Thành phần gây lỗi được khoanh đỏ, kèm giải thích.\n\"Xem diễn biến\" có biểu đồ theo thời gian và chi phí từng thành phần.\nCần trợ giúp? Gợi ý có hai mức: một câu định hướng, rồi tới thiết kế tham khảo (màn đó tối đa 2 sao)."
+    },
+    "study": {
+      "title": "Ôn thi SAA-C03",
+      "items": "Mỗi màn có liên kết tới bài học giải thích dịch vụ và cách đề thi hỏi về nó.\nLuyện đề: câu hỏi tình huống tiếng Anh có giải thích, và thi thử 65 câu / 130 phút.\nThẻ ghi nhớ để ôn nhanh con số và khái niệm."
+    },
+    "shortcuts": {
+      "title": "Phím tắt",
+      "run": "Ctrl+Enter (⌘ Enter): Chạy, hoặc tua hết khi đang chạy.",
+      "undo": "Ctrl+Z (⌘ Z): hoàn tác.",
+      "redo": "Ctrl+Shift+Z hoặc Ctrl+Y: làm lại.",
+      "delete": "Delete / Backspace: xoá ô hoặc đường nối đang chọn."
+    }
+  },
+  "LessonTitles": {
+    "ec2-pricing-models": "Các mô hình giá EC2: On-Demand, RI, Savings Plans, Spot, Dedicated",
+    "s3-storage-classes": "S3 Storage Classes, Lifecycle và công cụ phân tích chi phí S3",
+    "cost-management-tools": "Công cụ quản lý chi phí: Cost Explorer, Budgets, CUR, Tags, Anomaly Detection",
+    "cost-optimized-architectures": "Kiến trúc tối ưu chi phí: data transfer, network, serverless, scheduling",
+    "cost-database-storage-choices": "Chọn storage và database rẻ hơn: EBS/EFS/S3, FSx, Redshift, Athena, ElastiCache, Snow",
+    "cost-compute-serverless-containers": "Chọn compute rẻ nhất: EC2, ECS, Fargate, Lambda, Spot và Graviton",
+    "cost-network-transfer": "Chi phí mạng và data transfer chuyên sâu: AZ, Region, NAT, endpoint, hybrid, Transit Gateway",
+    "ec2-compute": "EC2: instance family, placement group và hiệu năng compute",
+    "containers-compute": "Container và serverless compute: ECS, EKS, Fargate, Lambda, Batch",
+    "block-file-storage": "Block và file storage: EBS, EFS, FSx",
+    "s3-performance": "Hiệu năng Amazon S3",
+    "relational-databases": "Relational database: RDS, Aurora và Redshift",
+    "nosql-caching": "NoSQL và caching: DynamoDB, ElastiCache, purpose-built databases",
+    "edge-networking": "Edge và mạng hiệu năng cao: CloudFront, Global Accelerator, Direct Connect",
+    "data-analytics": "Streaming và analytics: Kinesis, Firehose, Athena, Glue, EMR, Redshift",
+    "data-migration": "Di chuyển dữ liệu và workload lên AWS",
+    "ai-ml-services": "Dịch vụ AI/ML: chọn đúng dịch vụ theo use case",
+    "high-availability-multi-az": "High Availability và Multi-AZ",
+    "elastic-load-balancing": "Elastic Load Balancing: ALB, NLB, GWLB",
+    "auto-scaling": "EC2 Auto Scaling",
+    "decoupling-messaging": "Decoupling: SQS, SNS, EventBridge, Kinesis, Amazon MQ",
+    "serverless-workflows": "Serverless: Lambda, API Gateway, Step Functions, AppSync",
+    "route53-routing": "Route 53: DNS, routing policy và health check",
+    "disaster-recovery": "Disaster Recovery: RPO, RTO và 4 chiến lược",
+    "backup-replication": "Backup và Replication: AWS Backup, RDS, Aurora, DynamoDB, S3, EBS, EFS",
+    "management-iac": "Infrastructure as Code và vận hành: CloudFormation, Beanstalk, Systems Manager, CloudWatch",
+    "application-integration": "Tích hợp ứng dụng nâng cao: EventBridge, Step Functions, AppFlow, AppSync, MQ, SES, IoT Core",
+    "iam-fundamentals": "IAM căn bản: User, Group, Role và Policy",
+    "iam-organizations-scp": "AWS Organizations, SCP và truy cập cross-account",
+    "identity-federation-cognito": "Federation, Amazon Cognito và Directory Service",
+    "vpc-networking-security": "Bảo mật VPC: Subnet, Security Group, NACL và NAT",
+    "vpc-connectivity": "Kết nối VPC: Peering, Transit Gateway, Endpoint, VPN và Direct Connect",
+    "data-encryption-kms": "Mã hóa dữ liệu: KMS, CloudHSM và bảo vệ S3/EBS/RDS",
+    "secrets-certificates": "Secrets, Parameter Store, ACM và bảo vệ nội dung CloudFront",
+    "threat-detection-waf-shield": "Phát hiện mối đe dọa: WAF, Shield, GuardDuty và giám sát"
+  },
+  "ScenariosPage": {
+    "title": "Bài toán thiết kế",
+    "intro": "Mỗi bài là một sản phẩm thật, qua nhiều màn: lưu lượng tăng dần, sự cố mới, yêu cầu mới. Có sẵn mọi thành phần, bạn tự chọn kiến trúc.",
+    "easy": "Dễ",
+    "medium": "Vừa",
+    "hard": "Khó",
+    "count": "{count} bài",
+    "rounds": "{count} màn",
+    "done": "đã qua {done}/{total}",
+    "play": "Chơi"
+  },
+  "ComparePage": {
+    "title": "So sánh dịch vụ dễ nhầm",
+    "intro": "Các cặp, nhóm dịch vụ mà đề thi hay đặt cạnh nhau để gài bẫy. Mỗi mục có bảng so sánh, khi nào chọn cái nào và cụm từ gợi ý trong câu hỏi.",
+    "pick_when": "Chọn khi",
+    "jump_to": "Đi tới mục"
+  }
+}
