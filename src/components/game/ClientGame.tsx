@@ -2,25 +2,23 @@
 
 import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import { useState, useSyncExternalStore } from 'react';
+import { useState } from 'react';
 import { COMPONENT_TYPES_IN_PALETTE } from '@/game/catalog';
 import { ROUNDS, unlockedAt } from '@/game/rounds';
 import { TRACKS } from '@/game/tracks';
 import { inLocale } from '@/libs/Localize';
-import { useProgress } from '@/libs/Progress';
+import { useProgress, useProgressReady } from '@/libs/Progress';
 import { GameScreen } from './GameScreen';
 
-const noop = () => () => {};
-
 /**
- * Mounts the game only in the browser, where saved boards and progress live.
+ * Mounts the game once saved boards and progress are read from the browser.
  * @param props Learn rounds, a design problem, or the sandbox.
  */
 export const ClientGame = (props: { mode: 'learn' } | { mode: 'sandbox' } | { mode: 'track'; trackId: string }) => {
-  const mounted = useSyncExternalStore(noop, () => true, () => false);
+  const ready = useProgressReady();
   const params = useSearchParams();
 
-  if (!mounted) {
+  if (!ready) {
     return <div className="dot-grid fixed inset-0" />;
   }
 

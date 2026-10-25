@@ -42,7 +42,8 @@ export default async function RootLayout(props: {
 
   return (
     <html lang={locale} className={`${inter.variable} ${mono.variable}`}>
-      <body className="min-h-dvh font-sans antialiased">
+      {/* Browser extensions (e.g. ColorZilla) add attributes to body before React hydrates. */}
+      <body className="min-h-dvh font-sans antialiased" suppressHydrationWarning>
         <NextIntlClientProvider>{props.children}</NextIntlClientProvider>
       </body>
     </html>

@@ -16,111 +16,262 @@ export type Progress = {
   lessonsRead: string[];
 };
 
-const PREFIX = 'archlab:';
-const KEY = `${PREFIX}progress`;
-const BOARD_PREFIX = `${PREFIX}board:`;
-const EVENT = `${PREFIX}progress`;
-/** Prefix used before the app was renamed; saved data is moved over once. */
-const OLD_PREFIX = 'cloudcrash:';
-
-const migrate = () => {
-  for (const key of Object.keys(window.localStorage)) {
-    if (key.startsWith(OLD_PREFIX)) {
-      const value = window.localStorage.getItem(key);
-      const renamed = PREFIX + key.slice(OLD_PREFIX.length);
-
-      if (value !== null && window.localStorage.getItem(renamed) === null) {
-        window.localStorage.setItem(renamed, value);
-      }
-
-      window.localStorage.removeItem(key);
-    }
-  }
+type State = {
+  /** False until the saved data is read from IndexedDB. */
+  ready: boolean;
+  progress: Progress;
+  /** Saved board per round id or `sandbox`. */
+  boards: Record<string, Board>;
 };
+
+/** Change sent to other tabs so they stay in sync. */
+type Message = { type: 'progress'; progress: Progress } | { type: 'board'; slot: string; board: Board } | { type: 'reset' };
+
+const DB_NAME = 'archlab';
+const DB_VERSION = 1;
+const PROGRESS_STORE = 'progress';
+const BOARDS_STORE = 'boards';
+/** Progress is a single record in its store. */
+const PROGRESS_KEY = 'progress';
+
+/** localStorage prefixes used before IndexedDB; saved data is moved over once. */
+const LEGACY_PREFIXES = ['cloudcrash:', 'archlab:'];
+const LEGACY_BOARD = 'board:';
 
 const EMPTY: Progress = { stars: {}, fixesShown: [], answers: {}, cards: {}, lessonsRead: [] };
 
-let cache: Progress | null = null;
+let state: State = { ready: false, progress: EMPTY, boards: {} };
+let loading: Promise<void> | undefined;
+let channel: BroadcastChannel | undefined;
+const listeners = new Set<() => void>();
 
-const read = (): Progress => {
-  if (cache) {
-    return cache;
+const emit = () => {
+  for (const listener of listeners) {
+    listener();
   }
+};
+
+const settle = <T>(request: IDBRequest<T>) =>
+  new Promise<T>((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+
+let database: Promise<IDBDatabase> | undefined;
+
+const openDatabase = () => {
+  database ??= new Promise((resolve, reject) => {
+    const request = window.indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore(PROGRESS_STORE);
+      request.result.createObjectStore(BOARDS_STORE);
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+
+  return database;
+};
+
+/**
+ * Runs writes in one transaction and waits for it to commit.
+ * @param write Puts or deletes records through the transaction.
+ */
+const commit = async (write: (transaction: IDBTransaction) => void) => {
+  const db = await openDatabase();
+  const transaction = db.transaction([PROGRESS_STORE, BOARDS_STORE], 'readwrite');
+
+  write(transaction);
+
+  await new Promise<void>((resolve, reject) => {
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
+  });
+};
+
+/**
+ * Saves changes without blocking the UI.
+ * @param write Puts or deletes records through the transaction.
+ */
+const persist = (write: (transaction: IDBTransaction) => void) => {
+  commit(write).catch(() => {
+    // Storage can be full or blocked; data then lives for this tab only.
+  });
+};
+
+const readStored = async () => {
+  const db = await openDatabase();
+  const transaction = db.transaction([PROGRESS_STORE, BOARDS_STORE]);
+  const boardStore = transaction.objectStore(BOARDS_STORE);
+  const [progress, slots, boards] = await Promise.all([
+    settle(transaction.objectStore(PROGRESS_STORE).get(PROGRESS_KEY)),
+    settle(boardStore.getAllKeys()),
+    settle(boardStore.getAll()),
+  ]);
+
+  return {
+    progress: progress as Partial<Progress> | undefined,
+    boards: Object.fromEntries(slots.map((slot, i) => [String(slot), boards[i] as Board])),
+  };
+};
+
+/** Reads data saved in localStorage by older versions; newer prefixes win. */
+const readLegacy = () => {
+  const legacy: { progress?: Partial<Progress>; boards: Record<string, Board>; keys: string[] } = { boards: {}, keys: [] };
 
   try {
-    migrate();
-    const raw = window.localStorage.getItem(KEY);
+    for (const prefix of LEGACY_PREFIXES) {
+      for (const key of Object.keys(window.localStorage)) {
+        const raw = key.startsWith(prefix) ? window.localStorage.getItem(key) : null;
 
-    cache = raw ? { ...EMPTY, ...(JSON.parse(raw) as Partial<Progress>) } : EMPTY;
+        if (raw !== null) {
+          const name = key.slice(prefix.length);
+
+          if (name === PROGRESS_KEY) {
+            legacy.progress = JSON.parse(raw) as Partial<Progress>;
+          } else if (name.startsWith(LEGACY_BOARD)) {
+            legacy.boards[name.slice(LEGACY_BOARD.length)] = JSON.parse(raw) as Board;
+          }
+
+          legacy.keys.push(key);
+        }
+      }
+    }
   } catch {
-    cache = EMPTY;
+    // Unreadable legacy data is left in place and ignored.
+    return { boards: {}, keys: [] };
   }
 
-  return cache;
+  return legacy;
+};
+
+/** Moves localStorage data into IndexedDB once, keeping records already there. */
+const migrate = async (stored: Awaited<ReturnType<typeof readStored>>) => {
+  const legacy = readLegacy();
+
+  if (legacy.keys.length === 0) {
+    return stored;
+  }
+
+  const progress = stored.progress ?? legacy.progress;
+  const boards = { ...legacy.boards, ...stored.boards };
+
+  await commit((transaction) => {
+    if (progress) {
+      transaction.objectStore(PROGRESS_STORE).put(progress, PROGRESS_KEY);
+    }
+
+    for (const [slot, board] of Object.entries(boards)) {
+      transaction.objectStore(BOARDS_STORE).put(board, slot);
+    }
+  });
+
+  for (const key of legacy.keys) {
+    window.localStorage.removeItem(key);
+  }
+
+  return { progress, boards };
+};
+
+const receive = (message: Message) => {
+  if (message.type === 'progress') {
+    state = { ...state, progress: message.progress };
+  } else if (message.type === 'board') {
+    state = { ...state, boards: { ...state.boards, [message.slot]: message.board } };
+  } else {
+    state = { ...state, progress: EMPTY, boards: {} };
+  }
+
+  emit();
+};
+
+const broadcast = (message: Message) => {
+  channel?.postMessage(message);
+};
+
+const hydrate = async () => {
+  channel = new BroadcastChannel(DB_NAME);
+  channel.onmessage = (event: MessageEvent<Message>) => receive(event.data);
+
+  try {
+    const stored = await migrate(await readStored());
+
+    state = { ready: true, progress: { ...EMPTY, ...stored.progress }, boards: stored.boards };
+  } catch {
+    // IndexedDB is blocked (e.g. some private modes); start empty in memory.
+    state = { ...state, ready: true };
+  }
+
+  emit();
+};
+
+/** Starts reading the saved data once; resolves when it is in memory. */
+const load = () => {
+  loading ??= hydrate();
+
+  return loading;
 };
 
 const subscribe = (callback: () => void) => {
-  window.addEventListener(EVENT, callback);
-  window.addEventListener('storage', callback);
+  listeners.add(callback);
+  void load();
 
   return () => {
-    window.removeEventListener(EVENT, callback);
-    window.removeEventListener('storage', callback);
+    listeners.delete(callback);
   };
 };
 
 /**
  * Reads the saved progress and re-renders when it changes.
- * @returns The current progress.
+ * @returns The current progress, empty until the saved data is read.
  */
-export const useProgress = () => useSyncExternalStore(subscribe, read, () => EMPTY);
+export const useProgress = () => useSyncExternalStore(subscribe, () => state.progress, () => EMPTY);
+
+/**
+ * Tells whether the saved progress and boards were read.
+ * @returns True once `loadBoard` and `useProgress` return saved data.
+ */
+export const useProgressReady = () => useSyncExternalStore(subscribe, () => state.ready, () => false);
 
 /**
  * Applies a change to the saved progress.
  * @param change Builds the new progress from the old one.
  */
 export const updateProgress = (change: (old: Progress) => Progress) => {
-  cache = change(read());
+  void load().then(() => {
+    const progress = change(state.progress);
 
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(cache));
-  } catch {
-    // Storage can be full or blocked; progress then lives for this tab only.
-  }
-
-  window.dispatchEvent(new Event(EVENT));
+    state = { ...state, progress };
+    emit();
+    persist((transaction) => transaction.objectStore(PROGRESS_STORE).put(progress, PROGRESS_KEY));
+    broadcast({ type: 'progress', progress });
+  });
 };
 
 /** Forgets all progress and saved boards. */
 export const resetProgress = () => {
-  try {
-    for (const key of Object.keys(window.localStorage)) {
-      if (key.startsWith(PREFIX)) {
-        window.localStorage.removeItem(key);
-      }
-    }
-  } catch {
-    // Nothing to clear when storage is blocked.
-  }
-
-  cache = EMPTY;
-  window.dispatchEvent(new Event(EVENT));
+  void load().then(() => {
+    state = { ...state, progress: EMPTY, boards: {} };
+    emit();
+    persist((transaction) => {
+      transaction.objectStore(PROGRESS_STORE).clear();
+      transaction.objectStore(BOARDS_STORE).clear();
+    });
+    broadcast({ type: 'reset' });
+  });
 };
 
 /**
- * Loads the board saved for a round or the sandbox.
+ * Loads the board saved for a round or the sandbox; call after `useProgressReady` is true.
  * @param slot Round id or `sandbox`.
- * @returns The saved board, if any.
+ * @returns A copy of the saved board, if any.
  */
-export const loadBoard = (slot: string): Board | null => {
-  try {
-    migrate();
-    const raw = window.localStorage.getItem(BOARD_PREFIX + slot);
+export const loadBoard = (slot: string) => {
+  const board = state.boards[slot];
 
-    return raw ? (JSON.parse(raw) as Board) : null;
-  } catch {
-    return null;
-  }
+  return board ? structuredClone(board) : null;
 };
 
 /**
@@ -129,9 +280,9 @@ export const loadBoard = (slot: string): Board | null => {
  * @param board The board to keep.
  */
 export const saveBoard = (slot: string, board: Board) => {
-  try {
-    window.localStorage.setItem(BOARD_PREFIX + slot, JSON.stringify(board));
-  } catch {
-    // Ignore: the board stays in memory.
-  }
+  void load().then(() => {
+    state = { ...state, boards: { ...state.boards, [slot]: board } };
+    persist((transaction) => transaction.objectStore(BOARDS_STORE).put(board, slot));
+    broadcast({ type: 'board', slot, board });
+  });
 };
