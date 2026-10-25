@@ -1,12 +1,14 @@
-import './src/libs/Env';
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
+import { Env } from './src/libs/Env';
 
 const baseConfig: NextConfig = {
   devIndicators: {
     position: 'bottom-left',
   },
   poweredByHeader: false,
+  output: Env.STATIC_EXPORT === 'true' ? 'export' : undefined,
+  basePath: Env.BASE_PATH,
   reactStrictMode: true,
   reactCompiler: process.env.NODE_ENV === 'production', // Keep the development environment fast
   experimental: {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { Checkbox } from '@/components/Checkbox';
 import type { DomainId, Question } from '@/content/types';
@@ -38,10 +39,20 @@ const sameAnswer = (a: number[], b: number[]) => a.length === b.length && a.ever
 type Session = { mode: 'practice' | 'exam'; items: Question[]; index: number; picks: Record<string, number[]>; revealed: boolean; startedAt: number; finished: boolean };
 
 /**
+ * Reads the lesson filter from the URL and restarts practice when it changes.
+ * @param props All questions and lesson titles.
+ */
+export const PracticeClient = (props: { questions: Question[]; lessonTitles: Record<string, string> }) => {
+  const lesson = useSearchParams().get('lesson') ?? undefined;
+
+  return <Practice key={lesson ?? 'all'} questions={props.questions} lessonTitles={props.lessonTitles} lesson={lesson} />;
+};
+
+/**
  * Runs practice sets with instant feedback, or a timed mock exam.
  * @param props All questions, lesson titles and an optional lesson filter.
  */
-export const PracticeClient = (props: { questions: Question[]; lessonTitles: Record<string, string>; lesson?: string }) => {
+const Practice = (props: { questions: Question[]; lessonTitles: Record<string, string>; lesson?: string }) => {
   const t = useTranslations('PracticePage');
   const td = useTranslations('Domains');
   const progress = useProgress();
