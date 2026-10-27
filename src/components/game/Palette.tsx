@@ -22,6 +22,8 @@ const priceTag = (type: ComponentType, units: { month: string; per100: string })
 export const Palette = (props: {
   types: ComponentType[];
   fresh: ComponentType[];
+  /** Types already at their limit on the board. */
+  full: ComponentType[];
   onDragStart: (type: ComponentType, event: React.PointerEvent) => void;
   onClear: () => void;
   disabled: boolean;
@@ -36,7 +38,8 @@ export const Palette = (props: {
           <button
             key={type}
             type="button"
-            disabled={props.disabled}
+            disabled={props.disabled || props.full.includes(type)}
+            title={props.full.includes(type) ? t('limit_short') : undefined}
             className="relative flex touch-none flex-col items-center gap-0.5 rounded-lg border border-chalk/70 px-2 py-2 text-center hover:border-accent hover:bg-panel-2 disabled:opacity-40"
             onPointerDown={(event) => props.onDragStart(type, event)}
           >

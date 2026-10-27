@@ -162,6 +162,41 @@ export const DATA_STORE_TYPES = new Set<ComponentType>([...DATABASE_TYPES, 'elas
 export const QUEUE_TYPES = new Set<ComponentType>(['sqs', 'sns']);
 /** Components that only send traffic to healthy targets. */
 export const HEALTH_AWARE_TYPES = new Set<ComponentType>(['alb', 'route53', 'cloudfront', 'globalAccelerator']);
+/** Parents that share work across every instance of an EC2 group: a load balancer, or workers polling a queue. */
+export const BALANCER_TYPES = new Set<ComponentType>(['alb', 'sqs']);
+
+const DATA_TARGETS: ComponentType[] = ['elasticache', 'rds', 'aurora', 'readReplica', 'dynamodb', 's3'];
+const SERVER_TARGETS: ComponentType[] = ['ec2', 'lambda', 'alb', ...DATA_TARGETS, 'sqs', 'sns'];
+
+/** Components each component may send requests to, as in AWS. */
+export const LINKS: Record<ComponentType, ComponentType[]> = {
+  users: ['route53', 'globalAccelerator', 'waf', 'cloudfront', 'alb', 'apiGateway', 'ec2', 's3'],
+  route53: ['globalAccelerator', 'waf', 'cloudfront', 'alb', 'apiGateway', 'ec2', 's3'],
+  globalAccelerator: ['route53', 'waf', 'alb', 'apiGateway', 'ec2'],
+  waf: ['cloudfront', 'alb', 'apiGateway'],
+  cloudfront: ['route53', 'globalAccelerator', 'alb', 'apiGateway', 'ec2', 's3'],
+  alb: ['ec2', 'lambda'],
+  apiGateway: ['alb', 'ec2', 'lambda', 'sqs', 'sns'],
+  ec2: SERVER_TARGETS,
+  lambda: SERVER_TARGETS,
+  elasticache: ['rds', 'aurora', 'readReplica', 'dynamodb'],
+  rds: [],
+  aurora: [],
+  readReplica: [],
+  dynamodb: [],
+  s3: [],
+  sqs: ['ec2', 'lambda'],
+  sns: ['sqs', 'lambda'],
+};
+
+/** Most copies of a component one design needs; global entry points are shared by the whole app. */
+export const MAX_PER_BOARD: Partial<Record<ComponentType, number>> = {
+  users: 1,
+  route53: 1,
+  globalAccelerator: 1,
+  waf: 1,
+  cloudfront: 1,
+};
 
 /** Capacity in work units per second, by size. */
 export const CAPACITY: Partial<Record<ComponentType, Record<Size, number>>> = {

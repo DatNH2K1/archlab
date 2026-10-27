@@ -24,6 +24,10 @@
   "Game": {
     "users": "Users",
     "down": "DOWN",
+    "idle": "IDLE",
+    "link_not_allowed": "{from} cannot connect straight to {to}.",
+    "limit_reached": "A design needs at most {count} {name}.",
+    "limit_short": "Limit reached",
     "backlog": "{count} queued",
     "connect_from": "Drag to connect",
     "components": "Components",
@@ -237,6 +241,7 @@
     "nowhere_static": "{name} receives file downloads but has no file store: link it to S3 or a server.",
     "nowhere_job": "{name} receives background jobs but nothing can run them.",
     "alb_target": "{name} only sends requests to servers (EC2/Lambda), not straight to databases.",
+    "no_balancer": "{name} has several instances but no ALB in front, so every request lands on one of them: put an ALB before the EC2 group.",
     "replica_write": "{name}: a read replica is read-only; writes must go to the primary database.",
     "queue_no_consumer": "Nobody consumes {name}: connect the queue to EC2 or Lambda.",
     "down": "{name} failed during the incident and nothing replaced it.",

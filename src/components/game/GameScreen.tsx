@@ -4,8 +4,8 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { AppMenu } from '@/components/AppMenu';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
-import { canConnect, createNode, emptyBoard, newId } from '@/game/board';
-import { CATALOG, COMPONENT_TYPES_IN_PALETTE } from '@/game/catalog';
+import { canAdd, canConnect, createNode, emptyBoard, newId } from '@/game/board';
+import { CATALOG, COMPONENT_TYPES_IN_PALETTE, LINKS, MAX_PER_BOARD } from '@/game/catalog';
 import type { Round } from '@/game/rounds';
 import { inLocale } from '@/libs/Localize';
 import { simulate, TICKS } from '@/game/simulate';
@@ -99,6 +99,8 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
   const [hintLevel, setHintLevel] = useState(0);
   const [ghost, setGhost] = useState<{ type: ComponentType; x: number; y: number } | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(true);
+  /** Why the last edit was refused, shown until the next change. */
+  const [notice, setNotice] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const timer = useRef<number | undefined>(undefined);
 
@@ -108,6 +110,7 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
   const apply = (next: Board, record = true) => {
     saveBoard(slot, next);
     setRun(null);
+    setNotice(null);
     setHistory((old) =>
       record ? { past: [...old.past.slice(-60), old.present], present: next, future: [] } : { ...old, present: next },
     );
@@ -160,6 +163,7 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
     let tick = 0;
 
     setSelection(null);
+    setNotice(null);
     setRun({ result, tick, done: false });
     window.clearInterval(timer.current);
     timer.current = window.setInterval(() => {
@@ -247,6 +251,12 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
 
     const x = Math.round(((clientX - rect.left - view.x) / view.zoom - NODE_W / 2) / 10) * 10;
     const y = Math.round(((clientY - rect.top - view.y) / view.zoom - NODE_H / 2) / 10) * 10;
+    if (!canAdd(board, type)) {
+      setNotice(t('limit_reached', { name: CATALOG[type].label, count: MAX_PER_BOARD[type] ?? 0 }));
+
+      return;
+    }
+
     const node = createNode({ type, x, y });
 
     apply({ ...board, nodes: [...board.nodes, node] });
@@ -349,6 +359,10 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
       };
     }
 
+    if (notice) {
+      return { tone: 'warn', text: notice };
+    }
+
     if (result) {
       return result.passed
         ? { tone: 'good', text: t('coach_passed') }
@@ -411,10 +425,16 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
           apply({ ...board, nodes: board.nodes.map((node) => (node.id === id ? { ...node, x, y } : node)) }, false)
         }
         onConnect={(from, to) => {
+          const source = board.nodes.find((node) => node.id === from);
+          const target = board.nodes.find((node) => node.id === to);
+
           if (canConnect(board, from, to)) {
             apply({ ...board, edges: [...board.edges, { id: newId('edge'), from, to }] });
+          } else if (source && target && !LINKS[source.type].includes(target.type)) {
+            setNotice(t('link_not_allowed', { from: nodeLabel(from), to: nodeLabel(to) }));
           }
         }}
+        canLink={(from, to) => canConnect(board, from, to)}
         live={live}
         failingId={topIssue?.nodeId}
         locked={locked}
@@ -524,6 +544,7 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
               <Palette
                 types={palette}
                 fresh={fresh}
+                full={palette.filter((type) => !canAdd(board, type))}
                 disabled={locked}
                 onDragStart={startPaletteDrag}
                 onClear={() => {

@@ -1,4 +1,5 @@
 import {
+  BALANCER_TYPES,
   CAPACITY,
   CATALOG,
   COMPUTE_TYPES,
@@ -86,6 +87,7 @@ const ISSUE_RANK: Record<IssueCode, number> = {
   replica_write: 1,
   queue_no_consumer: 1,
   alb_target: 2,
+  no_balancer: 2,
   down: 2,
   overloaded: 2,
   backlog: 3,
@@ -172,6 +174,19 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       parents.get(to.id)?.push(from);
     }
   }
+
+  // Only components users can reach take part in the run.
+  const users = board.nodes.find((node) => node.type === 'users');
+  const reached = new Set<string>(users ? [users.id] : []);
+
+  for (const id of reached) {
+    for (const child of children.get(id) ?? []) {
+      reached.add(child.id);
+    }
+  }
+
+  /** Without a load balancer, or a queue polled by workers, every request lands on the same instance. */
+  const balanced = (node: BoardNode) => (parents.get(node.id) ?? []).every((parent) => BALANCER_TYPES.has(parent.type));
 
   const rt = new Map<string, Runtime>(
     board.nodes.map((node) => [
@@ -276,8 +291,9 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     if (node.type === 'ec2') {
       const inst = state(node.id).instances;
       const per = CAPACITY.ec2?.[node.config.size] ?? 0;
+      const up = (inst.a + inst.b) * aliveFraction(node);
 
-      return per * (inst.a + inst.b) * aliveFraction(node);
+      return per * (balanced(node) ? up : Math.min(up, 1));
     }
 
     if (node.type === 'dynamodb' && !node.config.provisioned) {
@@ -611,7 +627,6 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     return { ...sum(lost, result), lat: result.lat + delay * result.ok };
   }
 
-  const users = board.nodes.find((node) => node.type === 'users');
   const ticks: TickSample[] = [];
   let totalSent = 0;
   let totalOk = 0;
@@ -798,12 +813,17 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       const own = state(node.id);
       const instances = own.instances.a + own.instances.b;
 
+      // Idle components are still billed, but they show no live state.
       if (node.type === 'ec2') {
         own.instanceTicks += instances + own.pending.length;
       }
 
       if (node.type === 'lambda') {
         own.prevRate = own.load;
+      }
+
+      if (!reached.has(node.id)) {
+        continue;
       }
 
       nodes[node.id] = {
@@ -825,6 +845,16 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       twistActive: twist ? inWindow(twist, twist, t) && twist !== 'viral' : false,
       nodes,
     });
+  }
+
+  recording = true;
+
+  for (const node of board.nodes) {
+    const group = node.config.count > 1 || node.config.autoScaling;
+
+    if (node.type === 'ec2' && group && state(node.id).handled > 0 && !balanced(node)) {
+      report('no_balancer', node.id, 1);
+    }
   }
 
   // Leftover backlog: jobs nobody processed.

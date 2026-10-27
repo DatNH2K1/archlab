@@ -125,6 +125,10 @@ export const NodeBox = (props: {
   selected: boolean;
   failing: boolean;
   live?: NodeTick;
+  /** Not reachable from the users during a run. */
+  idle: boolean;
+  /** Cannot take the wire being drawn. */
+  dimmed: boolean;
   showDots: boolean;
   onPointerDown: (event: React.PointerEvent) => void;
   onDotPointerDown: (event: React.PointerEvent, side: Side) => void;
@@ -140,7 +144,7 @@ export const NodeBox = (props: {
   return (
     <div
       data-node-id={props.node.id}
-      className="group absolute touch-none select-none"
+      className={`group absolute touch-none transition-opacity select-none ${props.dimmed || props.idle ? 'opacity-35' : ''}`}
       style={{ left: props.node.x, top: props.node.y, width: w, height: h }}
       onPointerDown={props.onPointerDown}
     >
@@ -176,6 +180,11 @@ export const NodeBox = (props: {
             <div className="absolute inset-x-0 bottom-0 h-1 bg-line">
               <div className={`h-full ${utilColor(live.util)}`} style={{ width: `${Math.min(100, live.util * 100)}%` }} />
             </div>
+          )}
+          {props.idle && (
+            <span className="absolute top-1 right-8 rounded bg-muted px-1 font-mono text-[9px] font-bold text-ink">
+              {t('idle')}
+            </span>
           )}
           {down && (
             <span className="absolute top-1 right-8 rounded bg-bad px-1 font-mono text-[9px] font-bold text-ink">

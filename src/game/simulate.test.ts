@@ -93,4 +93,54 @@ describe('simulate', () => {
 
     expect(high).toBeGreaterThan(low * 6);
   });
+
+  it('spreads load over an EC2 group only behind an ALB', () => {
+    const direct = makeBoard(
+      [
+        ['users', 'users', 0, 0],
+        ['web', 'ec2', 0, 0, { count: 3 }],
+        ['db', 'dynamodb', 0, 0],
+      ],
+      [
+        ['users', 'web'],
+        ['web', 'db'],
+      ],
+    );
+    const balanced = makeBoard(
+      [
+        ['users', 'users', 0, 0],
+        ['lb', 'alb', 0, 0],
+        ['web', 'ec2', 0, 0, { count: 3 }],
+        ['db', 'dynamodb', 0, 0],
+      ],
+      [
+        ['users', 'lb'],
+        ['lb', 'web'],
+        ['web', 'db'],
+      ],
+    );
+    const busy = { ...scenario, traffic: 400 };
+
+    expect(simulate(direct, busy).issues.map((issue) => issue.code)).toContain('no_balancer');
+    expect(simulate(balanced, busy).passed).toBe(true);
+  });
+
+  it('leaves components users cannot reach out of the live state', () => {
+    const board = makeBoard(
+      [
+        ['users', 'users', 0, 0],
+        ['fn', 'lambda', 0, 0],
+        ['db', 'dynamodb', 0, 0],
+        ['spare', 'ec2', 0, 0],
+      ],
+      [
+        ['users', 'fn'],
+        ['fn', 'db'],
+      ],
+    );
+    const result = simulate(board, scenario);
+
+    expect(Object.keys(result.ticks[0]?.nodes ?? {})).toEqual(['users', 'fn', 'db']);
+    expect(result.costByNode.spare).toBeGreaterThan(0);
+  });
 });

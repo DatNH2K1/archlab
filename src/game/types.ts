@@ -111,6 +111,7 @@ export const ISSUE_CODES = [
   'nowhere_static',
   'nowhere_job',
   'alb_target',
+  'no_balancer',
   'replica_write',
   'queue_no_consumer',
   'down',

@@ -1,4 +1,4 @@
-import { defaultConfig } from './catalog';
+import { defaultConfig, LINKS, MAX_PER_BOARD } from './catalog';
 import type { Board, BoardNode, ComponentType, NodeConfig } from './types';
 
 /**
@@ -55,11 +55,21 @@ export const canConnect = (board: Board, from: string, to: string) => {
     return false;
   }
 
+  const source = board.nodes.find((node) => node.id === from);
   const target = board.nodes.find((node) => node.id === to);
 
-  if (!target || target.type === 'users') {
+  if (!source || !target || !LINKS[source.type].includes(target.type)) {
     return false;
   }
 
   return !board.edges.some((edge) => edge.from === from && edge.to === to);
 };
+
+/**
+ * Checks whether one more component of a type fits on the board.
+ * @param board The current board.
+ * @param type The component type to add.
+ * @returns True when the type is under its limit.
+ */
+export const canAdd = (board: Board, type: ComponentType) =>
+  board.nodes.filter((node) => node.type === type).length < (MAX_PER_BOARD[type] ?? Number.POSITIVE_INFINITY);

@@ -24,6 +24,10 @@
   "Game": {
     "users": "Người dùng",
     "down": "SẬP",
+    "idle": "KHÔNG DÙNG",
+    "link_not_allowed": "{from} không nối trực tiếp tới {to} được.",
+    "limit_reached": "Mỗi thiết kế chỉ cần tối đa {count} {name}.",
+    "limit_short": "Đã đạt số lượng tối đa",
     "backlog": "{count} đang chờ",
     "connect_from": "Kéo để nối",
     "components": "Thành phần",
@@ -237,6 +241,7 @@
     "nowhere_static": "{name} nhận yêu cầu tải file nhưng không có nơi chứa file: nối tới S3 hoặc máy chủ.",
     "nowhere_job": "{name} nhận tác vụ nền nhưng không có nơi xử lý.",
     "alb_target": "{name} chỉ chia yêu cầu cho máy chủ (EC2/Lambda), không gửi thẳng vào database.",
+    "no_balancer": "{name} có nhiều máy nhưng không có ALB phía trước, nên mọi yêu cầu dồn vào một máy: đặt ALB trước nhóm EC2.",
     "replica_write": "{name}: Read Replica chỉ cho đọc, yêu cầu ghi phải tới database chính.",
     "queue_no_consumer": "Không ai lấy việc từ {name}: nối hàng đợi tới EC2 hoặc Lambda.",
     "down": "{name} sập trong sự cố và không có gì thay thế.",

@@ -68,6 +68,7 @@ export const BoardCanvas = (props: {
   onMoveStart: () => void;
   onMove: (id: string, x: number, y: number) => void;
   onConnect: (from: string, to: string) => void;
+  canLink: (from: string, to: string) => boolean;
   live?: TickSample;
   failingId?: string;
   locked: boolean;
@@ -277,7 +278,7 @@ export const BoardCanvas = (props: {
                   strokeWidth={selected ? 3 : 1.8}
                   markerEnd="url(#arrow)"
                   className={`pointer-events-none ${selected ? 'stroke-accent' : edgeTone(props.live, to.id)} ${
-                    props.live ? 'edge-flow' : ''
+                    props.live?.nodes[from.id] && props.live.nodes[to.id] ? 'edge-flow' : ''
                   }`}
                 />
               </g>
@@ -300,6 +301,8 @@ export const BoardCanvas = (props: {
             selected={props.selection?.kind === 'node' && props.selection.id === node.id}
             failing={props.failingId === node.id}
             live={props.live?.nodes[node.id]}
+            idle={Boolean(props.live) && !props.live?.nodes[node.id]}
+            dimmed={wire !== null && wire.from !== node.id && !props.canLink(wire.from, node.id)}
             showDots={wire !== null}
             onPointerDown={(event) => startNodeDrag(event, node)}
             onDotPointerDown={(event, side) => startWire(event, node, side)}
