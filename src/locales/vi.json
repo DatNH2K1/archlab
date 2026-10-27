@@ -31,6 +31,7 @@
     "db_primary": "THÀNH CHÍNH",
     "db_replica": "THÀNH BẢN SAO",
     "db_stale": "DỮ LIỆU CŨ",
+    "load_hint": "Tải hiện tại / tải tối đa mỗi giây. Một lượt đọc tính 1; ghi vào database tính 2–3; tác vụ nền trên máy chủ tính 3.",
     "backlog": "{count} đang chờ",
     "connect_from": "Kéo để nối",
     "components": "Thành phần",

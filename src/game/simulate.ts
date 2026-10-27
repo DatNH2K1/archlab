@@ -911,8 +911,12 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
         continue;
       }
 
+      const cap = capacity(node);
+
       nodes[node.id] = {
         util: Math.min(own.util, 2),
+        load: own.load,
+        capacity: cap === Number.POSITIVE_INFINITY ? undefined : cap,
         alive: alive(node),
         instances: node.type === 'ec2' ? Math.round(instances * aliveFraction(node)) : undefined,
         backlog: node.type === 'sqs' ? own.backlog : undefined,

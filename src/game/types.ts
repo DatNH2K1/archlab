@@ -137,6 +137,10 @@ export type DbRole = 'primary' | 'replica' | 'stale';
 
 export type NodeTick = {
   util: number;
+  /** Work units per second on the node; a database write or a background job costs more than a read. */
+  load: number;
+  /** Work units per second the node can take; absent when it has no limit. */
+  capacity?: number;
   alive: boolean;
   instances?: number;
   backlog?: number;

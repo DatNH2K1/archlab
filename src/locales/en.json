@@ -31,6 +31,7 @@
     "db_primary": "PROMOTED",
     "db_replica": "NOW REPLICA",
     "db_stale": "STALE",
+    "load_hint": "Current load / max load per second. A read counts 1; a database write counts 2–3; a background job on a server counts 3.",
     "backlog": "{count} queued",
     "connect_from": "Drag to connect",
     "components": "Components",

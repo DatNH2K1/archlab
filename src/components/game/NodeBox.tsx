@@ -47,6 +47,17 @@ const REGION_TONE: Record<Region, string> = { 'us-east-1': 'text-info', 'eu-west
 
 const DB_ROLE_TONE: Record<DbRole, string> = { primary: 'bg-info', replica: 'bg-muted', stale: 'bg-bad' };
 
+/** Prints a load compactly, such as 850 or 12.4k. */
+const formatLoad = (load: number) => (load >= 1000 ? `${(load / 1000).toFixed(1)}k` : `${Math.round(load)}`);
+
+const utilText = (util: number) => {
+  if (util >= 1) {
+    return 'text-bad';
+  }
+
+  return util >= 0.75 ? 'text-warn' : 'text-chalk/80';
+};
+
 const utilColor = (util: number) => {
   if (util >= 1) {
     return 'bg-bad';
@@ -210,6 +221,14 @@ export const NodeBox = (props: {
             </span>
           )}
         </div>
+      )}
+      {live && !down && !isUsers && (
+        <span
+          title={t('load_hint')}
+          className={`absolute top-full right-1 mt-0.5 cursor-help font-mono text-[10px] ${utilText(live.util)}`}
+        >
+          {formatLoad(live.load)} / {live.capacity === undefined ? '∞' : formatLoad(live.capacity)}
+        </span>
       )}
       {SIDES.map((side) => {
         const dot = dotPosition({ ...props.node, x: 0, y: 0 }, side);
