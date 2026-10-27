@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { CATALOG } from '@/game/catalog';
 import type { Board, BoardNode, TickSample } from '@/game/types';
 import type { Side } from './NodeBox';
 import { dotPosition, NodeBox, nodeSize } from './NodeBox';
@@ -225,6 +226,9 @@ export const BoardCanvas = (props: {
   };
 
   const byId = new Map(props.board.nodes.map((node) => [node.id, node]));
+  const regions = new Set(
+    props.board.nodes.filter((node) => CATALOG[node.type].fields.includes('region')).map((node) => node.config.region),
+  );
   const wireFrom = wire ? byId.get(wire.from) : undefined;
 
   return (
@@ -303,6 +307,7 @@ export const BoardCanvas = (props: {
             live={props.live?.nodes[node.id]}
             idle={Boolean(props.live) && !props.live?.nodes[node.id]}
             dimmed={wire !== null && wire.from !== node.id && !props.canLink(wire.from, node.id)}
+            showRegion={regions.size > 1}
             showDots={wire !== null}
             onPointerDown={(event) => startNodeDrag(event, node)}
             onDotPointerDown={(event, side) => startWire(event, node, side)}

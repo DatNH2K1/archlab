@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { CATALOG, defaultConfig } from '@/game/catalog';
-import type { BoardNode, DbRole, NodeTick } from '@/game/types';
+import type { BoardNode, DbRole, NodeTick, Region } from '@/game/types';
 import { ComponentIcon } from './ComponentIcon';
 
 export const NODE_W = 150;
@@ -43,6 +43,8 @@ export const dotPosition = (node: BoardNode, side: Side) => {
 
 const SIDES: Side[] = ['top', 'right', 'bottom', 'left'];
 
+const REGION_TONE: Record<Region, string> = { 'us-east-1': 'text-info', 'eu-west-1': 'text-warn' };
+
 const DB_ROLE_TONE: Record<DbRole, string> = { primary: 'bg-info', replica: 'bg-muted', stale: 'bg-bad' };
 
 const utilColor = (util: number) => {
@@ -76,7 +78,7 @@ const useSubtitle = (node: BoardNode) => {
 };
 
 /** Lists the badges shown on a node for settings that matter in the exam. */
-const useBadges = (node: BoardNode) => {
+const useBadges = (node: BoardNode, showRegion: boolean) => {
   const t = useTranslations('Fields');
   const tg = useTranslations('Game');
   const spec = CATALOG[node.type];
@@ -111,8 +113,8 @@ const useBadges = (node: BoardNode) => {
     badges.push({ label: tg('badge_api_cache'), tone: 'text-info' });
   }
 
-  if (spec.fields.includes('region') && c.region !== defaultConfig(node.type).region) {
-    badges.push({ label: c.region, tone: 'text-warn' });
+  if (spec.fields.includes('region') && (showRegion || c.region !== defaultConfig(node.type).region)) {
+    badges.push({ label: c.region, tone: REGION_TONE[c.region] });
   }
 
   return badges;
@@ -131,13 +133,15 @@ export const NodeBox = (props: {
   idle: boolean;
   /** Cannot take the wire being drawn. */
   dimmed: boolean;
+  /** Print the Region even when it is the default, because the board spans several. */
+  showRegion: boolean;
   showDots: boolean;
   onPointerDown: (event: React.PointerEvent) => void;
   onDotPointerDown: (event: React.PointerEvent, side: Side) => void;
 }) => {
   const t = useTranslations('Game');
   const subtitle = useSubtitle(props.node);
-  const badges = useBadges(props.node);
+  const badges = useBadges(props.node, props.showRegion);
   const { w, h } = nodeSize(props.node);
   const live = props.live;
   const down = live && !live.alive;
