@@ -118,6 +118,11 @@ const twoRegions = (web: Record<string, unknown>, web2: Record<string, unknown>,
       ['queue', 'worker'],
       ['lb2', 'web2'],
       ['web2', 'db2'],
+      // db2 is a cross-Region replica of db: eu-west-1 reads it locally and sends writes to the primary.
+      ['db', 'db2'],
+      ['web2', 'db'],
+      // After failover db is stale and db2 is the new primary for both Regions.
+      ['web', 'db2'],
     ],
   );
 const failover = twoRegions({ size: 'medium', count: 2 }, { size: 'medium', count: 2 });
@@ -234,13 +239,13 @@ export const videoStreaming: Track = {
           title: 'Cả Region sập',
           story: 'us-east-1 mất điện trong gần nửa vòng chơi. S3, ALB, EC2 và RDS ở đó đều chết, CloudFront không còn nơi nào để lấy nội dung. Học viên ở châu Âu vẫn chiếm một nửa. Ngân sách $330/tháng.',
           concept: 'Dựng một stack thứ hai ở eu-west-1 (S3, ALB, EC2, database) và đặt Route 53 sau CloudFront: health check chuyển sang Region còn sống, còn latency routing đưa học viên châu Âu về Region gần họ.',
-          nudge: 'CloudFront → Route 53 → S3 + ALB ở cả hai Region. Ở eu-west-1: ALB → 2 EC2 Vừa → RDS Vừa.',
+          nudge: 'CloudFront → Route 53 → S3 + ALB ở cả hai Region. Ở eu-west-1: ALB → 2 EC2 Vừa → RDS Vừa, là bản sao của RDS us-east-1. Nối EC2 mỗi Region tới cả hai RDS: ghi vào bản chính, kể cả khi bản chính đã chuyển sang eu-west-1 sau failover.',
         },
         en: {
           title: 'A whole Region goes down',
           story: 'us-east-1 loses power for almost half the round. Its S3, ALB, EC2 and RDS all die, leaving CloudFront with no origin. Half the students are still in Europe. Budget $330/month.',
           concept: 'Build a second stack in eu-west-1 (S3, ALB, EC2, database) and put Route 53 behind CloudFront: health checks fail over to the live Region and latency routing sends European students to the closer one.',
-          nudge: 'CloudFront → Route 53 → S3 + ALB in both Regions. In eu-west-1: ALB → 2 Medium EC2 → Medium RDS.',
+          nudge: 'CloudFront → Route 53 → S3 + ALB in both Regions. In eu-west-1: ALB → 2 Medium EC2 → Medium RDS, a replica of the us-east-1 RDS. Link the EC2 in each Region to both RDS: writes go to the primary, even after failover moves it to eu-west-1.',
         },
       },
       scenario: { traffic: 4000, mix: { static: 0.72, read: 0.2, write: 0.03, job: 0.05 }, audience: { 'us-east-1': 0.5, 'eu-west-1': 0.5 }, twist: 'regionOutage', outageRegion: 'us-east-1', latencyTarget: 120, budget: 330, requirements: ['drainQueue'] },

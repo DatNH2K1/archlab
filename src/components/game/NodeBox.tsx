@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { CATALOG, defaultConfig } from '@/game/catalog';
-import type { BoardNode, NodeTick } from '@/game/types';
+import type { BoardNode, DbRole, NodeTick } from '@/game/types';
 import { ComponentIcon } from './ComponentIcon';
 
 export const NODE_W = 150;
@@ -42,6 +42,8 @@ export const dotPosition = (node: BoardNode, side: Side) => {
 };
 
 const SIDES: Side[] = ['top', 'right', 'bottom', 'left'];
+
+const DB_ROLE_TONE: Record<DbRole, string> = { primary: 'bg-info', replica: 'bg-muted', stale: 'bg-bad' };
 
 const utilColor = (util: number) => {
   if (util >= 1) {
@@ -180,6 +182,13 @@ export const NodeBox = (props: {
             <div className="absolute inset-x-0 bottom-0 h-1 bg-line">
               <div className={`h-full ${utilColor(live.util)}`} style={{ width: `${Math.min(100, live.util * 100)}%` }} />
             </div>
+          )}
+          {live?.dbRole && !down && (
+            <span
+              className={`absolute top-1 right-8 rounded px-1 font-mono text-[9px] font-bold text-ink ${DB_ROLE_TONE[live.dbRole]}`}
+            >
+              {t(`db_${live.dbRole}`)}
+            </span>
           )}
           {props.idle && (
             <span className="absolute top-1 right-8 rounded bg-muted px-1 font-mono text-[9px] font-bold text-ink">

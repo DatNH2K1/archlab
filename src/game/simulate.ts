@@ -3,6 +3,7 @@ import {
   CAPACITY,
   CATALOG,
   COMPUTE_TYPES,
+  DATA_STORE_TYPES,
   DATABASE_TYPES,
   FIXED_CAPACITY,
   FLAT_PRICE,
@@ -16,6 +17,7 @@ import {
 import type {
   Board,
   BoardNode,
+  DbRole,
   ComponentType,
   Issue,
   IssueCode,
@@ -85,6 +87,8 @@ const ISSUE_RANK: Record<IssueCode, number> = {
   nowhere_static: 1,
   nowhere_job: 1,
   replica_write: 1,
+  data_split: 1,
+  stale_data: 1,
   queue_no_consumer: 1,
   alb_target: 2,
   no_balancer: 2,
@@ -123,6 +127,8 @@ type Runtime = {
   instanceTicks: number;
   latShare: number;
   coldStarts: number;
+  writes: number;
+  staleHits: number;
 };
 
 const inWindow = (twist: TwistId | undefined, id: TwistId, t: number) => {
@@ -185,6 +191,35 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     }
   }
 
+  // Databases linked by replication hold one dataset.
+  const datasetOf = new Map<string, string>();
+  const dataset = (id: string): string => {
+    const up = datasetOf.get(id) ?? id;
+
+    return up === id ? id : dataset(up);
+  };
+
+  for (const edge of board.edges) {
+    const from = byId.get(edge.from);
+    const to = byId.get(edge.to);
+
+    if (from && to && DATABASE_TYPES.has(from.type) && DATABASE_TYPES.has(to.type)) {
+      datasetOf.set(dataset(to.id), dataset(from.id));
+    }
+  }
+
+  /** Replication role of each database; a replication target starts as a read-only copy. */
+  const roles = new Map<string, DbRole>(
+    board.nodes
+      .filter((node) => DATABASE_TYPES.has(node.type))
+      .map((node) => [
+        node.id,
+        (parents.get(node.id) ?? []).some((parent) => DATABASE_TYPES.has(parent.type)) ? 'replica' : 'primary',
+      ]),
+  );
+  const initialRoles = new Map(roles);
+  const role = (db: BoardNode) => roles.get(db.id) ?? 'primary';
+
   /** Without a load balancer, or a queue polled by workers, every request lands on the same instance. */
   const balanced = (node: BoardNode) => (parents.get(node.id) ?? []).every((parent) => BALANCER_TYPES.has(parent.type));
 
@@ -206,6 +241,8 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
         instanceTicks: 0,
         latShare: 0,
         coldStarts: 0,
+        writes: 0,
+        staleHits: 0,
       },
     ]),
   );
@@ -412,10 +449,27 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     return forward(node, flow, path, targets);
   };
 
-  const databases = (node: BoardNode, cls: 'read' | 'write') =>
-    (children.get(node.id) ?? []).filter(
-      (child) => DATABASE_TYPES.has(child.type) && (cls === 'read' || child.type !== 'readReplica'),
+  /** DynamoDB global tables take writes in every Region; other copies are read-only until promoted. A stale database still takes writes, as in AWS. */
+  const writable = (db: BoardNode) => {
+    if (db.type === 'readReplica') {
+      return false;
+    }
+
+    return db.type === 'dynamodb' || role(db) !== 'replica';
+  };
+
+  /** Databases a server can use: current data first, then healthy, then in its own Region. */
+  const databases = (node: BoardNode, cls: 'read' | 'write') => {
+    const linked = (children.get(node.id) ?? []).filter(
+      (child) => DATABASE_TYPES.has(child.type) && (cls === 'read' || writable(child)),
     );
+    const current = linked.filter((db) => role(db) !== 'stale');
+    const dbs = current.length > 0 ? current : linked;
+    const up = dbs.filter(alive);
+    const local = up.filter((db) => db.config.region === node.config.region);
+
+    return local.length > 0 ? local : up.length > 0 ? up : dbs;
+  };
 
   const readFromData = (node: BoardNode, flow: Flow, path: string[]): Outcome => {
     const caches = (children.get(node.id) ?? []).filter((child) => child.type === 'elasticache' && alive(child));
@@ -486,7 +540,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
         }
 
         if (dbs.length === 0) {
-          const onlyReplicas = kids.some((child) => child.type === 'readReplica');
+          const onlyReplicas = kids.some((child) => DATABASE_TYPES.has(child.type));
 
           return failed(onlyReplicas ? 'replica_write' : 'nowhere_write', node.id, flow.rate, flow.cls);
         }
@@ -608,6 +662,14 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     // Attack traffic is billed too: pay-per-request services charge for every junk request.
     if (recording) {
       own.handled += flow.rate * weight(node.type, flow.cls);
+
+      if (flow.cls === 'write' && DATABASE_TYPES.has(node.type)) {
+        own.writes += flow.rate;
+      }
+
+      if (role(node) === 'stale' && flow.cls !== 'attack') {
+        own.staleHits += flow.rate;
+      }
     }
 
     const dropped = flow.rate * own.drop;
@@ -731,8 +793,31 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
   const mix = Object.entries(scenario.mix) as [TrafficClass, number][];
   const audience = Object.entries(scenario.audience) as [Region, number][];
 
+  /**
+   * Promotes a healthy copy when the primary of a dataset fails. The promotion sticks: a promoted RDS replica leaves
+   * replication, so the old primary returns stale; Aurora Global Database adds the old primary back as a read-only copy.
+   */
+  const failover = () => {
+    for (const db of board.nodes) {
+      if (db.type === 'dynamodb' || role(db) !== 'primary' || alive(db)) {
+        continue;
+      }
+
+      const copy = board.nodes.find(
+        (other) =>
+          other.type === db.type && role(other) === 'replica' && alive(other) && dataset(other.id) === dataset(db.id),
+      );
+
+      if (copy) {
+        roles.set(copy.id, 'primary');
+        roles.set(db.id, db.type === 'aurora' ? 'replica' : 'stale');
+      }
+    }
+  };
+
   for (t = 0; t < TICKS; t += 1) {
     scaleGroups();
+    failover();
 
     const wave = 1 + 0.08 * Math.sin(t / 3);
     // The sale ramps up over six ticks, so Auto Scaling has a chance to follow.
@@ -831,6 +916,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
         alive: alive(node),
         instances: node.type === 'ec2' ? Math.round(instances * aliveFraction(node)) : undefined,
         backlog: node.type === 'sqs' ? own.backlog : undefined,
+        dbRole: roles.get(node.id) === initialRoles.get(node.id) ? undefined : roles.get(node.id),
       };
     }
 
@@ -940,7 +1026,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
           (node) =>
             (DATABASE_TYPES.has(node.type) || node.type === 'elasticache') &&
             (parents.get(node.id) ?? []).some(
-              (parent) => !COMPUTE_TYPES.has(parent.type) && parent.type !== 'elasticache',
+              (parent) => !COMPUTE_TYPES.has(parent.type) && !DATA_STORE_TYPES.has(parent.type),
             ),
         );
 
@@ -991,6 +1077,30 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     }
   }
 
+  const integrityOk = checkIntegrity();
+
+  /** Writes must all land in one dataset: databases linked by replication count as one. */
+  function checkIntegrity() {
+    const stale = board.nodes.filter((node) => state(node.id).staleHits > 0);
+
+    for (const node of stale) {
+      report('stale_data', node.id, state(node.id).staleHits);
+    }
+
+    const written = board.nodes.filter((node) => state(node.id).writes > 0);
+    const datasets = new Set(written.map((node) => dataset(node.id)));
+
+    if (datasets.size <= 1) {
+      return stale.length === 0;
+    }
+
+    const least = written.reduce((a, b) => (state(b.id).writes < state(a.id).writes ? b : a));
+
+    report('data_split', least.id, state(least.id).writes);
+
+    return false;
+  }
+
   const answered = totalSent > 0 ? Math.max(0, Math.min(1, totalOk / totalSent)) : 0;
   const avgLatency = totalOk > 0 ? Math.round(BASE_LATENCY + totalLat / Math.max(totalOk, 1)) : 0;
   const latencyOk = totalOk > 0 && avgLatency <= scenario.latencyTarget;
@@ -1036,8 +1146,9 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       answered: answeredOk,
       latency: latencyOk,
       cost: costOk,
+      integrity: integrityOk,
       requirements: requirementChecks,
     },
-    passed: answeredOk && latencyOk && costOk && requirementChecks.every((check) => check.ok),
+    passed: answeredOk && latencyOk && costOk && integrityOk && requirementChecks.every((check) => check.ok),
   };
 };

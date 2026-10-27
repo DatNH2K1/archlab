@@ -598,7 +598,7 @@ Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu",
       'Amazon S3',
       'Amazon EBS',
     ],
-    minutes: 10,
+    minutes: 13,
     body: `## RPO và RTO
 
 - **RPO (Recovery Point Objective)**: lượng dữ liệu tối đa chấp nhận mất, tính bằng thời gian. RPO 1 giờ = được phép mất tối đa 1 giờ dữ liệu → phải backup/replicate ít nhất mỗi giờ.
@@ -636,6 +636,35 @@ Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu",
 - Nhiều Region cùng phục vụ (Route 53 latency/weighted routing), dữ liệu đồng bộ bằng **DynamoDB global tables** hoặc **Aurora Global Database** (write forwarding).
 - RTO gần như bằng 0, chi phí cao nhất, phức tạp nhất về xung đột ghi dữ liệu.
 
+## Failover và failback: dữ liệu đi đâu
+
+Chuyển sang Region DR mới là nửa đầu. Nửa sau là **quay về Region chính (failback)** mà không mất hay lệch dữ liệu.
+
+### Khi Region chính sập (failover)
+
+1. Health check của Route 53 báo lỗi, **failover routing** chuyển người dùng sang Region DR.
+2. **Promote** database ở Region DR thành bản chính:
+   - **RDS cross-Region read replica**: promote thủ công (hoặc bằng script). Replica **cắt liên kết sao chép** và thành DB độc lập. Phần ghi chưa kịp sao chép (replication lag) bị mất, đó chính là RPO.
+   - **Aurora Global Database**: managed failover, RPO khoảng 1 giây, RTO dưới 1 phút.
+3. Trỏ app ở Region DR vào endpoint ghi mới và scale ASG lên đủ tải.
+
+### Khi Region chính sống lại (failback)
+
+- DB cũ ở Region chính **không tự nhận lại** những gì đã ghi ở Region DR trong lúc sập. Cho người dùng quay về ngay thì app ghi vào dữ liệu cũ, hai bản lệch nhau (**split-brain**).
+- Vì vậy failback là **quy trình có kế hoạch**, không tự động:
+  1. Giữ traffic ở Region DR, nơi đang có bản chính mới.
+  2. Dựng lại sao chép theo **chiều ngược**: RDS thì tạo read replica ở Region chính từ DB ở Region DR; Aurora Global Database sau managed failover tự đưa cluster cũ vào lại làm secondary.
+  3. Chờ đồng bộ xong (replication lag gần 0).
+  4. Chuyển về trong khung bảo trì: RDS promote lại replica ở Region chính; Aurora dùng **switchover** (có kế hoạch, không mất dữ liệu).
+  5. Đổi DNS về, rồi dựng lại replica sang Region DR cho lần sự cố sau.
+- Route 53 failover routing **tự chuyển traffic về** ngay khi health check của Region chính xanh lại, trước khi dữ liệu kịp đồng bộ. Cần chặn bước này: dùng **Route 53 Application Recovery Controller (ARC)** để bật/tắt Region bằng tay, hoặc tạm sửa bản ghi DNS cho tới khi failback xong.
+
+| Dịch vụ | Failover | Failback |
+|---|---|---|
+| RDS cross-Region read replica | Promote thủ công, mất phần replication lag | Tạo replica ngược chiều, đồng bộ xong mới chuyển về |
+| Aurora Global Database | Managed failover (RPO ~1 giây, RTO < 1 phút) | Cluster cũ vào lại làm secondary; switchover để quay về không mất dữ liệu |
+| DynamoDB global tables | Không cần promote: Region nào cũng ghi được | Region sống lại tự bắt kịp; xung đột xử lý theo ghi sau thắng (last writer wins) |
+
 ## AWS Elastic Disaster Recovery (AWS DRS)
 
 - Replicate **liên tục ở mức block** từ server on-premises, máy chủ ở cloud khác hoặc EC2 ở Region khác vào **staging area** chi phí thấp trong AWS (EBS volume + instance replication nhỏ).
@@ -667,6 +696,8 @@ Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu",
       { trigger: 'DR cho server on-premises, RPO giây, RTO phút', answer: 'AWS Elastic Disaster Recovery' },
       { trigger: 'dựng lại hạ tầng nhanh ở Region khác', answer: 'AWS CloudFormation (IaC)' },
       { trigger: 'chuyển DNS sang Region DR khi primary lỗi', answer: 'Route 53 failover routing + health check' },
+      { trigger: 'quay về Region chính sau sự cố mà không mất dữ liệu', answer: 'Sao chép ngược chiều rồi switchover có kế hoạch' },
+      { trigger: 'bật/tắt Region bằng tay khi failover và failback', answer: 'Route 53 Application Recovery Controller' },
     ],
     traps: [
       'Nhầm pilot light (app server tắt) với warm standby (app server chạy quy mô nhỏ).',
@@ -674,6 +705,7 @@ Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu",
       'Multi-AZ không phải DR cross-Region; nó chỉ chịu lỗi AZ.',
       'AMI và snapshot là tài nguyên theo Region, phải copy sang Region DR.',
       'AWS MGN là công cụ migration, không phải công cụ DR liên tục.',
+      'Promote RDS read replica cắt hẳn sao chép; DB cũ ở Region chính sống lại vẫn thiếu dữ liệu ghi trong lúc sập, đừng chuyển traffic về ngay.',
     ],
   },
   {

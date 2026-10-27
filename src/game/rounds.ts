@@ -204,6 +204,9 @@ const ROUNDS_DATA: Omit<LearnRound, 'text'>[] = [
         ['web1', 'db1'],
         ['lb2', 'web2'],
         ['web2', 'db2'],
+        ['db1', 'db2'],
+        // After failover the writer stays in eu-west-1, so us-east-1 must reach it too.
+        ['web1', 'db2'],
       ],
     ),
   },

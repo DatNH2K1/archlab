@@ -61,6 +61,7 @@ export const ResultCard = (props: {
         {scenario.budget !== undefined && (
           <Check ok={result.checks.cost} label={t('cost')} value={`$${result.cost.toFixed(0)} / $${scenario.budget}`} />
         )}
+        <Check ok={result.checks.integrity} label={t('integrity')} value="" />
         {result.checks.requirements.map((check) => (
           <Check key={check.id} ok={check.ok} label={tr(`${check.id}.title`)} value="" />
         ))}

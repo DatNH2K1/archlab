@@ -110,6 +110,8 @@ const twoRegions = makeBoard(
     ['lb2', 'game2'],
     ['game2', 'board2'],
     ['game2', 'scores2'],
+    // DynamoDB global table: both Regions take writes and replicate to each other.
+    ['scores1', 'scores2'],
   ],
 );
 
@@ -155,6 +157,8 @@ const finals = makeBoard(
     ['lb2', 'game2'],
     ['game2', 'board2'],
     ['game2', 'scores2'],
+    // DynamoDB global table: both Regions take writes and replicate to each other.
+    ['scores1', 'scores2'],
   ],
 );
 
@@ -336,7 +340,7 @@ export const gameLeaderboard: Track = {
           concept:
             'Multi-Region active-active: một bộ ALB + EC2 + ElastiCache + DynamoDB (Global Tables) ở mỗi Region. Route 53 gửi người chơi tới Region gần nhất và chuyển hết sang Region còn sống khi một Region sập.',
           nudge:
-            'Thêm Route 53 sau Global Accelerator, dựng bộ thứ hai ở eu-west-1 (2 EC2 kích cỡ Lớn mỗi bên là đủ) và nối Route 53 tới cả hai ALB.',
+            'Thêm Route 53 sau Global Accelerator, dựng bộ thứ hai ở eu-west-1 (2 EC2 kích cỡ Lớn mỗi bên là đủ) và nối Route 53 tới cả hai ALB. Nối hai bảng DynamoDB với nhau để thành Global Table.',
         },
         en: {
           title: 'A whole Region fails',
@@ -345,7 +349,7 @@ export const gameLeaderboard: Track = {
           concept:
             'Multi-Region active-active: one ALB + EC2 + ElastiCache + DynamoDB (Global Tables) stack per Region. Route 53 sends players to the nearest Region and moves everyone to the surviving one when a Region fails.',
           nudge:
-            'Add Route 53 after Global Accelerator, build a second stack in eu-west-1 (2 large EC2 per side is enough) and point Route 53 at both ALBs.',
+            'Add Route 53 after Global Accelerator, build a second stack in eu-west-1 (2 large EC2 per side is enough) and point Route 53 at both ALBs. Link the two DynamoDB tables to make a global table.',
         },
       },
       scenario: {

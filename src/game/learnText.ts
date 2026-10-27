@@ -76,14 +76,14 @@ export const LEARN_TEXT: Record<string, { vi: RoundText; en: RoundText }> = {
     vi: {
       title: 'Cả Region sập',
       story: 'Sếp hỏi: "Nếu cả us-east-1 sập thì sao?" Hôm nay là lúc kiểm chứng câu trả lời.',
-      concept: 'Khôi phục sau thảm hoạ (DR): dựng sẵn một bản ở Region khác (warm standby) và để Route 53 chuyển sang khi health check báo lỗi.',
-      nudge: 'Người dùng → Route 53 → hai bộ ALB → EC2 → Aurora; bộ thứ hai đặt ở eu-west-1.',
+      concept: 'Khôi phục sau thảm hoạ (DR): dựng sẵn một bản ở Region khác (warm standby) và để Route 53 chuyển sang khi health check báo lỗi. Khi failover, database ở Region DR được promote thành bản chính và giữ vai trò đó; Region chính sống lại thì Route 53 đưa người dùng về, nên EC2 ở đó cũng phải ghi được vào bản chính mới. Aurora Global Database tự đưa cluster cũ vào lại làm bản sao.',
+      nudge: 'Người dùng → Route 53 → hai bộ ALB → EC2 → Aurora; bộ thứ hai đặt ở eu-west-1. Nối Aurora us-east-1 → Aurora eu-west-1 để sao chép dữ liệu, và nối EC2 us-east-1 tới cả Aurora eu-west-1 để vẫn ghi được sau failover.',
     },
     en: {
       title: 'The whole Region goes down',
       story: 'Your boss asks: "What if all of us-east-1 goes down?" Today you find out.',
-      concept: 'Disaster recovery: run a copy in another Region (warm standby) and let Route 53 fail over when health checks fail.',
-      nudge: 'Users → Route 53 → two ALB → EC2 → Aurora stacks; put the second stack in eu-west-1.',
+      concept: 'Disaster recovery: run a copy in another Region (warm standby) and let Route 53 fail over when health checks fail. On failover the DR database is promoted to primary and stays primary; when the primary Region recovers, Route 53 sends users back, so its EC2 must be able to write to the new primary too. Aurora Global Database adds the old cluster back as a copy.',
+      nudge: 'Users → Route 53 → two ALB → EC2 → Aurora stacks; put the second stack in eu-west-1. Link the us-east-1 Aurora → the eu-west-1 Aurora to replicate the data, and link the us-east-1 EC2 to the eu-west-1 Aurora too so it can still write after failover.',
     },
   },
   'cache-it': {

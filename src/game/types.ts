@@ -113,6 +113,8 @@ export const ISSUE_CODES = [
   'alb_target',
   'no_balancer',
   'replica_write',
+  'data_split',
+  'stale_data',
   'queue_no_consumer',
   'down',
   'overloaded',
@@ -130,11 +132,16 @@ export type IssueCode = (typeof ISSUE_CODES)[number];
 
 export type Issue = { code: IssueCode; nodeId?: string; count: number };
 
+/** Replication role of a database: the writable primary, a read-only copy, or an old primary cut off by failover. */
+export type DbRole = 'primary' | 'replica' | 'stale';
+
 export type NodeTick = {
   util: number;
   alive: boolean;
   instances?: number;
   backlog?: number;
+  /** Database role, set only once failover changed it. */
+  dbRole?: DbRole;
 };
 
 export type TickSample = {
@@ -157,6 +164,8 @@ export type SimResult = {
     answered: boolean;
     latency: boolean;
     cost: boolean;
+    /** Every write lands in one dataset. */
+    integrity: boolean;
     requirements: { id: RequirementId; ok: boolean }[];
   };
   passed: boolean;

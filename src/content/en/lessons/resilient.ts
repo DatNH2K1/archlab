@@ -598,7 +598,7 @@ Keywords "real-time", "multiple applications read the same data stream", "replay
       'Amazon S3',
       'Amazon EBS',
     ],
-    minutes: 10,
+    minutes: 13,
     body: `## RPO and RTO
 
 - **RPO (Recovery Point Objective)**: the maximum amount of data you accept losing, measured in time. RPO of 1 hour = you may lose at most 1 hour of data → you must back up/replicate at least every hour.
@@ -636,6 +636,35 @@ Keywords "real-time", "multiple applications read the same data stream", "replay
 - Multiple Regions serve at the same time (Route 53 latency/weighted routing), with data synchronized using **DynamoDB global tables** or **Aurora Global Database** (write forwarding).
 - RTO is nearly 0, cost is highest, and it is the most complex with respect to write conflicts.
 
+## Failover and failback: where the data goes
+
+Moving to the DR Region is only half the job. The other half is **returning to the primary Region (failback)** without losing or diverging data.
+
+### When the primary Region fails (failover)
+
+1. A Route 53 health check fails and **failover routing** sends users to the DR Region.
+2. **Promote** the database in the DR Region to primary:
+   - **RDS cross-Region read replica**: promote it manually (or with a script). The replica **breaks the replication link** and becomes a standalone DB. Writes not yet replicated (replication lag) are lost; that is the RPO.
+   - **Aurora Global Database**: managed failover, RPO about 1 second, RTO under 1 minute.
+3. Point the app in the DR Region at the new writer endpoint and scale the ASG up to full size.
+
+### When the primary Region comes back (failback)
+
+- The old database in the primary Region **does not receive** the writes made in the DR Region during the outage. Sending users back right away makes the app write to stale data, and the two copies diverge (**split-brain**).
+- So failback is a **planned procedure**, not an automatic one:
+  1. Keep traffic in the DR Region, where the new primary is.
+  2. Rebuild replication **in the reverse direction**: for RDS, create a read replica in the primary Region from the DR database; Aurora Global Database adds the old cluster back as a secondary after a managed failover.
+  3. Wait until it catches up (replication lag near 0).
+  4. Switch back in a maintenance window: for RDS, promote the replica in the primary Region; for Aurora, use **switchover** (planned, no data loss).
+  5. Point DNS back, then rebuild the replica in the DR Region for the next incident.
+- Route 53 failover routing **sends traffic back automatically** as soon as the primary Region's health check turns healthy, before the data has caught up. Prevent that: use **Route 53 Application Recovery Controller (ARC)** to turn Regions on and off by hand, or change the DNS record until failback is done.
+
+| Service | Failover | Failback |
+|---|---|---|
+| RDS cross-Region read replica | Promote manually, lose the replication lag | Create a replica in the reverse direction, switch back once it catches up |
+| Aurora Global Database | Managed failover (RPO ~1 second, RTO < 1 minute) | Old cluster rejoins as a secondary; switchover to return without data loss |
+| DynamoDB global tables | No promotion: every Region takes writes | The recovered Region catches up on its own; conflicts resolve as last writer wins |
+
 ## AWS Elastic Disaster Recovery (AWS DRS)
 
 - **Continuously replicates at block level** from on-premises servers, servers in another cloud, or EC2 in another Region into a low-cost **staging area** in AWS (EBS volumes + small replication instances).
@@ -667,6 +696,8 @@ Keywords "real-time", "multiple applications read the same data stream", "replay
       { trigger: 'DR for on-premises servers, RPO seconds, RTO minutes', answer: 'AWS Elastic Disaster Recovery' },
       { trigger: 'quickly rebuild infrastructure in another Region', answer: 'AWS CloudFormation (IaC)' },
       { trigger: 'switch DNS to the DR Region when the primary fails', answer: 'Route 53 failover routing + health check' },
+      { trigger: 'return to the primary Region after an incident without data loss', answer: 'Reverse replication, then a planned switchover' },
+      { trigger: 'turn Regions on and off by hand during failover and failback', answer: 'Route 53 Application Recovery Controller' },
     ],
     traps: [
       'Confusing pilot light (app servers off) with warm standby (app servers running at small scale).',
@@ -674,6 +705,7 @@ Keywords "real-time", "multiple applications read the same data stream", "replay
       'Multi-AZ is not cross-Region DR; it only tolerates an AZ failure.',
       'AMIs and snapshots are Region-scoped resources and must be copied to the DR Region.',
       'AWS MGN is a migration tool, not a continuous DR tool.',
+      'Promoting an RDS read replica breaks replication for good; the old primary comes back missing the writes made during the outage, so do not send traffic back right away.',
     ],
   },
   {

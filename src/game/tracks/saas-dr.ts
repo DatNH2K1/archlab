@@ -31,11 +31,11 @@ const standby = (o: { web: Cfg; db: Cfg; web2: Cfg; db2: Cfg; cache?: Cfg; dns?:
       ...(o.dns === false ? [] : [['dns', 'route53', 260, 300] as const]),
       ['lb', 'alb', 440, 160],
       ['web', 'ec2', 640, 160, o.web],
-      ['db', 'rds', 860, 160, o.db],
+      ['db', 'aurora', 860, 160, o.db],
       ...(cached ? [['cache', 'elasticache', 860, 20, o.cache] as const, ['cache2', 'elasticache', 860, 590, { ...o.cache, region: 'eu-west-1' }] as const] : []),
       ['lb2', 'alb', 440, 440, { region: 'eu-west-1' }],
       ['web2', 'ec2', 640, 440, { ...o.web2, region: 'eu-west-1' }],
-      ['db2', 'rds', 860, 440, { ...o.db2, region: 'eu-west-1' }],
+      ['db2', 'aurora', 860, 440, { ...o.db2, region: 'eu-west-1' }],
     ] as Parameters<typeof makeBoard>[0],
     [
       ...(o.dns === false
@@ -52,6 +52,11 @@ const standby = (o: { web: Cfg; db: Cfg; web2: Cfg; db2: Cfg; cache?: Cfg; dns?:
       ['web', 'db'],
       ['lb2', 'web2'],
       ['web2', 'db2'],
+      // db2 is a cross-Region replica of db: eu-west-1 reads it locally and sends writes to the primary.
+      ['db', 'db2'],
+      ['web2', 'db'],
+      // After failover db is stale and db2 is the new primary for both Regions.
+      ['web', 'db2'],
       ...(cached
         ? ([
             ['web', 'cache'],
@@ -64,9 +69,9 @@ const standby = (o: { web: Cfg; db: Cfg; web2: Cfg; db2: Cfg; cache?: Cfg; dns?:
 
 const warmCfg = {
   web: { size: 'medium', count: 2, az: 'spread' },
-  db: { size: 'medium', multiAz: true },
+  db: { size: 'small' },
   web2: { size: 'medium', count: 1, autoScaling: true, maxCount: 3 },
-  db2: { size: 'medium' },
+  db2: { size: 'small' },
 } satisfies Parameters<typeof standby>[0];
 const warm = standby(warmCfg);
 
@@ -80,9 +85,9 @@ const locked = standby(lockedCfg);
 
 const activeCfg = {
   web: { size: 'medium', count: 2, az: 'spread', autoScaling: true, maxCount: 4 },
-  db: { size: 'medium', multiAz: true, encrypted: true },
+  db: { size: 'small', encrypted: true },
   web2: { size: 'medium', count: 2, autoScaling: true, maxCount: 4 },
-  db2: { size: 'medium', encrypted: true },
+  db2: { size: 'small', encrypted: true },
   cache: { encrypted: true },
 } satisfies Parameters<typeof standby>[0];
 const active = standby(activeCfg);
@@ -171,14 +176,14 @@ export const saasDr: Track = {
         vi: {
           title: 'Kế hoạch DR',
           story: 'Kiểm toán hỏi: nếu cả us-east-1 sập thì sao? Vòng này us-east-1 sẽ chết gần nửa thời gian. Ngân sách $250/tháng, mục tiêu dưới 150 ms.',
-          concept: 'Warm standby: một bản thu nhỏ của hệ thống luôn chạy ở một Region khác (eu-west-1), có database riêng. Route 53 failover dùng health check để chuyển người dùng sang đó, rồi Auto Scaling nâng nó lên đủ tải.',
-          nudge: 'Người dùng → Route 53 → ALB ở cả hai Region. Ở eu-west-1: ALB → 1 EC2 Vừa có Auto Scaling Group (tối đa 3) → RDS Vừa.',
+          concept: 'Warm standby: một bản thu nhỏ của hệ thống luôn chạy ở một Region khác (eu-west-1), có bản sao database qua Aurora Global Database. Route 53 failover dùng health check để chuyển người dùng sang đó, rồi Auto Scaling nâng nó lên đủ tải. Khi failover, database ở Region DR được promote thành bản chính và giữ vai trò đó; Region chính sống lại thì Route 53 đưa người dùng về, nên EC2 ở đó cũng phải ghi được vào bản chính mới. Với RDS, bản cũ bị tách khỏi sao chép và mọi truy vấn phải sang Region kia, nên Aurora, nơi bản cũ tự vào lại làm bản sao đọc tại chỗ, nhanh hơn.',
+          nudge: 'Người dùng → Route 53 → ALB ở cả hai Region. Ở eu-west-1: ALB → 1 EC2 Vừa có Auto Scaling Group (tối đa 3). Thay RDS bằng Aurora Nhỏ ở cả hai Region, nối Aurora us-east-1 → Aurora eu-west-1, và nối EC2 mỗi Region tới cả hai Aurora.',
         },
         en: {
           title: 'A DR plan',
           story: 'The auditor asks: what if all of us-east-1 goes down? This round it is dead for almost half the time. Budget $250/month, target under 150 ms.',
-          concept: 'Warm standby: a scaled-down copy of the system always runs in another Region (eu-west-1) with its own database. Route 53 failover uses health checks to move users there, then Auto Scaling grows it to full size.',
-          nudge: 'Users → Route 53 → an ALB in each Region. In eu-west-1: ALB → 1 Medium EC2 with Auto Scaling Group (max 3) → Medium RDS.',
+          concept: 'Warm standby: a scaled-down copy of the system always runs in another Region (eu-west-1) with a database copy through Aurora Global Database. Route 53 failover uses health checks to move users there, then Auto Scaling grows it to full size. On failover the DR database is promoted to primary and stays primary; when the primary Region recovers, Route 53 sends users back, so its EC2 must be able to write to the new primary too. With RDS the old copy leaves replication and every query has to cross Regions, so Aurora, whose old cluster rejoins as a local reader, is faster.',
+          nudge: 'Users → Route 53 → an ALB in each Region. In eu-west-1: ALB → 1 Medium EC2 with Auto Scaling Group (max 3). Replace RDS with a Small Aurora in both Regions, link the us-east-1 Aurora → the eu-west-1 Aurora, and link the EC2 in each Region to both Auroras.',
         },
       },
       scenario: { traffic: 350, mix: { read: 0.8, write: 0.2 }, audience: { 'us-east-1': 1 }, twist: 'regionOutage', outageRegion: 'us-east-1', latencyTarget: 150, budget: 250, requirements: [] },
@@ -194,13 +199,13 @@ export const saasDr: Track = {
           title: 'Kiểm tra tuân thủ',
           story: 'Một ngân hàng muốn ký hợp đồng nhưng yêu cầu: mọi dữ liệu phải mã hoá khi lưu trữ, database không lộ ra ngoài, không máy chủ nào nhận yêu cầu trực tiếp từ Internet. us-east-1 vẫn có thể sập.',
           concept: 'Mã hoá khi lưu trữ bằng KMS phải bật ở mọi nơi chứa dữ liệu, kể cả bản ở eu-west-1. Database chỉ được nối từ tầng ứng dụng, EC2 nằm sau ALB trong subnet riêng.',
-          nudge: 'Bật "Mã hoá khi lưu trữ (KMS)" cho RDS ở cả hai Region.',
+          nudge: 'Bật "Mã hoá khi lưu trữ (KMS)" cho Aurora ở cả hai Region.',
         },
         en: {
           title: 'Compliance audit',
           story: 'A bank wants to sign, with conditions: all data encrypted at rest, no exposed database, no server taking requests straight from the internet. us-east-1 can still go down.',
           concept: 'KMS encryption at rest must cover every data store, including the copy in eu-west-1. Databases are reachable only from the app tier, and EC2 sits behind the ALB in private subnets.',
-          nudge: 'Turn on "Encryption at rest (KMS)" for RDS in both Regions.',
+          nudge: 'Turn on "Encryption at rest (KMS)" for Aurora in both Regions.',
         },
       },
       scenario: { traffic: 350, mix: { read: 0.8, write: 0.2 }, audience: { 'us-east-1': 1 }, twist: 'regionOutage', outageRegion: 'us-east-1', latencyTarget: 150, budget: 250, requirements: [...compliance] },
@@ -216,13 +221,13 @@ export const saasDr: Track = {
           title: 'Khách hàng châu Âu',
           story: 'Lưu lượng lên 1.000 yêu cầu/giây, 40% đến từ châu Âu và mục tiêu siết còn 120 ms. Route 53 đưa họ về eu-west-1 vì gần hơn, nên bản thu nhỏ ở đó quá tải ngay cả khi không có sự cố.',
           concept: 'Từ warm standby sang active-active: latency routing của Route 53 phục vụ mỗi người dùng từ Region gần nhất, nên cả hai Region đều phải đủ sức. ElastiCache (có mã hoá) ở mỗi Region giảm tải đọc cho database.',
-          nudge: 'Cho cả hai Region 2 EC2 Vừa có Auto Scaling Group (tối đa 4), và thêm ElastiCache có mã hoá cạnh mỗi RDS.',
+          nudge: 'Cho cả hai Region 2 EC2 Vừa có Auto Scaling Group (tối đa 4), và thêm ElastiCache có mã hoá cạnh mỗi Aurora.',
         },
         en: {
           title: 'European customers',
           story: 'Traffic grows to 1,000 requests/s, 40% from Europe, and the target tightens to 120 ms. Route 53 sends them to eu-west-1, which is closer, so the scaled-down copy is overloaded even without an outage.',
           concept: 'From warm standby to active-active: Route 53 latency routing serves each user from the nearest Region, so both Regions need real capacity. An encrypted ElastiCache in each Region takes reads off the database.',
-          nudge: 'Give both Regions 2 Medium EC2 with Auto Scaling Group (max 4), and add an encrypted ElastiCache next to each RDS.',
+          nudge: 'Give both Regions 2 Medium EC2 with Auto Scaling Group (max 4), and add an encrypted ElastiCache next to each Aurora.',
         },
       },
       scenario: { traffic: 1000, mix: { read: 0.85, write: 0.15 }, audience: { 'us-east-1': 0.6, 'eu-west-1': 0.4 }, twist: 'regionOutage', outageRegion: 'us-east-1', latencyTarget: 120, budget: 330, requirements: [...compliance] },
