@@ -27,6 +27,14 @@ export const resilientLessons: Lesson[] = [
 - **Wavelength**: hạ tầng AWS đặt trong mạng 5G của nhà mạng, dùng cho ứng dụng mobile/edge siêu thấp độ trễ.
 - **Outposts**: rack phần cứng AWS đặt tại data center của bạn, cho workload phải ở on-premises (độ trễ tới hệ thống cũ, data residency) nhưng muốn dùng cùng API AWS.
 
+~~~groups
+# Hạ tầng AWS từ Region ra tới sát người dùng
+Region: AZ a, AZ b, *AZ c (tối thiểu 3 AZ)
+Gần thành phố: Local Zones
+Trong mạng 5G: Wavelength
+Tại data center của bạn: Outposts
+~~~
+
 ## Single point of failure (SPOF)
 
 Đề thi hay mô tả "một EC2 instance chạy web + database" rồi hỏi cách tăng availability. Cách nghĩ:
@@ -35,6 +43,14 @@ export const resilientLessons: Lesson[] = [
 - Database tự quản trên EC2 là SPOF. Giải pháp: chuyển sang **RDS Multi-AZ** hoặc **Aurora**.
 - NAT Gateway là tài nguyên theo AZ: để HA, đặt **một NAT Gateway mỗi AZ** và route table của từng AZ trỏ vào NAT cùng AZ.
 - Ổ đĩa EBS chỉ nằm trong 1 AZ. Cần file system dùng chung nhiều AZ thì dùng **EFS** (Regional, dữ liệu lưu dư thừa nhiều AZ).
+
+~~~groups
+# Kiến trúc web 2 AZ không còn SPOF
+[Region ap-southeast-1]
+AZ a: ALB node, EC2 (ASG), NAT Gateway, *RDS primary
+AZ b: ALB node, EC2 (ASG), NAT Gateway, *RDS standby
+Regional: S3, DynamoDB, EFS, SQS
+~~~
 
 ## Multi-AZ cho từng dịch vụ
 
@@ -48,16 +64,35 @@ export const resilientLessons: Lesson[] = [
 | DynamoDB, S3, SQS, Lambda | Regional, tự Multi-AZ | Không cần cấu hình thêm |
 | ElastiCache Redis/Valkey | Replication group Multi-AZ + automatic failover | Memcached không có replication |
 
+~~~ladder
+# Thời gian gián đoạn khi database gặp sự cố
+RDS Single-AZ | Không có standby, phải recover hoặc restore | Downtime dài
+RDS Multi-AZ instance | 1 standby không đọc được, failover qua DNS | 1–2 phút
+RDS Multi-AZ DB cluster | 2 reader standby đọc được ở 3 AZ | < 35 giây
+~~~
+
 ### RDS: Multi-AZ khác Read Replica
 
 - **Multi-AZ** = high availability, replication **đồng bộ**, một endpoint, tự động failover.
 - **Read Replica** = scale đọc, replication **bất đồng bộ**, endpoint riêng, có thể cross-Region, có thể promote thủ công thành DB độc lập.
 - Câu hỏi nói "giảm tải đọc cho báo cáo" → Read Replica. Câu hỏi nói "tự động failover khi AZ lỗi" → Multi-AZ.
 
+~~~flow
+# Multi-AZ: đồng bộ, để failover. Read Replica: bất đồng bộ, để đọc
+App -> RDS primary -[sync]-> Standby (AZ khác, không đọc được)
+RDS primary -[async]-> Read Replica (endpoint riêng, đọc được)
+~~~
+
 ## Scale dọc và scale ngang
 
 - **Vertical scaling (scale up)**: đổi instance type lớn hơn. Đơn giản nhưng có giới hạn và thường cần downtime; vẫn là SPOF.
 - **Horizontal scaling (scale out)**: thêm instance. Đi kèm ELB + ASG, chịu lỗi tốt, là đáp án mặc định cho "elastic", "unpredictable traffic".
+
+~~~groups
+# Scale up vẫn là một máy, scale out mới chịu lỗi
+Scale up: Một instance lớn hơn, Có giới hạn và cần downtime, *Vẫn là SPOF
+Scale out: Thêm instance ở nhiều AZ, ELB + ASG, *Mất một instance vẫn chạy
+~~~
 
 ## Ứng dụng stateless và session
 
@@ -66,6 +101,12 @@ export const resilientLessons: Lesson[] = [
 - Lưu **session** ra ngoài instance: **ElastiCache** (Redis/Valkey, độ trễ sub-millisecond) hoặc **DynamoDB** (serverless, có TTL để tự xoá session hết hạn).
 - File người dùng upload lưu vào **S3** hoặc **EFS**, không lưu trên EBS của từng instance.
 - Sticky session trên ALB là giải pháp tạm: làm phân bổ tải lệch và mất session khi instance chết. Đề hỏi giải pháp bền vững thì chọn lưu session ra ngoài.
+
+~~~flow
+# State nằm ngoài instance nên ASG terminate máy nào cũng được
+Users -> ALB -> EC2 bất kỳ (ASG) -[session]-> ElastiCache hoặc DynamoDB
+EC2 bất kỳ -[file upload]-> S3 hoặc EFS
+~~~
 
 ## Elastic IP
 
@@ -138,10 +179,23 @@ Quy tắc chọn nhanh:
 - **Weighted target groups**: chia % traffic giữa hai target group, dùng cho blue/green hoặc canary.
 - Redirect HTTP → HTTPS làm ngay trên listener của ALB.
 
+~~~flow
+# Một ALB phục vụ nhiều microservice qua listener rule
+Users -[HTTPS:443]-> ALB -[/api/*]-> Target group API (EC2)
+ALB -[host img.example.com]-> Target group ảnh (ECS)
+ALB -[/report/*]-> Lambda (target type lambda)
+~~~
+
 ## Health check
 
 - ELB chỉ gửi traffic tới target **healthy**. Cấu hình path (ví dụ /health), interval, healthy/unhealthy threshold.
 - Khi ASG dùng **ELB health check**, instance bị ELB đánh dấu unhealthy sẽ bị ASG thay thế (xem bài Auto Scaling).
+
+~~~flow
+# Health check fail: ELB ngừng gửi traffic, ASG thay instance
+ELB -[GET /health mỗi interval]-> Target -[fail đủ unhealthy threshold]-> Unhealthy (ngừng nhận traffic)
+Unhealthy -[ASG bật ELB health check]-> ASG launch instance thay thế
+~~~
 
 ## Cross-zone load balancing
 
@@ -149,6 +203,13 @@ Quy tắc chọn nhanh:
 - **ALB**: bật mặc định, không tính phí data inter-AZ.
 - **NLB và GWLB**: tắt mặc định; bật thì có phí data transfer giữa các AZ.
 - Đề hỏi "số instance mỗi AZ không đều, tải bị lệch" → bật cross-zone load balancing.
+
+~~~groups
+# Cross-zone tắt: mỗi LB node nhận 50% rồi chỉ chia trong AZ của nó
+AZ a có 2 EC2: mỗi EC2 nhận 25%
+AZ b có 8 EC2: mỗi EC2 nhận 6.25%
+Cross-zone bật: *mỗi EC2 trong 10 EC2 nhận 10%
+~~~
 
 ## Sticky sessions (session affinity)
 
@@ -161,17 +222,34 @@ Quy tắc chọn nhanh:
 - Trên CLB tên gọi là **connection draining**.
 - Request ngắn → giảm giá trị để scale in nhanh hơn.
 
+~~~flow
+# Deregistration delay: request đang chạy được làm xong trước khi gỡ
+Scale in hoặc deploy -> Target draining (không nhận request mới) -[tối đa 300 giây mặc định]-> Request cũ hoàn tất -> Gỡ khỏi target group
+~~~
+
 ## SSL/TLS offload, ACM và SNI
 
 - Gắn certificate từ **AWS Certificate Manager (ACM)** lên listener HTTPS (ALB) hoặc TLS (NLB) → LB giải mã, giảm tải CPU cho backend. ACM tự động gia hạn certificate public.
 - **SNI (Server Name Indication)**: một listener gắn nhiều certificate, LB chọn certificate theo hostname client yêu cầu → host nhiều domain trên **một** ALB/NLB. CLB không hỗ trợ SNI.
 - Cần mã hoá end-to-end tới tận instance: dùng HTTPS từ LB tới target, hoặc NLB TCP passthrough (không terminate TLS).
 
+~~~flow
+# Terminate TLS tại LB hay giữ mã hoá tới tận instance
+Client -[HTTPS, SNI a.com]-> ALB (certificate ACM a.com và b.com) -[HTTP]-> EC2
+Client -[TLS]-> NLB (TCP passthrough) -[TLS nguyên vẹn]-> EC2 (tự giải mã)
+~~~
+
 ## IP tĩnh và whitelist
 
 - ALB không có IP tĩnh. Khách hàng yêu cầu whitelist IP cố định:
   - **NLB** với Elastic IP mỗi AZ, có thể đặt ALB làm target của NLB để vừa có IP tĩnh vừa có routing layer 7.
   - Hoặc **Global Accelerator** (2 anycast IP tĩnh) phía trước ALB.
+
+~~~flow
+# IP tĩnh để whitelist mà vẫn giữ routing layer 7
+Đối tác -[Elastic IP mỗi AZ]-> NLB -> ALB -> EC2
+Đối tác -[2 anycast IP tĩnh]-> Global Accelerator -> ALB -> EC2
+~~~
 
 ## ALB với Lambda
 
@@ -217,6 +295,14 @@ Quy tắc chọn nhanh:
 - **Subnets ở nhiều AZ**: ASG cân bằng instance giữa các AZ; khi một AZ lỗi, ASG launch instance thay thế ở AZ còn lại.
 - **Mixed instances policy**: kết hợp On-Demand base + Spot, nhiều instance type để tăng khả năng có Spot capacity.
 
+~~~groups
+# ASG trải 2 AZ, luôn giữ desired trong khoảng min–max
+[Auto Scaling group (launch template)]
+AZ a: EC2, EC2
+AZ b: EC2, EC2
+Capacity: min 2, *desired 4, max 8
+~~~
+
 ## Các loại scaling policy
 
 | Loại | Cách hoạt động | Khi nào chọn |
@@ -228,6 +314,14 @@ Quy tắc chọn nhanh:
 | Predictive scaling | Dùng ML phân tích lịch sử để dự báo và launch trước | Tải có chu kỳ lặp lại hằng ngày/tuần, cần capacity sẵn trước khi tải đến |
 
 Có thể kết hợp nhiều policy; khi xung đột, ASG chọn kết quả cho **capacity lớn nhất**.
+
+~~~decide
+# Đề mô tả tải thế nào → chọn policy nào
+Giữ CPU trung bình quanh 50% => Target tracking
+Tải tăng vào giờ biết trước (9h sáng thứ Hai) => Scheduled scaling
+Tải lặp lại theo ngày/tuần, cần capacity sẵn trước => Predictive scaling
+Vượt ngưỡng càng xa càng thêm nhiều instance => Step scaling
+~~~
 
 ## Cooldown và instance warm-up
 
@@ -241,16 +335,37 @@ Có thể kết hợp nhiều policy; khi xung đột, ASG chọn kết quả ch
 - Bật **ELB health check** trên ASG: instance vẫn "running" nhưng ứng dụng trả lỗi (health check HTTP fail) sẽ bị ASG **terminate và thay thế**.
 - Câu hỏi kiểu "app treo nhưng instance vẫn chạy, ASG không thay thế" → bật ELB health check cho ASG.
 
+~~~decide
+# Instance có vấn đề → ASG phát hiện bằng cách nào
+Lỗi phần cứng hoặc hệ điều hành => EC2 status check (mặc định)
+App trả lỗi HTTP nhưng instance vẫn running => Bật ELB health check cho ASG
+Instance mới bị thay trước khi app kịp khởi động => Tăng health check grace period
+~~~
+
 ## Lifecycle hooks
 
 - Tạm dừng instance ở trạng thái **Pending:Wait** (khi launch) hoặc **Terminating:Wait** (khi terminate).
 - Dùng để: cài đặt/cấu hình trước khi nhận traffic, hoặc **lấy log/flush dữ liệu** trước khi instance bị xoá.
 - Kết hợp EventBridge hoặc SNS/SQS để kích hoạt Lambda/script; gọi complete-lifecycle-action khi xong. Timeout mặc định 1 giờ.
 
+~~~flow
+# Lifecycle hook giữ instance lại để làm việc trước khi đổi trạng thái
+Scale out -> Pending:Wait -[cài đặt, cấu hình]-> InService
+Scale in -> Terminating:Wait -[lấy log, flush dữ liệu]-> Terminated
+Terminating:Wait -> EventBridge -> Lambda -[complete-lifecycle-action]-> ASG
+~~~
+
 ## Warm pools
 
 - Giữ sẵn một nhóm instance đã khởi tạo ở trạng thái **Stopped**, **Running** hoặc **Hibernated**.
 - Giảm độ trễ scale out với ứng dụng khởi động lâu (ví dụ cần vài phút load dữ liệu). Instance Stopped chỉ trả phí EBS.
+
+~~~ladder
+# Trạng thái instance trong warm pool: nhanh hơn → rẻ hơn
+Running | Đã chạy sẵn, vào InService gần như ngay | Phí EC2
+Hibernated | RAM lưu trên EBS, khởi động lại nhanh | Phí EBS
+Stopped | App đã cài, phải boot lại OS | Phí EBS
+~~~
 
 ## Termination policy
 
@@ -266,6 +381,12 @@ Với worker xử lý hàng đợi SQS, metric CPU không phản ánh đúng t�
 1. Tính **backlog per instance** = ApproximateNumberOfMessagesVisible / số instance InService.
 2. Xác định giá trị chấp nhận được = độ trễ chấp nhận được / thời gian xử lý trung bình một message (ví dụ 10 giây / 0.1 giây = 100 message/instance).
 3. Publish custom metric lên CloudWatch và dùng **target tracking** với mục tiêu đó.
+
+~~~flow
+# Scale SQS worker theo backlog per instance thay vì CPU
+SQS -[ApproximateNumberOfMessagesVisible]-> Backlog per instance (chia số instance InService)
+Backlog per instance -[PutMetricData]-> CloudWatch -[target tracking 100]-> ASG worker
+~~~
 
 ## Lưu ý thi
 
@@ -303,6 +424,11 @@ Với worker xử lý hàng đợi SQS, metric CPU không phản ánh đúng t�
 
 Khi web tier gọi trực tiếp backend xử lý chậm, một đợt tăng tải có thể làm sập cả hệ thống. Đặt một hàng đợi ở giữa giúp: hấp thụ spike, retry khi lỗi, scale producer và consumer độc lập. Từ khoá đề thi: "decouple", "loosely coupled", "đơn hàng không được mất khi backend lỗi".
 
+~~~flow
+# Hàng đợi ở giữa hấp thụ spike, hai phía scale độc lập
+Users -> ALB -> Web tier (EC2) -> SQS -> Worker (ASG)
+~~~
+
 ## Amazon SQS
 
 | Thuộc tính | Standard | FIFO |
@@ -321,6 +447,14 @@ Các thông số hay gặp:
 - **Kích thước message**: giới hạn kinh điển trong đề là 256 KB (AWS đã nâng lên 1 MiB từ 2025). Payload lớn hơn → **SQS Extended Client Library** lưu payload ở **S3**, message chỉ chứa con trỏ.
 - Bảo mật: SSE với SQS-managed key hoặc KMS, queue access policy, VPC endpoint.
 
+~~~flow
+# Vòng đời một message SQS
+Producer -> SQS -[ReceiveMessage]-> Consumer (ẩn trong visibility timeout)
+Consumer -[xử lý xong]-> DeleteMessage
+Consumer -[hết timeout chưa xoá]-> Message hiện lại (xử lý lần nữa)
+SQS -[quá maxReceiveCount]-> DLQ (redrive về queue gốc)
+~~~
+
 ## Amazon SNS
 
 - Pub/sub: một **topic**, nhiều subscriber (SQS, Lambda, HTTP/S, email, SMS, mobile push, Firehose).
@@ -329,6 +463,13 @@ Các thông số hay gặp:
 - **SNS FIFO topic** kết hợp SQS FIFO khi cần fan-out có thứ tự và dedup.
 - SNS không lưu message lâu dài: subscriber offline có thể mất message, nên đặt SQS phía sau để bền vững.
 
+~~~flow
+# Fan-out: một đơn hàng, ba hệ thống xử lý độc lập
+Order service -> SNS -> SQS kho -> Worker kho (EC2)
+SNS -> SQS thanh toán -> Lambda
+SNS -[filter policy country = VN]-> SQS analytics VN
+~~~
+
 ## Amazon EventBridge
 
 - Event bus serverless: **default bus** (sự kiện từ dịch vụ AWS), **custom bus** (ứng dụng của bạn), **partner bus** (SaaS như Zendesk, Datadog).
@@ -336,6 +477,13 @@ Các thông số hay gặp:
 - **EventBridge Scheduler**: lập lịch (cron/rate/one-time) gọi hàng nghìn loại target, thay cho cron trên EC2.
 - **EventBridge Pipes**: nối point-to-point từ source (SQS, Kinesis, DynamoDB Streams...) tới target, có filter và enrichment, giảm code glue.
 - Chọn EventBridge khi: phản ứng với sự kiện AWS (ví dụ EC2 state change), tích hợp SaaS, định tuyến nhiều rule phức tạp. Chọn SNS khi cần fan-out đơn giản, throughput cao, push tới SMS/email/mobile.
+
+~~~flow
+# EventBridge: rule lọc sự kiện rồi gửi tới target
+EC2 state change -> Default bus -[rule theo event pattern]-> Lambda
+Zendesk -> Partner bus -[rule]-> Step Functions
+EventBridge Scheduler -[cron]-> Lambda
+~~~
 
 ## Kinesis Data Streams và SQS
 
@@ -349,11 +497,24 @@ Các thông số hay gặp:
 
 Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu", "replay" → Kinesis. Muốn đẩy stream vào S3/Redshift/OpenSearch không cần code → **Amazon Data Firehose** (near real-time).
 
+~~~flow
+# Kinesis: nhiều consumer đọc cùng một luồng, replay trong retention
+Clickstream -[partition key]-> Kinesis Data Streams -> Lambda (analytics real-time)
+Kinesis Data Streams -> Ứng dụng thứ hai (đọc cùng dữ liệu, replay được)
+Kinesis Data Streams -> Data Firehose -> S3 hoặc Redshift
+~~~
+
 ## Amazon MQ
 
 - Managed message broker cho **Apache ActiveMQ** và **RabbitMQ**, hỗ trợ giao thức chuẩn: **AMQP, MQTT, STOMP, OpenWire, JMS**.
 - Chọn khi **migrate ứng dụng có sẵn** đang dùng broker on-premises và không muốn sửa code sang API SQS/SNS.
 - HA: active/standby broker trên 2 AZ (ActiveMQ) hoặc cluster 3 node (RabbitMQ). Không scale "vô hạn" như SQS/SNS.
+
+~~~groups
+# Amazon MQ chịu lỗi AZ bằng nhiều broker, không tự scale như SQS
+ActiveMQ active/standby: *Active broker ở AZ a, Standby broker ở AZ b
+RabbitMQ cluster: Node AZ a, Node AZ b, Node AZ c
+~~~
 
 ## Chọn nhanh
 
@@ -414,14 +575,33 @@ Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu",
 - **SnapStart** (Java, Python, .NET): giảm cold start bằng snapshot.
 - Lambda kết nối RDS với nhiều kết nối đồng thời → dùng **RDS Proxy** để gom kết nối.
 
+~~~groups
+# Reserved giới hạn, provisioned làm nóng sẵn
+Reserved concurrency: Trần concurrency cho một function, Bảo vệ downstream, *Không xoá cold start
+Provisioned concurrency: Execution environment khởi tạo sẵn, *Loại bỏ cold start, Có phí
+~~~
+
 ### Lambda trong VPC
 
 - Gắn Lambda vào subnet private để truy cập RDS, ElastiCache trong VPC (Lambda dùng Hyperplane ENI).
 - Lambda trong VPC **không có Internet** trừ khi route qua **NAT Gateway**; truy cập S3/DynamoDB nên dùng **VPC endpoint**.
 
+~~~flow
+# Lambda trong private subnet ra ngoài bằng đường nào
+Lambda (private subnet) -> NAT Gateway (public subnet) -> Internet
+Lambda (private subnet) -[VPC endpoint]-> S3 hoặc DynamoDB
+~~~
+
 ### Gọi Lambda và xử lý lỗi
 
 - Đồng bộ (API Gateway, ALB), bất đồng bộ (S3, SNS, EventBridge: tự retry 2 lần, có thể cấu hình **destination** hoặc DLQ), và **event source mapping** (SQS, Kinesis, DynamoDB Streams: Lambda poll).
+
+~~~flow
+# Ba cách gọi Lambda
+API Gateway -[đồng bộ, chờ kết quả]-> Lambda
+S3 event -[bất đồng bộ, retry 2 lần]-> Lambda -[vẫn lỗi]-> Destination hoặc DLQ
+SQS -[event source mapping, Lambda poll]-> Lambda
+~~~
 
 ## Lambda@Edge và CloudFront Functions
 
@@ -432,6 +612,12 @@ Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu",
 | Thời gian chạy | Dưới 1 ms | Tới 5 giây (viewer), 30 giây (origin) |
 | Truy cập mạng/body | Không | Có |
 | Use case | Rewrite URL, header, redirect, kiểm tra token đơn giản, quy mô cực lớn, rẻ | Logic phức tạp, gọi dịch vụ bên ngoài, xử lý body |
+
+~~~groups
+# Chèn code ở đâu quanh CloudFront
+Viewer request/response: CloudFront Functions, Lambda@Edge
+Origin request/response: *Chỉ Lambda@Edge
+~~~
 
 ## Amazon API Gateway
 
@@ -449,6 +635,11 @@ Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu",
 - Authorizer: IAM, Cognito user pool, Lambda authorizer.
 - Đặt **SQS** phía sau API Gateway (service integration) để hấp thụ spike ghi.
 
+~~~flow
+# API Gateway ghi thẳng vào SQS để hấp thụ spike ghi
+Users -> API Gateway -[service integration]-> SQS -> Lambda -> DynamoDB
+~~~
+
 ## AWS Step Functions
 
 - Orchestrate nhiều bước (Lambda, ECS, Glue, SageMaker, gọi trực tiếp hơn 200 dịch vụ AWS qua SDK integration) bằng state machine: retry, catch, parallel, map, wait, choice.
@@ -460,6 +651,13 @@ Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu",
 | Semantics | Exactly-once | At-least-once (async) / at-most-once (sync) |
 | Giá | Theo state transition | Theo số execution + thời gian + memory |
 | Use case | Workflow dài, cần audit lịch sử, phê duyệt | Event processing khối lượng lớn, IoT, streaming |
+
+~~~decide
+# Workflow kiểu gì → Standard hay Express
+Chạy nhiều ngày, cần phê duyệt thủ công => Standard
+Cần lịch sử thực thi để audit, exactly-once => Standard
+Hàng nghìn sự kiện mỗi giây, mỗi workflow vài giây => Express
+~~~
 
 ## AWS AppSync
 
@@ -515,6 +713,12 @@ Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu",
 - Alias **không** trỏ được tới DNS name của EC2 instance.
 - Đề hỏi "trỏ example.com tới ALB" → Alias A record.
 
+~~~flow
+# Alias dùng được ở zone apex, CNAME chỉ cho subdomain
+example.com -[Alias A]-> ALB (truy vấn miễn phí)
+www.example.com -[CNAME]-> app.other-host.com (không dùng ở apex)
+~~~
+
 ## Routing policies
 
 | Policy | Hành vi | Use case |
@@ -530,6 +734,15 @@ Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu",
 
 - Geolocation dựa trên **vị trí** (luật, ngôn ngữ), Latency dựa trên **độ trễ đo được**. Đề nói "người dùng ở Đức phải được phục vụ từ eu-central-1 vì quy định" → Geolocation.
 
+~~~decide
+# Đề nói gì → chọn routing policy nào
+Chuyển 10% traffic sang phiên bản mới => Weighted
+Đưa người dùng tới Region nhanh nhất => Latency
+Quy định pháp lý hoặc ngôn ngữ theo quốc gia => Geolocation
+Primary lỗi thì sang site dự phòng => Failover + health check
+Dịch dần traffic giữa các vùng bằng bias => Geoproximity
+~~~
+
 ## Health checks
 
 - Ba loại: **endpoint** (HTTP/HTTPS/TCP tới IP hoặc domain), **calculated** (kết hợp nhiều health check con với AND/OR/ngưỡng), **CloudWatch alarm** based.
@@ -538,11 +751,25 @@ Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu",
 - Với Alias trỏ tới ELB, bật **Evaluate Target Health** thay vì tạo health check riêng.
 - Có thể gửi thông báo qua CloudWatch alarm + SNS.
 
+~~~flow
+# Failover routing: health check quyết định trả record nào
+Users -> Route 53 -[primary healthy]-> ALB (ap-southeast-1)
+Route 53 -[primary unhealthy]-> ALB (us-east-1 secondary)
+EC2 private -> CloudWatch alarm -> Health check (theo alarm)
+~~~
+
 ## TTL
 
 - TTL cao: ít truy vấn DNS hơn (rẻ hơn), nhưng thay đổi lan truyền chậm.
 - TTL thấp: chuyển đổi nhanh khi migrate/failover, nhiều truy vấn hơn.
 - Mẹo migrate: giảm TTL vài ngày trước khi đổi record, sau đó tăng lại.
+
+~~~ladder
+# TTL thấp đổi nhanh, TTL cao rẻ hơn
+60 giây | Failover và migrate lan nhanh | Nhiều truy vấn
+300 giây | Cân bằng giữa tốc độ đổi và chi phí | Vừa phải
+1 ngày | Thay đổi lan rất chậm | Ít truy vấn
+~~~
 
 ## Hosted zones và hybrid DNS
 
@@ -553,6 +780,12 @@ Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu",
   - Rule có thể chia sẻ giữa nhiều tài khoản bằng **AWS RAM**.
 - **Route 53 Resolver DNS Firewall**: chặn truy vấn tới domain độc hại từ VPC.
 
+~~~flow
+# Hybrid DNS qua Route 53 Resolver
+DNS on-premises -[hỏi tên trong AWS]-> Inbound endpoint -> Private hosted zone
+EC2 trong VPC -> Route 53 Resolver -[forwarding rule corp.local]-> Outbound endpoint -> DNS on-premises
+~~~
+
 ## Route 53 hay Global Accelerator
 
 | | Route 53 | Global Accelerator |
@@ -561,6 +794,12 @@ Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu",
 | Failover | Theo TTL, có thể chậm do client cache | Nhanh (dưới 1 phút), không phụ thuộc DNS cache |
 | Giao thức | Mọi thứ dùng DNS | TCP, UDP (game, VoIP, IoT) |
 | IP tĩnh | Không | Có |
+
+~~~flow
+# DNS failover chờ TTL, Global Accelerator đổi đường ngay tại edge
+Users -[phân giải DNS, client cache theo TTL]-> Route 53 -> ALB (Region A)
+Users -[2 anycast IP tĩnh]-> Edge location gần nhất -[backbone AWS]-> ALB (Region A, lỗi thì sang Region B)
+~~~
 
 - Global Accelerator khác CloudFront: CloudFront **cache** nội dung HTTP tại edge; Global Accelerator **không cache**, chỉ tăng tốc đường mạng và cung cấp IP tĩnh cho TCP/UDP.
 `,
@@ -605,6 +844,11 @@ Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu",
 - **RTO (Recovery Time Objective)**: thời gian tối đa từ lúc sự cố tới khi hệ thống chạy lại.
 - RPO/RTO càng nhỏ → chi phí càng cao. Đề thi thường cho con số RPO/RTO + "MOST cost-effective" và bạn chọn chiến lược **rẻ nhất vẫn đạt yêu cầu**.
 
+~~~flow
+# RPO đo ngược về backup cuối, RTO đo tới lúc chạy lại
+Backup hoặc bản sao cuối cùng -[RPO: dữ liệu mất]-> Sự cố -[RTO: thời gian ngừng]-> Hệ thống chạy lại
+~~~
+
 ## Bốn chiến lược DR
 
 | Chiến lược | Ở Region DR có gì | RPO / RTO điển hình | Chi phí |
@@ -613,6 +857,14 @@ Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu",
 | Pilot light | Dữ liệu được replicate liên tục (DB replica), core infra tối thiểu; app server **tắt** hoặc chưa tạo | Phút / hàng chục phút | Thấp |
 | Warm standby | Bản thu nhỏ của toàn bộ hệ thống **đang chạy** | Giây–phút / phút | Trung bình |
 | Multi-site active/active | Hệ thống đầy đủ chạy và nhận traffic ở nhiều Region | Gần 0 / gần 0 | Cao nhất |
+
+~~~ladder
+# Bốn chiến lược DR: rẻ, chậm → đắt, gần như tức thì
+Backup & restore | Chỉ có backup, dựng lại bằng IaC khi sự cố | RTO giờ
+Pilot light | DB replicate liên tục, app server tắt | RTO 10+ phút
+Warm standby | Toàn bộ stack chạy ở quy mô nhỏ | RTO phút
+Multi-site active/active | Nhiều Region cùng nhận traffic | RTO ~0
+~~~
 
 ### Backup & restore
 
@@ -624,6 +876,14 @@ Từ khoá "real-time", "nhiều ứng dụng đọc cùng luồng dữ liệu",
 
 - Giống "đốm lửa mồi": phần lõi (database) luôn được replicate, ví dụ **RDS cross-Region read replica** hoặc **Aurora Global Database**.
 - App tier chỉ có AMI và launch template sẵn; khi sự cố thì khởi chạy, scale lên, promote database, đổi DNS.
+
+~~~groups
+# Pilot light: chỉ phần dữ liệu luôn chạy ở Region DR
+[Region DR]
+Luôn chạy: *DB replica (replicate liên tục)
+Có sẵn nhưng tắt: AMI, Launch template, ASG desired 0
+Khi sự cố: Khởi chạy app, Promote DB, Đổi DNS
+~~~
 
 ### Warm standby
 
@@ -648,6 +908,12 @@ Chuyển sang Region DR mới là nửa đầu. Nửa sau là **quay về Region
    - **Aurora Global Database**: managed failover, RPO khoảng 1 giây, RTO dưới 1 phút.
 3. Trỏ app ở Region DR vào endpoint ghi mới và scale ASG lên đủ tải.
 
+~~~flow
+# Failover: chuyển traffic và promote database ở Region DR
+Health check lỗi -> Route 53 failover -> ALB (Region DR) -> EC2 (ASG scale lên)
+Read Replica (Region DR) -[promote]-> DB ghi mới (mất phần replication lag)
+~~~
+
 ### Khi Region chính sống lại (failback)
 
 - DB cũ ở Region chính **không tự nhận lại** những gì đã ghi ở Region DR trong lúc sập. Cho người dùng quay về ngay thì app ghi vào dữ liệu cũ, hai bản lệch nhau (**split-brain**).
@@ -658,6 +924,12 @@ Chuyển sang Region DR mới là nửa đầu. Nửa sau là **quay về Region
   4. Chuyển về trong khung bảo trì: RDS promote lại replica ở Region chính; Aurora dùng **switchover** (có kế hoạch, không mất dữ liệu).
   5. Đổi DNS về, rồi dựng lại replica sang Region DR cho lần sự cố sau.
 - Route 53 failover routing **tự chuyển traffic về** ngay khi health check của Region chính xanh lại, trước khi dữ liệu kịp đồng bộ. Cần chặn bước này: dùng **Route 53 Application Recovery Controller (ARC)** để bật/tắt Region bằng tay, hoặc tạm sửa bản ghi DNS cho tới khi failback xong.
+
+~~~flow
+# Failback có kế hoạch để tránh split-brain
+DB ở Region DR (bản chính) -[replica ngược chiều]-> DB ở Region chính
+Chờ lag gần 0 -> Promote hoặc switchover -> Đổi DNS về -> Dựng lại replica sang Region DR
+~~~
 
 | Dịch vụ | Failover | Failback |
 |---|---|---|
@@ -672,6 +944,12 @@ Chuyển sang Region DR mới là nửa đầu. Nửa sau là **quay về Region
 - Hỗ trợ **drill** (khởi chạy thử không ảnh hưởng replication) và **failback** về nguồn.
 - Từ khoá: "server on-premises", "giảm chi phí DR site", "RPO giây, RTO phút" → AWS Elastic Disaster Recovery. Thay thế CloudEndure Disaster Recovery.
 - Khác **AWS Application Migration Service (MGN)**: MGN dùng cho migrate (lift-and-shift) một lần, DRS dùng cho DR liên tục.
+
+~~~flow
+# AWS DRS: replicate block liên tục vào staging area giá rẻ
+Server on-premises -[replicate block liên tục]-> Staging area (EBS + instance replication nhỏ)
+Staging area -[failover hoặc drill]-> EC2 phục hồi -[failback]-> Server on-premises
+~~~
 
 ## Cross-Region snapshot copy
 
@@ -737,6 +1015,12 @@ Chuyển sang Region DR mới là nửa đầu. Nửa sau là **quay về Region
 - **Logically air-gapped vault**: vault cách ly, chia sẻ được sang tài khoản khác để phục hồi khi bị ransomware.
 - **Backup Audit Manager** để kiểm tra tuân thủ chính sách backup.
 
+~~~flow
+# AWS Backup: gán tài nguyên theo tag, copy backup ra nơi an toàn
+Tag backup=daily -> Backup plan -> Backup vault (KMS) -[copy rule]-> Vault ở Region khác
+Backup vault -[cross-account copy]-> Vault tài khoản backup (Vault Lock)
+~~~
+
 ## Amazon RDS
 
 | | Automated backups | Manual snapshot |
@@ -750,6 +1034,13 @@ Chuyển sang Region DR mới là nửa đầu. Nửa sau là **quay về Region
 - Giữ backup quá 35 ngày → manual snapshot hoặc AWS Backup.
 - **Read replica**: replication bất đồng bộ, có thể **cross-Region** (dùng cho DR và đọc gần người dùng). Promote replica thành DB độc lập khi Region chính lỗi (thao tác thủ công, RPO bằng replication lag).
 
+~~~decide
+# Yêu cầu khôi phục RDS → dùng gì
+Khôi phục về một giây cụ thể trong 35 ngày => Automated backup + PITR
+Giữ backup lâu hơn 35 ngày => Manual snapshot hoặc AWS Backup
+Có bản sao ở Region khác cho DR hoặc đọc gần người dùng => Cross-Region read replica
+~~~
+
 ## Amazon Aurora
 
 - Backup liên tục lên S3, PITR trong retention 1–35 ngày; **Backtrack** (Aurora MySQL) tua lại DB tại chỗ không cần restore.
@@ -760,12 +1051,24 @@ Chuyển sang Region DR mới là nửa đầu. Nửa sau là **quay về Region
   - **Write forwarding**: secondary chuyển lệnh ghi về primary.
   - Đọc độ trễ thấp cho người dùng toàn cầu.
 
+~~~flow
+# Aurora Global Database: replicate ở tầng storage sang Region khác
+Primary Region (đọc và ghi) -[storage replication, thường < 1 giây]-> Secondary Region (chỉ đọc)
+Secondary Region -[write forwarding]-> Primary Region
+~~~
+
 ## Amazon DynamoDB
 
 - **On-demand backup**: full backup không ảnh hưởng hiệu năng, giữ tới khi xoá.
 - **PITR**: khôi phục tới bất kỳ giây nào trong tối đa **35 ngày** gần nhất; restore tạo **bảng mới**.
 - **Global tables**: multi-Region, **multi-active** (ghi ở mọi Region), replication thường dưới 1 giây, xử lý xung đột last-writer-wins. Cần DynamoDB Streams (được bật tự động).
 - Export sang S3 dùng PITR để phân tích mà không tốn read capacity.
+
+~~~groups
+# Ghi ở đâu khi chạy đa Region
+Aurora Global Database: *1 Region primary ghi, Secondary chỉ đọc, Write forwarding về primary
+DynamoDB global tables: *Region nào cũng ghi được, Last writer wins khi xung đột
+~~~
 
 ## Amazon S3
 
@@ -778,6 +1081,12 @@ Chuyển sang Region DR mới là nửa đầu. Nửa sau là **quay về Region
   - Không replicate theo chuỗi (A → B → C không tự động).
 - **S3 Replication Time Control (RTC)**: SLA replicate **99,99% object trong 15 phút**, có metric và thông báo. Từ khoá "yêu cầu replicate trong thời gian có thể dự đoán / compliance".
 
+~~~flow
+# S3 replication chỉ áp dụng cho object mới
+S3 nguồn (versioning) -[CRR, bất đồng bộ]-> S3 đích ở Region khác (versioning)
+Object đã có trước khi bật -[S3 Batch Replication]-> S3 đích ở Region khác
+~~~
+
 ## Amazon EBS
 
 - **Snapshot**: incremental, lưu trên S3 (do AWS quản lý), có thể copy cross-Region/cross-account, tạo volume ở AZ bất kỳ trong Region.
@@ -785,6 +1094,13 @@ Chuyển sang Region DR mới là nửa đầu. Nửa sau là **quay về Region
 - **Fast Snapshot Restore (FSR)**: volume tạo từ snapshot đạt hiệu năng đầy đủ ngay, không bị độ trễ "first touch" khi đọc block lần đầu. Có phí theo giờ mỗi AZ.
 - **Recycle Bin**: giữ snapshot EBS và AMI bị xoá trong thời gian retention để khôi phục khi xoá nhầm.
 - **EBS Snapshot Archive**: tier lưu trữ rẻ hơn cho snapshot ít dùng (tối thiểu 90 ngày, khôi phục mất 24–72 giờ).
+
+~~~flow
+# Volume chỉ ở một AZ, snapshot thì dùng được khắp Region
+EBS volume (AZ a) -[snapshot incremental]-> Snapshot (Regional) -> Volume mới (AZ b)
+Snapshot -[copy cross-Region]-> Snapshot ở Region khác
+Snapshot -[xoá nhầm]-> Recycle Bin (khôi phục trong retention)
+~~~
 
 ## Amazon EFS
 
@@ -857,6 +1173,12 @@ Khai báo hạ tầng trong **template** (JSON/YAML) → CloudFormation tạo **
 - **Drift detection**: phát hiện tài nguyên bị sửa tay lệch khỏi template.
 - **Stack policy** chặn update tài nguyên quan trọng; **termination protection** chặn xoá stack.
 
+~~~flow
+# Xem trước bằng change set, bắt sửa tay bằng drift detection
+Template mới -> Change set (thêm, sửa, replace) -[execute]-> Stack được update
+Sửa tay trên console -> Drift detection -> Báo tài nguyên lệch template
+~~~
+
 ### DeletionPolicy
 
 | Giá trị | Khi xoá stack hoặc gỡ tài nguyên |
@@ -872,10 +1194,23 @@ Khai báo hạ tầng trong **template** (JSON/YAML) → CloudFormation tạo **
 - **Nested stacks**: tài nguyên AWS::CloudFormation::Stack gọi template con, tái sử dụng thành phần chung trong **một** stack cha.
 - **StackSets**: triển khai **cùng một template tới nhiều tài khoản và nhiều Region** bằng một thao tác. Với **service-managed permissions** (AWS Organizations), bật **automatic deployment** để tài khoản mới vào OU được deploy tự động.
 
+~~~flow
+# StackSets: một template, nhiều tài khoản và Region
+Template -> StackSet (management account) -> Tài khoản Prod (us-east-1)
+StackSet -> Tài khoản Dev (ap-southeast-1)
+StackSet -[automatic deployment]-> Tài khoản mới vào OU
+~~~
+
 ### Bootstrapping EC2
 
 - **cfn-init** đọc metadata AWS::CloudFormation::Init để cài package, tạo file, chạy service.
 - **cfn-signal** + **CreationPolicy**: stack chỉ CREATE_COMPLETE khi instance báo thành công; hết timeout thì rollback.
+
+~~~flow
+# CreationPolicy chờ cfn-signal rồi mới hoàn tất stack
+CloudFormation -> EC2 (cfn-init cài package) -[cfn-signal thành công]-> CREATE_COMPLETE
+EC2 -[hết timeout chưa có signal]-> Rollback
+~~~
 
 ### AWS CDK và AWS SAM
 
@@ -894,6 +1229,16 @@ Khai báo hạ tầng trong **template** (JSON/YAML) → CloudFormation tạo **
 
 **Blue/green**: tạo môi trường thứ hai rồi **swap environment URL** (CNAME) hoặc chuyển dần bằng Route 53 weighted.
 
+~~~ladder
+# Beanstalk deployment: nhanh, rẻ, có rủi ro → an toàn, tốn hơn
+All at once | Deploy mọi instance cùng lúc | Downtime
+Rolling | Từng batch, capacity giảm khi deploy | -capacity
+Rolling with additional batch | Thêm một batch tạm, giữ đủ capacity | +1 batch
+Immutable | Instance mới ở ASG tạm, rollback nhanh | x2
+Traffic splitting | Canary: chia % traffic cho instance mới | Canary
+Blue/green | Môi trường thứ hai rồi swap URL | x2 env
+~~~
+
 ## AWS Systems Manager (SSM)
 
 Quản lý **managed node** (EC2 và server on-premises qua **hybrid activation**) có SSM Agent và IAM role.
@@ -905,12 +1250,28 @@ Quản lý **managed node** (EC2 và server on-premises qua **hybrid activation*
 - **State Manager**: association giữ node ở trạng thái mong muốn.
 - **OpsCenter**: gom OpsItem từ CloudWatch alarm, EventBridge để xử lý tập trung. **Parameter Store**: xem bài Secrets.
 
+~~~groups
+# Các nhóm tính năng của Systems Manager
+[AWS Systems Manager (SSM Agent + IAM role)]
+Truy cập: *Session Manager, Run Command
+Bảo trì: Patch Manager, Maintenance Window
+Tự động hoá: Automation, State Manager
+Vận hành: OpsCenter, Parameter Store
+~~~
+
 ## Amazon CloudWatch
 
 - **Metrics**: EC2 basic monitoring 5 phút, detailed 1 phút. **Memory và disk usage không có sẵn** → cài **CloudWatch agent**. Custom metric qua PutMetricData, tới 1 giây.
 - **Alarms** → action: SNS, Auto Scaling, **EC2 action** (stop, terminate, reboot, **recover**), SSM OpsItem. **Composite alarm** giảm cảnh báo nhiễu.
 - **Logs**: log group, retention; **metric filter** biến pattern log thành metric; **subscription filter** stream real-time tới Lambda, Kinesis, Firehose; export sang S3 không real-time. **Logs Insights** để truy vấn log.
 - **Dashboards** đa Region, đa tài khoản; **cross-account observability**: một monitoring account xem metric, log, trace của các source account.
+
+~~~flow
+# CloudWatch Logs: cảnh báo, real-time hay lưu trữ
+App log -> CloudWatch Logs -[metric filter]-> Metric -> Alarm -> SNS
+CloudWatch Logs -[subscription filter, real-time]-> Lambda / Kinesis / Firehose
+CloudWatch Logs -[export, không real-time]-> S3
+~~~
 
 ## X-Ray, Health Dashboard và Service Catalog
 
@@ -978,11 +1339,22 @@ Quản lý **managed node** (EC2 và server on-premises qua **hybrid activation*
 - **Partner event source**: SaaS (Zendesk, Datadog...) đẩy sự kiện thẳng vào tài khoản, không cần webhook/poller.
 - **Cross-account**: rule ở tài khoản nguồn có target là event bus của tài khoản trung tâm; bus đích cần **resource-based policy** cho phép tài khoản nguồn (hoặc cả organization) gửi vào. Cũng gửi được sang bus ở Region khác.
 
+~~~flow
+# Gom sự kiện của nhiều tài khoản về một bus trung tâm
+EC2 state change -> Default bus (tài khoản nguồn) -[rule]-> Bus trung tâm (resource-based policy) -> Lambda
+~~~
+
 ### Rule và event pattern
 
 - Pattern lọc theo source, detail-type, detail (prefix, suffix, anything-but, numeric...).
 - Mỗi rule tối đa 5 target; **input transformer** định dạng lại payload trước khi gửi.
 - Mỗi target có **retry policy** (mặc định thử lại tới 24 giờ) và **DLQ** (SQS) cho sự kiện gửi không thành công.
+
+~~~flow
+# Rule lọc, định dạng lại, gửi; gửi lỗi thì retry rồi vào DLQ
+Sự kiện -> Rule (event pattern) -[input transformer]-> Target (tối đa 5)
+Rule -[gửi lỗi, hết retry tới 24 giờ]-> DLQ (SQS)
+~~~
 
 ### Các tính năng hay ra thi
 
@@ -992,6 +1364,11 @@ Quản lý **managed node** (EC2 và server on-premises qua **hybrid activation*
 - **EventBridge Pipes**: point-to-point **source → filter → enrichment → target**. Source: SQS, Kinesis, DynamoDB Streams, MSK/Kafka, Amazon MQ. Enrichment: Lambda, Step Functions Express, API Gateway, API destination. Giảm Lambda "glue".
 - **API destinations**: gọi HTTP endpoint bên ngoài (SaaS, webhook) làm target, có **connection** quản lý xác thực (Basic, API key, OAuth) và giới hạn tốc độ gọi.
 - **Global endpoints**: failover ingestion sự kiện sang Region thứ hai khi Region chính gặp sự cố.
+
+~~~flow
+# EventBridge Pipes: nối point-to-point không cần Lambda glue
+SQS (source) -> Filter -> Lambda (enrichment) -> Step Functions (target)
+~~~
 
 ## Step Functions: các pattern
 
@@ -1010,11 +1387,23 @@ Nhắc lại: **Standard** (tới 1 năm, exactly-once, lịch sử thực thi) 
 | Run a Job | .sync | Chờ job (ECS task, Glue, Batch) hoàn tất |
 | Wait for Callback | .waitForTaskToken | Tạm dừng tới khi hệ thống ngoài gọi SendTaskSuccess/SendTaskFailure kèm task token; có HeartbeatSeconds |
 
+~~~flow
+# Wait for Callback: workflow dừng tới khi có task token quay về
+Step Functions -[.waitForTaskToken]-> SQS (kèm task token) -> Hệ thống ngoài hoặc người duyệt
+Hệ thống ngoài hoặc người duyệt -[SendTaskSuccess + token]-> Step Functions (chạy tiếp)
+~~~
+
 ### Map và saga
 
 - **Map (inline)**: lặp song song trên mảng trong input, concurrency tối đa 40.
 - **Distributed Map**: chạy **tới 10.000 child execution song song**, đọc item trực tiếp từ S3 (CSV, JSON, danh sách object) → xử lý hàng triệu file.
 - **Saga**: mỗi bước (giữ chỗ, thanh toán, giao hàng) có Catch dẫn tới **compensating step** (huỷ giữ chỗ, hoàn tiền) chạy ngược lại, thay cho transaction phân tán.
+
+~~~flow
+# Saga: bước sau lỗi thì chạy bước bù trừ ngược lại
+Giữ chỗ -> Thanh toán -> Giao hàng
+Giao hàng -[Catch lỗi]-> Hoàn tiền -> Huỷ giữ chỗ
+~~~
 
 ## Dịch vụ tích hợp chuyên biệt
 
@@ -1043,6 +1432,12 @@ Nhắc lại: **Standard** (tới 1 năm, exactly-once, lịch sử thực thi) 
 - Thiết bị kết nối qua **MQTT** (cả HTTPS, MQTT over WebSocket), xác thực bằng chứng chỉ **X.509**.
 - **Device Shadow** lưu trạng thái mong muốn/báo cáo khi thiết bị offline.
 - **Rules engine**: câu lệnh kiểu SQL lọc message theo topic rồi chuyển tới Lambda, DynamoDB, S3, Kinesis, Firehose, SQS, SNS... không cần server trung gian.
+
+~~~flow
+# IoT Core: thiết bị gửi MQTT, rules engine định tuyến không cần server
+Thiết bị -[MQTT, chứng chỉ X.509]-> IoT Core -[rule SQL]-> DynamoDB
+IoT Core -[rule SQL khác]-> Kinesis Data Streams
+~~~
 
 ## Chọn dịch vụ tích hợp nào
 

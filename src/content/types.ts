@@ -62,6 +62,8 @@ export type Comparison = {
   rows: { aspect: string; values: string[] }[];
   /** When to pick each one; same order as `services`. */
   pick: string[];
+  /** Optional fenced diagram block in lesson Markdown syntax, shown above the table. */
+  diagram?: string;
   /** Phrases in a question that point to one answer. */
   keywords: { trigger: string; answer: string }[];
   /** Slugs of lessons with more detail. */

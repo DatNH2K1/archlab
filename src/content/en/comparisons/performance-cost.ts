@@ -24,6 +24,21 @@ export const performanceCostComparisonsEn: Comparison[] = [
       'FSx: Windows SMB file shares, HPC (Lustre), or lifting NetApp/ZFS file servers to AWS.',
       'S3: objects, static files, backups, data lakes, unlimited storage accessed over the API.',
     ],
+    diagram: `~~~groups
+# Three ways to access storage
+Block (attached to an instance): *EBS (durable), Instance store (temporary)
+File (many clients mount): *EFS (Linux NFS), FSx (SMB/Lustre/ONTAP/ZFS)
+Object (over HTTPS API): *S3 (unlimited)
+~~~
+
+~~~decide
+# What the question says, which storage to pick
+Temporary data, highest IOPS, loss acceptable => Instance store
+Database on one EC2 instance, must be durable => EBS
+Many Linux instances share files across AZs => EFS
+Windows SMB or HPC Lustre => FSx
+Unlimited capacity accessed over an API => S3
+~~~`,
     keywords: [
       { trigger: 'temporary data, highest IOPS, data loss acceptable', answer: 'Instance store' },
       { trigger: 'shared file system for Linux instances across AZs', answer: 'Amazon EFS' },
@@ -54,6 +69,21 @@ export const performanceCostComparisonsEn: Comparison[] = [
       'FSx for NetApp ONTAP: multi-protocol access or moving NetApp workloads without changing tools.',
       'FSx for OpenZFS: moving ZFS or Linux NFS file servers with snapshots and clones.',
     ],
+    diagram: `~~~decide
+# Which protocol or workload the question mentions
+Windows, SMB, Active Directory => FSx for Windows File Server
+HPC, ML training, data in S3 => FSx for Lustre
+NFS + SMB + iSCSI or already on NetApp => FSx for NetApp ONTAP
+Moving ZFS or Linux NFS, need snapshots and clones => FSx for OpenZFS
+~~~
+
+~~~groups
+# Deployment options and integrations
+Windows File Server: Single-AZ, *Multi-AZ, backup via AWS Backup
+Lustre: Scratch, Persistent, *linked S3 bucket
+NetApp ONTAP: Single-AZ, *Multi-AZ, tiering to capacity pool
+OpenZFS: Single-AZ, *Multi-AZ, snapshots and clones
+~~~`,
     keywords: [
       { trigger: 'HPC, ML training, process data from S3 at high speed', answer: 'FSx for Lustre' },
       { trigger: 'SMB, Active Directory, Windows ACLs', answer: 'FSx for Windows File Server' },
@@ -85,6 +115,22 @@ export const performanceCostComparisonsEn: Comparison[] = [
       'st1: large sequential reads and writes such as log processing or big data.',
       'sc1: rarely accessed sequential data at the lowest EBS price.',
     ],
+    diagram: `~~~ladder
+# From fastest to cheapest
+io2 Block Express | provisioned IOPS SSD, Multi-Attach | 256k IOPS
+gp3 | default SSD, IOPS tuned independently of size | 3k IOPS base
+st1 | sequential throughput HDD, not bootable | 500 MiB/s
+sc1 | cold HDD, lowest price per GB | 250 MiB/s
+~~~
+
+~~~decide
+# What the question mentions, which volume to pick
+More IOPS without more capacity => gp3
+Very high steady IOPS for critical OLTP or Multi-Attach => io2 Block Express
+Logs, big data sequential reads, low cost => st1
+Cold, rarely accessed data, cheapest => sc1
+Boot volume => SSD: gp3 or io2 (no HDD)
+~~~`,
     keywords: [
       { trigger: 'increase IOPS without increasing volume size', answer: 'gp3' },
       { trigger: 'more than 64,000 IOPS, sub-millisecond latency, critical database', answer: 'io2 Block Express' },
@@ -116,6 +162,23 @@ export const performanceCostComparisonsEn: Comparison[] = [
       'Lambda: short event-driven tasks with spiky or unpredictable traffic.',
       'App Runner: simplest way to run a web app or API from source or a container image.',
     ],
+    diagram: `~~~ladder
+# From most control to least operations
+EC2 | you manage the OS, patching, and scaling | most
+ECS on EC2 | you manage the underlying EC2 cluster | high
+Fargate | declare only vCPU and RAM per task | low
+App Runner | source or image to an HTTPS URL | very low
+Lambda | write only the function, up to 15 minutes | least
+~~~
+
+~~~decide
+# The limit that decides
+Need GPUs or full OS access => EC2 (or ECS on EC2)
+Containers without managing servers => Fargate
+Event-driven, each run under 15 minutes => Lambda
+Job longer than 15 minutes, serverless => Fargate
+Web app from source code, least configuration => App Runner
+~~~`,
     keywords: [
       { trigger: 'serverless containers, no EC2 management', answer: 'AWS Fargate' },
       { trigger: 'event-driven, runs under 15 minutes, pay per request', answer: 'AWS Lambda' },
@@ -148,6 +211,23 @@ export const performanceCostComparisonsEn: Comparison[] = [
       'Redshift: analytical SQL and BI dashboards over terabytes to petabytes.',
       'ElastiCache: offload repeated reads or store sessions with sub-millisecond latency.',
     ],
+    diagram: `~~~decide
+# Pick a database by access pattern
+Standard relational, need Oracle or SQL Server => RDS
+MySQL/PostgreSQL needing more speed, fast failover => Aurora
+Key-value at any scale, steady latency => DynamoDB
+Analytical SQL on TB to PB => Redshift
+Repeated reads or sessions under a millisecond => ElastiCache
+~~~
+
+~~~ladder
+# Typical latency, fastest first
+DynamoDB + DAX | reads through an in-memory cache | microseconds
+ElastiCache | in-memory key-value | sub-ms
+DynamoDB | key-value at any scale | single-digit ms
+RDS / Aurora | relational OLTP | ms
+Redshift | complex analytic queries | seconds
+~~~`,
     keywords: [
       { trigger: 'complex joins, transactions, existing MySQL app', answer: 'Amazon RDS or Aurora' },
       { trigger: 'global relational database, Region failover under a minute', answer: 'Aurora Global Database' },
@@ -178,6 +258,19 @@ export const performanceCostComparisonsEn: Comparison[] = [
       'DAX: read-heavy DynamoDB tables needing microsecond reads with minimal code change.',
       'CloudFront: cache static and dynamic web content close to global users.',
     ],
+    diagram: `~~~flow
+# Where each cache layer sits
+Users -> CloudFront (edge) -> ALB -> EC2 -> ElastiCache (Redis/Valkey or Memcached)
+EC2 -> DAX (microseconds) -> DynamoDB
+~~~
+
+~~~decide
+# Pick a cache layer
+Read-heavy DynamoDB table, almost no code change => DAX
+Leaderboard or sessions needing HA and persistence => ElastiCache Redis/Valkey
+Simple multithreaded key-value cache => ElastiCache Memcached
+Web content close to global users => CloudFront
+~~~`,
     keywords: [
       { trigger: 'DynamoDB microsecond read latency', answer: 'DynamoDB Accelerator (DAX)' },
       { trigger: 'leaderboard, sorted sets, pub/sub', answer: 'ElastiCache for Redis/Valkey' },
@@ -208,6 +301,20 @@ export const performanceCostComparisonsEn: Comparison[] = [
       'Global Accelerator: gaming, IoT, VoIP or apps needing static IPs and fast multi-Region failover.',
       'S3 Transfer Acceleration: users far from the bucket uploading large files to S3.',
     ],
+    diagram: `~~~flow
+# All enter the nearest edge, then do different things
+Users -[HTTP/HTTPS]-> CloudFront (caches at the edge) -> ALB
+Users -[TCP/UDP]-> Global Accelerator (2 static IPs, no cache) -> NLB
+Users -[upload]-> Edge location (Transfer Acceleration) -[AWS backbone]-> S3
+~~~
+
+~~~decide
+# Exam keywords
+Cache static content, offload the origin => CloudFront
+UDP, gaming, IoT, VoIP => Global Accelerator
+Two static IPs for allowlisting => Global Accelerator
+Distant users upload large files to S3 => S3 Transfer Acceleration
+~~~`,
     keywords: [
       { trigger: 'static IP addresses, allowlist, TCP/UDP', answer: 'AWS Global Accelerator' },
       { trigger: 'non-HTTP traffic, gaming, VoIP, global users', answer: 'AWS Global Accelerator' },
@@ -238,6 +345,18 @@ export const performanceCostComparisonsEn: Comparison[] = [
       'Managed Service for Apache Flink: real-time analytics and aggregations over streams.',
       'MSK: existing Kafka applications or Kafka-specific features without managing brokers.',
     ],
+    diagram: `~~~flow
+# Where each service sits in the pipeline
+Producers -> Kinesis Data Streams (real-time, replay) -> Managed Service for Apache Flink (analytics)
+Kinesis Data Streams -> Data Firehose (near real-time, buffer) -> S3 / Redshift / OpenSearch
+Kafka clients -> MSK (Kafka API) -> Consumers
+~~~
+
+~~~groups
+# Does it store and replay
+Stores and replays: *Kinesis Data Streams (24 hours to 365 days), *MSK (custom retention)
+Does not store: Data Firehose (buffers then writes), Managed Service for Apache Flink (reads a source stream)
+~~~`,
     keywords: [
       { trigger: 'real-time, multiple consumers, replay data', answer: 'Kinesis Data Streams' },
       { trigger: 'load streaming data into S3/Redshift, least operational overhead', answer: 'Amazon Data Firehose' },
@@ -269,6 +388,23 @@ export const performanceCostComparisonsEn: Comparison[] = [
       'Glue: serverless ETL and a central Data Catalog for the data lake.',
       'OpenSearch Service: full-text search, log analytics and near real-time dashboards.',
     ],
+    diagram: `~~~flow
+# S3 data lake and its query engines
+S3 (data lake) -> Glue (crawler, ETL) -> Glue Data Catalog -> Athena (ad hoc SQL)
+Glue Data Catalog -> Redshift Spectrum (join with the warehouse)
+S3 (data lake) -> EMR (Spark, Hadoop)
+Logs -> OpenSearch Service (search, dashboards)
+~~~
+
+~~~decide
+# Exam keywords
+Ad hoc SQL on S3, no infrastructure => Athena
+Complex BI dashboards, many joins => Redshift
+Join warehouse tables with data on S3 => Redshift Spectrum
+Large Spark or Hadoop jobs => EMR
+Serverless ETL, schema discovery => Glue
+Full-text search, log analytics => OpenSearch Service
+~~~`,
     keywords: [
       { trigger: 'query data in S3 with SQL, serverless, ad hoc', answer: 'Amazon Athena' },
       { trigger: 'query S3 data from the data warehouse without loading', answer: 'Redshift Spectrum' },
@@ -300,6 +436,21 @@ export const performanceCostComparisonsEn: Comparison[] = [
       'Snowball Edge: very large data with little bandwidth, if the account already has access.',
       'DMS: migrate databases with continuous replication (CDC) and minimal downtime.',
     ],
+    diagram: `~~~decide
+# Pick by the job to be done
+Move or sync files over the network => DataSync
+On-prem apps keep NFS, SMB, or iSCSI with data in AWS => Storage Gateway
+Partners send files over SFTP => Transfer Family
+Hundreds of TB, low bandwidth, tight deadline => Snowball Edge
+Migrate a database with little downtime => DMS
+~~~
+
+~~~groups
+# Online, hybrid or offline
+Online once or on a schedule: *DataSync (files), *DMS (databases)
+Long-term hybrid: *Storage Gateway, Transfer Family (SFTP partners)
+Offline: *Snowball Edge (ship a device)
+~~~`,
     keywords: [
       { trigger: 'migrate NFS/SMB data to EFS/S3 online, automate and verify', answer: 'AWS DataSync' },
       { trigger: 'on-prem apps keep accessing files, backed by S3', answer: 'S3 File Gateway (Storage Gateway)' },
@@ -330,6 +481,20 @@ export const performanceCostComparisonsEn: Comparison[] = [
       'Spread: a few critical instances that must not share hardware.',
       'Partition: large distributed, replicated systems that are rack-aware.',
     ],
+    diagram: `~~~groups
+# How instances are laid out on hardware
+Cluster: *packed together in 1 AZ, lowest latency
+Spread: *one rack per instance, max 7 per AZ
+Partition: *one set of racks per partition, max 7 partitions per AZ
+~~~
+
+~~~decide
+# Exam keywords
+Lowest latency between nodes, HPC => Cluster
+A few critical instances must not share hardware => Spread
+Rack-aware HDFS, Cassandra, Kafka => Partition
+Must tolerate failures across AZs => Spread or Partition (not Cluster)
+~~~`,
     keywords: [
       { trigger: 'low latency, high network throughput between nodes, HPC', answer: 'Cluster placement group' },
       { trigger: 'critical instances, avoid simultaneous failure, small number', answer: 'Spread placement group' },
@@ -360,6 +525,24 @@ export const performanceCostComparisonsEn: Comparison[] = [
       'Spot: fault-tolerant, flexible jobs where interruption is acceptable.',
       'Dedicated Hosts: per-socket/per-core licenses or compliance needing a dedicated server.',
     ],
+    diagram: `~~~ladder
+# Maximum discount versus On-Demand
+Spot | can be reclaimed with a 2-minute notice | up to 90%
+Reserved Instances | 1- or 3-year commitment, specific instance | up to 72%
+Savings Plans | 1- or 3-year hourly spend commitment | up to 72%
+On-Demand | no commitment, no interruption | 0%
+Dedicated Hosts | a whole physical server for BYOL | costs more
+~~~
+
+~~~decide
+# Exam keywords
+Interruption-tolerant batch, cheapest => Spot
+Steady for 1-3 years, fixed instance type => Reserved Instances
+Commit to spend, switch families or use Fargate and Lambda => Compute Savings Plans
+Short term, cannot be interrupted => On-Demand
+Per-socket or per-core licensing => Dedicated Hosts
+Reserve capacity in one AZ without a long-term commitment => On-Demand Capacity Reservations
+~~~`,
     keywords: [
       { trigger: 'steady 24/7 for 3 years, lowest cost', answer: 'Reserved Instances or Savings Plans (3-year)' },
       { trigger: 'flexibility across instance families, Regions, Fargate, Lambda', answer: 'Compute Savings Plans' },
@@ -394,6 +577,26 @@ export const performanceCostComparisonsEn: Comparison[] = [
       'Glacier Flexible Retrieval: archives where minutes-to-hours restore is fine.',
       'Glacier Deep Archive: lowest-cost long-term retention with restores within 12-48 hours.',
     ],
+    diagram: `~~~ladder
+# Hot to cold: storage price falls, retrieval fees and time rise
+Standard | frequent access | ms
+Intelligent-Tiering | moves tiers by access pattern | ms
+Standard-IA | rarely read, 30-day minimum | ms
+One Zone-IA | 1 AZ, re-creatable, 30-day minimum | ms
+Glacier Instant Retrieval | about once a quarter, 90-day minimum | ms
+Glacier Flexible Retrieval | 1-2 times a year, 90-day minimum | minutes to hours
+Glacier Deep Archive | cheapest, 180-day minimum | 12-48 hours
+~~~
+
+~~~decide
+# Exam keywords
+Unknown or changing access pattern => Intelligent-Tiering
+Rarely read but needed immediately, survives an AZ loss => Standard-IA
+Rarely read, can be recreated => One Zone-IA
+Archive read about once a quarter, needs milliseconds => Glacier Instant Retrieval
+Archive with restores in minutes to hours => Glacier Flexible Retrieval
+Cheapest 7-10 year compliance storage => Glacier Deep Archive
+~~~`,
     keywords: [
       { trigger: 'unknown or unpredictable access patterns', answer: 'S3 Intelligent-Tiering' },
       { trigger: 'infrequent access, data can be re-created, lowest cost', answer: 'S3 One Zone-IA' },
@@ -426,6 +629,21 @@ export const performanceCostComparisonsEn: Comparison[] = [
       'Trusted Advisor: broad checks such as idle resources, open ports and service limits.',
       'Compute Optimizer: right-size instances, volumes and functions based on actual usage.',
     ],
+    diagram: `~~~decide
+# What the question wants
+See where money goes, trends, and forecasts => Cost Explorer
+Alert or act automatically past a threshold => AWS Budgets
+Detailed billing data to query with Athena => Cost and Usage Report (Data Exports)
+General best-practice checks => Trusted Advisor
+Right-size based on actual usage => Compute Optimizer
+~~~
+
+~~~groups
+# Look back, alert or recommend
+View and analyze: *Cost Explorer, Cost and Usage Report (Data Exports)
+Alert and act: *AWS Budgets
+Recommend: *Trusted Advisor (best practices), *Compute Optimizer (right-sizing)
+~~~`,
     keywords: [
       { trigger: 'alert when forecasted cost exceeds a threshold', answer: 'AWS Budgets' },
       { trigger: 'visualize and forecast spending, by service or tag', answer: 'AWS Cost Explorer' },
@@ -456,6 +674,21 @@ export const performanceCostComparisonsEn: Comparison[] = [
       'Provisioned + auto scaling: predictable traffic with gradual daily ups and downs.',
       'Reserved capacity: long-term steady provisioned throughput at the lowest price.',
     ],
+    diagram: `~~~ladder
+# From most flexible to cheapest under steady use
+On-demand | pay per request, absorbs spikes | most flexible
+Provisioned + auto scaling | set min, max, and target utilization | balanced
+Provisioned | set RCU/WCU manually | cheaper
+Reserved capacity | 1- or 3-year commitment | cheapest
+~~~
+
+~~~decide
+# Exam keywords
+New app, unpredictable traffic, sudden spikes => On-demand
+Traffic rises and falls gradually during the day => Provisioned + auto scaling
+Steady, well-known throughput => Provisioned
+Long-term steady baseline, lowest price => Reserved capacity
+~~~`,
     keywords: [
       { trigger: 'unpredictable traffic, no capacity planning', answer: 'DynamoDB on-demand' },
       { trigger: 'predictable traffic, cost-effective', answer: 'Provisioned with auto scaling' },

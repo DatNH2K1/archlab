@@ -39,6 +39,18 @@ export const secureResilientComparisonsEn: Comparison[] = [
       'Choose a Security Group for normal least-privilege access between instances and tiers.',
       'Choose a Network ACL to explicitly block an IP or CIDR range at the subnet level.',
     ],
+    diagram: `~~~flow
+# A request passes the NACL then the SG; the reply skips SG rules but needs a NACL rule
+Client -> NACL inbound (subnet) -> Security Group inbound (ENI) -> EC2
+EC2 -[response]-> Security Group (stateful, auto-allowed) -> NACL outbound (open 1024-65535) -> Client
+~~~
+
+~~~ladder
+# A NACL checks rules by number; the first match wins
+Rule 100 | Deny 203.0.113.5/32 | Matched first
+Rule 200 | Allow 0.0.0.0/0 port 443 | Allow
+Rule * | Deny all traffic that matched no rule | Default
+~~~`,
     keywords: [
       { trigger: 'Block a specific malicious IP address', answer: 'Network ACL Deny rule (or AWS WAF for HTTP)' },
       { trigger: 'Stateful, allow only', answer: 'Security Group' },
@@ -85,6 +97,20 @@ export const secureResilientComparisonsEn: Comparison[] = [
       'Choose a permissions boundary when developers may create roles but must not exceed a limit.',
       'Choose an SCP to restrict what entire accounts or OUs can ever do, such as Regions or services.',
     ],
+    diagram: `~~~groups
+# Only two types grant access; the rest only set a maximum
+[Effective permissions = Allow intersected with every limit]
+Grant access: *Identity-based policy, *Resource-based policy
+Limit only: Permissions boundary, SCP, Session policy
+~~~
+
+~~~decide
+# What you need and which policy does it
+Grant permissions to a Lambda role => Identity-based policy
+Let another account read a bucket without assuming a role => Resource-based policy (bucket policy)
+Developers create roles but cannot escalate privileges => Permissions boundary
+Forbid a whole account from using unapproved Regions => SCP
+~~~`,
     keywords: [
       { trigger: 'Prevent all accounts from using a Region', answer: 'SCP with Deny' },
       { trigger: 'Developers create IAM roles without privilege escalation', answer: 'Permissions boundary' },
@@ -123,6 +149,19 @@ export const secureResilientComparisonsEn: Comparison[] = [
       'Choose an Identity Pool when app users must call AWS services directly with temporary credentials.',
       'Choose IAM Identity Center for employees to sign in once to many AWS accounts.',
     ],
+    diagram: `~~~flow
+# Customers go through Cognito, employees through IAM Identity Center
+Users -> Cognito User Pool -[JWT]-> Cognito Identity Pool -[STS credentials]-> S3
+Employees -> IdP (Entra ID, Okta) -[SAML + SCIM]-> IAM Identity Center -[permission set]-> Many AWS accounts
+~~~
+
+~~~decide
+# Exam keywords and the pick
+App needs sign-up, sign-in and JWTs => Cognito User Pool
+App users upload straight to S3 => Cognito Identity Pool
+Unauthenticated guests call AWS with limited rights => Identity Pool (guest role)
+Employees sign in once to many accounts => IAM Identity Center
+~~~`,
     keywords: [
       { trigger: 'Mobile app users upload directly to S3', answer: 'Cognito Identity Pool' },
       { trigger: 'Sign-up and sign-in for millions of app users', answer: 'Cognito User Pool' },
@@ -152,6 +191,20 @@ export const secureResilientComparisonsEn: Comparison[] = [
       'Choose a customer managed key when you need key policy control, cross-account sharing or disable/delete.',
       'Choose CloudHSM when compliance requires a single-tenant HSM under your exclusive control.',
     ],
+    diagram: `~~~ladder
+# More control means more operations
+AWS managed key | AWS creates and rotates it, key policy not editable | No ops
+Customer managed key | You own the key policy, grants, cross-account sharing | Low
+CloudHSM | Single-tenant HSM, you hold the keys and run HA | High
+~~~
+
+~~~decide
+# Exam requirements and the key to pick
+Default encryption with nothing to manage => AWS managed key
+Share an encrypted snapshot with another account => Customer managed key
+Edit the key policy, disable or delete the key => Customer managed key
+Single-tenant HSM under the company's exclusive control => CloudHSM
+~~~`,
     keywords: [
       { trigger: 'Dedicated, single-tenant hardware security module', answer: 'CloudHSM' },
       { trigger: 'Share encrypted snapshot with another account', answer: 'Customer managed KMS key' },
@@ -191,6 +244,20 @@ export const secureResilientComparisonsEn: Comparison[] = [
       'Choose SSE-C when you must manage keys yourself but let S3 do the encryption.',
       'Choose client-side encryption when AWS must never see plaintext data.',
     ],
+    diagram: `~~~ladder
+# The key moves from AWS into your hands
+SSE-S3 | S3 manages the key, default for new objects | Default
+SSE-KMS | Key in KMS, audited in CloudTrail | Audit
+DSSE-KMS | Key in KMS, two layers of encryption | 2 layers
+SSE-C | You send the key with each request, S3 encrypts | HTTPS
+Client-side | The app encrypts before upload | DIY
+~~~
+
+~~~flow
+# S3 Bucket Keys cut KMS calls for SSE-KMS
+PutObject -[SSE-KMS]-> S3 -[calls KMS for every object]-> KMS (risk of throttling)
+PutObject -[SSE-KMS + Bucket Key]-> S3 (temporary bucket-level key) -[far fewer calls]-> KMS
+~~~`,
     keywords: [
       { trigger: 'Audit who used the key', answer: 'SSE-KMS' },
       { trigger: 'KMS throttling on high request rate', answer: 'Enable S3 Bucket Keys' },
@@ -222,6 +289,19 @@ export const secureResilientComparisonsEn: Comparison[] = [
       'Choose Secrets Manager when credentials must rotate automatically or be replicated across Regions.',
       'Choose Parameter Store for cheap configuration values and secrets without rotation needs.',
     ],
+    diagram: `~~~decide
+# Choosing where to store a secret
+DB password must rotate automatically => Secrets Manager
+Secret must exist in the DR Region => Secrets Manager (replica secret)
+Hierarchical config at the lowest cost => Parameter Store Standard
+Simple secret with no rotation => Parameter Store SecureString
+~~~
+
+~~~flow
+# How an app reads values at runtime
+App -[GetParameter with WithDecryption]-> Parameter Store (SecureString) -[Decrypt]-> KMS
+App -[GetSecretValue]-> Secrets Manager -[replicate]-> Replica secret in DR Region
+~~~`,
     keywords: [
       { trigger: 'Rotate RDS credentials automatically', answer: 'Secrets Manager' },
       { trigger: 'Store configuration at lowest cost', answer: 'Parameter Store Standard tier' },
@@ -263,6 +343,21 @@ export const secureResilientComparisonsEn: Comparison[] = [
       'Choose Security Hub to centralize findings and check against security standards across accounts.',
       'Choose Detective to investigate the root cause of a finding.',
     ],
+    diagram: `~~~flow
+# Detect, aggregate, then investigate
+GuardDuty (threats) -> Security Hub (aggregated findings)
+Inspector (vulnerabilities) -> Security Hub (aggregated findings)
+Macie (PII in S3) -> Security Hub (aggregated findings)
+GuardDuty (finding) -> Detective (root cause)
+~~~
+
+~~~groups
+# Each service looks at a different source
+Logs and account activity: *GuardDuty, Detective
+Software on workloads: *Inspector
+Data in S3: *Macie
+Findings from other services: *Security Hub
+~~~`,
     keywords: [
       { trigger: 'Detect unusual API calls or crypto mining', answer: 'GuardDuty' },
       { trigger: 'Scan ECR images for CVEs', answer: 'Inspector' },
@@ -300,6 +395,19 @@ export const secureResilientComparisonsEn: Comparison[] = [
       'Choose AWS Config to track configuration history and enforce compliance rules.',
       'Choose CloudWatch Logs to collect, search and alarm on application and system logs.',
     ],
+    diagram: `~~~groups
+# Each tool records something different
+CloudTrail: Who called which API, When and from where
+AWS Config: Resource configuration over time, *Config rules and remediation
+CloudWatch Logs: App and OS logs, *Metric filter to alarm
+~~~
+
+~~~flow
+# One event leaves a trace in each tool
+Admin deletes an SG rule -[API call]-> CloudTrail (who, when, from where)
+Admin deletes an SG rule -[configuration change]-> AWS Config (before and after, compliant?)
+App hits an error -[writes log]-> CloudWatch Logs -[metric filter]-> CloudWatch alarm
+~~~`,
     keywords: [
       { trigger: 'Who made the API call', answer: 'CloudTrail' },
       { trigger: 'Detect and remediate non-compliant resources', answer: 'AWS Config rules + remediation' },
@@ -331,6 +439,22 @@ export const secureResilientComparisonsEn: Comparison[] = [
       'Choose PrivateLink to expose or consume one service privately, even with overlapping CIDRs.',
       'Choose a gateway endpoint for free private access to S3 or DynamoDB from inside the VPC.',
     ],
+    diagram: `~~~groups
+# Each option connects something different
+VPC peering: Two VPCs 1:1, Not transitive
+Transit Gateway: *Transitive hub, VPC + VPN + DX
+PrivateLink: One service behind an NLB, Overlapping CIDRs are fine
+Gateway endpoint: S3 and DynamoDB only, *Free
+~~~
+
+~~~decide
+# Exam keywords and the pick
+A few VPCs, simple and low cost => VPC peering
+Hundreds of VPCs plus on-premises, transitive => Transit Gateway
+Expose a service to customer VPCs with overlapping CIDRs => PrivateLink
+Private subnet reaches S3 at no charge => Gateway endpoint
+Private S3 access from on-premises => S3 interface endpoint
+~~~`,
     keywords: [
       { trigger: 'Hundreds of VPCs, simplify network', answer: 'Transit Gateway' },
       { trigger: 'Expose a service to other VPCs with overlapping CIDRs', answer: 'PrivateLink (NLB endpoint service)' },
@@ -361,6 +485,21 @@ export const secureResilientComparisonsEn: Comparison[] = [
       'Choose DX + VPN when you need DX performance and encryption in transit.',
       'Choose Client VPN for remote employees connecting from laptops.',
     ],
+    diagram: `~~~flow
+# The paths from outside into AWS
+Employee laptop -[TLS over the Internet]-> Client VPN endpoint -> VPC
+Customer gateway -[IPsec over the Internet]-> VGW or Transit Gateway -> VPC
+Data center -[dedicated line]-> DX location -[VIF]-> VPC
+Data center -[IPsec over DX]-> Transit Gateway -> VPC
+~~~
+
+~~~ladder
+# On-premises connection resiliency, lowest to highest
+Single DX connection | One single point of failure | No redundancy
+DX + Site-to-Site VPN | VPN over the Internet takes over when DX fails | Cost-effective
+Two DX at two locations | Survives the loss of one location | High
+Two DX at each of two locations | Survives device and location failures | Maximum
+~~~`,
     keywords: [
       { trigger: 'Connect quickly, encrypted, low cost', answer: 'Site-to-Site VPN' },
       { trigger: 'Consistent network performance, large transfers', answer: 'Direct Connect' },
@@ -392,6 +531,21 @@ export const secureResilientComparisonsEn: Comparison[] = [
       'Choose Aurora Replicas for both read scaling and fast failover inside a Region.',
       'Choose Aurora Global Database for cross-Region DR with very low RPO and RTO.',
     ],
+    diagram: `~~~flow
+# Each kind of copy serves a different goal
+RDS primary -[sync]-> Multi-AZ standby (other AZ, not readable)
+RDS primary -[async]-> Read Replica (readable, manual promote)
+Aurora writer -[shared cluster storage]-> Aurora Replica (readable, automatic failover)
+Aurora primary Region -[replication under 1 second]-> Secondary Region (Global Database)
+~~~
+
+~~~ladder
+# The scope of failure each option survives
+Read Replica in the same Region | Offloads reads, manual promotion | No auto failover
+RDS Multi-AZ | Instance or AZ failure, automatic failover | AZ
+Aurora Replica | Automatic failover by priority tier, usually faster than RDS | AZ
+Aurora Global Database | Whole-Region outage, RPO about 1 second | Region
+~~~`,
     keywords: [
       { trigger: 'Automatic failover if an AZ fails', answer: 'RDS Multi-AZ' },
       { trigger: 'Reporting queries slow down production', answer: 'Read Replica' },
@@ -424,6 +578,22 @@ export const secureResilientComparisonsEn: Comparison[] = [
       'Choose EventBridge to route events by content from AWS services, SaaS apps or schedules.',
       'Choose Kinesis Data Streams for real-time streaming that multiple consumers can replay.',
     ],
+    diagram: `~~~flow
+# Queue, fan-out, event bus and stream
+Producer -> SQS -[consumer polls]-> Consumer
+Producer -> SNS -[push fan-out]-> Many SQS queues
+AWS or SaaS event -> EventBridge -[content-based rule]-> Target
+Producer -> Kinesis Data Streams -[read and replay]-> Many consumers
+~~~
+
+~~~decide
+# Exam keywords and the pick
+Buffer work and decouple tiers => SQS Standard
+Strict order, no duplicates => SQS FIFO
+One message to many subscribers => SNS
+Route SaaS events by content => EventBridge
+Many consumers replay real-time data => Kinesis Data Streams
+~~~`,
     keywords: [
       { trigger: 'Process orders in sequence, no duplicates', answer: 'SQS FIFO' },
       { trigger: 'One event to multiple queues', answer: 'SNS fan-out to SQS' },
@@ -455,6 +625,21 @@ export const secureResilientComparisonsEn: Comparison[] = [
       'Choose warm standby when recovery must take minutes and a small copy can always run.',
       'Choose multi-site active/active when downtime must be near zero regardless of cost.',
     ],
+    diagram: `~~~ladder
+# Cheapest to most expensive, RTO shrinking
+Backup & restore | Only backups in the DR Region | Hours
+Pilot light | Data replicated, app turned off | Tens of minutes
+Warm standby | A scaled-down stack is running | Minutes
+Multi-site active/active | A full stack serving traffic | Near zero
+~~~
+
+~~~groups
+# What is running in the DR Region
+Backup & restore: Snapshots and backups, Nothing running
+Pilot light: *Database replica, AMIs and IaC ready
+Warm standby: *Database replica, *Scaled-down ASG, ALB
+Multi-site active/active: *Full database, *Production stack, Route 53 splits traffic
+~~~`,
     keywords: [
       { trigger: 'Lowest cost, RTO of hours acceptable', answer: 'Backup & restore' },
       { trigger: 'Only the database runs in the DR Region', answer: 'Pilot light' },
@@ -486,6 +671,22 @@ export const secureResilientComparisonsEn: Comparison[] = [
       'Choose Geoproximity to route by distance and shift traffic with bias.',
       'Choose Multivalue to return several healthy IPs.',
     ],
+    diagram: `~~~decide
+# Question keywords and the routing policy to pick
+Split traffic by percentage, canary => Weighted
+Send users to the fastest-responding Region => Latency
+Active-passive based on health checks => Failover
+Serve by the user's country, compliance => Geolocation
+Shift traffic between Regions with a bias => Geoproximity
+Return several healthy IPs => Multivalue
+~~~
+
+~~~flow
+# Route 53 returns different records by health and weight
+Users -> Route 53 -[failover, primary healthy]-> ALB in primary Region
+Users -> Route 53 -[failover, primary unhealthy]-> ALB in DR Region
+Users -> Route 53 -[weighted 90/10]-> Old and new versions
+~~~`,
     keywords: [
       { trigger: 'Send 10% of traffic to the new version', answer: 'Weighted' },
       { trigger: 'Lowest latency for global users', answer: 'Latency' },
@@ -515,6 +716,21 @@ export const secureResilientComparisonsEn: Comparison[] = [
       'Choose NLB for TCP/UDP, extreme performance, static IPs or PrivateLink.',
       'Choose GWLB to insert third-party network appliances transparently.',
     ],
+    diagram: `~~~flow
+# Each load balancer works at a different layer
+Users -[HTTP/HTTPS, layer 7]-> ALB -[path, host, header]-> EC2 / Lambda
+Client -[TCP/UDP, layer 4]-> NLB (static IP per AZ) -> EC2
+Traffic -[GENEVE, layer 3]-> GWLB -> Firewall appliance -> Original destination
+~~~
+
+~~~decide
+# Exam requirements and the load balancer
+Route by path, host or header => ALB
+Authenticate with Cognito/OIDC or attach WAF => ALB
+Static IPs, UDP, millions of requests per second => NLB
+Expose a service through PrivateLink => NLB
+Insert third-party firewall appliances transparently => GWLB
+~~~`,
     keywords: [
       { trigger: 'Route /api and /images to different targets', answer: 'ALB' },
       { trigger: 'Static IP for allow-listing', answer: 'NLB (or Global Accelerator)' },

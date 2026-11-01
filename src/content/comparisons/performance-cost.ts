@@ -24,6 +24,21 @@ export const performanceCostComparisons: Comparison[] = [
       'FSx: file share Windows SMB, HPC (Lustre), hoặc chuyển file server NetApp/ZFS lên AWS.',
       'S3: object, file tĩnh, backup, data lake, dung lượng không giới hạn truy cập qua API.',
     ],
+    diagram: `~~~groups
+# Ba kiểu truy cập storage
+Block (gắn vào instance): *EBS (bền), Instance store (tạm)
+File (nhiều client mount): *EFS (Linux NFS), FSx (SMB/Lustre/ONTAP/ZFS)
+Object (qua HTTPS API): *S3 (không giới hạn)
+~~~
+
+~~~decide
+# Đề nói gì thì chọn storage nào
+Dữ liệu tạm, IOPS cao nhất, mất cũng được => Instance store
+Database trên một EC2, cần bền => EBS
+Nhiều instance Linux chia sẻ file qua nhiều AZ => EFS
+Windows SMB hoặc HPC Lustre => FSx
+Dung lượng không giới hạn, truy cập qua API => S3
+~~~`,
     keywords: [
       { trigger: 'temporary data, highest IOPS, data loss acceptable', answer: 'Instance store' },
       { trigger: 'shared file system for Linux instances across AZs', answer: 'Amazon EFS' },
@@ -54,6 +69,21 @@ export const performanceCostComparisons: Comparison[] = [
       'FSx for NetApp ONTAP: cần truy cập multi-protocol hoặc chuyển workload NetApp mà không đổi công cụ.',
       'FSx for OpenZFS: chuyển file server ZFS hoặc Linux NFS, cần snapshot và clone.',
     ],
+    diagram: `~~~decide
+# Đề nhắc giao thức hay workload nào
+Windows, SMB, Active Directory => FSx for Windows File Server
+HPC, ML training, dữ liệu ở S3 => FSx for Lustre
+NFS + SMB + iSCSI hoặc đang dùng NetApp => FSx for NetApp ONTAP
+Chuyển ZFS hoặc Linux NFS, cần snapshot và clone => FSx for OpenZFS
+~~~
+
+~~~groups
+# Kiểu triển khai và tích hợp
+Windows File Server: Single-AZ, *Multi-AZ, backup qua AWS Backup
+Lustre: Scratch, Persistent, *liên kết S3 bucket
+NetApp ONTAP: Single-AZ, *Multi-AZ, tiering sang capacity pool
+OpenZFS: Single-AZ, *Multi-AZ, snapshot và clone
+~~~`,
     keywords: [
       { trigger: 'HPC, ML training, process data from S3 at high speed', answer: 'FSx for Lustre' },
       { trigger: 'SMB, Active Directory, Windows ACLs', answer: 'FSx for Windows File Server' },
@@ -85,6 +115,22 @@ export const performanceCostComparisons: Comparison[] = [
       'st1: đọc ghi tuần tự lớn như xử lý log hoặc big data.',
       'sc1: dữ liệu tuần tự hiếm khi truy cập, giá EBS thấp nhất.',
     ],
+    diagram: `~~~ladder
+# Từ nhanh nhất tới rẻ nhất
+io2 Block Express | SSD provisioned IOPS, Multi-Attach | 256k IOPS
+gp3 | SSD mặc định, IOPS chỉnh độc lập dung lượng | 3k IOPS base
+st1 | HDD throughput tuần tự, không làm boot | 500 MiB/s
+sc1 | HDD lạnh, giá mỗi GB thấp nhất | 250 MiB/s
+~~~
+
+~~~decide
+# Đề nhắc gì thì chọn volume nào
+Tăng IOPS mà không tăng dung lượng => gp3
+IOPS rất cao ổn định cho OLTP quan trọng hoặc Multi-Attach => io2 Block Express
+Log, big data đọc tuần tự, giá thấp => st1
+Dữ liệu lạnh ít truy cập, rẻ nhất => sc1
+Boot volume => SSD: gp3 hoặc io2 (không HDD)
+~~~`,
     keywords: [
       { trigger: 'increase IOPS without increasing volume size', answer: 'gp3' },
       { trigger: 'more than 64,000 IOPS, sub-millisecond latency, critical database', answer: 'io2 Block Express' },
@@ -116,6 +162,23 @@ export const performanceCostComparisons: Comparison[] = [
       'Lambda: tác vụ ngắn, event-driven, traffic thất thường hoặc khó dự đoán.',
       'App Runner: cách đơn giản nhất để chạy web app hoặc API từ source code hoặc container image.',
     ],
+    diagram: `~~~ladder
+# Từ nhiều quyền kiểm soát tới ít vận hành nhất
+EC2 | bạn quản lý OS, patch và scale | nhiều nhất
+ECS on EC2 | bạn quản lý cluster EC2 bên dưới | nhiều
+Fargate | chỉ khai báo vCPU và RAM cho task | ít
+App Runner | từ source hoặc image ra URL HTTPS | rất ít
+Lambda | chỉ viết function, tối đa 15 phút | ít nhất
+~~~
+
+~~~decide
+# Giới hạn quyết định lựa chọn
+Cần GPU hoặc toàn quyền OS => EC2 (hoặc ECS on EC2)
+Container, không quản lý server => Fargate
+Event-driven, mỗi lần chạy dưới 15 phút => Lambda
+Job dài hơn 15 phút, serverless => Fargate
+Web app từ source code, ít cấu hình nhất => App Runner
+~~~`,
     keywords: [
       { trigger: 'serverless containers, no EC2 management', answer: 'AWS Fargate' },
       { trigger: 'event-driven, runs under 15 minutes, pay per request', answer: 'AWS Lambda' },
@@ -148,6 +211,23 @@ export const performanceCostComparisons: Comparison[] = [
       'Redshift: SQL phân tích và dashboard BI trên hàng TB tới PB dữ liệu.',
       'ElastiCache: giảm tải đọc lặp lại hoặc lưu session với latency dưới mili giây.',
     ],
+    diagram: `~~~decide
+# Chọn database theo kiểu truy cập
+Quan hệ chuẩn, cần Oracle hoặc SQL Server => RDS
+MySQL/PostgreSQL cần nhanh hơn, failover nhanh => Aurora
+Key-value ở mọi quy mô, latency ổn định => DynamoDB
+SQL phân tích trên TB tới PB => Redshift
+Đọc lặp lại hoặc session dưới mili giây => ElastiCache
+~~~
+
+~~~ladder
+# Latency điển hình, nhanh nhất trước
+DynamoDB + DAX | đọc qua cache in-memory | micro giây
+ElastiCache | key-value in-memory | dưới ms
+DynamoDB | key-value ở mọi quy mô | vài ms
+RDS / Aurora | OLTP quan hệ | ms
+Redshift | query phân tích phức tạp | giây
+~~~`,
     keywords: [
       { trigger: 'complex joins, transactions, existing MySQL app', answer: 'Amazon RDS hoặc Aurora' },
       { trigger: 'global relational database, Region failover under a minute', answer: 'Aurora Global Database' },
@@ -178,6 +258,19 @@ export const performanceCostComparisons: Comparison[] = [
       'DAX: bảng DynamoDB đọc nhiều cần đọc micro giây mà gần như không sửa code.',
       'CloudFront: cache nội dung web tĩnh và động gần người dùng toàn cầu.',
     ],
+    diagram: `~~~flow
+# Mỗi lớp cache đứng ở đâu
+Users -> CloudFront (edge) -> ALB -> EC2 -> ElastiCache (Redis/Valkey hoặc Memcached)
+EC2 -> DAX (micro giây) -> DynamoDB
+~~~
+
+~~~decide
+# Chọn lớp cache
+Bảng DynamoDB đọc nhiều, gần như không sửa code => DAX
+Leaderboard hoặc session cần HA và persistence => ElastiCache Redis/Valkey
+Cache key-value đơn giản, đa luồng => ElastiCache Memcached
+Nội dung web gần người dùng toàn cầu => CloudFront
+~~~`,
     keywords: [
       { trigger: 'DynamoDB microsecond read latency', answer: 'DynamoDB Accelerator (DAX)' },
       { trigger: 'leaderboard, sorted sets, pub/sub', answer: 'ElastiCache for Redis/Valkey' },
@@ -208,6 +301,20 @@ export const performanceCostComparisons: Comparison[] = [
       'Global Accelerator: game, IoT, VoIP hoặc app cần IP tĩnh và failover đa Region nhanh.',
       'S3 Transfer Acceleration: người dùng ở xa bucket upload file lớn vào S3.',
     ],
+    diagram: `~~~flow
+# Cùng vào edge gần nhất, khác ở việc làm gì sau đó
+Users -[HTTP/HTTPS]-> CloudFront (cache tại edge) -> ALB
+Users -[TCP/UDP]-> Global Accelerator (2 static IP, không cache) -> NLB
+Users -[upload]-> Edge location (Transfer Acceleration) -[backbone AWS]-> S3
+~~~
+
+~~~decide
+# Từ khóa trong đề
+Cache nội dung tĩnh, giảm tải origin => CloudFront
+UDP, game, IoT, VoIP => Global Accelerator
+Cần 2 IP tĩnh để whitelist => Global Accelerator
+Người dùng ở xa upload file lớn vào S3 => S3 Transfer Acceleration
+~~~`,
     keywords: [
       { trigger: 'static IP addresses, allowlist, TCP/UDP', answer: 'AWS Global Accelerator' },
       { trigger: 'non-HTTP traffic, gaming, VoIP, global users', answer: 'AWS Global Accelerator' },
@@ -238,6 +345,18 @@ export const performanceCostComparisons: Comparison[] = [
       'Managed Service for Apache Flink: phân tích và tổng hợp real-time trên stream.',
       'MSK: ứng dụng Kafka sẵn có hoặc cần tính năng riêng của Kafka mà không quản lý broker.',
     ],
+    diagram: `~~~flow
+# Vị trí của từng dịch vụ trong pipeline
+Producers -> Kinesis Data Streams (real-time, replay) -> Managed Service for Apache Flink (phân tích)
+Kinesis Data Streams -> Data Firehose (near real-time, buffer) -> S3 / Redshift / OpenSearch
+Kafka clients -> MSK (Kafka API) -> Consumers
+~~~
+
+~~~groups
+# Có lưu và replay được không
+Lưu và replay: *Kinesis Data Streams (24 giờ tới 365 ngày), *MSK (retention tùy chỉnh)
+Không lưu: Data Firehose (buffer rồi ghi), Managed Service for Apache Flink (đọc từ stream nguồn)
+~~~`,
     keywords: [
       { trigger: 'real-time, multiple consumers, replay data', answer: 'Kinesis Data Streams' },
       { trigger: 'load streaming data into S3/Redshift, least operational overhead', answer: 'Amazon Data Firehose' },
@@ -269,6 +388,23 @@ export const performanceCostComparisons: Comparison[] = [
       'Glue: ETL serverless và Data Catalog trung tâm cho data lake.',
       'OpenSearch Service: full-text search, phân tích log và dashboard gần real-time.',
     ],
+    diagram: `~~~flow
+# Data lake trên S3 và các engine truy vấn
+S3 (data lake) -> Glue (crawler, ETL) -> Glue Data Catalog -> Athena (SQL ad hoc)
+Glue Data Catalog -> Redshift Spectrum (join với warehouse)
+S3 (data lake) -> EMR (Spark, Hadoop)
+Logs -> OpenSearch Service (search, dashboard)
+~~~
+
+~~~decide
+# Từ khóa trong đề
+SQL ad hoc trên S3, không hạ tầng => Athena
+Dashboard BI phức tạp, nhiều join => Redshift
+Join warehouse với dữ liệu trên S3 => Redshift Spectrum
+Job Spark hoặc Hadoop lớn => EMR
+ETL serverless, tự nhận schema => Glue
+Full-text search, phân tích log => OpenSearch Service
+~~~`,
     keywords: [
       { trigger: 'query data in S3 with SQL, serverless, ad hoc', answer: 'Amazon Athena' },
       { trigger: 'query S3 data from the data warehouse without loading', answer: 'Redshift Spectrum' },
@@ -300,6 +436,21 @@ export const performanceCostComparisons: Comparison[] = [
       'Snowball Edge: dữ liệu rất lớn, băng thông thấp, nếu tài khoản vẫn còn được dùng dịch vụ.',
       'DMS: migrate database với replicate liên tục (CDC) và downtime tối thiểu.',
     ],
+    diagram: `~~~decide
+# Chọn theo việc cần làm
+Chuyển hoặc đồng bộ file qua mạng => DataSync
+App on-prem vẫn dùng NFS, SMB hoặc iSCSI, dữ liệu ở AWS => Storage Gateway
+Đối tác gửi file qua SFTP => Transfer Family
+Hàng trăm TB, băng thông thấp, deadline gấp => Snowball Edge
+Migrate database ít downtime => DMS
+~~~
+
+~~~groups
+# Online, hybrid hay offline
+Online một lần hoặc theo lịch: *DataSync (file), *DMS (database)
+Hybrid lâu dài: *Storage Gateway, Transfer Family (đối tác SFTP)
+Offline: *Snowball Edge (gửi thiết bị)
+~~~`,
     keywords: [
       { trigger: 'migrate NFS/SMB data to EFS/S3 online, automate and verify', answer: 'AWS DataSync' },
       { trigger: 'on-prem apps keep accessing files, backed by S3', answer: 'S3 File Gateway (Storage Gateway)' },
@@ -330,6 +481,20 @@ export const performanceCostComparisons: Comparison[] = [
       'Spread: vài instance quan trọng không được dùng chung phần cứng.',
       'Partition: hệ phân tán lớn có replicate và nhận biết rack.',
     ],
+    diagram: `~~~groups
+# Cách bố trí instance trên phần cứng
+Cluster: *gom sát nhau trong 1 AZ, latency thấp nhất
+Spread: *mỗi instance một rack, tối đa 7 mỗi AZ
+Partition: *mỗi partition một nhóm rack, tối đa 7 partition mỗi AZ
+~~~
+
+~~~decide
+# Từ khóa trong đề
+Latency thấp nhất giữa các node, HPC => Cluster
+Vài instance quan trọng không dùng chung phần cứng => Spread
+HDFS, Cassandra, Kafka nhận biết rack => Partition
+Cần chịu lỗi qua nhiều AZ => Spread hoặc Partition (không Cluster)
+~~~`,
     keywords: [
       { trigger: 'low latency, high network throughput between nodes, HPC', answer: 'Cluster placement group' },
       { trigger: 'critical instances, avoid simultaneous failure, small number', answer: 'Spread placement group' },
@@ -360,6 +525,24 @@ export const performanceCostComparisons: Comparison[] = [
       'Spot: job chịu lỗi, linh hoạt, chấp nhận bị gián đoạn.',
       'Dedicated Hosts: license theo socket/core hoặc compliance cần server riêng.',
     ],
+    diagram: `~~~ladder
+# Giảm giá tối đa so với On-Demand
+Spot | có thể bị thu hồi, báo trước 2 phút | tới 90%
+Reserved Instances | cam kết 1 hoặc 3 năm, instance cụ thể | tới 72%
+Savings Plans | cam kết mức chi theo giờ 1 hoặc 3 năm | tới 72%
+On-Demand | không cam kết, không gián đoạn | 0%
+Dedicated Hosts | cả server vật lý cho BYOL | đắt hơn
+~~~
+
+~~~decide
+# Từ khóa trong đề
+Batch chịu gián đoạn, rẻ nhất => Spot
+Ổn định 1-3 năm, instance type cố định => Reserved Instances
+Cam kết mức chi, đổi family hoặc dùng Fargate và Lambda => Compute Savings Plans
+Ngắn hạn, không được gián đoạn => On-Demand
+License theo socket hoặc core => Dedicated Hosts
+Giữ capacity trong 1 AZ mà không cam kết dài hạn => On-Demand Capacity Reservations
+~~~`,
     keywords: [
       { trigger: 'steady 24/7 for 3 years, lowest cost', answer: 'Reserved Instances hoặc Savings Plans (3 năm)' },
       { trigger: 'flexibility across instance families, Regions, Fargate, Lambda', answer: 'Compute Savings Plans' },
@@ -394,6 +577,26 @@ export const performanceCostComparisons: Comparison[] = [
       'Glacier Flexible Retrieval: archive chấp nhận restore trong vài phút tới vài giờ.',
       'Glacier Deep Archive: lưu dài hạn rẻ nhất, restore trong 12-48 giờ.',
     ],
+    diagram: `~~~ladder
+# Từ nóng tới lạnh: giá lưu giảm, phí và thời gian lấy tăng
+Standard | truy cập thường xuyên | ms
+Intelligent-Tiering | tự chuyển tier theo pattern | ms
+Standard-IA | ít đọc, lưu tối thiểu 30 ngày | ms
+One Zone-IA | 1 AZ, tạo lại được, tối thiểu 30 ngày | ms
+Glacier Instant Retrieval | khoảng mỗi quý, tối thiểu 90 ngày | ms
+Glacier Flexible Retrieval | 1-2 lần mỗi năm, tối thiểu 90 ngày | phút tới giờ
+Glacier Deep Archive | rẻ nhất, tối thiểu 180 ngày | 12-48 giờ
+~~~
+
+~~~decide
+# Từ khóa trong đề
+Pattern truy cập không rõ hoặc thay đổi => Intelligent-Tiering
+Ít đọc nhưng cần ngay, chịu được mất 1 AZ => Standard-IA
+Ít đọc, tạo lại được => One Zone-IA
+Archive đọc khoảng mỗi quý, cần mili giây => Glacier Instant Retrieval
+Archive chấp nhận restore vài phút tới vài giờ => Glacier Flexible Retrieval
+Lưu compliance 7-10 năm, rẻ nhất => Glacier Deep Archive
+~~~`,
     keywords: [
       { trigger: 'unknown or unpredictable access patterns', answer: 'S3 Intelligent-Tiering' },
       { trigger: 'infrequent access, data can be re-created, lowest cost', answer: 'S3 One Zone-IA' },
@@ -426,6 +629,21 @@ export const performanceCostComparisons: Comparison[] = [
       'Trusted Advisor: kiểm tra tổng quát như resource nhàn rỗi, port mở, service limit.',
       'Compute Optimizer: right-size instance, volume, function dựa trên mức sử dụng thực tế.',
     ],
+    diagram: `~~~decide
+# Câu hỏi muốn gì
+Xem tiền đi đâu, xu hướng và dự báo => Cost Explorer
+Cảnh báo hoặc tự hành động khi vượt ngưỡng => AWS Budgets
+Dữ liệu billing chi tiết để query bằng Athena => Cost and Usage Report (Data Exports)
+Kiểm tra best practice tổng quát => Trusted Advisor
+Right-size theo mức dùng thực tế => Compute Optimizer
+~~~
+
+~~~groups
+# Nhìn lại, cảnh báo hay khuyến nghị
+Xem và phân tích: *Cost Explorer, Cost and Usage Report (Data Exports)
+Cảnh báo và hành động: *AWS Budgets
+Khuyến nghị: *Trusted Advisor (best practice), *Compute Optimizer (right-size)
+~~~`,
     keywords: [
       { trigger: 'alert when forecasted cost exceeds a threshold', answer: 'AWS Budgets' },
       { trigger: 'visualize and forecast spending, by service or tag', answer: 'AWS Cost Explorer' },
@@ -456,6 +674,21 @@ export const performanceCostComparisons: Comparison[] = [
       'Provisioned + auto scaling: traffic dự đoán được, lên xuống từ từ trong ngày.',
       'Reserved capacity: throughput provisioned ổn định dài hạn với giá thấp nhất.',
     ],
+    diagram: `~~~ladder
+# Từ linh hoạt nhất tới rẻ nhất khi dùng đều
+On-demand | trả theo request, tự xử lý spike | linh hoạt nhất
+Provisioned + auto scaling | đặt min, max và target utilization | cân bằng
+Provisioned | đặt RCU/WCU thủ công | rẻ hơn
+Reserved capacity | cam kết 1 hoặc 3 năm | rẻ nhất
+~~~
+
+~~~decide
+# Từ khóa trong đề
+App mới, traffic không đoán được, spike đột ngột => On-demand
+Traffic lên xuống từ từ trong ngày => Provisioned + auto scaling
+Throughput ổn định, biết rõ => Provisioned
+Baseline ổn định dài hạn, giá thấp nhất => Reserved capacity
+~~~`,
     keywords: [
       { trigger: 'unpredictable traffic, no capacity planning', answer: 'DynamoDB on-demand' },
       { trigger: 'predictable traffic, cost-effective', answer: 'Provisioned với auto scaling' },

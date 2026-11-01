@@ -2,6 +2,181 @@ import type { Lesson } from '@/content/types';
 
 export const secureLessonsEn: Lesson[] = [
   {
+    slug: 'security-layers-overview',
+    domain: 'secure',
+    title: 'Security by system layer: the big picture',
+    summary:
+      'A summary map: how each layer of a system (edge, network, compute, application, data) gets attacked and which AWS service stops it there. Read this before the detailed lessons.',
+    services: [
+      'AWS WAF',
+      'AWS Shield',
+      'Amazon CloudFront',
+      'AWS Network Firewall',
+      'Amazon VPC',
+      'AWS IAM',
+      'AWS KMS',
+      'Amazon GuardDuty',
+      'AWS Security Hub',
+    ],
+    minutes: 8,
+    body: `## Defense in depth
+
+Exam questions often list a pile of security services (WAF, Shield, Security Group, NACL, Network Firewall, KMS, GuardDuty...) as distractors. The fastest way through: **work out which layer the threat lives in**, then pick the service that works at that layer.
+
+No layer is enough on its own. A request from the Internet passes through several layers, and each one stops a different kind of attack. The outer layers stop things early and cheaply; the innermost layer protects the data once the outer ones have been bypassed.
+
+~~~layers
+# Outside in: each layer has its own group of services
+Edge (outside the VPC): Route 53, CloudFront, *AWS WAF, *Shield
+Network (VPC and subnets): Public/private subnet, *NACL, Network Firewall, NAT Gateway, VPC endpoint
+Compute (instances): *Security Group, IMDSv2, Inspector, Systems Manager Patch Manager
+Application: Cognito, API Gateway authorizer, Secrets Manager, ACM (TLS)
+Data (core): *KMS, S3 Block Public Access, bucket policy, Macie, AWS Backup
+~~~
+
+Two things **belong to no single layer and cut across all of them**:
+
+- **Identity (IAM)**: who may call which API. It applies to every layer, from editing a WAF rule to reading a KMS key.
+- **Detection and audit**: CloudTrail, Config, GuardDuty and Security Hub record and alert on what happens at every layer.
+
+~~~groups
+# Two cross-cutting layers next to the five system layers
+Access control (IAM): IAM policy, *Roles instead of access keys, SCP, Permissions boundary, IAM Identity Center
+Detection and audit: *CloudTrail, AWS Config, *GuardDuty, Security Hub, Detective
+~~~
+
+## How a request passes through the layers
+
+Follow one HTTPS request from a user to the database in a standard 3-tier web architecture:
+
+~~~flow
+# Every hop has its own check
+Users -[DNS]-> Route 53 -[HTTPS]-> CloudFront (WAF + Shield) -> ALB (public subnet) -> EC2 (private subnet)
+EC2 (private subnet) -[SG port 3306]-> RDS (KMS encrypted) -> Snapshot (also encrypted)
+~~~
+
+What to remember at each hop:
+
+1. **Route 53 + CloudFront + Shield Standard**: absorb layer 3/4 DDoS at the edge, before traffic reaches the VPC.
+2. **AWS WAF** (attached to CloudFront, ALB, API Gateway or AppSync): filters on HTTP content such as SQL injection, XSS, per-IP rate limits and geo blocking.
+3. **ALB in a public subnet**: only the ALB has a path to the Internet. Its Security Group opens 443 from the Internet (or only from the CloudFront prefix list).
+4. **EC2 in a private subnet**: no public IP. Its Security Group only accepts traffic **from the ALB's Security Group**, not from a CIDR.
+5. **RDS**: its Security Group only accepts traffic from the app tier's Security Group. Data is encrypted at rest with KMS and connections use TLS.
+
+~~~groups
+# Where each tier sits in the VPC
+[VPC 10.0.0.0/16]
+Public subnet: *ALB, NAT Gateway
+Private subnet (app): *EC2 (ASG)
+Private subnet (data): *RDS, ElastiCache
+~~~
+
+## Summary table: layer, threat, service
+
+| Layer | Typical threat | Services that stop it here | The exam usually says |
+|---|---|---|---|
+| Edge | DDoS, bots, SQL injection, XSS | Shield, WAF, CloudFront | "layer 7 attack", "block SQL injection", "DDoS" |
+| Network | Access from unknown IPs, filtering between subnets, data leaving to the Internet | NACL, Network Firewall, private subnet, VPC endpoint | "block an IP range", "filter by domain", "must not traverse the Internet" |
+| Compute | Extra open ports, unpatched OS, credentials leaked on an instance | Security Group, Inspector, Patch Manager, IMDSv2, roles | "least privilege between tiers", "software vulnerabilities" |
+| Application | Unauthenticated users, hard-coded secrets, eavesdropping | Cognito, API Gateway authorizer, Secrets Manager, ACM | "sign-in for a mobile app", "rotate the DB password" |
+| Data | Data theft, public buckets, accidental deletes, ransomware | KMS, S3 Block Public Access, Macie, Object Lock, Backup | "encrypt at rest", "find PII", "WORM" |
+
+## Traffic filtering: 5 services that get mixed up
+
+The hardest questions put the traffic filters side by side. Tell them apart by **OSI layer** and **what they attach to**:
+
+~~~ladder
+# From the application layer down to the network layer
+AWS WAF | Reads HTTP content: URL, headers, body, IP, country | L7
+AWS Shield Advanced | DDoS protection with the DRT team and cost protection | L3/4/7
+Network Firewall | Stateful firewall for the whole VPC, domain filtering, IPS | L3-7
+Network ACL | Stateless allow/deny rules by CIDR for a whole subnet | L3/4
+Security Group | Stateful, allow only, attached to an ENI/instance | L3/4
+~~~
+
+~~~decide
+# What the question says and which filter to pick
+Block SQL injection or XSS => AWS WAF
+Limit requests per IP over 5 minutes => AWS WAF rate-based rule
+Block one specific IP at the subnet level => Network ACL Deny rule
+Let EC2 reach only an allow list of domains => AWS Network Firewall
+Large DDoS, need AWS responders and scaling cost refunds => Shield Advanced
+Only the app tier may connect to the database => Security Group referencing an SG
+~~~
+
+## Encryption: in transit and at rest
+
+Encryption is the last line of defense: even if an attacker gets a disk or a snapshot, they can't read it without the key.
+
+~~~flow
+# In transit uses TLS, at rest uses KMS
+Users -[TLS, ACM cert]-> CloudFront -[TLS]-> ALB -[TLS optional]-> EC2
+EC2 -[TLS]-> RDS -[at rest]-> KMS key
+~~~
+
+- **In transit**: TLS on every hop. Free public certificates come from **ACM** and attach to CloudFront, ALB and API Gateway. To force HTTPS for S3, use a bucket policy with the \`aws:SecureTransport\` condition.
+- **At rest**: most storage services (S3, EBS, RDS, DynamoDB, EFS) encrypt with **KMS**. To control the key policy and rotation yourself, use a **customer managed key**; for a single-tenant HSM at FIPS 140-3 level 3, use **CloudHSM**.
+
+## Identity: the layer you never skip
+
+The network controls **who can reach** a resource; IAM controls **who may call the API**. An S3 bucket is not inside any VPC, so only IAM and the bucket policy protect it.
+
+~~~flow
+# One API call is evaluated through several policy layers
+Request -> SCP (account limit) -> Permissions boundary -> Identity policy -> Resource policy
+~~~
+
+- An explicit Deny at any layer always wins.
+- Apps on EC2, Lambda and ECS use an **IAM role**, never access keys stored on the machine.
+- Workforce users sign in through **IAM Identity Center**; an app's end users sign in through **Cognito**.
+
+## Detection and response
+
+Defensive layers can be bypassed, so you need a **detection** layer. This is the typical chain the exam asks about:
+
+~~~flow
+# From logs to automatic response
+CloudTrail + VPC Flow Logs + DNS logs -> GuardDuty (detects) -> Security Hub (aggregates)
+GuardDuty (finding) -> EventBridge -> Lambda (isolates the instance) -> SNS (alerts the team)
+~~~
+
+~~~decide
+# Each detection service answers one question
+Who called which API, and when => CloudTrail
+Is the resource configuration compliant, and who changed it => AWS Config
+Unusual behaviour such as crypto mining or calls to malicious IPs => GuardDuty
+EC2 or container images with unpatched CVEs => Amazon Inspector
+S3 holds sensitive data such as PII => Amazon Macie
+Gather every finding and score it against a standard => Security Hub
+~~~
+
+## Quick summary
+
+1. For any security question, identify the layer first (edge, network, compute, application, data), then pick the service.
+2. HTTP/request content → WAF. DDoS → Shield. Subnet/IP → NACL. Between tiers → Security Group. Domain filtering for a whole VPC → Network Firewall.
+3. Data is always encrypted: TLS (ACM) in transit, KMS at rest.
+4. IAM and the detection layer (CloudTrail, Config, GuardDuty, Security Hub) apply to every layer.
+5. Each layer is covered in detail in the following lessons of this domain: IAM, Organizations, Cognito, VPC security, VPC connectivity, KMS, secrets and WAF/Shield/GuardDuty.
+`,
+    keywords: [
+      { trigger: 'block SQL injection, XSS, rate limit per IP', answer: 'AWS WAF' },
+      { trigger: 'large DDoS, need a response team and cost protection', answer: 'AWS Shield Advanced' },
+      { trigger: 'block an IP range at the subnet level', answer: 'Network ACL' },
+      { trigger: 'filter outbound traffic by domain for a whole VPC', answer: 'AWS Network Firewall' },
+      { trigger: 'only the app tier may connect to the database', answer: 'Security Group referencing a Security Group' },
+      { trigger: 'encrypt at rest and manage the key policy yourself', answer: 'KMS customer managed key' },
+      { trigger: 'aggregate security findings across services and accounts', answer: 'AWS Security Hub' },
+    ],
+    traps: [
+      'Security Groups and NACLs cannot read HTTP content; blocking SQL injection needs WAF.',
+      'WAF does not attach to an NLB or directly to EC2; it attaches to CloudFront, ALB, API Gateway, AppSync, Cognito User Pools and a few other services.',
+      'Security Groups have no Deny rules; to block one specific IP, use a NACL or WAF.',
+      'S3 is not inside a VPC; protect it with IAM, bucket policies and Block Public Access, not Security Groups.',
+      'GuardDuty only detects, it does not block; for automatic response, route findings through EventBridge to Lambda.',
+      'Shield Standard is free and always on; only Shield Advanced adds the DRT and cost protection.',
+    ],
+  },
+  {
     slug: 'iam-fundamentals',
     domain: 'secure',
     title: 'IAM Basics: Users, Groups, Roles and Policies',
@@ -21,6 +196,14 @@ AWS Identity and Access Management (IAM) is a global service (not tied to a Regi
 - **IAM role**: an identity with no long-term credentials. Whoever is allowed (per the trust policy) assumes the role and receives **temporary credentials** from AWS STS.
 - **Policy**: a JSON document with Effect (Allow/Deny), Action, Resource, Condition.
 
+~~~groups
+# IAM identities and how they get credentials
+Root user: Full account access, *Enable MFA and lock it away
+IAM user: Console password, Long-term access keys
+IAM group: Users only, Cannot be nested, Not a principal
+IAM role: Trust policy, *Temporary credentials from STS
+~~~
+
 ### Policy types
 
 | Type | Attached to | Exam notes |
@@ -33,6 +216,14 @@ AWS Identity and Access Management (IAM) is a global service (not tied to a Regi
 | SCP (Organizations) | OU/Account | Limits maximum permissions for the whole account |
 | Session policy | When assuming a role | Narrows the permissions of the session |
 
+~~~groups
+# Where each policy type attaches
+Identity: Managed policy, Inline policy, *Permission boundary (user or role only)
+Resource: Bucket policy, Key policy, Role trust policy
+Organizations: *SCP on an OU or account
+Session: Session policy when assuming a role
+~~~
+
 ## Policy evaluation logic
 
 1. By default every request is an **implicit deny**.
@@ -44,9 +235,23 @@ Remember: **effective permissions = intersection** of the identity policy with t
 
 For **cross-account** access, both sides must allow: the identity policy in the calling account and the resource-based policy (or role trust policy) in the account that owns the resource.
 
+~~~ladder
+# A request is evaluated from top to bottom
+Explicit Deny | Present in any policy means denied immediately | Deny
+SCP, permission boundary, session policy | Must allow, but grants nothing by itself | Filter
+Identity-based or resource-based policy | Needs at least one Allow | Allow
+No Allow anywhere | Denied by default | Implicit deny
+~~~
+
 ### When to use a permission boundary
 
 Classic scenario: let developers create IAM roles for their own Lambda functions without allowing privilege escalation. Solution: require every role created by developers to have a specific permission boundary attached (using the Condition iam:PermissionsBoundary).
+
+~~~flow
+# Developers can only create roles that carry the boundary
+Developer -[CreateRole with boundary]-> Role for Lambda -> Permissions = policy intersected with boundary
+Developer -[CreateRole without boundary]-> Denied (iam:PermissionsBoundary condition)
+~~~
 
 ## Root user – best practices
 
@@ -68,11 +273,25 @@ Classic scenario: let developers create IAM roles for their own Lambda functions
 - IAM Credential Report (account level) and IAM Access Advisor (user/role level, shows when each service was last used) help clean up excess permissions.
 - IAM Access Analyzer: detects resources shared outside the account/organization, validates policies, generates least-privilege policies from CloudTrail.
 
+~~~decide
+# Tools for cleaning up permissions and credentials
+List password, access key and MFA status of every user => IAM Credential Report
+See when a user or role last used each service => IAM Access Advisor
+Find resources shared outside the account or organization => IAM Access Analyzer
+Generate a least-privilege policy from CloudTrail activity => IAM Access Analyzer
+~~~
+
 ## Roles for services and Instance profiles
 
 - EC2 uses a role through an **instance profile** (a container for the role). Applications on EC2 get temporary credentials from the Instance Metadata Service (IMDSv2 recommended).
 - Lambda uses an **execution role**; ECS tasks use a **task role** (different from the task execution role used to pull images and write logs).
 - You can replace the role of a running EC2 instance without stopping it.
+
+~~~flow
+# EC2 uses a role instead of access keys
+IAM role -> Instance profile -> EC2
+App on EC2 -[IMDSv2]-> Temporary credentials (auto-rotated) -> S3
+~~~
 
 ## Quick comparison
 
@@ -126,6 +345,15 @@ AWS Organizations groups multiple accounts into an organization with a **managem
 - Two modes: consolidated billing only, or **all features** (required to use SCPs).
 - Creating a new account via API automatically creates the OrganizationAccountAccessRole so the management account can administer it.
 
+~~~groups
+# Policies attached to an OU are inherited by child accounts
+[Organization root]
+Management account: Central billing, *Not affected by SCPs
+OU Security: Log Archive account, Audit account
+OU Prod: App A account, App B account
+OU Dev: Dev account, Sandbox account
+~~~
+
 ## Service Control Policy (SCP)
 
 An SCP sets the **maximum permissions** for every IAM user and role in member accounts, **including the member account root user**.
@@ -140,6 +368,12 @@ Besides SCPs there is the **Resource Control Policy (RCP)**, which limits maximu
 
 To block access to resources from outside the organization: use the Condition **aws:PrincipalOrgID** in resource-based policies (e.g., a bucket policy that only allows principals in your own organization).
 
+~~~flow
+# An SCP is only a filter: effective permissions are the SCP intersected with IAM policies
+Request in a member account -[SCP allows?]-> IAM policy -[has Allow?]-> Executed
+Request to an unapproved Region -[SCP Deny]-> Denied (even member account root)
+~~~
+
 ## AWS Control Tower
 
 Control Tower sets up a best-practice multi-account **landing zone** in just a few steps, running on top of Organizations.
@@ -148,6 +382,13 @@ Control Tower sets up a best-practice multi-account **landing zone** in just a f
 - **Controls** (formerly guardrails): preventive (enforced with SCPs), detective (enforced with AWS Config rules), proactive (checked with CloudFormation hooks before resources are created).
 - **Account Factory**: creates new, standardized accounts.
 - Dashboard shows which accounts are non-compliant.
+
+~~~groups
+# Control Tower's three kinds of controls
+Preventive: Blocks before it happens, *Enforced by SCPs
+Detective: Detects after it happens, *Enforced by AWS Config rules
+Proactive: Checks before resources are created, *CloudFormation hooks
+~~~
 
 Exam keywords: "set up and govern a secure multi-account environment quickly", "landing zone" → Control Tower.
 
@@ -158,6 +399,12 @@ The new name for AWS Single Sign-On. A single place to sign in to multiple AWS a
 - Identity source: the built-in Identity Center directory, Active Directory (via AWS Managed Microsoft AD or AD Connector), or an external IdP (Microsoft Entra ID, Okta...) via SAML 2.0 + SCIM.
 - **Permission set**: a set of policies assigned to users/groups on each account; Identity Center automatically creates the corresponding role in the account.
 - AWS-recommended choice for human (workforce) access, instead of creating IAM users in each account.
+
+~~~flow
+# One sign-in, many accounts
+External IdP (Entra ID, Okta) -[SCIM syncs users and groups]-> IAM Identity Center
+Employee -[SAML sign-in]-> IAM Identity Center -[permission set]-> Role created in each account
+~~~
 
 ## Identity-based vs Resource-based policy
 
@@ -170,11 +417,23 @@ The new name for AWS Single Sign-On. A single place to sign in to multiple AWS a
 
 Exam point: when you assume a role, you **lose the permissions of your original identity** and only have the role's permissions. With a resource-based policy the principal keeps its own permissions (useful when you need to read from bucket A and write to bucket B in two different accounts).
 
+~~~flow
+# Assuming a role drops your original permissions; a resource-based policy does not
+Role in account A -[sts:AssumeRole]-> Role in account B (only role B's permissions)
+Role in account A -[bucket policy allows it]-> Bucket in account B (keeps account A permissions)
+~~~
+
 ## Cross-account access with STS AssumeRole
 
 1. Account B (owns the resource) creates a role with a **trust policy** allowing account A (or a specific role) to assume it.
 2. Account A grants the user/role the sts:AssumeRole permission on that role's ARN.
 3. The application calls AssumeRole and receives temporary credentials (1 hour by default, up to the role's configured max session duration, which can be up to 12 hours).
+
+~~~flow
+# Account A accesses resources in account B
+User/role in account A -[sts:AssumeRole]-> STS -[checks trust policy]-> Role in account B
+Role in account B -[temporary credentials]-> S3 (account B bucket)
+~~~
 
 For **third-party** (vendor) access: use a cross-account role with an **External ID** in the Condition to prevent the "confused deputy" problem. Never share access keys.
 
@@ -233,11 +492,22 @@ Federation lets identities managed **outside AWS** (Active Directory, Okta, Goog
 - Flow: user signs in to the IdP → IdP returns a SAML assertion → call **AssumeRoleWithSAML** (or use the console sign-in endpoint) → receive temporary credentials.
 - Today AWS recommends using **IAM Identity Center** as an intermediate layer when you have multiple accounts.
 
+~~~flow
+# SAML 2.0 federation flow
+Employee -> Corporate IdP (AD FS, Entra ID, Okta) -[SAML assertion]-> STS (AssumeRoleWithSAML) -[temporary credentials]-> AWS console / API
+~~~
+
 ### OIDC / Web identity federation
 
 - For web/mobile applications with IdPs such as Google, Facebook, Amazon, Apple or any OIDC IdP.
 - API: **AssumeRoleWithWebIdentity**. For mobile apps, AWS recommends using **Cognito Identity Pools** instead of calling it directly.
 - Also used for workloads: GitHub Actions, EKS (IRSA) assume roles via OIDC without access keys.
+
+~~~flow
+# Workloads trade an OIDC token for temporary credentials, no access keys
+GitHub Actions -[OIDC token]-> STS (AssumeRoleWithWebIdentity) -[temporary credentials]-> Deploy to AWS
+EKS pod (IRSA) -[service account token]-> STS (AssumeRoleWithWebIdentity) -[temporary credentials]-> DynamoDB
+~~~
 
 ## Amazon Cognito
 
@@ -248,6 +518,12 @@ Federation lets identities managed **outside AWS** (Active Directory, Okta, Goog
 - Returns **JWTs** (ID token, access token, refresh token).
 - Direct integration: **API Gateway** (Cognito authorizer), **Application Load Balancer** (authenticate-cognito listener rule).
 - Lambda triggers to customize flows (pre sign-up, post confirmation...).
+
+~~~flow
+# A User Pool protects an ALB and API Gateway
+Users -> ALB (authenticate-cognito) -[redirect if not signed in]-> Cognito hosted UI -[after sign-in]-> ALB -> EC2
+Users -[JWT in header]-> API Gateway (Cognito authorizer) -> Lambda
+~~~
 
 ### Identity Pools – authorization to AWS
 
@@ -265,6 +541,11 @@ Federation lets identities managed **outside AWS** (Active Directory, Okta, Goog
 
 Common combination: the user signs in via a User Pool, then exchanges the JWT at an Identity Pool to upload photos directly to S3.
 
+~~~flow
+# The User Pool authenticates, the Identity Pool authorizes to AWS
+Users -[sign-in]-> Cognito User Pool -[JWT]-> Cognito Identity Pool -[temporary credentials]-> S3 (the user's own prefix)
+~~~
+
 ## AWS Directory Service
 
 | Option | What it is | When to choose |
@@ -279,6 +560,13 @@ Exam points:
 - "Do not want to store directory information in the cloud", "proxy" → **AD Connector**. AD Connector depends on on-prem connectivity; if the link goes down, authentication fails.
 - "Low cost, basic AD features, standalone" → **Simple AD**.
 
+~~~decide
+# Picking a Directory Service option
+Need a trust with on-prem AD or AD-aware apps on AWS => AWS Managed Microsoft AD
+Reuse existing on-prem AD without storing directory data in the cloud => AD Connector
+Small, low-cost directory with no trust needed => Simple AD
+~~~
+
 ## Which solution?
 
 | Scenario | Answer |
@@ -288,6 +576,12 @@ Exam points:
 | Mobile app uploads directly to S3 | Cognito Identity Pool |
 | Has a SAML IdP, only one account | SAML federation with an IAM role |
 | Protect an application behind an ALB with sign-in | ALB + Cognito User Pool or OIDC IdP |
+
+~~~groups
+# Who signs in decides the service
+Employees (workforce): *IAM Identity Center, SAML federation, Directory Service
+Application customers: *Cognito User Pool, Cognito Identity Pool, Google/Facebook/Apple sign-in
+~~~
 
 ## Exam tips
 
@@ -329,6 +623,14 @@ Exam points:
 - **Egress-only Internet Gateway**: lets IPv6 traffic go out to the Internet but not in (the IPv6 equivalent of NAT).
 - **Public IPv4 addresses are charged** hourly (including in-use Elastic IPs), so avoid assigning unnecessary public IPs.
 
+~~~groups
+# Public subnets route to the IGW, private subnets go out through NAT
+[VPC 10.0.0.0/16]
+Public subnet: ALB, NAT Gateway, *Route 0.0.0.0/0 to IGW
+Private subnet: EC2, *Route 0.0.0.0/0 to NAT Gateway
+Database subnet: RDS, No route to the Internet
+~~~
+
 ## NAT Gateway vs NAT instance
 
 Instances in a private subnet that need to reach the Internet (patching, calling external APIs) but must not accept connections initiated from the Internet → use NAT.
@@ -343,6 +645,12 @@ Instances in a private subnet that need to reach the Internet (patching, calling
 | Special configuration | Placed in a public subnet, has an Elastic IP | Must **disable source/destination check** |
 
 Standard HA architecture: each AZ has a NAT Gateway in a public subnet, and the private subnet route table in the same AZ points to the NAT GW in that AZ (avoids cross-AZ charges and single points of failure).
+
+~~~flow
+# One NAT Gateway per AZ, outbound only
+EC2 (private subnet AZ a) -> NAT Gateway (public subnet AZ a) -> Internet Gateway -> Internet
+EC2 (private subnet AZ b) -> NAT Gateway (public subnet AZ b) -> Internet Gateway -> Internet
+~~~
 
 ## Security Group vs Network ACL
 
@@ -361,6 +669,12 @@ Important exam points:
 - 3-tier architecture: the app SG allows inbound only from the **ALB SG**; the DB SG allows the DB port only from the **app SG**. Referencing an SG is safer than a CIDR because it updates automatically as you scale.
 - NACL forgetting to open outbound ephemeral ports → clients do not receive responses.
 
+~~~flow
+# NACLs filter at the subnet edge, SGs at each instance; tiers are chained by SG ID
+Internet -> NACL (subnet, stateless) -> Security Group (ENI, stateful) -> EC2
+ALB SG -[app port only]-> App SG -[DB port only]-> DB SG
+~~~
+
 ## Administrative access to instances
 
 - **Bastion host**: an EC2 instance in a public subnet, SG opens SSH only from the company IP; from there you SSH into private instances. You must patch it and manage keys yourself.
@@ -368,6 +682,13 @@ Important exam points:
 - **EC2 Instance Connect**: pushes a temporary SSH key via API; Instance Connect Endpoint allows SSH into private instances without a public IP.
 
 When the question asks for "most secure, least operational overhead to access private instances" → **Session Manager**.
+
+~~~flow
+# Session Manager needs no bastion and no inbound port
+Admin -[SSH port 22]-> Bastion (public subnet) -[SSH]-> EC2 (private subnet)
+Admin -[IAM, console or CLI]-> Systems Manager -> SSM Agent on EC2 (no inbound port open)
+SSM Agent -[outbound HTTPS via NAT or VPC endpoint]-> Systems Manager
+~~~
 
 ## VPC Flow Logs
 
@@ -383,6 +704,12 @@ When the question asks for "most secure, least operational overhead to access pr
 - Centralized architecture: an inspection VPC attached to Transit Gateway filters East-West and egress traffic for multiple VPCs.
 - Multi-account policies are managed via Firewall Manager.
 
+~~~flow
+# Route tables steer traffic through the firewall endpoint
+Internet -> Internet Gateway -[ingress route table]-> Firewall endpoint (firewall subnet) -> ALB (public subnet)
+EC2 (private subnet) -> NAT Gateway -> Firewall endpoint -> Internet Gateway
+~~~
+
 | Need | Choose |
 |---|---|
 | Filter HTTP layer 7 (SQLi, XSS) in front of ALB/CloudFront | AWS WAF |
@@ -390,6 +717,14 @@ When the question asks for "most secure, least operational overhead to access pr
 | Block DNS queries to malicious domains | Route 53 Resolver DNS Firewall |
 | Block an IP at the subnet level | NACL |
 | Allow traffic between application tiers | Security Group |
+
+~~~ladder
+# Traffic filtering layers from the outside in
+AWS WAF | HTTP layer 7 at CloudFront or ALB | Layer 7
+Network Firewall | Stateful, FQDN filtering, IPS for the whole VPC | VPC
+NACL | Stateless, Allow and Deny at the subnet edge | Subnet
+Security Group | Stateful, Allow only on each ENI | ENI
+~~~
 
 ## Exam tips
 
@@ -441,6 +776,13 @@ When the question asks for "most secure, least operational overhead to access pr
 - Supports **ECMP** with VPN to aggregate bandwidth across multiple tunnels; supports IP multicast.
 - Share a TGW between accounts using **RAM**.
 
+~~~flow
+# Peering is not transitive, Transit Gateway is
+VPC A -[peering]-> VPC B -[peering]-> VPC C (A cannot reach C)
+VPC A -> Transit Gateway -> VPC C (transitive routing)
+On-premises -[VPN or DX]-> Transit Gateway -> VPC B
+~~~
+
 | Criterion | VPC Peering | Transit Gateway |
 |---|---|---|
 | Transitive | No | Yes |
@@ -464,11 +806,23 @@ Let resources in a VPC access AWS services **without going through the Internet,
 - When the question says "private subnet accesses S3, reduce NAT costs" → **gateway endpoint**.
 - Interface endpoints need private DNS enabled so the SDK uses the service's default name.
 
+~~~flow
+# Reaching AWS services without the Internet or NAT
+EC2 (private subnet) -[route table]-> Gateway endpoint (free) -> S3
+EC2 (private subnet) -[private DNS]-> Interface endpoint (ENI, paid) -> SQS
+On-premises -[VPN or DX]-> Interface endpoint -> S3
+~~~
+
 ## AWS PrivateLink
 
 - The technology behind interface endpoints. Lets you **offer your own service** (placed behind a **Network Load Balancer** or Gateway Load Balancer) to other VPCs/accounts/customers **without peering, without exposing the whole VPC**, regardless of overlapping CIDRs.
 - One-directional only: the consumer initiates the connection to the service.
 - Question: "expose a service to hundreds of customer VPCs, overlapping CIDRs, private" → **PrivateLink**.
+
+~~~flow
+# The consumer sees one ENI, not the provider's whole VPC
+Customer VPC -> Interface endpoint (ENI) -[PrivateLink]-> Endpoint service -> NLB -> Provider app
+~~~
 
 ## Site-to-Site VPN
 
@@ -476,6 +830,12 @@ Let resources in a VPC access AWS services **without going through the Internet,
 - Each connection has **2 tunnels** at 2 different endpoints for HA; each tunnel supports up to about **1.25 Gbps**.
 - Quick to set up (minutes to hours), cheap, but latency depends on the Internet.
 - Static or dynamic (BGP) routing.
+
+~~~flow
+# Each VPN connection has two tunnels to two endpoints for HA
+Customer Gateway (on-prem) -[IPsec tunnel 1]-> VGW endpoint 1 -> VPC
+Customer Gateway (on-prem) -[IPsec tunnel 2]-> VGW endpoint 2 -> VPC
+~~~
 
 ## AWS VPN CloudHub
 
@@ -496,6 +856,12 @@ Let resources in a VPC access AWS services **without going through the Internet,
 - **Not encrypted by default**. To encrypt: **Site-to-Site VPN over DX** (via public VIF or private IP VPN) or **MACsec** (layer 2) on supported connections.
 - **Direct Connect Gateway**: one DX connection to **VPCs in multiple Regions** (and multiple accounts).
 
+~~~flow
+# One DX connection to many VPCs through a Direct Connect Gateway
+Data center -> DX location -[private VIF]-> Direct Connect Gateway -> VPC (multiple Regions)
+Data center -> DX location -[transit VIF]-> Direct Connect Gateway -> Transit Gateway
+~~~
+
 ### Resiliency
 
 | Level | Design |
@@ -503,6 +869,12 @@ Let resources in a VPC access AWS services **without going through the Internet,
 | Cost-effective | Primary DX + **Site-to-Site VPN as backup** |
 | High resiliency | 2 DX connections at **2 different DX locations** |
 | Maximum resiliency | 2 separate connections on separate devices at **each** of 2 DX locations |
+
+~~~groups
+# Maximum resiliency: no single point of failure in devices or locations
+DX location 1: *Connection 1 (device A), *Connection 2 (device B)
+DX location 2: *Connection 3 (device C), *Connection 4 (device D)
+~~~
 
 ## Choosing a solution
 
@@ -563,6 +935,12 @@ Let resources in a VPC access AWS services **without going through the Internet,
 - API limit: Encrypt directly handles at most **4 KB** of data. There are request-per-second quotas; SSE-KMS with heavy traffic may be throttled → enable **S3 Bucket Keys** to reduce requests to KMS (and reduce cost).
 - Every use of a key is logged in **CloudTrail**.
 
+~~~flow
+# Cross-account KMS key use needs both sides to allow it
+Role in account B -[IAM policy allows kms:Decrypt]-> KMS key in account A -[key policy lists account B]-> Decrypt succeeds
+Role in account B -[key policy omits account B]-> KMS key in account A (AccessDenied)
+~~~
+
 ### Envelope encryption
 
 1. Call GenerateDataKey → KMS returns the data key in plaintext and encrypted form.
@@ -571,12 +949,26 @@ Let resources in a VPC access AWS services **without going through the Internet,
 
 Benefit: large data does not have to be sent to KMS, only the small data key.
 
+~~~flow
+# Envelope encryption: only the small data key goes to KMS
+App -[GenerateDataKey]-> KMS -[plaintext + encrypted data key]-> App
+App -[encrypt with plaintext data key]-> Encrypted data + encrypted data key -> Storage (S3, EBS)
+~~~
+
 ## AWS CloudHSM
 
 - A dedicated **single-tenant** HSM in your VPC, FIPS 140 Level 3 certified.
 - **You fully manage keys and users**; AWS cannot access the keys. Losing credentials means losing the keys.
 - Use when the question requires: exclusive control of keys, dedicated HSM, SSL offloading, Oracle TDE, PKCS#11/JCE.
 - Can serve as a **custom key store** for KMS to get KMS integration while keeping keys in your own HSM.
+
+~~~ladder
+# Who holds the key, from AWS toward you
+AWS managed key | AWS creates and rotates it in your account | AWS
+Customer managed key | You manage the key policy, KMS holds the HSMs | KMS
+KMS custom key store | Key material lives in your CloudHSM cluster | Your HSM
+CloudHSM directly | You fully control keys and users, AWS has no access | You
+~~~
 
 ## S3 encryption
 
@@ -592,6 +984,12 @@ Since January 2023, all new objects are **encrypted by default with SSE-S3**.
 
 You can enforce an encryption type with a bucket policy (Deny PutObject if the s3:x-amz-server-side-encryption header is not aws:kms). Note: the bucket policy is evaluated before default encryption.
 
+~~~flow
+# The bucket policy blocks requests before default encryption applies
+PutObject without SSE header aws:kms -[bucket policy Deny]-> Denied
+PutObject with SSE header aws:kms -> Bucket policy allows -> Object encrypted with SSE-KMS
+~~~
+
 ## S3 protection
 
 - **Bucket policy**: resource-based, allows cross-account, enforces HTTPS, restricts by VPC endpoint, IP, aws:PrincipalOrgID.
@@ -603,6 +1001,14 @@ You can enforce an encryption type with a bucket policy (Deny PutObject if the s
   - **Legal hold**: held indefinitely until removed, independent of the retention period.
 - **S3 Glacier Vault Lock**: attach a Vault Lock policy (WORM) to a vault; once the lock is confirmed (within 24 hours of the in-progress state) the policy **cannot be changed**.
 - **Presigned URL**: grants temporary GET/PUT access to an object with the permissions of the URL creator; time-limited (up to 7 days when signed with an IAM user, shorter with temporary credentials).
+
+~~~ladder
+# Protecting S3 objects from deletion, weakest to strongest
+Versioning | Restore an older version after an accidental delete | Basic
+MFA Delete | Permanently deleting a version needs root MFA | MFA
+Object Lock governance | Users with s3:BypassGovernanceRetention can still delete | Bypass
+Object Lock compliance | No one, including root, can delete until expiry | WORM
+~~~
 
 ## EBS encryption
 
@@ -617,6 +1023,11 @@ You can enforce an encryption type with a bucket policy (Deny PutObject if the s
 - Read replicas have the same encryption state as the primary.
 - In transit: use SSL/TLS; can be enforced with a parameter (e.g., rds.force_ssl).
 - RDS and Aurora support IAM database authentication for MySQL/PostgreSQL.
+
+~~~flow
+# Encrypting an existing unencrypted EBS volume or RDS DB
+Snapshot -[copy with encryption and a KMS key]-> Encrypted snapshot -[create volume or restore]-> New volume / DB -> Switch the application over
+~~~
 
 ## Exam tips
 
@@ -671,6 +1082,13 @@ You can enforce an encryption type with a bucket policy (Deny PutObject if the s
 - **No built-in automatic rotation**; you must write your own Lambda + EventBridge.
 - Can reference a Secrets Manager secret through Parameter Store.
 
+~~~groups
+# Parameter Store keeps values in a path tree
+/prod/app: db-url (String), *db-password (SecureString)
+/dev/app: db-url (String), *db-password (SecureString)
+IAM permissions: ssm:GetParametersByPath on /prod/app, *kms:Decrypt for SecureString
+~~~
+
 | Criterion | Secrets Manager | Parameter Store |
 |---|---|---|
 | Automatic rotation | Yes, integrated with RDS/Aurora/Redshift | Not built in |
@@ -681,6 +1099,13 @@ You can enforce an encryption type with a bucket policy (Deny PutObject if the s
 
 Question: "rotate database credentials automatically with least operational overhead" → **Secrets Manager**. "Store configuration values, low cost" → **Parameter Store**.
 
+~~~flow
+# Secrets Manager rotates the DB password automatically
+Rotation schedule -> Lambda (rotation function) -[sets new password]-> RDS
+Lambda (rotation function) -[stores new version]-> Secrets Manager
+App -[GetSecretValue]-> Secrets Manager
+~~~
+
 ## AWS Certificate Manager (ACM)
 
 - Issues **free public TLS certificates** for integrated services, with **automatic renewal** (with DNS domain validation, renewal is fully automatic).
@@ -690,11 +1115,24 @@ Question: "rotate database credentials automatically with least operational over
 - Certificates used for **CloudFront must be in us-east-1**. Certificates for ALB/regional API Gateway must be in the same Region as the resource.
 - In exam context, ACM public certificates are attached to integrated services rather than manually installed on EC2. AWS Private CA is used to issue internal private certificates.
 
+~~~flow
+# ACM certificates must live in the Region of the service that uses them
+Route 53 (CNAME record) -[DNS validation]-> ACM -[auto-renewal]-> Public certificate
+ACM us-east-1 -> CloudFront (all edge locations)
+ACM eu-west-1 -> ALB in eu-west-1
+~~~
+
 ### TLS on ALB and CloudFront
 
 - **TLS termination at the ALB**: the ALB decrypts, offloading CPU from EC2; uses SNI to serve multiple certificates on one listener.
 - For end-to-end encryption: the ALB re-encrypts to targets over HTTPS (targets use their own certificates), or use **NLB TCP passthrough** so targets terminate TLS themselves.
 - CloudFront: Viewer Protocol Policy = Redirect HTTP to HTTPS or HTTPS only; Origin Protocol Policy to encrypt to the origin. **Field-level encryption** encrypts sensitive fields (card numbers) from the edge.
+
+~~~flow
+# ACM certificates and where TLS terminates
+Users -[HTTPS, ACM cert in us-east-1]-> CloudFront -[HTTPS]-> ALB (ACM cert in same Region) -[HTTP or HTTPS re-encrypt]-> EC2
+Users -[TLS]-> NLB (TCP passthrough) -[TLS]-> EC2 (terminates TLS itself)
+~~~
 
 ## CloudFront Origin Access Control (OAC)
 
@@ -702,6 +1140,12 @@ Question: "rotate database credentials automatically with least operational over
 - **OAC replaces OAI** (legacy). OAC supports SSE-KMS, all Regions, PUT/DELETE methods, and signs requests with SigV4.
 - Configuration: keep the bucket private (Block Public Access on), bucket policy allows the cloudfront.amazonaws.com principal with Condition AWS:SourceArn set to the distribution ARN.
 - For ALB/EC2 origins (custom origin): there is no S3-style OAC; use a **secret custom header** added by CloudFront and verified by the ALB, combined with an SG that only allows the **CloudFront managed prefix list**. CloudFront also supports VPC origins for ALB/EC2 in private subnets.
+
+~~~flow
+# Only CloudFront can read the bucket
+Users -> CloudFront -[OAC, SigV4 signed]-> S3 (private, Block Public Access on)
+Users -[direct S3 URL]-> S3 (denied by bucket policy)
+~~~
 
 ## Signed URL vs Signed Cookie
 
@@ -721,6 +1165,14 @@ Question: "rotate database credentials automatically with least operational over
 | Access via edge, cached | Direct access to S3 |
 | Origin can be S3 or custom | S3 only |
 | Restrict by IP, time (custom policy) | Uses the permissions of the IAM principal that signed the URL |
+
+~~~decide
+# Temporary access to private content
+One file through CloudFront => CloudFront signed URL
+Many files or a whole premium area through CloudFront => CloudFront signed cookies
+Download or upload one object directly with S3 => S3 presigned URL
+Restrict by IP or start time => CloudFront signed URL/cookie with a custom policy
+~~~
 
 ## Exam tips
 
@@ -766,6 +1218,12 @@ Question: "rotate database credentials automatically with least operational over
   - **AWS Managed Rules** and rules from AWS Marketplace; Bot Control, Account Takeover Prevention.
 - Logs to CloudWatch Logs, S3 or Firehose.
 
+~~~flow
+# WAF filters layer 7 at the edge or in front of the ALB; Shield stops layer 3/4 DDoS
+Users -> CloudFront (WAF, Shield) -> ALB (WAF) -> EC2 (ASG)
+Users -> API Gateway (WAF) -> Lambda
+~~~
+
 ## AWS Shield
 
 | Criterion | Shield Standard | Shield Advanced |
@@ -784,6 +1242,12 @@ Question: "protect against DDoS, need 24/7 DDoS experts and cost protection" →
 - Manages: WAF rules, Shield Advanced, Security Groups, Network Firewall, Route 53 Resolver DNS Firewall, third-party firewall policies.
 - Automatically applies policies to **newly created** resources (e.g., every new ALB gets WAF attached).
 
+~~~flow
+# Firewall Manager applies policies to every account, new resources included
+Security admin account -[WAF policy]-> Firewall Manager -[attaches web ACL]-> New ALB in account A
+Firewall Manager -[attaches web ACL]-> CloudFront in account B
+~~~
+
 ## Detection and assessment services
 
 | Service | What it does | Exam keywords |
@@ -797,6 +1261,14 @@ Question: "protect against DDoS, need 24/7 DDoS experts and cost protection" →
 
 GuardDuty is enabled with a single action, **without needing to enable Flow Logs or a separate CloudTrail trail** (it reads from the data sources independently).
 
+~~~groups
+# The security toolkit by role
+Block up front: WAF, Shield, Firewall Manager, Network Firewall
+Detect: GuardDuty, Inspector, Macie
+Aggregate and investigate: *Security Hub, Detective
+Record and comply: CloudTrail, AWS Config, CloudWatch
+~~~
+
 ## Logging and compliance
 
 ### AWS CloudTrail
@@ -806,6 +1278,13 @@ GuardDuty is enabled with a single action, **without needing to enable Flow Logs
 - **Data events** (S3 object-level, Lambda invoke) are not recorded by default and must be enabled (charged).
 - **Log file integrity validation** proves logs were not tampered with. Add protection with a dedicated bucket, Object Lock, and an SCP that blocks StopLogging.
 - CloudTrail Insights detects unusual API activity; CloudTrail Lake allows SQL queries.
+
+~~~groups
+# Types of events CloudTrail records
+Management events: *On by default, 90-day event history, Creating or deleting resources
+Data events: Off by default, Extra cost, S3 object-level and Lambda invoke
+Insights events: Unusual API activity, Enabled separately at extra cost
+~~~
 
 ### AWS Config
 
@@ -827,11 +1306,22 @@ GuardDuty is enabled with a single action, **without needing to enable Flow Logs
 - Logs Insights for queries; encrypt log groups with KMS; set retention.
 - CloudWatch agent to collect logs and memory/disk metrics from EC2.
 
+~~~flow
+# Alert when the root user signs in
+CloudTrail (trail) -> CloudWatch Logs -[root login metric filter]-> Metric -[alarm when above 0]-> SNS (email to security team)
+~~~
+
 ### EventBridge for automated remediation
 
 - Captures events from GuardDuty findings, Config compliance changes, CloudTrail API calls, Security Hub, ACM expiring certificates...
 - Targets: **Lambda**, SSM Automation, SNS, Step Functions for automatic handling (isolate an instance, revoke a key, close a port).
 - Classic pattern: GuardDuty finding → EventBridge rule → Lambda switches the compromised EC2 instance's Security Group to an isolation SG + SNS notification.
+
+~~~flow
+# Automatically isolating a compromised EC2 instance
+GuardDuty (finding) -> EventBridge (rule) -> Lambda -[switch to isolation SG]-> EC2
+EventBridge (rule) -> SNS -> Security team
+~~~
 
 ## Exam tips
 

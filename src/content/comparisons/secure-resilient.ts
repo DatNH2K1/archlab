@@ -39,6 +39,18 @@ export const secureResilientComparisons: Comparison[] = [
       'Chọn Security Group cho truy cập least privilege thông thường giữa instance và các tầng.',
       'Chọn Network ACL khi cần chặn rõ ràng một IP hoặc dải CIDR ở cấp subnet.',
     ],
+    diagram: `~~~flow
+# Request đi qua NACL rồi tới SG; phản hồi tự qua SG nhưng phải được NACL cho phép
+Client -> NACL inbound (subnet) -> Security Group inbound (ENI) -> EC2
+EC2 -[phản hồi]-> Security Group (stateful, tự cho qua) -> NACL outbound (mở 1024-65535) -> Client
+~~~
+
+~~~ladder
+# NACL xét rule theo số thứ tự, rule khớp đầu tiên thắng
+Rule 100 | Deny 203.0.113.5/32 | Khớp trước
+Rule 200 | Allow 0.0.0.0/0 port 443 | Allow
+Rule * | Chặn mọi traffic không khớp rule nào | Mặc định
+~~~`,
     keywords: [
       { trigger: 'Chặn một địa chỉ IP độc hại cụ thể', answer: 'Network ACL rule Deny (hoặc AWS WAF cho HTTP)' },
       { trigger: 'Stateful, chỉ có allow', answer: 'Security Group' },
@@ -85,6 +97,20 @@ export const secureResilientComparisons: Comparison[] = [
       'Chọn permissions boundary khi developer được tự tạo role nhưng không được vượt một giới hạn.',
       'Chọn SCP để giới hạn những gì cả account hoặc OU được phép làm, ví dụ Region hay service.',
     ],
+    diagram: `~~~groups
+# Chỉ hai loại cấp quyền; các loại còn lại chỉ đặt giới hạn tối đa
+[Quyền hiệu lực = Allow giao với mọi giới hạn]
+Cấp quyền: *Identity-based policy, *Resource-based policy
+Chỉ giới hạn: Permissions boundary, SCP, Session policy
+~~~
+
+~~~decide
+# Cần làm gì thì dùng policy nào
+Cấp quyền cho role của Lambda => Identity-based policy
+Cho account khác đọc bucket mà không assume role => Resource-based policy (bucket policy)
+Developer tự tạo role nhưng không được leo thang quyền => Permissions boundary
+Cấm cả account dùng Region ngoài danh sách => SCP
+~~~`,
     keywords: [
       { trigger: 'Ngăn mọi account dùng một Region', answer: 'SCP với Deny' },
       { trigger: 'Developer tự tạo IAM role mà không leo thang quyền', answer: 'Permissions boundary' },
@@ -123,6 +149,19 @@ export const secureResilientComparisons: Comparison[] = [
       'Chọn Identity Pool khi người dùng app cần gọi trực tiếp AWS service bằng credentials tạm thời.',
       'Chọn IAM Identity Center để nhân viên đăng nhập một lần vào nhiều AWS account.',
     ],
+    diagram: `~~~flow
+# Khách hàng đi qua Cognito, nhân viên đi qua IAM Identity Center
+Users -> Cognito User Pool -[JWT]-> Cognito Identity Pool -[credentials STS]-> S3
+Nhân viên -> IdP (Entra ID, Okta) -[SAML + SCIM]-> IAM Identity Center -[permission set]-> Nhiều AWS account
+~~~
+
+~~~decide
+# Từ khóa trong đề và lựa chọn
+App cần sign-up, sign-in và nhận JWT => Cognito User Pool
+Người dùng app upload thẳng lên S3 => Cognito Identity Pool
+Khách chưa đăng nhập vẫn gọi AWS với quyền hạn chế => Identity Pool (guest role)
+Nhân viên đăng nhập một lần vào nhiều account => IAM Identity Center
+~~~`,
     keywords: [
       { trigger: 'Người dùng mobile app upload trực tiếp lên S3', answer: 'Cognito Identity Pool' },
       { trigger: 'Sign-up/sign-in cho hàng triệu người dùng app', answer: 'Cognito User Pool' },
@@ -152,6 +191,20 @@ export const secureResilientComparisons: Comparison[] = [
       'Chọn customer managed key khi cần kiểm soát key policy, chia sẻ cross-account hoặc disable/xóa key.',
       'Chọn CloudHSM khi compliance yêu cầu HSM single-tenant do bạn kiểm soát độc quyền.',
     ],
+    diagram: `~~~ladder
+# Kiểm soát càng nhiều, vận hành càng nặng
+AWS managed key | AWS tạo và xoay vòng, không sửa key policy | Không vận hành
+Customer managed key | Bạn quản key policy, grants, chia sẻ cross-account | Thấp
+CloudHSM | HSM single-tenant, bạn giữ key và tự lo HA | Cao
+~~~
+
+~~~decide
+# Yêu cầu trong đề và lựa chọn key
+Mã hóa mặc định, không muốn quản lý gì => AWS managed key
+Chia sẻ snapshot mã hóa với account khác => Customer managed key
+Tự sửa key policy, disable hoặc xóa key => Customer managed key
+HSM single-tenant do công ty kiểm soát độc quyền => CloudHSM
+~~~`,
     keywords: [
       { trigger: 'Hardware security module riêng, single-tenant', answer: 'CloudHSM' },
       { trigger: 'Chia sẻ snapshot mã hóa cho account khác', answer: 'Customer managed KMS key' },
@@ -191,6 +244,20 @@ export const secureResilientComparisons: Comparison[] = [
       'Chọn SSE-C khi phải tự quản lý key nhưng vẫn để S3 mã hóa.',
       'Chọn client-side encryption khi AWS tuyệt đối không được thấy plaintext.',
     ],
+    diagram: `~~~ladder
+# Key chuyển dần từ AWS sang tay bạn
+SSE-S3 | S3 quản lý key, mặc định cho mọi object mới | Mặc định
+SSE-KMS | Key trong KMS, audit qua CloudTrail | Audit
+DSSE-KMS | Key trong KMS, mã hóa hai lớp | 2 lớp
+SSE-C | Bạn gửi key mỗi request, S3 mã hóa | HTTPS
+Client-side | App mã hóa trước khi upload | Tự làm
+~~~
+
+~~~flow
+# S3 Bucket Key giảm số lần gọi KMS với SSE-KMS
+PutObject -[SSE-KMS]-> S3 -[gọi KMS cho mỗi object]-> KMS (dễ bị throttling)
+PutObject -[SSE-KMS + Bucket Key]-> S3 (key cấp bucket tạm thời) -[ít call hơn]-> KMS
+~~~`,
     keywords: [
       { trigger: 'Audit ai đã dùng key', answer: 'SSE-KMS' },
       { trigger: 'KMS throttling khi request rate cao', answer: 'Bật S3 Bucket Keys' },
@@ -222,6 +289,19 @@ export const secureResilientComparisons: Comparison[] = [
       'Chọn Secrets Manager khi credentials phải tự động rotate hoặc replicate sang Region khác.',
       'Chọn Parameter Store cho giá trị cấu hình và secret rẻ, không cần rotation.',
     ],
+    diagram: `~~~decide
+# Chọn nơi lưu secret
+Mật khẩu DB phải tự động rotate => Secrets Manager
+Secret cần có sẵn ở Region DR => Secrets Manager (replica secret)
+Cấu hình phân cấp với chi phí thấp nhất => Parameter Store Standard
+Secret đơn giản, không cần rotation => Parameter Store SecureString
+~~~
+
+~~~flow
+# Ứng dụng đọc giá trị lúc chạy
+App -[GetParameter kèm WithDecryption]-> Parameter Store (SecureString) -[Decrypt]-> KMS
+App -[GetSecretValue]-> Secrets Manager -[replicate]-> Replica secret ở Region DR
+~~~`,
     keywords: [
       { trigger: 'Tự động rotate credentials của RDS', answer: 'Secrets Manager' },
       { trigger: 'Lưu cấu hình với chi phí thấp nhất', answer: 'Parameter Store Standard tier' },
@@ -263,6 +343,21 @@ export const secureResilientComparisons: Comparison[] = [
       'Chọn Security Hub để tập trung finding và kiểm tra theo security standard trên nhiều account.',
       'Chọn Detective để điều tra nguyên nhân gốc của một finding.',
     ],
+    diagram: `~~~flow
+# Phát hiện, tổng hợp rồi điều tra
+GuardDuty (mối đe dọa) -> Security Hub (tổng hợp findings)
+Inspector (lỗ hổng) -> Security Hub (tổng hợp findings)
+Macie (PII trong S3) -> Security Hub (tổng hợp findings)
+GuardDuty (finding) -> Detective (nguyên nhân gốc)
+~~~
+
+~~~groups
+# Mỗi service nhìn vào một nguồn khác nhau
+Log và hoạt động trong account: *GuardDuty, Detective
+Phần mềm trên workload: *Inspector
+Dữ liệu trong S3: *Macie
+Findings của các service khác: *Security Hub
+~~~`,
     keywords: [
       { trigger: 'Phát hiện API call bất thường hoặc đào coin', answer: 'GuardDuty' },
       { trigger: 'Quét CVE cho ECR image', answer: 'Inspector' },
@@ -300,6 +395,19 @@ export const secureResilientComparisons: Comparison[] = [
       'Chọn AWS Config để theo dõi lịch sử cấu hình và áp compliance rule.',
       'Chọn CloudWatch Logs để thu thập, tìm kiếm và cảnh báo trên log ứng dụng và hệ thống.',
     ],
+    diagram: `~~~groups
+# Mỗi công cụ ghi lại một thứ khác nhau
+CloudTrail: Ai gọi API nào, Khi nào và từ đâu
+AWS Config: Cấu hình tài nguyên theo thời gian, *Config rules và remediation
+CloudWatch Logs: Log app và OS, *Metric filter tới alarm
+~~~
+
+~~~flow
+# Một sự việc để lại dấu vết ở từng công cụ
+Admin xóa rule SG -[API call]-> CloudTrail (ai, khi nào, từ đâu)
+Admin xóa rule SG -[cấu hình thay đổi]-> AWS Config (trước và sau, có compliant?)
+App gặp lỗi -[ghi log]-> CloudWatch Logs -[metric filter]-> CloudWatch alarm
+~~~`,
     keywords: [
       { trigger: 'Ai đã thực hiện API call', answer: 'CloudTrail' },
       { trigger: 'Phát hiện và tự sửa tài nguyên non-compliant', answer: 'AWS Config rules + remediation' },
@@ -331,6 +439,22 @@ export const secureResilientComparisons: Comparison[] = [
       'Chọn PrivateLink để expose hoặc dùng một service private, kể cả khi CIDR trùng nhau.',
       'Chọn gateway endpoint để truy cập S3 hoặc DynamoDB private, miễn phí từ trong VPC.',
     ],
+    diagram: `~~~groups
+# Mỗi lựa chọn nối một thứ khác nhau
+VPC peering: Hai VPC 1:1, Không transitive
+Transit Gateway: *Hub transitive, VPC + VPN + DX
+PrivateLink: Một service sau NLB, CIDR trùng vẫn được
+Gateway endpoint: Chỉ S3 và DynamoDB, *Miễn phí
+~~~
+
+~~~decide
+# Từ khóa trong đề và lựa chọn
+Vài VPC, nối đơn giản, chi phí thấp => VPC peering
+Hàng trăm VPC và on-prem, cần transitive => Transit Gateway
+Expose service cho VPC khách hàng có CIDR trùng => PrivateLink
+Private subnet truy cập S3 không tốn phí => Gateway endpoint
+Truy cập S3 private từ on-premises => S3 interface endpoint
+~~~`,
     keywords: [
       { trigger: 'Hàng trăm VPC, đơn giản hóa mạng', answer: 'Transit Gateway' },
       { trigger: 'Expose service cho VPC khác có CIDR trùng', answer: 'PrivateLink (NLB endpoint service)' },
@@ -361,6 +485,21 @@ export const secureResilientComparisons: Comparison[] = [
       'Chọn DX + VPN khi cần cả hiệu năng DX lẫn mã hóa in transit.',
       'Chọn Client VPN cho nhân viên làm việc từ xa kết nối bằng laptop.',
     ],
+    diagram: `~~~flow
+# Các đường từ bên ngoài vào AWS
+Laptop nhân viên -[TLS qua Internet]-> Client VPN endpoint -> VPC
+Customer gateway -[IPsec qua Internet]-> VGW hoặc Transit Gateway -> VPC
+Data center -[đường riêng]-> DX location -[VIF]-> VPC
+Data center -[IPsec chạy trên DX]-> Transit Gateway -> VPC
+~~~
+
+~~~ladder
+# Độ bền kết nối on-prem, từ thấp tới cao
+Một DX connection | Một điểm lỗi đơn | Không dự phòng
+DX + Site-to-Site VPN | VPN qua Internet gánh khi DX lỗi | Tiết kiệm
+Hai DX ở hai location | Chịu được lỗi một location | High
+Hai DX ở mỗi trong hai location | Chịu lỗi cả thiết bị lẫn location | Maximum
+~~~`,
     keywords: [
       { trigger: 'Kết nối nhanh, có mã hóa, chi phí thấp', answer: 'Site-to-Site VPN' },
       { trigger: 'Hiệu năng mạng ổn định, truyền dữ liệu lớn', answer: 'Direct Connect' },
@@ -392,6 +531,21 @@ export const secureResilientComparisons: Comparison[] = [
       'Chọn Aurora Replica cho cả scale đọc và failover nhanh trong một Region.',
       'Chọn Aurora Global Database cho DR cross-Region với RPO và RTO rất thấp.',
     ],
+    diagram: `~~~flow
+# Mỗi loại bản sao phục vụ một mục tiêu
+RDS primary -[sync]-> Multi-AZ standby (AZ khác, không đọc được)
+RDS primary -[async]-> Read Replica (đọc được, promote thủ công)
+Aurora writer -[cluster storage dùng chung]-> Aurora Replica (đọc được, failover tự động)
+Aurora primary Region -[replication dưới 1 giây]-> Secondary Region (Global Database)
+~~~
+
+~~~ladder
+# Phạm vi sự cố mỗi lựa chọn chịu được
+Read Replica cùng Region | Giảm tải đọc, promote thủ công | Không tự failover
+RDS Multi-AZ | Lỗi instance hoặc AZ, failover tự động | AZ
+Aurora Replica | Failover tự động theo priority tier, thường nhanh hơn RDS | AZ
+Aurora Global Database | Sự cố cả Region, RPO khoảng 1 giây | Region
+~~~`,
     keywords: [
       { trigger: 'Failover tự động khi một AZ lỗi', answer: 'RDS Multi-AZ' },
       { trigger: 'Query báo cáo làm chậm production', answer: 'Read Replica' },
@@ -424,6 +578,22 @@ export const secureResilientComparisons: Comparison[] = [
       'Chọn EventBridge để định tuyến event theo nội dung từ AWS service, SaaS hoặc lịch.',
       'Chọn Kinesis Data Streams cho streaming real-time mà nhiều consumer có thể replay.',
     ],
+    diagram: `~~~flow
+# Queue, fan-out, event bus và stream
+Producer -> SQS -[consumer poll]-> Consumer
+Producer -> SNS -[push fan-out]-> Nhiều SQS queue
+Event từ AWS hoặc SaaS -> EventBridge -[rule theo nội dung]-> Target
+Producer -> Kinesis Data Streams -[đọc và replay]-> Nhiều consumer
+~~~
+
+~~~decide
+# Từ khóa trong đề và lựa chọn
+Đệm công việc, decouple các tầng => SQS Standard
+Đúng thứ tự, không trùng lặp => SQS FIFO
+Một message tới nhiều subscriber => SNS
+Định tuyến event từ SaaS theo nội dung => EventBridge
+Nhiều consumer đọc lại dữ liệu real-time => Kinesis Data Streams
+~~~`,
     keywords: [
       { trigger: 'Xử lý đơn hàng theo thứ tự, không trùng', answer: 'SQS FIFO' },
       { trigger: 'Một event tới nhiều queue', answer: 'SNS fan-out tới SQS' },
@@ -455,6 +625,21 @@ export const secureResilientComparisons: Comparison[] = [
       'Chọn warm standby khi phải phục hồi trong vài phút và chấp nhận chạy sẵn một bản nhỏ.',
       'Chọn multi-site active/active khi downtime phải gần bằng 0 bất kể chi phí.',
     ],
+    diagram: `~~~ladder
+# Từ rẻ nhất tới đắt nhất, RTO ngắn dần
+Backup & restore | Chỉ có backup ở Region DR | Vài giờ
+Pilot light | Dữ liệu được replicate, app tắt | Hàng chục phút
+Warm standby | Stack thu nhỏ đang chạy | Vài phút
+Multi-site active/active | Stack đầy đủ đang phục vụ traffic | Gần 0
+~~~
+
+~~~groups
+# Những gì đang chạy ở Region DR
+Backup & restore: Snapshot và backup, Chưa chạy gì
+Pilot light: *Database replica, AMI và IaC sẵn sàng
+Warm standby: *Database replica, *ASG thu nhỏ, ALB
+Multi-site active/active: *Database đầy đủ, *Stack production, Route 53 chia traffic
+~~~`,
     keywords: [
       { trigger: 'Chi phí thấp nhất, RTO vài giờ chấp nhận được', answer: 'Backup & restore' },
       { trigger: 'Chỉ database chạy ở Region DR', answer: 'Pilot light' },
@@ -486,6 +671,22 @@ export const secureResilientComparisons: Comparison[] = [
       'Chọn Geoproximity để định tuyến theo khoảng cách và dịch traffic bằng bias.',
       'Chọn Multivalue để trả về nhiều IP healthy.',
     ],
+    diagram: `~~~decide
+# Từ khóa trong đề và routing policy cần chọn
+Chia phần trăm traffic, canary => Weighted
+Đưa user tới Region phản hồi nhanh nhất => Latency
+Active-passive dựa trên health check => Failover
+Phục vụ theo quốc gia của user, compliance => Geolocation
+Dịch traffic giữa các Region bằng bias => Geoproximity
+Trả về nhiều IP healthy => Multivalue
+~~~
+
+~~~flow
+# Route 53 trả bản ghi khác nhau theo health và trọng số
+Users -> Route 53 -[failover, primary healthy]-> ALB Region chính
+Users -> Route 53 -[failover, primary unhealthy]-> ALB Region DR
+Users -> Route 53 -[weighted 90/10]-> Phiên bản cũ và phiên bản mới
+~~~`,
     keywords: [
       { trigger: 'Gửi 10% traffic sang phiên bản mới', answer: 'Weighted' },
       { trigger: 'Độ trễ thấp nhất cho user toàn cầu', answer: 'Latency' },
@@ -515,6 +716,21 @@ export const secureResilientComparisons: Comparison[] = [
       'Chọn NLB cho TCP/UDP, hiệu năng cực cao, IP tĩnh hoặc PrivateLink.',
       'Chọn GWLB để chèn network appliance bên thứ ba một cách trong suốt.',
     ],
+    diagram: `~~~flow
+# Mỗi load balancer làm việc ở một layer
+Users -[HTTP/HTTPS, layer 7]-> ALB -[path, host, header]-> EC2 / Lambda
+Client -[TCP/UDP, layer 4]-> NLB (IP tĩnh mỗi AZ) -> EC2
+Traffic -[GENEVE, layer 3]-> GWLB -> Firewall appliance -> Đích ban đầu
+~~~
+
+~~~decide
+# Yêu cầu trong đề và load balancer
+Route theo path, host hoặc header => ALB
+Xác thực Cognito/OIDC hoặc gắn WAF => ALB
+IP tĩnh, UDP, hàng triệu request mỗi giây => NLB
+Expose service qua PrivateLink => NLB
+Chèn firewall appliance bên thứ ba trong suốt => GWLB
+~~~`,
     keywords: [
       { trigger: 'Route /api và /images tới target khác nhau', answer: 'ALB' },
       { trigger: 'IP tĩnh để allow-list', answer: 'NLB (hoặc Global Accelerator)' },

@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { MarkReadButton } from '@/components/LessonReadBadge';
+import { KeywordCards } from '@/components/lesson/KeywordCards';
+import { LessonMarkdown, lessonHeadings } from '@/components/lesson/LessonMarkdown';
 import { PageShell } from '@/components/PageShell';
 import { getLessons, getQuestions } from '@/content';
 import { DOMAINS } from '@/content/types';
@@ -42,6 +42,7 @@ export default async function LessonPage(props: LessonPageProps) {
   const rounds = ALL_ROUNDS.filter((round) => round.lessons.some((item) => item === slug));
   const previous = lessons[index - 1];
   const next = lessons[index + 1];
+  const headings = lessonHeadings(lesson.body);
 
   return (
     <PageShell title={t('title')} back={{ href: '/lessons', label: t('all_lessons') }}>
@@ -69,22 +70,30 @@ export default async function LessonPage(props: LessonPageProps) {
           </div>
         </div>
       )}
-      <article className="prose-lesson mt-6">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{lesson.body}</ReactMarkdown>
+      {headings.length > 1 && (
+        <nav className="mt-6 rounded-xl border border-line bg-panel p-4" aria-label={t('in_this_lesson')}>
+          <p className="text-xs font-semibold tracking-widest text-muted uppercase">{t('in_this_lesson')}</p>
+          <ol className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-2">
+            {headings.map((heading, i) => (
+              <li key={heading.id}>
+                <a href={`#${heading.id}`} className="flex gap-2 text-sm hover:text-accent">
+                  <span className="font-mono text-accent">{String(i + 1).padStart(2, '0')}</span>
+                  {heading.text}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )}
+      <article className="prose-lesson mt-8">
+        <LessonMarkdown>{lesson.body}</LessonMarkdown>
       </article>
       <section className="mt-10">
         <h2 className="text-xl font-bold">{t('keywords')}</h2>
         <p className="text-sm text-muted">{t('keywords_intro')}</p>
-        <table className="mt-3 w-full text-sm">
-          <tbody>
-            {lesson.keywords.map((keyword) => (
-              <tr key={keyword.trigger} className="border-b border-line">
-                <td className="py-2 pr-4 text-chalk/80 italic">“{keyword.trigger}”</td>
-                <td className="py-2 font-semibold text-accent">→ {keyword.answer}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="mt-3">
+          <KeywordCards keywords={lesson.keywords} />
+        </div>
       </section>
       <section className="mt-8">
         <h2 className="text-xl font-bold">{t('traps')}</h2>

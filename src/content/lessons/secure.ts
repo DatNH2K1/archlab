@@ -2,6 +2,181 @@ import type { Lesson } from '@/content/types';
 
 export const secureLessons: Lesson[] = [
   {
+    slug: 'security-layers-overview',
+    domain: 'secure',
+    title: 'Tổng quan bảo mật theo từng lớp hệ thống',
+    summary:
+      'Bản đồ tổng hợp: mỗi lớp của hệ thống (edge, mạng, compute, ứng dụng, dữ liệu) bị tấn công kiểu gì và dịch vụ AWS nào chặn ở lớp đó. Đọc bài này trước khi đi vào từng bài chi tiết.',
+    services: [
+      'AWS WAF',
+      'AWS Shield',
+      'Amazon CloudFront',
+      'AWS Network Firewall',
+      'Amazon VPC',
+      'AWS IAM',
+      'AWS KMS',
+      'Amazon GuardDuty',
+      'AWS Security Hub',
+    ],
+    minutes: 8,
+    body: `## Tư duy defense in depth
+
+Đề thi hay liệt kê một loạt dịch vụ bảo mật (WAF, Shield, Security Group, NACL, Network Firewall, KMS, GuardDuty...) làm đáp án nhiễu. Cách gỡ nhanh nhất: **xác định mối đe dọa nằm ở lớp nào**, rồi chọn dịch vụ làm việc ở đúng lớp đó.
+
+Không có lớp nào đủ một mình. Request từ Internet phải đi qua nhiều lớp, mỗi lớp chặn một kiểu tấn công khác nhau. Lớp ngoài cùng chặn sớm và rẻ, lớp trong cùng bảo vệ dữ liệu khi các lớp ngoài đã bị vượt qua.
+
+~~~layers
+# Từ ngoài vào trong: mỗi lớp một nhóm dịch vụ
+Edge (ngoài VPC): Route 53, CloudFront, *AWS WAF, *Shield
+Mạng (VPC và subnet): Public/private subnet, *NACL, Network Firewall, NAT Gateway, VPC endpoint
+Compute (instance): *Security Group, IMDSv2, Inspector, Systems Manager Patch Manager
+Ứng dụng: Cognito, API Gateway authorizer, Secrets Manager, ACM (TLS)
+Dữ liệu (lõi): *KMS, S3 Block Public Access, bucket policy, Macie, AWS Backup
+~~~
+
+Hai thứ **không thuộc một lớp nào mà xuyên suốt tất cả**:
+
+- **Identity (IAM)**: ai được gọi API nào. Áp dụng cho mọi lớp, từ việc sửa WAF rule tới việc đọc KMS key.
+- **Phát hiện và audit**: CloudTrail, Config, GuardDuty, Security Hub ghi lại và cảnh báo những gì xảy ra ở mọi lớp.
+
+~~~groups
+# Hai lớp xuyên suốt nằm cạnh 5 lớp hệ thống
+Kiểm soát truy cập (IAM): IAM policy, *Role thay access key, SCP, Permissions boundary, IAM Identity Center
+Phát hiện và audit: *CloudTrail, AWS Config, *GuardDuty, Security Hub, Detective
+~~~
+
+## Một request đi qua các lớp như thế nào
+
+Theo một request HTTPS từ người dùng tới database trong kiến trúc web 3 tầng chuẩn:
+
+~~~flow
+# Mỗi chặng có một lớp kiểm tra riêng
+Users -[DNS]-> Route 53 -[HTTPS]-> CloudFront (WAF + Shield) -> ALB (public subnet) -> EC2 (private subnet)
+EC2 (private subnet) -[SG port 3306]-> RDS (KMS mã hóa) -> Snapshot (cũng được mã hóa)
+~~~
+
+Điểm cần nhớ ở từng chặng:
+
+1. **Route 53 + CloudFront + Shield Standard**: hấp thụ DDoS lớp 3/4 ở edge, trước khi traffic chạm tới VPC.
+2. **AWS WAF** (gắn vào CloudFront, ALB, API Gateway hoặc AppSync): lọc theo nội dung HTTP như SQL injection, XSS, rate limit theo IP, chặn theo quốc gia.
+3. **ALB trong public subnet**: chỉ ALB có đường ra Internet. Security Group của ALB mở 443 từ Internet (hoặc chỉ từ prefix list của CloudFront).
+4. **EC2 trong private subnet**: không có public IP. Security Group chỉ nhận traffic **từ Security Group của ALB**, không mở theo CIDR.
+5. **RDS**: Security Group chỉ nhận từ Security Group của tầng app. Dữ liệu mã hóa at rest bằng KMS, kết nối bằng TLS.
+
+~~~groups
+# Vị trí các tầng trong VPC
+[VPC 10.0.0.0/16]
+Public subnet: *ALB, NAT Gateway
+Private subnet (app): *EC2 (ASG)
+Private subnet (data): *RDS, ElastiCache
+~~~
+
+## Bảng tổng hợp: lớp, mối đe dọa, dịch vụ
+
+| Lớp | Mối đe dọa điển hình | Dịch vụ chặn ở lớp này | Đề thi hay nói |
+|---|---|---|---|
+| Edge | DDoS, bot, SQL injection, XSS | Shield, WAF, CloudFront | "tấn công lớp 7", "chặn SQL injection", "DDoS" |
+| Mạng | Truy cập từ IP lạ, lọc traffic giữa subnet, thoát dữ liệu ra Internet | NACL, Network Firewall, private subnet, VPC endpoint | "chặn một dải IP", "lọc theo domain", "không đi qua Internet" |
+| Compute | Port mở thừa, OS chưa vá, lộ credential trên instance | Security Group, Inspector, Patch Manager, IMDSv2, role | "least privilege giữa các tầng", "lỗ hổng phần mềm" |
+| Ứng dụng | Người dùng chưa xác thực, secret hard-code, nghe lén | Cognito, API Gateway authorizer, Secrets Manager, ACM | "đăng nhập cho app mobile", "rotate mật khẩu DB" |
+| Dữ liệu | Đọc trộm dữ liệu, bucket public, xoá nhầm, ransomware | KMS, S3 Block Public Access, Macie, Object Lock, Backup | "mã hóa at rest", "tìm dữ liệu PII", "WORM" |
+
+## Lọc traffic: 5 dịch vụ hay bị nhầm
+
+Câu hỏi khó nhất thường đặt các dịch vụ lọc traffic cạnh nhau. Phân biệt bằng **lớp OSI** và **phạm vi gắn vào**:
+
+~~~ladder
+# Từ lớp ứng dụng xuống lớp mạng
+AWS WAF | Đọc nội dung HTTP: URL, header, body, IP, quốc gia | L7
+AWS Shield Advanced | Chống DDoS có đội hỗ trợ DRT và bảo vệ chi phí | L3/4/7
+Network Firewall | Firewall stateful cho cả VPC, lọc theo domain, IPS | L3-7
+Network ACL | Stateless, rule allow/deny theo CIDR cho cả subnet | L3/4
+Security Group | Stateful, chỉ allow, gắn vào ENI/instance | L3/4
+~~~
+
+~~~decide
+# Đề nói gì thì chọn dịch vụ lọc nào
+Chặn SQL injection hoặc XSS => AWS WAF
+Giới hạn số request mỗi IP trong 5 phút => AWS WAF rate-based rule
+Chặn một IP cụ thể ở cấp subnet => Network ACL rule Deny
+Chỉ cho EC2 truy cập ra một danh sách domain => AWS Network Firewall
+DDoS lớn, cần đội AWS hỗ trợ và hoàn phí scale => Shield Advanced
+Chỉ tầng app được nối tới database => Security Group tham chiếu SG
+~~~
+
+## Mã hóa: in transit và at rest
+
+Mã hóa là lớp bảo vệ cuối cùng: dù kẻ tấn công lấy được ổ đĩa hay bản snapshot, không có key thì không đọc được.
+
+~~~flow
+# In transit dùng TLS, at rest dùng KMS
+Users -[TLS, cert ACM]-> CloudFront -[TLS]-> ALB -[TLS tuỳ chọn]-> EC2
+EC2 -[TLS]-> RDS -[at rest]-> KMS key
+~~~
+
+- **In transit**: TLS ở mọi chặng. Certificate public miễn phí từ **ACM**, gắn vào CloudFront, ALB, API Gateway. Muốn bắt buộc HTTPS khi truy cập S3: bucket policy với điều kiện \`aws:SecureTransport\`.
+- **At rest**: hầu hết dịch vụ lưu trữ (S3, EBS, RDS, DynamoDB, EFS) mã hóa bằng **KMS**. Muốn tự kiểm soát key policy và rotation thì dùng **customer managed key**; cần HSM single-tenant theo FIPS 140-3 level 3 thì dùng **CloudHSM**.
+
+## Identity: lớp không bao giờ được bỏ qua
+
+Mạng chặn **ai có thể chạm tới** tài nguyên; IAM chặn **ai được phép gọi API**. Một bucket S3 không nằm trong VPC nào, nên chỉ IAM và bucket policy bảo vệ nó.
+
+~~~flow
+# Một API call được đánh giá qua nhiều tầng policy
+Request -> SCP (giới hạn account) -> Permissions boundary -> Identity policy -> Resource policy
+~~~
+
+- Deny tường minh ở bất kỳ tầng nào đều thắng.
+- Ứng dụng trên EC2, Lambda, ECS dùng **IAM role**, không lưu access key trên máy.
+- Người dùng nội bộ đăng nhập qua **IAM Identity Center**; người dùng cuối của app qua **Cognito**.
+
+## Phát hiện và phản ứng
+
+Các lớp phòng thủ có thể bị vượt qua, nên cần lớp **phát hiện**. Đây là chuỗi điển hình mà đề thi hay hỏi:
+
+~~~flow
+# Từ log tới tự động xử lý
+CloudTrail + VPC Flow Logs + DNS logs -> GuardDuty (phát hiện) -> Security Hub (gom kết quả)
+GuardDuty (finding) -> EventBridge -> Lambda (cô lập instance) -> SNS (báo đội vận hành)
+~~~
+
+~~~decide
+# Mỗi dịch vụ phát hiện trả lời một câu hỏi
+Ai đã gọi API gì, lúc nào => CloudTrail
+Cấu hình tài nguyên có đúng chuẩn không, ai đổi nó => AWS Config
+Có hành vi bất thường như đào coin, gọi IP độc hại => GuardDuty
+EC2 hoặc image container có CVE chưa vá => Amazon Inspector
+S3 có chứa dữ liệu nhạy cảm như PII => Amazon Macie
+Gom tất cả finding và chấm điểm theo chuẩn => Security Hub
+~~~
+
+## Tóm tắt nhanh
+
+1. Gặp câu hỏi bảo mật: xác định lớp trước (edge, mạng, compute, ứng dụng, dữ liệu), rồi mới chọn dịch vụ.
+2. HTTP/nội dung request → WAF. DDoS → Shield. Subnet/IP → NACL. Giữa các tầng → Security Group. Lọc domain cả VPC → Network Firewall.
+3. Dữ liệu luôn mã hóa: TLS (ACM) khi truyền, KMS khi lưu.
+4. IAM và lớp phát hiện (CloudTrail, Config, GuardDuty, Security Hub) áp dụng cho mọi lớp.
+5. Chi tiết từng lớp nằm ở các bài tiếp theo trong domain này: IAM, Organizations, Cognito, bảo mật VPC, kết nối VPC, KMS, secrets và WAF/Shield/GuardDuty.
+`,
+    keywords: [
+      { trigger: 'chặn SQL injection, XSS, rate limit theo IP', answer: 'AWS WAF' },
+      { trigger: 'DDoS lớn, cần đội hỗ trợ và bảo vệ chi phí', answer: 'AWS Shield Advanced' },
+      { trigger: 'chặn một dải IP ở cấp subnet', answer: 'Network ACL' },
+      { trigger: 'lọc traffic ra theo domain cho cả VPC', answer: 'AWS Network Firewall' },
+      { trigger: 'chỉ tầng app được kết nối tới database', answer: 'Security Group tham chiếu Security Group' },
+      { trigger: 'mã hóa at rest, tự quản lý key policy', answer: 'KMS customer managed key' },
+      { trigger: 'gom finding bảo mật từ nhiều dịch vụ và account', answer: 'AWS Security Hub' },
+    ],
+    traps: [
+      'Security Group và NACL không đọc được nội dung HTTP; chặn SQL injection phải dùng WAF.',
+      'WAF không gắn được vào NLB hay EC2 trực tiếp; chỉ gắn vào CloudFront, ALB, API Gateway, AppSync, Cognito User Pool và một vài dịch vụ khác.',
+      'Security Group không có rule Deny; muốn chặn một IP cụ thể thì dùng NACL hoặc WAF.',
+      'S3 không nằm trong VPC; bảo vệ nó bằng IAM, bucket policy và Block Public Access chứ không phải Security Group.',
+      'GuardDuty chỉ phát hiện, không tự chặn; muốn phản ứng tự động thì nối qua EventBridge tới Lambda.',
+      'Shield Standard miễn phí và tự bật; chỉ Shield Advanced mới có DRT và bảo vệ chi phí.',
+    ],
+  },
+  {
     slug: 'iam-fundamentals',
     domain: 'secure',
     title: 'IAM căn bản: User, Group, Role và Policy',
@@ -21,6 +196,14 @@ AWS Identity and Access Management (IAM) là service global (không thuộc Regi
 - **IAM role**: danh tính không có credentials dài hạn. Ai được phép (theo trust policy) sẽ assume role và nhận **temporary credentials** từ AWS STS.
 - **Policy**: tài liệu JSON gồm Effect (Allow/Deny), Action, Resource, Condition.
 
+~~~groups
+# Các danh tính IAM và cách chúng có credentials
+Root user: Toàn quyền account, *Bật MFA rồi cất đi
+IAM user: Mật khẩu console, Access key dài hạn
+IAM group: Chỉ chứa user, Không lồng nhau, Không phải principal
+IAM role: Trust policy, *Credentials tạm thời từ STS
+~~~
+
 ### Các loại policy
 
 | Loại | Gắn vào | Ghi chú thi |
@@ -33,6 +216,14 @@ AWS Identity and Access Management (IAM) là service global (không thuộc Regi
 | SCP (Organizations) | OU/Account | Giới hạn quyền tối đa cho cả account |
 | Session policy | Khi assume role | Thu hẹp quyền của phiên |
 
+~~~groups
+# Mỗi loại policy gắn ở đâu
+Identity: Managed policy, Inline policy, *Permission boundary (chỉ user hoặc role)
+Tài nguyên: Bucket policy, Key policy, Trust policy của role
+Organizations: *SCP ở OU hoặc account
+Phiên: Session policy khi assume role
+~~~
+
 ## Logic đánh giá policy (Policy evaluation)
 
 1. Mặc định mọi request bị **implicit deny**.
@@ -44,9 +235,23 @@ Ghi nhớ: **quyền hiệu lực = giao (intersection)** của identity policy 
 
 Với truy cập **cross-account**, cả hai phía phải cho phép: identity policy ở account gọi và resource-based policy (hoặc trust policy của role) ở account sở hữu tài nguyên.
 
+~~~ladder
+# Một request được đánh giá từ trên xuống
+Explicit Deny | Có ở bất kỳ policy nào là từ chối ngay | Deny
+SCP, permission boundary, session policy | Phải cho phép, nhưng không tự cấp quyền | Bộ lọc
+Identity-based hoặc resource-based policy | Phải có ít nhất một Allow | Allow
+Không có Allow nào | Mặc định từ chối | Implicit deny
+~~~
+
 ### Permission boundary dùng khi nào
 
 Tình huống kinh điển: cho phép developer tự tạo IAM role cho Lambda của họ nhưng không được leo thang đặc quyền (privilege escalation). Giải pháp: yêu cầu mọi role do developer tạo phải gắn một permission boundary nhất định (dùng Condition iam:PermissionsBoundary).
+
+~~~flow
+# Developer chỉ tạo được role có gắn boundary
+Developer -[CreateRole kèm boundary]-> Role cho Lambda -> Quyền = policy giao boundary
+Developer -[CreateRole không kèm boundary]-> Bị từ chối (Condition iam:PermissionsBoundary)
+~~~
 
 ## Root user – best practices
 
@@ -68,11 +273,25 @@ Tình huống kinh điển: cho phép developer tự tạo IAM role cho Lambda c
 - IAM Credential Report (cấp account) và IAM Access Advisor (cấp user/role, xem service nào được dùng lần cuối) giúp dọn quyền thừa.
 - IAM Access Analyzer: phát hiện tài nguyên được chia sẻ ra ngoài account/organization, kiểm tra policy, sinh policy least-privilege từ CloudTrail.
 
+~~~decide
+# Công cụ dọn quyền và credentials
+Liệt kê password, access key, MFA của mọi user => IAM Credential Report
+Xem service nào user hoặc role dùng lần cuối => IAM Access Advisor
+Tìm tài nguyên chia sẻ ra ngoài account hoặc organization => IAM Access Analyzer
+Sinh policy least-privilege từ hoạt động trong CloudTrail => IAM Access Analyzer
+~~~
+
 ## Role cho service và Instance profile
 
 - EC2 dùng role thông qua **instance profile** (container chứa role). Ứng dụng trên EC2 lấy temporary credentials từ Instance Metadata Service (nên dùng IMDSv2).
 - Lambda dùng **execution role**; ECS task dùng **task role** (khác task execution role dùng để pull image và ghi log).
 - Có thể thay role cho EC2 đang chạy mà không cần stop instance.
+
+~~~flow
+# EC2 dùng role thay cho access key
+IAM role -> Instance profile -> EC2
+App trên EC2 -[IMDSv2]-> Credentials tạm (tự xoay vòng) -> S3
+~~~
 
 ## So sánh nhanh
 
@@ -126,6 +345,15 @@ AWS Organizations gom nhiều account vào một tổ chức có **management ac
 - Hai chế độ: chỉ consolidated billing, hoặc **all features** (cần thiết để dùng SCP).
 - Tạo account mới bằng API, tự có role OrganizationAccountAccessRole để management account quản trị.
 
+~~~groups
+# Policy gắn ở OU được kế thừa xuống các account con
+[Organization root]
+Management account: Billing tập trung, *Không chịu SCP
+OU Security: Log Archive account, Audit account
+OU Prod: Account app A, Account app B
+OU Dev: Account dev, Account sandbox
+~~~
+
 ## Service Control Policy (SCP)
 
 SCP đặt **giới hạn quyền tối đa** cho mọi IAM user và role trong member account, **kể cả root user của member account**.
@@ -140,6 +368,12 @@ Ngoài SCP còn có **Resource Control Policy (RCP)** giới hạn quyền tối
 
 Muốn chặn truy cập tài nguyên từ ngoài tổ chức: dùng Condition **aws:PrincipalOrgID** trong resource-based policy (ví dụ bucket policy chỉ cho principal thuộc organization của mình).
 
+~~~flow
+# SCP chỉ là bộ lọc: quyền thực tế là phần giao của SCP và IAM policy
+Request trong member account -[SCP cho phép?]-> IAM policy -[có Allow?]-> Được thực thi
+Request tới Region ngoài danh sách -[SCP Deny]-> Bị từ chối (kể cả root của member account)
+~~~
+
 ## AWS Control Tower
 
 Control Tower dựng **landing zone** đa account theo best practice chỉ với vài thao tác, chạy trên Organizations.
@@ -148,6 +382,13 @@ Control Tower dựng **landing zone** đa account theo best practice chỉ với
 - **Controls** (trước gọi là guardrails): preventive (thực thi bằng SCP), detective (thực thi bằng AWS Config rules), proactive (kiểm tra bằng CloudFormation hooks trước khi tạo tài nguyên).
 - **Account Factory**: tạo account mới đã chuẩn hóa.
 - Dashboard thấy account nào không tuân thủ.
+
+~~~groups
+# Ba loại control của Control Tower
+Preventive: Chặn trước khi xảy ra, *Thực thi bằng SCP
+Detective: Phát hiện sau khi xảy ra, *Thực thi bằng AWS Config rules
+Proactive: Kiểm tra trước khi tạo tài nguyên, *CloudFormation hooks
+~~~
 
 Từ khóa đề: "set up and govern a secure multi-account environment quickly", "landing zone" → Control Tower.
 
@@ -158,6 +399,12 @@ Tên mới của AWS Single Sign-On. Một nơi đăng nhập cho nhiều AWS ac
 - Identity source: thư mục có sẵn của Identity Center, Active Directory (qua AWS Managed Microsoft AD hoặc AD Connector), hoặc IdP bên ngoài (Microsoft Entra ID, Okta...) qua SAML 2.0 + SCIM.
 - **Permission set**: tập policy được gán cho user/group trên từng account, Identity Center tự tạo role tương ứng trong account.
 - Là lựa chọn được AWS khuyến nghị cho truy cập của con người (workforce), thay vì tạo IAM user ở từng account.
+
+~~~flow
+# Một lần đăng nhập, nhiều account
+IdP bên ngoài (Entra ID, Okta) -[SCIM đồng bộ user và group]-> IAM Identity Center
+Nhân viên -[đăng nhập SAML]-> IAM Identity Center -[permission set]-> Role tự tạo trong từng account
+~~~
 
 ## Identity-based vs Resource-based policy
 
@@ -170,11 +417,23 @@ Tên mới của AWS Single Sign-On. Một nơi đăng nhập cho nhiều AWS ac
 
 Điểm thi: khi assume role, bạn **mất quyền của danh tính gốc** và chỉ có quyền của role. Với resource-based policy thì principal vẫn giữ quyền của mình (hữu ích khi cần đọc từ bucket A và ghi vào bucket B ở hai account khác nhau).
 
+~~~flow
+# Assume role thì mất quyền gốc, resource-based policy thì không
+Role ở account A -[sts:AssumeRole]-> Role ở account B (chỉ còn quyền của role B)
+Role ở account A -[bucket policy cho phép]-> Bucket ở account B (vẫn giữ quyền ở account A)
+~~~
+
 ## Truy cập cross-account bằng STS AssumeRole
 
 1. Account B (sở hữu tài nguyên) tạo role với **trust policy** cho phép account A (hoặc role cụ thể) assume.
 2. Account A cấp cho user/role quyền sts:AssumeRole trên ARN của role đó.
 3. Ứng dụng gọi AssumeRole, nhận temporary credentials (mặc định 1 giờ, tối đa theo cấu hình max session duration của role, có thể tới 12 giờ).
+
+~~~flow
+# Account A truy cập tài nguyên của account B
+User/role ở account A -[sts:AssumeRole]-> STS -[kiểm tra trust policy]-> Role ở account B
+Role ở account B -[credentials tạm]-> S3 (bucket của account B)
+~~~
 
 Cho **bên thứ ba** (vendor) truy cập: dùng role cross-account với **External ID** trong Condition để chống "confused deputy". Không bao giờ chia sẻ access key.
 
@@ -233,11 +492,22 @@ Federation cho phép danh tính được quản lý **bên ngoài AWS** (Active 
 - Luồng: user đăng nhập IdP → IdP trả SAML assertion → gọi **AssumeRoleWithSAML** (hoặc dùng endpoint đăng nhập console) → nhận credentials tạm.
 - Ngày nay AWS khuyến nghị dùng **IAM Identity Center** làm lớp trung gian khi có nhiều account.
 
+~~~flow
+# Luồng SAML 2.0 federation
+Nhân viên -> IdP doanh nghiệp (AD FS, Entra ID, Okta) -[SAML assertion]-> STS (AssumeRoleWithSAML) -[credentials tạm]-> AWS console / API
+~~~
+
 ### OIDC / Web identity federation
 
 - Dành cho ứng dụng web/mobile với IdP như Google, Facebook, Amazon, Apple hoặc IdP OIDC bất kỳ.
 - API: **AssumeRoleWithWebIdentity**. Với ứng dụng mobile, AWS khuyến nghị dùng **Cognito Identity Pools** thay vì gọi trực tiếp.
 - Còn dùng cho workload: GitHub Actions, EKS (IRSA) assume role qua OIDC mà không cần access key.
+
+~~~flow
+# Workload đổi token OIDC lấy credentials tạm, không cần access key
+GitHub Actions -[OIDC token]-> STS (AssumeRoleWithWebIdentity) -[credentials tạm]-> Deploy lên AWS
+Pod EKS (IRSA) -[token của service account]-> STS (AssumeRoleWithWebIdentity) -[credentials tạm]-> DynamoDB
+~~~
 
 ## Amazon Cognito
 
@@ -248,6 +518,12 @@ Federation cho phép danh tính được quản lý **bên ngoài AWS** (Active 
 - Trả về **JWT** (ID token, access token, refresh token).
 - Tích hợp trực tiếp: **API Gateway** (Cognito authorizer), **Application Load Balancer** (listener rule authenticate-cognito).
 - Lambda triggers để tùy biến luồng (pre sign-up, post confirmation...).
+
+~~~flow
+# User Pool bảo vệ ALB và API Gateway
+Users -> ALB (authenticate-cognito) -[chuyển hướng nếu chưa đăng nhập]-> Cognito hosted UI -[đăng nhập xong]-> ALB -> EC2
+Users -[JWT trong header]-> API Gateway (Cognito authorizer) -> Lambda
+~~~
 
 ### Identity Pools – phân quyền (authorization tới AWS)
 
@@ -265,6 +541,11 @@ Federation cho phép danh tính được quản lý **bên ngoài AWS** (Active 
 
 Kết hợp phổ biến: user đăng nhập qua User Pool, rồi đổi JWT ở Identity Pool để upload ảnh thẳng lên S3.
 
+~~~flow
+# User Pool xác thực, Identity Pool cấp quyền AWS
+Users -[sign-in]-> Cognito User Pool -[JWT]-> Cognito Identity Pool -[credentials tạm]-> S3 (prefix riêng của user)
+~~~
+
 ## AWS Directory Service
 
 | Lựa chọn | Bản chất | Khi nào chọn |
@@ -279,6 +560,13 @@ Kết hợp phổ biến: user đăng nhập qua User Pool, rồi đổi JWT ở
 - "Không muốn lưu thông tin thư mục trên cloud", "proxy" → **AD Connector**. AD Connector phụ thuộc kết nối tới on-prem; nếu đường truyền đứt thì xác thực lỗi.
 - "Low cost, basic AD features, standalone" → **Simple AD**.
 
+~~~decide
+# Chọn lựa chọn Directory Service
+Cần trust với AD on-prem hoặc chạy app cần AD trên AWS => AWS Managed Microsoft AD
+Dùng AD on-prem sẵn có, không lưu dữ liệu thư mục trên cloud => AD Connector
+Thư mục nhỏ, chi phí thấp, không cần trust => Simple AD
+~~~
+
 ## Chọn giải pháp nào?
 
 | Tình huống | Đáp án |
@@ -288,6 +576,12 @@ Kết hợp phổ biến: user đăng nhập qua User Pool, rồi đổi JWT ở
 | App mobile upload trực tiếp lên S3 | Cognito Identity Pool |
 | Có IdP SAML, chỉ một account | SAML federation với IAM role |
 | Bảo vệ ứng dụng sau ALB bằng đăng nhập | ALB + Cognito User Pool hoặc OIDC IdP |
+
+~~~groups
+# Ai đăng nhập quyết định chọn service nào
+Nhân viên (workforce): *IAM Identity Center, SAML federation, Directory Service
+Khách hàng của ứng dụng: *Cognito User Pool, Cognito Identity Pool, Đăng nhập Google/Facebook/Apple
+~~~
 
 ## Mẹo làm bài
 
@@ -329,6 +623,14 @@ Kết hợp phổ biến: user đăng nhập qua User Pool, rồi đổi JWT ở
 - **Egress-only Internet Gateway**: cho IPv6 đi ra Internet mà không cho chiều vào (tương đương NAT cho IPv6).
 - Địa chỉ **public IPv4 bị tính phí** theo giờ (kể cả Elastic IP đang dùng), nên hạn chế gán public IP không cần thiết.
 
+~~~groups
+# Public subnet có route tới IGW, private subnet đi ra qua NAT
+[VPC 10.0.0.0/16]
+Public subnet: ALB, NAT Gateway, *Route 0.0.0.0/0 tới IGW
+Private subnet: EC2, *Route 0.0.0.0/0 tới NAT Gateway
+Database subnet: RDS, Không có route ra Internet
+~~~
+
 ## NAT Gateway vs NAT instance
 
 Instance trong private subnet cần ra Internet (cập nhật patch, gọi API bên ngoài) nhưng không cho Internet khởi tạo kết nối vào → dùng NAT.
@@ -343,6 +645,12 @@ Instance trong private subnet cần ra Internet (cập nhật patch, gọi API b
 | Cấu hình đặc biệt | Đặt trong public subnet, có Elastic IP | Phải **tắt source/destination check** |
 
 Kiến trúc chuẩn HA: mỗi AZ có một NAT Gateway trong public subnet, route table của private subnet cùng AZ trỏ tới NAT GW cùng AZ (tránh phí cross-AZ và tránh điểm lỗi đơn).
+
+~~~flow
+# Mỗi AZ một NAT Gateway, chỉ cho chiều đi ra
+EC2 (private subnet AZ a) -> NAT Gateway (public subnet AZ a) -> Internet Gateway -> Internet
+EC2 (private subnet AZ b) -> NAT Gateway (public subnet AZ b) -> Internet Gateway -> Internet
+~~~
 
 ## Security Group vs Network ACL
 
@@ -361,6 +669,12 @@ Kiến trúc chuẩn HA: mỗi AZ có một NAT Gateway trong public subnet, rou
 - Kiến trúc 3 tầng: SG của app chỉ cho phép inbound từ **SG của ALB**; SG của DB chỉ cho phép port DB từ **SG của app**. Tham chiếu SG an toàn hơn CIDR vì tự cập nhật khi scale.
 - NACL quên mở ephemeral port outbound → client không nhận được phản hồi.
 
+~~~flow
+# NACL lọc ở biên subnet, SG lọc ở từng instance; các tầng nối bằng SG ID
+Internet -> NACL (subnet, stateless) -> Security Group (ENI, stateful) -> EC2
+ALB SG -[chỉ port app]-> App SG -[chỉ port DB]-> DB SG
+~~~
+
 ## Truy cập quản trị instance
 
 - **Bastion host**: EC2 trong public subnet, SG chỉ mở SSH từ IP công ty; từ đó SSH vào private instance. Phải tự vá lỗi, quản lý key.
@@ -368,6 +682,13 @@ Kiến trúc chuẩn HA: mỗi AZ có một NAT Gateway trong public subnet, rou
 - **EC2 Instance Connect**: đẩy SSH key tạm thời qua API; Instance Connect Endpoint cho phép SSH vào instance private không cần public IP.
 
 Đề hỏi "most secure, least operational overhead to access private instances" → **Session Manager**.
+
+~~~flow
+# Session Manager không cần bastion hay port inbound
+Admin -[SSH port 22]-> Bastion (public subnet) -[SSH]-> EC2 (private subnet)
+Admin -[IAM, console hoặc CLI]-> Systems Manager -> SSM Agent trên EC2 (không mở port inbound)
+SSM Agent -[HTTPS outbound qua NAT hoặc VPC endpoint]-> Systems Manager
+~~~
 
 ## VPC Flow Logs
 
@@ -383,6 +704,12 @@ Kiến trúc chuẩn HA: mỗi AZ có một NAT Gateway trong public subnet, rou
 - Kiến trúc tập trung: inspection VPC gắn với Transit Gateway để lọc traffic East-West và egress cho nhiều VPC.
 - Quản lý chính sách đa account qua Firewall Manager.
 
+~~~flow
+# Route table đưa traffic đi qua firewall endpoint
+Internet -> Internet Gateway -[ingress route table]-> Firewall endpoint (firewall subnet) -> ALB (public subnet)
+EC2 (private subnet) -> NAT Gateway -> Firewall endpoint -> Internet Gateway
+~~~
+
 | Nhu cầu | Chọn |
 |---|---|
 | Lọc HTTP layer 7 (SQLi, XSS) trước ALB/CloudFront | AWS WAF |
@@ -390,6 +717,14 @@ Kiến trúc chuẩn HA: mỗi AZ có một NAT Gateway trong public subnet, rou
 | Chặn truy vấn DNS tới domain độc hại | Route 53 Resolver DNS Firewall |
 | Chặn IP ở cấp subnet | NACL |
 | Cho phép traffic giữa các tầng ứng dụng | Security Group |
+
+~~~ladder
+# Các lớp lọc traffic từ ngoài vào trong
+AWS WAF | HTTP layer 7 tại CloudFront hoặc ALB | Layer 7
+Network Firewall | Stateful, lọc FQDN, IPS cho cả VPC | VPC
+NACL | Stateless, Allow và Deny ở biên subnet | Subnet
+Security Group | Stateful, chỉ Allow ở từng ENI | ENI
+~~~
 
 ## Mẹo làm bài
 
@@ -441,6 +776,13 @@ Kiến trúc chuẩn HA: mỗi AZ có một NAT Gateway trong public subnet, rou
 - Hỗ trợ **ECMP** với VPN để cộng gộp băng thông nhiều tunnel; hỗ trợ IP multicast.
 - Chia sẻ TGW giữa các account bằng **RAM**.
 
+~~~flow
+# Peering không transitive, Transit Gateway thì có
+VPC A -[peering]-> VPC B -[peering]-> VPC C (A không tới được C)
+VPC A -> Transit Gateway -> VPC C (định tuyến transitive)
+On-premises -[VPN hoặc DX]-> Transit Gateway -> VPC B
+~~~
+
 | Tiêu chí | VPC Peering | Transit Gateway |
 |---|---|---|
 | Transitive | Không | Có |
@@ -464,11 +806,23 @@ Cho phép tài nguyên trong VPC truy cập dịch vụ AWS **không đi qua Int
 - Khi đề nói "private subnet truy cập S3, giảm chi phí NAT" → **gateway endpoint**.
 - Interface endpoint cần bật private DNS để SDK dùng tên mặc định của service.
 
+~~~flow
+# Đi tới dịch vụ AWS mà không qua Internet hay NAT
+EC2 (private subnet) -[route table]-> Gateway endpoint (miễn phí) -> S3
+EC2 (private subnet) -[private DNS]-> Interface endpoint (ENI, tính phí) -> SQS
+On-premises -[VPN hoặc DX]-> Interface endpoint -> S3
+~~~
+
 ## AWS PrivateLink
 
 - Công nghệ đằng sau interface endpoint. Cho phép **cung cấp dịch vụ của bạn** (đặt sau **Network Load Balancer** hoặc Gateway Load Balancer) cho VPC khác/account khác/khách hàng mà **không cần peering, không lộ cả VPC**, không quan tâm CIDR chồng lấn.
 - Chỉ hướng một chiều: consumer khởi tạo kết nối tới service.
 - Đề: "expose a service to hundreds of customer VPCs, overlapping CIDRs, private" → **PrivateLink**.
+
+~~~flow
+# Consumer chỉ thấy một ENI, không thấy cả VPC của provider
+VPC khách hàng -> Interface endpoint (ENI) -[PrivateLink]-> Endpoint service -> NLB -> App của provider
+~~~
 
 ## Site-to-Site VPN
 
@@ -476,6 +830,12 @@ Cho phép tài nguyên trong VPC truy cập dịch vụ AWS **không đi qua Int
 - Mỗi kết nối có **2 tunnel** ở 2 endpoint khác nhau để HA; mỗi tunnel tối đa khoảng **1,25 Gbps**.
 - Thiết lập nhanh (vài phút đến vài giờ), rẻ, nhưng độ trễ phụ thuộc Internet.
 - Routing tĩnh hoặc động (BGP).
+
+~~~flow
+# Mỗi kết nối VPN có hai tunnel tới hai endpoint để HA
+Customer Gateway (on-prem) -[tunnel IPsec 1]-> VGW endpoint 1 -> VPC
+Customer Gateway (on-prem) -[tunnel IPsec 2]-> VGW endpoint 2 -> VPC
+~~~
 
 ## AWS VPN CloudHub
 
@@ -496,6 +856,12 @@ Cho phép tài nguyên trong VPC truy cập dịch vụ AWS **không đi qua Int
 - **Không mã hóa mặc định**. Muốn mã hóa: **Site-to-Site VPN chạy trên DX** (qua public VIF hoặc private IP VPN) hoặc **MACsec** (layer 2) trên các kết nối hỗ trợ.
 - **Direct Connect Gateway**: một kết nối DX tới **nhiều VPC ở nhiều Region** (và nhiều account).
 
+~~~flow
+# Một kết nối DX tới nhiều VPC qua Direct Connect Gateway
+Data center -> DX location -[private VIF]-> Direct Connect Gateway -> VPC (nhiều Region)
+Data center -> DX location -[transit VIF]-> Direct Connect Gateway -> Transit Gateway
+~~~
+
 ### Độ bền (resiliency)
 
 | Mức | Thiết kế |
@@ -503,6 +869,12 @@ Cho phép tài nguyên trong VPC truy cập dịch vụ AWS **không đi qua Int
 | Tiết kiệm chi phí | DX chính + **Site-to-Site VPN làm backup** |
 | High resiliency | 2 kết nối DX ở **2 DX location khác nhau** |
 | Maximum resiliency | 2 kết nối riêng biệt trên các thiết bị riêng ở **mỗi** trong 2 DX location |
+
+~~~groups
+# Maximum resiliency: không có điểm lỗi đơn ở thiết bị hay location
+DX location 1: *Kết nối 1 (thiết bị A), *Kết nối 2 (thiết bị B)
+DX location 2: *Kết nối 3 (thiết bị C), *Kết nối 4 (thiết bị D)
+~~~
 
 ## Chọn giải pháp
 
@@ -563,6 +935,12 @@ Cho phép tài nguyên trong VPC truy cập dịch vụ AWS **không đi qua Int
 - Giới hạn API: Encrypt trực tiếp tối đa **4 KB** dữ liệu. Có quota số request/giây; SSE-KMS với lưu lượng lớn có thể bị throttling → bật **S3 Bucket Keys** để giảm request tới KMS (và giảm chi phí).
 - Mọi lần dùng key được ghi lại trong **CloudTrail**.
 
+~~~flow
+# Dùng KMS key cross-account cần cho phép ở cả hai phía
+Role ở account B -[IAM policy cho phép kms:Decrypt]-> KMS key ở account A -[key policy có account B]-> Giải mã được
+Role ở account B -[key policy thiếu account B]-> KMS key ở account A (AccessDenied)
+~~~
+
 ### Envelope encryption
 
 1. Gọi GenerateDataKey → KMS trả data key dạng plaintext và dạng mã hóa.
@@ -571,12 +949,26 @@ Cho phép tài nguyên trong VPC truy cập dịch vụ AWS **không đi qua Int
 
 Lợi ích: dữ liệu lớn không phải gửi tới KMS, chỉ gửi data key nhỏ.
 
+~~~flow
+# Envelope encryption: chỉ data key nhỏ đi tới KMS
+App -[GenerateDataKey]-> KMS -[data key plaintext + bản mã hóa]-> App
+App -[mã hóa bằng data key plaintext]-> Dữ liệu mã hóa + data key mã hóa -> Lưu trữ (S3, EBS)
+~~~
+
 ## AWS CloudHSM
 
 - HSM **single-tenant** chuyên dụng trong VPC của bạn, chứng nhận FIPS 140 Level 3.
 - **Bạn quản lý key và user hoàn toàn**; AWS không truy cập được key. Mất credentials là mất key.
 - Dùng khi đề yêu cầu: kiểm soát độc quyền key, HSM chuyên dụng, SSL offloading, Oracle TDE, PKCS#11/JCE.
 - Có thể làm **custom key store** cho KMS để vừa tích hợp KMS vừa giữ key trong HSM của mình.
+
+~~~ladder
+# Ai giữ key, từ AWS dần sang bạn
+AWS managed key | AWS tạo và xoay vòng trong account bạn | AWS
+Customer managed key | Bạn quản lý key policy, KMS giữ HSM | KMS
+KMS custom key store | Key material nằm trong cluster CloudHSM của bạn | HSM của bạn
+CloudHSM trực tiếp | Bạn toàn quyền key và user, AWS không truy cập được | Bạn
+~~~
 
 ## Mã hóa S3
 
@@ -592,6 +984,12 @@ Từ tháng 1/2023 mọi object mới được **mã hóa mặc định bằng S
 
 Có thể ép kiểu mã hóa bằng bucket policy (Deny PutObject nếu header s3:x-amz-server-side-encryption không phải aws:kms). Lưu ý: bucket policy được đánh giá trước default encryption.
 
+~~~flow
+# Bucket policy chặn request trước khi default encryption được áp
+PutObject không có header SSE aws:kms -[bucket policy Deny]-> Bị từ chối
+PutObject có header SSE aws:kms -> Bucket policy cho phép -> Object mã hóa SSE-KMS
+~~~
+
 ## Bảo vệ S3
 
 - **Bucket policy**: resource-based, cho phép cross-account, ép HTTPS, giới hạn theo VPC endpoint, IP, aws:PrincipalOrgID.
@@ -603,6 +1001,14 @@ Có thể ép kiểu mã hóa bằng bucket policy (Deny PutObject nếu header 
   - **Legal hold**: giữ vô thời hạn tới khi gỡ, độc lập với retention period.
 - **S3 Glacier Vault Lock**: gắn Vault Lock policy (WORM) cho vault; sau khi xác nhận lock (trong vòng 24 giờ ở trạng thái in-progress) thì policy **không thể thay đổi**.
 - **Presigned URL**: cấp quyền tạm thời GET/PUT một object với quyền của người tạo URL; có thời hạn (tối đa 7 ngày khi ký bằng IAM user, ngắn hơn nếu dùng credentials tạm thời).
+
+~~~ladder
+# Chống xóa object trong S3, từ yếu tới mạnh
+Versioning | Khôi phục được version cũ khi xóa nhầm | Cơ bản
+MFA Delete | Xóa vĩnh viễn version cần MFA của root | MFA
+Object Lock governance | User có s3:BypassGovernanceRetention vẫn xóa được | Bypass
+Object Lock compliance | Không ai xóa được, kể cả root, tới khi hết hạn | WORM
+~~~
 
 ## Mã hóa EBS
 
@@ -617,6 +1023,11 @@ Có thể ép kiểu mã hóa bằng bucket policy (Deny PutObject nếu header 
 - Read replica có cùng trạng thái mã hóa với primary.
 - In transit: dùng SSL/TLS; có thể ép bằng parameter (ví dụ rds.force_ssl).
 - RDS và Aurora hỗ trợ IAM database authentication cho MySQL/PostgreSQL.
+
+~~~flow
+# Mã hóa EBS volume hoặc RDS DB đang chạy chưa mã hóa
+Snapshot -[copy, bật encryption với KMS key]-> Snapshot mã hóa -[tạo volume hoặc restore]-> Volume / DB mới -> Chuyển ứng dụng sang
+~~~
 
 ## Mẹo làm bài
 
@@ -671,6 +1082,13 @@ Có thể ép kiểu mã hóa bằng bucket policy (Deny PutObject nếu header 
 - **Không có rotation tự động tích hợp**; phải tự viết Lambda + EventBridge.
 - Có thể tham chiếu secret trong Secrets Manager qua Parameter Store.
 
+~~~groups
+# Parameter Store lưu giá trị theo cây đường dẫn
+/prod/app: db-url (String), *db-password (SecureString)
+/dev/app: db-url (String), *db-password (SecureString)
+Quyền IAM: ssm:GetParametersByPath trên /prod/app, *kms:Decrypt cho SecureString
+~~~
+
 | Tiêu chí | Secrets Manager | Parameter Store |
 |---|---|---|
 | Rotation tự động | Có, tích hợp RDS/Aurora/Redshift | Không có sẵn |
@@ -681,6 +1099,13 @@ Có thể ép kiểu mã hóa bằng bucket policy (Deny PutObject nếu header 
 
 Đề: "rotate database credentials automatically with least operational overhead" → **Secrets Manager**. "Store configuration values, low cost" → **Parameter Store**.
 
+~~~flow
+# Secrets Manager tự xoay vòng mật khẩu DB
+Lịch rotation -> Lambda (rotation function) -[đặt mật khẩu mới]-> RDS
+Lambda (rotation function) -[lưu version mới]-> Secrets Manager
+App -[GetSecretValue]-> Secrets Manager
+~~~
+
 ## AWS Certificate Manager (ACM)
 
 - Cấp **chứng chỉ TLS public miễn phí** cho service tích hợp, **tự động gia hạn** (với domain validation qua DNS thì gia hạn hoàn toàn tự động).
@@ -690,11 +1115,24 @@ Có thể ép kiểu mã hóa bằng bucket policy (Deny PutObject nếu header 
 - Chứng chỉ dùng cho **CloudFront phải ở us-east-1**. Chứng chỉ cho ALB/API Gateway regional phải cùng Region với tài nguyên.
 - Trong ngữ cảnh đề thi, chứng chỉ public của ACM được gắn vào service tích hợp chứ không cài tay lên EC2. AWS Private CA dùng để cấp chứng chỉ private nội bộ.
 
+~~~flow
+# Chứng chỉ ACM phải nằm đúng Region của service dùng nó
+Route 53 (bản ghi CNAME) -[DNS validation]-> ACM -[tự gia hạn]-> Chứng chỉ public
+ACM us-east-1 -> CloudFront (mọi edge location)
+ACM eu-west-1 -> ALB ở eu-west-1
+~~~
+
 ### TLS trên ALB và CloudFront
 
 - **TLS termination tại ALB**: ALB giải mã, giảm tải CPU cho EC2; dùng SNI để phục vụ nhiều chứng chỉ trên một listener.
 - Yêu cầu end-to-end encryption: ALB re-encrypt tới target bằng HTTPS (target dùng chứng chỉ riêng), hoặc dùng **NLB TCP passthrough** để target tự terminate TLS.
 - CloudFront: Viewer Protocol Policy = Redirect HTTP to HTTPS hoặc HTTPS only; Origin Protocol Policy để mã hóa tới origin. Có **field-level encryption** để mã hóa trường nhạy cảm (số thẻ) từ edge.
+
+~~~flow
+# Chứng chỉ ACM và các điểm terminate TLS
+Users -[HTTPS, cert ACM ở us-east-1]-> CloudFront -[HTTPS]-> ALB (cert ACM cùng Region) -[HTTP hoặc HTTPS re-encrypt]-> EC2
+Users -[TLS]-> NLB (TCP passthrough) -[TLS]-> EC2 (tự terminate TLS)
+~~~
 
 ## CloudFront Origin Access Control (OAC)
 
@@ -702,6 +1140,12 @@ Có thể ép kiểu mã hóa bằng bucket policy (Deny PutObject nếu header 
 - **OAC thay thế OAI** (legacy). OAC hỗ trợ SSE-KMS, mọi Region, các method PUT/DELETE, ký request bằng SigV4.
 - Cấu hình: bucket để private (Block Public Access bật), bucket policy cho phép principal cloudfront.amazonaws.com với Condition AWS:SourceArn là ARN distribution.
 - Với origin là ALB/EC2 (custom origin): không có OAC kiểu S3; dùng **custom header bí mật** do CloudFront thêm vào và ALB kiểm tra, kết hợp SG chỉ cho phép **managed prefix list của CloudFront**. CloudFront cũng hỗ trợ VPC origins cho ALB/EC2 trong private subnet.
+
+~~~flow
+# Chỉ CloudFront đọc được bucket
+Users -> CloudFront -[OAC, ký SigV4]-> S3 (private, Block Public Access bật)
+Users -[gọi thẳng URL S3]-> S3 (bucket policy từ chối)
+~~~
 
 ## Signed URL vs Signed Cookie
 
@@ -721,6 +1165,14 @@ Có thể ép kiểu mã hóa bằng bucket policy (Deny PutObject nếu header 
 | Truy cập qua edge, có cache | Truy cập trực tiếp S3 |
 | Origin có thể là S3 hoặc custom | Chỉ S3 |
 | Hạn chế theo IP, thời gian (custom policy) | Dùng quyền của IAM principal ký URL |
+
+~~~decide
+# Cấp quyền tạm thời cho nội dung riêng tư
+Một file qua CloudFront => CloudFront signed URL
+Nhiều file hoặc cả khu vực premium qua CloudFront => CloudFront signed cookies
+Tải hoặc upload một object thẳng với S3 => S3 presigned URL
+Giới hạn theo IP hoặc thời gian bắt đầu => CloudFront signed URL/cookie với custom policy
+~~~
 
 ## Mẹo làm bài
 
@@ -766,6 +1218,12 @@ Có thể ép kiểu mã hóa bằng bucket policy (Deny PutObject nếu header 
   - **AWS Managed Rules** và rule từ AWS Marketplace; Bot Control, Account Takeover Prevention.
 - Log tới CloudWatch Logs, S3 hoặc Firehose.
 
+~~~flow
+# WAF lọc layer 7 ở edge hoặc trước ALB; Shield chống DDoS layer 3/4
+Users -> CloudFront (WAF, Shield) -> ALB (WAF) -> EC2 (ASG)
+Users -> API Gateway (WAF) -> Lambda
+~~~
+
 ## AWS Shield
 
 | Tiêu chí | Shield Standard | Shield Advanced |
@@ -784,6 +1242,12 @@ Có thể ép kiểu mã hóa bằng bucket policy (Deny PutObject nếu header 
 - Quản lý: WAF rules, Shield Advanced, Security Groups, Network Firewall, Route 53 Resolver DNS Firewall, các policy firewall bên thứ ba.
 - Tự áp chính sách cho tài nguyên **mới tạo** (ví dụ mọi ALB mới đều được gắn WAF).
 
+~~~flow
+# Firewall Manager áp chính sách cho mọi account, kể cả tài nguyên mới
+Account quản trị bảo mật -[policy WAF]-> Firewall Manager -[tự gắn web ACL]-> ALB mới ở account A
+Firewall Manager -[tự gắn web ACL]-> CloudFront ở account B
+~~~
+
 ## Nhóm phát hiện và đánh giá
 
 | Service | Làm gì | Từ khóa đề |
@@ -797,6 +1261,14 @@ Có thể ép kiểu mã hóa bằng bucket policy (Deny PutObject nếu header 
 
 GuardDuty bật chỉ với một thao tác, **không cần bật Flow Logs hay CloudTrail trail riêng** (nó đọc nguồn dữ liệu độc lập).
 
+~~~groups
+# Bộ công cụ bảo mật theo vai trò
+Chặn trước: WAF, Shield, Firewall Manager, Network Firewall
+Phát hiện: GuardDuty, Inspector, Macie
+Tổng hợp và điều tra: *Security Hub, Detective
+Ghi lại và tuân thủ: CloudTrail, AWS Config, CloudWatch
+~~~
+
 ## Ghi log và tuân thủ
 
 ### AWS CloudTrail
@@ -806,6 +1278,13 @@ GuardDuty bật chỉ với một thao tác, **không cần bật Flow Logs hay 
 - **Data events** (S3 object-level, Lambda invoke) mặc định không ghi, phải bật (có phí).
 - **Log file integrity validation** để chứng minh log không bị sửa. Bảo vệ thêm bằng bucket riêng, Object Lock, SCP chặn StopLogging.
 - CloudTrail Insights phát hiện lưu lượng API bất thường; CloudTrail Lake để truy vấn SQL.
+
+~~~groups
+# Các loại event CloudTrail ghi lại
+Management events: *Bật mặc định, Event history 90 ngày, Tạo hoặc xóa tài nguyên
+Data events: Tắt mặc định, Có phí, S3 object-level và Lambda invoke
+Insights events: Lưu lượng API bất thường, Bật riêng và có phí
+~~~
 
 ### AWS Config
 
@@ -827,11 +1306,22 @@ GuardDuty bật chỉ với một thao tác, **không cần bật Flow Logs hay 
 - Logs Insights để truy vấn; mã hóa log group bằng KMS; đặt retention.
 - CloudWatch agent để thu log và metric bộ nhớ/đĩa từ EC2.
 
+~~~flow
+# Cảnh báo khi root user đăng nhập
+CloudTrail (trail) -> CloudWatch Logs -[metric filter root login]-> Metric -[alarm khi lớn hơn 0]-> SNS (email đội bảo mật)
+~~~
+
 ### EventBridge cho tự động khắc phục
 
 - Bắt sự kiện từ GuardDuty finding, Config compliance change, CloudTrail API call, Security Hub, ACM sắp hết hạn...
 - Đích: **Lambda**, SSM Automation, SNS, Step Functions để tự động xử lý (cách ly instance, thu hồi key, đóng port).
 - Mẫu kinh điển: GuardDuty finding → EventBridge rule → Lambda đổi Security Group của EC2 bị nhiễm sang SG cách ly + SNS thông báo.
+
+~~~flow
+# Tự động cách ly EC2 bị xâm nhập
+GuardDuty (finding) -> EventBridge (rule) -> Lambda -[đổi sang SG cách ly]-> EC2
+EventBridge (rule) -> SNS -> Đội bảo mật
+~~~
 
 ## Mẹo làm bài
 

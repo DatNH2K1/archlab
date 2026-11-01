@@ -25,6 +25,15 @@ An instance name looks like m7g.2xlarge: **m** = family, **7** = generation, **g
 | Storage optimized | I, D, H | High IOPS on instance store (NVMe), NoSQL, data warehouses, HDFS |
 | Accelerated computing | P, G, Inf, Trn, F | GPU training (P), graphics/inference (G), Inferentia (Inf), Trainium (Trn), FPGA (F) |
 
+~~~decide
+# Which workload, which family
+Web or app server balancing CPU and RAM => M (T for low load with bursts)
+CPU-heavy transcoding, HPC, game servers => C
+In-memory database, SAP HANA, large cache => R or X
+Very high IOPS on NVMe instance store => I
+ML training on GPUs => P or Trn
+~~~
+
 ### Graviton
 
 - ARM CPUs designed by AWS, with up to about 40% better price/performance than same-generation x86.
@@ -41,11 +50,23 @@ An instance name looks like m7g.2xlarge: **m** = family, **7** = generation, **g
 
 Tip: "lowest latency, highest throughput between nodes" is Cluster; "critical instances must not share hardware" is Spread; "distributed big data, rack-aware" is Partition.
 
+~~~groups
+# Three placement group types
+Cluster: Rack 1 (all instances), *lowest latency in 1 AZ
+Spread: Rack 1 (A), Rack 2 (B), Rack 3 (C), *max 7 instances per AZ
+Partition: P1 (own set of racks), P2 (own set of racks), P3 (own set of racks), *max 7 partitions per AZ
+~~~
+
 ## Enhanced networking: ENA and EFA
 
 - **ENA (Elastic Network Adapter)**: uses SR-IOV, high bandwidth (up to 100 Gbps or more depending on the instance), high PPS, low latency. Enabled by default on most modern instances.
 - **EFA (Elastic Fabric Adapter)**: ENA plus **OS-bypass** capability for distributed HPC/ML applications using MPI or NCCL. Linux only. Combine with a cluster placement group.
 - When a question mentions "tightly coupled HPC, MPI, inter-node communication", think EFA + cluster placement group.
+
+~~~flow
+# Tightly coupled HPC: EFA inside a cluster placement group
+EC2 (EFA) -[MPI / NCCL, OS-bypass]-> EC2 (EFA) -[MPI / NCCL, OS-bypass]-> EC2 (EFA)
+~~~
 
 ## Instance store vs EBS
 
@@ -58,17 +79,36 @@ Tip: "lowest latency, highest throughput between nodes" is Cluster; "critical in
 
 Instance store keeps data on reboot; stop/terminate loses it.
 
+~~~ladder
+# Does instance store data survive?
+Reboot | stays on the same host | kept
+Stop or hibernate | starts again on another host | lost
+Terminate | instance is deleted | lost
+Host hardware failure | no copy exists | lost
+~~~
+
 ## EC2 Hibernate
 
 - Saves RAM contents to the **EBS root volume (must be encrypted)**; on start, RAM is restored and the app starts faster (no cache warm-up, no OS reboot).
 - Requirements: EBS root, enough space to hold RAM, limited RAM (for example under 150 GB), no hibernation longer than 60 days, only some families and On-Demand/Spot.
 - Question: "long initialization time, preserve in-memory state" means choose Hibernate.
 
+~~~flow
+# Hibernate saves RAM to the encrypted EBS root
+EC2 (RAM in use) -[stop with hibernate]-> EBS root (encrypted, holds RAM) -[start]-> EC2 (RAM restored, no warm-up)
+~~~
+
 ## User data, AMI, and EC2 Image Builder
 
 - **User data**: a script that runs **once on first boot** (by default) with root privileges; used to install packages and pull code. Drawback: slows boot if it installs a lot.
 - **AMI**: the image used to launch instances. An AMI belongs to **one Region**; to use it in another Region, copy the AMI. A **golden AMI** (everything pre-installed) reduces startup time when Auto Scaling scales out.
 - **EC2 Image Builder**: an automated pipeline to build, test, patch, and distribute AMIs (and container images) on a schedule, and share them across Regions/accounts. The question "automate creation and patching of AMIs" means choose Image Builder.
+
+~~~flow
+# Golden AMI: build once, scale out fast
+EC2 Image Builder -[build, test, patch]-> Golden AMI -[copy]-> AMI in another Region
+Golden AMI -> Launch template -> Auto Scaling group (fast boot, little user data)
+~~~
 
 ## Quick selection tips for the exam
 
@@ -118,6 +158,14 @@ AWS offers many ways to run code. The exam usually gives a scenario and asks whi
 
 The keyword "already uses Kubernetes, migrate without changing manifests" means choose EKS.
 
+~~~decide
+# ECS or EKS
+Run containers quickly with deep AWS integration => ECS
+Avoid an hourly control plane fee => ECS
+Already on Kubernetes, keep manifests and Helm => EKS
+Run the same Kubernetes on premises => EKS Anywhere
+~~~
+
 ## EC2 launch type vs Fargate
 
 | | EC2 launch type / node group | Fargate |
@@ -131,10 +179,23 @@ The keyword "already uses Kubernetes, migrate without changing manifests" means 
 - **ECS task role** assigns IAM per task; **EC2 instance profile** is the host's permissions.
 - ECS service auto scaling uses target tracking (CPU, RAM, ALB request count). On the EC2 launch type, use a **capacity provider** so the cluster scales EC2 automatically based on task demand.
 
+~~~groups
+# Who manages what
+[ECS or EKS]
+EC2 launch type: you manage EC2, AMI and patching, cluster scaling, *GPU and Spot and daemons
+Fargate: AWS manages the hosts, declare only vCPU and RAM, *lowest overhead
+~~~
+
 ## Amazon ECR
 
 - Private (and public) Docker/OCI registry, integrated with IAM, image scanning, lifecycle policies, cross-Region and cross-account replication.
 - The question "store container images securely, scan for vulnerabilities" means choose ECR.
+
+~~~flow
+# The path of a container image
+CI build -[docker push]-> ECR (image scanning) -[pull]-> ECS / EKS
+ECR -[replication]-> ECR (another Region or account)
+~~~
 
 ## AWS App Runner
 
@@ -153,6 +214,15 @@ The keyword "already uses Kubernetes, migrate without changing manifests" means 
 - You can still access the underlying resources. Fits lift-and-shift of traditional web apps, where developers want to focus on code.
 - Deployment policies: all at once, rolling, rolling with additional batch, immutable, traffic splitting, blue/green (swap URL).
 
+~~~ladder
+# Deployment policies: fastest to safest
+All at once | every instance at the same time | downtime
+Rolling | batch by batch, capacity drops during deploy | no downtime
+Rolling with additional batch | adds a new batch first | full capacity
+Immutable | new Auto Scaling group, fast rollback | safe
+Blue/green | separate environment, swap URL | safest
+~~~
+
 ## Lambda vs container vs EC2
 
 | Criterion | Lambda | Container (ECS/EKS/Fargate) | EC2 |
@@ -168,12 +238,25 @@ Quick rules:
 - Jobs longer than 15 minutes, or needing a custom runtime/continuously running microservices: containers on Fargate.
 - Need specific GPUs, kernel access, host-bound licenses: EC2 (or Dedicated Host).
 
+~~~decide
+# Where to run the code
+Event-driven, each run under 15 minutes => Lambda
+Always-on service or job longer than 15 minutes => ECS/EKS on Fargate
+Thousands of batch jobs with queues and dependencies => AWS Batch
+Need GPUs, kernel access, or host-bound licenses => EC2
+~~~
+
 ### Lambda performance points to remember
 
 - Increasing memory also increases CPU proportionally; CPU-heavy functions should get more memory.
 - **Provisioned Concurrency** keeps pre-initialized environments ready to eliminate cold starts for predictable load.
 - **Reserved concurrency** caps/guarantees concurrency for a function.
 - When Lambda connects to RDS with many concurrent connections: put **RDS Proxy** in between.
+
+~~~flow
+# Lambda shares a connection pool through RDS Proxy
+Lambda (thousands of invocations) -> RDS Proxy (connection pool) -> RDS
+~~~
 `,
     keywords: [
       { trigger: 'run containers without managing servers or clusters', answer: 'Fargate (ECS or EKS)' },
@@ -219,10 +302,27 @@ EBS is network block storage attached to EC2 in the **same AZ**. Snapshots are s
 - For a database needing steady IOPS, low latency, above 16,000 IOPS: io2 Block Express.
 - Instances also have an EBS bandwidth limit: choose an **EBS-optimized** instance that is large enough, otherwise a fast volume is still bottlenecked.
 
+~~~ladder
+# EBS volume types from fastest to cheapest
+io2 Block Express | provisioned IOPS SSD, sub-ms latency | 256k IOPS
+io1 | previous-generation provisioned IOPS SSD | 64k IOPS
+gp3 | default SSD, IOPS tuned independently of size | 3k IOPS base
+gp2 | SSD, IOPS grow with size | 3 IOPS/GiB
+st1 | sequential-read HDD, not bootable | 500 MiB/s
+sc1 | cold HDD, cheapest, not bootable | 250 MiB/s
+~~~
+
 ### Multi-Attach
 
 - **io1/io2** only, attaches one volume to up to **16 Nitro instances in the same AZ**.
 - The application must manage concurrent writes itself (cluster-aware file system), not regular ext4/XFS.
+
+~~~groups
+# Multi-Attach: one io1/io2 volume for up to 16 Nitro instances
+[One AZ]
+Volume: *io1 or io2, Multi-Attach on
+Instances: EC2 Nitro 1, EC2 Nitro 2, up to 16 instances, *cluster-aware file system
+~~~
 
 ### Snapshots
 
@@ -230,6 +330,13 @@ EBS is network block storage attached to EC2 in the **same AZ**. Snapshots are s
 - **Fast Snapshot Restore (FSR)**: eliminates the initialization latency when creating a volume from a snapshot (no pre-warming needed).
 - **Snapshot Archive**: up to 75% cheaper, restore takes 24 to 72 hours. **Recycle Bin** protects against accidental deletion.
 - **Data Lifecycle Manager (DLM)** automatically creates/deletes snapshots on a schedule.
+
+~~~flow
+# Snapshot lifecycle
+EBS volume -[DLM on a schedule]-> Snapshot (incremental) -[copy]-> Another Region
+Snapshot -[Fast Snapshot Restore]-> New volume (full performance at once)
+Snapshot -[archive]-> Snapshot Archive (up to 75% cheaper, 24-72 hour restore)
+~~~
 
 ## Amazon EFS
 
@@ -240,6 +347,12 @@ EBS is network block storage attached to EC2 in the **same AZ**. Snapshots are s
   - **Provisioned**: reserve fixed throughput up front, independent of size.
   - **Bursting**: throughput grows with stored capacity, uses burst credits.
 - **Storage classes**: Standard, Infrequent Access (IA), Archive; **One Zone** and One Zone-IA for data that does not need multi-AZ (cheaper). **Lifecycle management** automatically moves infrequently used files to IA/Archive.
+
+~~~groups
+# EFS storage classes, lifecycle moves rarely used files to cheaper tiers
+Regional (multi-AZ): *Standard, Infrequent Access, Archive
+One Zone (1 AZ): *One Zone, One Zone-IA
+~~~
 
 ### EFS vs EBS
 
@@ -260,11 +373,25 @@ EBS is network block storage attached to EC2 in the **same AZ**. Snapshots are s
 | FSx for NetApp ONTAP | NFS, SMB, iSCSI (multi-protocol) | Migrating on-prem NetApp, need snapshots, clones, dedup, compression, SnapMirror; access from Linux, Windows, macOS |
 | FSx for OpenZFS | NFS | Migrating on-prem ZFS, very low latency, instant snapshots and clones |
 
+~~~decide
+# Four FSx options by protocol and source
+Windows, SMB, Active Directory => FSx for Windows File Server
+HPC, ML training, hundreds of GB/s => FSx for Lustre
+NFS + SMB + iSCSI or already on NetApp => FSx for NetApp ONTAP
+Already on ZFS, need very low-latency NFS => FSx for OpenZFS
+~~~
+
 ### FSx for Lustre in detail
 
 - **Scratch**: temporary storage, no replication, high burst throughput, cheap; for short-term processing.
 - **Persistent**: data is replicated within the same AZ, for long-term processing and sensitive data.
 - **S3 integration** (data repository association): the S3 bucket appears as files in Lustre, data is lazy-loaded on first read, and results can be exported back to S3. This is the classic answer for "process data stored in S3 with a high-performance file system".
+
+~~~flow
+# FSx for Lustre processes data that lives in S3
+S3 -[lazy load on first read]-> FSx for Lustre -> EC2 (HPC / ML training)
+FSx for Lustre -[export results]-> S3
+~~~
 
 ## Quick selection
 
@@ -313,6 +440,15 @@ EBS is network block storage attached to EC2 in the **same AZ**. Snapshots are s
 - There is no limit on the number of prefixes in a bucket. To increase throughput: **spread objects across multiple prefixes** (for example by date or by hash). 4 prefixes can reach 22,000 GET/s.
 - S3 scales automatically; a sudden load increase may briefly cause 503 Slow Down errors, and clients should retry with exponential backoff.
 
+~~~groups
+# Limits apply per prefix: 4 prefixes give up to 22k GET/s
+[One bucket]
+logs/a/: 3.5k PUT/s, 5.5k GET/s
+logs/b/: 3.5k PUT/s, 5.5k GET/s
+logs/c/: 3.5k PUT/s, 5.5k GET/s
+logs/d/: 3.5k PUT/s, 5.5k GET/s
+~~~
+
 ## Speeding up uploads and downloads
 
 | Technique | When to use |
@@ -322,10 +458,23 @@ EBS is network block storage attached to EC2 in the **same AZ**. Snapshots are s
 | **Byte-range fetches** | Download multiple parts of one object in parallel using the Range header; also used to fetch only the beginning of a file (the header) |
 | **CloudFront** | Cache frequently read content near users, reducing requests to S3 |
 
+~~~flow
+# Faster uploads: parallel parts, and the edge when far away
+Large file (over 100 MB) -[multipart, in parallel]-> S3 (joined into 1 object)
+Users (other continents) -> Edge location -[AWS backbone]-> S3 (distant Region)
+~~~
+
 ## S3 Select
 
 - Uses simple SQL to filter data **inside a single object** (CSV, JSON, Parquet), reducing the data transferred back.
 - Note: AWS has stopped opening S3 Select to new customers (since 2024) and recommends Athena or client-side filtering. Older exams may still mention S3 Select; for queries across many objects, Athena is always the standard choice.
+
+~~~decide
+# Filter or transform data in S3
+Filter inside one object on an account already using S3 Select => S3 Select
+SQL across many objects => Athena
+Each app needs its own transformed view on GET => S3 Object Lambda
+~~~
 
 ## S3 Express One Zone
 
@@ -333,6 +482,12 @@ EBS is network block storage attached to EC2 in the **same AZ**. Snapshots are s
 - Data lives in **one AZ only** and uses a **directory bucket** (different from a general purpose bucket).
 - Use for ML training and interactive analytics, placed in the same AZ as compute to reduce latency.
 - Trade-off: lower availability because it is only 1 AZ.
+
+~~~groups
+# General purpose bucket vs directory bucket
+S3 Standard: general purpose bucket, at least 3 AZs, *survives losing an AZ
+S3 Express One Zone: *directory bucket, *1 AZ next to compute, single-digit ms latency
+~~~
 
 ## Event notifications
 
@@ -344,6 +499,11 @@ EBS is network block storage attached to EC2 in the **same AZ**. Snapshots are s
 - A bucket serves static HTML/CSS/JS through the website endpoint (HTTP). You must disable Block Public Access and have a bucket policy allowing public read, **or** better: use **CloudFront + Origin Access Control (OAC)** to keep the bucket private and get HTTPS.
 - Dynamic (server-side) content cannot run on S3.
 
+~~~flow
+# Static website with HTTPS while the bucket stays private
+Users -[HTTPS]-> CloudFront -[OAC]-> S3 (private bucket)
+~~~
+
 ## CORS
 
 - When a web page on domain A uses JavaScript to load resources from a bucket on domain B, the browser needs bucket B to return CORS headers.
@@ -353,6 +513,11 @@ EBS is network block storage attached to EC2 in the **same AZ**. Snapshots are s
 
 - Attaches Lambda to the GET path to **transform data on read** (hide PII, resize images, convert formats) without storing multiple copies.
 - Goes through an S3 Access Point + Object Lambda Access Point.
+
+~~~flow
+# S3 Object Lambda transforms data on the GET path
+App -[GET]-> Object Lambda Access Point -> Lambda (redact PII, resize) -> S3 Access Point -> S3 (single original copy)
+~~~
 
 ## Quick selection table
 
@@ -414,11 +579,24 @@ EBS is network block storage attached to EC2 in the **same AZ**. Snapshots are s
 - The app must send read queries to the replica endpoint itself (a separate connection string).
 - Cross-Region replication incurs data transfer charges.
 
+~~~groups
+# Read replicas scale reads, Multi-AZ gives HA
+Read Replica: async, *serves read traffic, up to 15, cross-Region possible
+Multi-AZ instance: sync, standby serves no reads, *automatic failover
+Multi-AZ DB cluster: semi-sync, *2 readable standbys, 3 AZs
+~~~
+
 ## RDS Proxy
 
 - Managed connection pooling, sitting between the app and RDS/Aurora.
 - Solves **too many connections** (especially from Lambda), reduces failover time (by up to about 66%), and preserves connections during failover.
 - Supports IAM authentication and fetching credentials from Secrets Manager; accessible only within the VPC.
+
+~~~flow
+# RDS Proxy keeps app connections through failover
+App / Lambda -> RDS Proxy (connection pool, IAM auth) -> RDS primary
+RDS Proxy -[failover]-> RDS standby (app does not reconnect)
+~~~
 
 ## Amazon Aurora
 
@@ -427,6 +605,14 @@ EBS is network block storage attached to EC2 in the **same AZ**. Snapshots are s
 - Compatible with **MySQL** and **PostgreSQL**, with higher performance than RDS on the same engine (AWS claims up to 5 times MySQL, 3 times PostgreSQL).
 - The cluster storage volume grows automatically and stores **6 copies across 3 AZs**; writes need 4/6, reads need 3/6; self-healing.
 - Up to **15 Aurora Replicas** share the same storage, so replica lag is very low (usually under 100 ms). Failover to a replica is typically under 30 seconds.
+
+~~~groups
+# Cluster volume: 6 copies across 3 AZs, writes need 4/6, reads need 3/6
+[Shared Aurora cluster volume]
+AZ a: *Writer, copy 1, copy 2
+AZ b: Aurora Replica, copy 3, copy 4
+AZ c: Aurora Replica, copy 5, copy 6
+~~~
 
 ### Endpoints
 
@@ -437,6 +623,13 @@ EBS is network block storage attached to EC2 in the **same AZ**. Snapshots are s
 | Custom endpoint | Groups a specific set of replicas (for example larger replicas for analytics) |
 | Instance endpoint | Connects directly to one instance |
 
+~~~flow
+# Each kind of traffic uses its own endpoint
+App -[write]-> Cluster endpoint -> Aurora (writer)
+App -[read]-> Reader endpoint -> Aurora Replica (load balanced)
+Reporting -> Custom endpoint -> Aurora Replica (large instance)
+~~~
+
 ### Performance features
 
 - **Aurora Auto Scaling**: automatically adds/removes Aurora Replicas based on CPU or connection count.
@@ -445,6 +638,15 @@ EBS is network block storage attached to EC2 in the **same AZ**. Snapshots are s
 - **Aurora I/O-Optimized**: no I/O charges, higher instance and storage prices; saves money when I/O cost is more than about 25% of the total Aurora cost.
 - **Babelfish for Aurora PostgreSQL**: understands T-SQL and the SQL Server protocol, helping SQL Server apps move to Aurora PostgreSQL with few code changes.
 - **Parallel Query**, **Backtrack** (MySQL), fast **Database cloning** for testing.
+
+~~~decide
+# Aurora feature by exam requirement
+Read load rises and falls during the day => Aurora Auto Scaling (add or remove replicas)
+Intermittent workload, dev/test => Aurora Serverless v2
+Low-latency global reads, cross-Region DR => Aurora Global Database
+I/O charges above about 25% of the bill => Aurora I/O-Optimized
+SQL Server app to PostgreSQL with little code change => Babelfish
+~~~
 
 ## Redshift vs RDS
 
@@ -457,6 +659,14 @@ EBS is network block storage attached to EC2 in the **same AZ**. Snapshots are s
 
 - Heavy reports running on the OLTP DB slow down production: the usual solution is a **read replica** (if the reports are simple) or **moving the data to Redshift** (if it is complex, high-volume analytics).
 - Redshift Serverless for uneven analytic load when you do not want to manage a cluster.
+
+~~~decide
+# Reports are slowing the production database
+Many small transactions: orders, users, carts => RDS / Aurora (OLTP)
+Simple reports overloading the primary => Read Replica
+Complex analytics on TB to PB => Redshift (OLAP, columnar)
+Irregular analytics load, no cluster to manage => Redshift Serverless
+~~~
 
 ## Exam tips
 
@@ -503,11 +713,24 @@ NoSQL key-value and document database, serverless, single-digit millisecond late
 - Poor keys: status, the current date, values with few choices. You can add a random suffix (write sharding) to spread writes.
 - **Composite key** = partition key + sort key, allowing range queries on the sort key.
 
+~~~groups
+# A good partition key spreads load, a poor one creates hot partitions
+Good key: *userId, *orderId, deviceId + random suffix
+Poor key: status, current date, country
+~~~
+
 ### Capacity
 
 - **1 RCU** = 1 strongly consistent read/second for an item up to **4 KB**, or 2 eventually consistent reads/second. Transactional reads cost double.
 - **1 WCU** = 1 write/second for an item up to **1 KB**. Transactional writes cost double.
 - Example: strongly consistent reads of 10 items of 6 KB per second: each item rounds up to 8 KB = 2 RCU, total 20 RCU.
+
+~~~ladder
+# RCU cost of reading one 4 KB item
+Eventually consistent | may miss the latest write | 0.5 RCU
+Strongly consistent | always reads the latest version | 1 RCU
+Transactional | ACID across items | 2 RCU
+~~~
 
 | Mode | When to use |
 |---|---|
@@ -526,6 +749,14 @@ NoSQL key-value and document database, serverless, single-digit millisecond late
 
 Note: a GSI that is write-throttled can throttle writes on the main table, so provision enough capacity for the GSI.
 
+~~~decide
+# GSI or LSI
+Query by another attribute on an existing table => GSI
+Partition key entirely different from the table => GSI
+Same partition key, different sort key, at table creation => LSI
+Need strongly consistent reads on the index => LSI
+~~~
+
 ### Other features
 
 - **DAX**: in-memory cache for DynamoDB, reads go from **milliseconds down to microseconds**, API-compatible (few code changes). Helps reads only (eventually consistent), not writes.
@@ -534,6 +765,12 @@ Note: a GSI that is write-throttled can throttle writes on the main table, so pr
 - **Transactions**: TransactWriteItems/TransactGetItems, ACID across multiple items/tables.
 - **Global Tables**: multi-Region, multi-active, low latency for global users.
 - **Export to S3** (point-in-time) for analysis with Athena without consuming RCU.
+
+~~~flow
+# DAX speeds up reads, Streams reacts to changes
+App -[read]-> DAX (microseconds) -[cache miss]-> DynamoDB
+DynamoDB -[Streams, 24 hours]-> Lambda (process changes)
+~~~
 
 ## Amazon ElastiCache
 
@@ -558,10 +795,23 @@ Note: a GSI that is write-throttled can throttle writes on the main table, so pr
 
 Lazy loading + write-through + TTL are commonly combined.
 
+~~~flow
+# Lazy loading: a cache miss costs 3 steps
+App -[1. read cache]-> ElastiCache (miss)
+App -[2. read DB]-> RDS
+App -[3. write to cache, with TTL]-> ElastiCache
+~~~
+
 ## Amazon MemoryDB
 
 - Redis/Valkey-compatible but a **durable primary database** (Multi-AZ transaction log), microsecond reads, single-digit millisecond writes.
 - Choose when you need in-memory speed **and** cannot lose data. ElastiCache is mainly a cache.
+
+~~~groups
+# Cache or primary database
+ElastiCache: cache in front of a database, *session store, not a primary database
+MemoryDB: *durable primary database, Multi-AZ transaction log, microsecond reads
+~~~
 
 ## Purpose-built databases
 
@@ -613,6 +863,13 @@ A CDN with hundreds of edge locations. Caches content near users, reducing laten
 - **Custom origin**: ALB, EC2, API Gateway, any HTTP server (including on-premises). For ALB/EC2, the origin must be reachable over the internet (or use **VPC origins** for ALB/EC2 in a private subnet).
 - An **S3 website endpoint** is treated as a custom origin.
 
+~~~groups
+# CloudFront origin types
+S3 origin: *private S3 bucket via OAC
+Custom origin: ALB, EC2, API Gateway, on-prem HTTP server, S3 website endpoint
+VPC origin: *ALB, NLB or EC2 in a private subnet
+~~~
+
 ### Behaviors and caching
 
 - **Cache behavior**: routes by path pattern (for example /api/* to ALB, /static/* to S3); each behavior has its own cache policy, viewer protocol policy, and allowed methods.
@@ -621,12 +878,24 @@ A CDN with hundreds of edge locations. Caches content near users, reducing laten
 - **TTL**: the origin can control it with Cache-Control/Expires within the min/max TTL limits.
 - **Invalidation**: removes objects from the cache before the TTL expires (charged beyond the free allowance). A better approach for frequent deployments: **versioned file names** (app.v2.js).
 
+~~~flow
+# Cache behaviors route by path
+Users -> CloudFront -[/static/*]-> S3 (OAC)
+CloudFront -[/api/*]-> ALB -> EC2
+~~~
+
 ### Availability and security
 
 - **Origin failover (origin group)**: primary and secondary origins; when the primary returns a configured error code (for example 500, 502, 503, 504) or times out, CloudFront tries the secondary. Applies to GET, HEAD, OPTIONS requests.
 - **Geo restriction**: allowlist/blocklist by country.
 - **Field-level encryption**: encrypts specific fields in a POST (for example card numbers) at the edge with a public key; only the backend holding the private key can decrypt.
 - **Signed URLs / signed cookies** for private content; integrates with AWS WAF and Shield.
+
+~~~flow
+# Origin failover in an origin group
+Users -> CloudFront -> Primary origin (returns 5xx or times out)
+CloudFront -[retry GET / HEAD / OPTIONS]-> Secondary origin
+~~~
 
 ### Compute at the edge
 
@@ -642,6 +911,12 @@ A CDN with hundreds of edge locations. Caches content near users, reducing laten
 - Health checks and **very fast failover between Regions** (not dependent on DNS caching). Traffic dials and endpoint weights for traffic steering.
 - Supports **TCP and UDP**: gaming, IoT, VoIP, applications that need fixed IPs for allowlisting.
 
+~~~flow
+# 2 static anycast IPs, AWS backbone, Region failover without waiting on DNS
+Users -> Global Accelerator (2 static IPs) -[AWS backbone]-> ALB (primary Region)
+Global Accelerator -[failover on failed health check]-> ALB (standby Region)
+~~~
+
 ### CloudFront vs Global Accelerator
 
 | | CloudFront | Global Accelerator |
@@ -650,6 +925,15 @@ A CDN with hundreds of edge locations. Caches content near users, reducing laten
 | Protocol | HTTP/HTTPS (WebSocket) | TCP, UDP |
 | IP | Many dynamic IPs (uses DNS) | 2 static anycast IPs |
 | Scenario | Static/dynamic web content, video | Non-HTTP, fixed IPs, fast multi-Region failover |
+
+~~~decide
+# Exam keywords
+Website, video, content caching => CloudFront
+UDP games, VoIP, IoT => Global Accelerator
+Fixed IPs for allowlisting => Global Accelerator
+Multi-Region failover in seconds without DNS => Global Accelerator
+Only faster long-distance uploads to S3 => S3 Transfer Acceleration
+~~~
 
 ## Enhanced networking on EC2
 
@@ -666,6 +950,13 @@ A CDN with hundreds of edge locations. Caches content near users, reducing laten
 - **Not encrypted** by default: use MACsec (on supported dedicated ports) or a VPN running over Direct Connect.
 - **LAG** bundles multiple connections to increase bandwidth. **Direct Connect Gateway** connects to multiple VPCs/Regions.
 - HA: 2 connections at 2 different locations, or a Site-to-Site VPN as backup.
+
+~~~flow
+# Direct Connect HA: 2 locations, VPN as backup
+Data center -[connection 1]-> DX location A -> Direct Connect Gateway -> VPC
+Data center -[connection 2]-> DX location B -> Direct Connect Gateway
+Data center -[backup Site-to-Site VPN]-> VPC
+~~~
 
 ## S3 Transfer Acceleration
 
@@ -714,6 +1005,14 @@ A CDN with hundreds of edge locations. Caches content near users, reducing laten
 | **Managed Service for Apache Flink** (formerly Kinesis Data Analytics) | Stream processing with Apache Flink (SQL, Java, Python) | Real-time analytics: windowing, aggregation, anomaly detection on streams |
 | **Amazon MSK** | Managed Apache Kafka (MSK Serverless available) | Already using Kafka, need Kafka API compatibility |
 
+~~~decide
+# Pick a streaming service
+Custom processing, many consumers, replay => Kinesis Data Streams
+Just deliver to S3, Redshift, OpenSearch with no code => Data Firehose
+Real-time windowing and aggregation on streams => Managed Service for Apache Flink
+Already using Kafka => Amazon MSK
+~~~
+
 ### Kinesis Data Streams in detail
 
 - Provisioned mode: each **shard** accepts **1 MB/s or 1,000 records/s** for writes and **2 MB/s** for reads (shared among consumers).
@@ -721,6 +1020,13 @@ A CDN with hundreds of edge locations. Caches content near users, reducing laten
 - **On-demand mode**: scales automatically, no shard management.
 - Default retention is 24 hours, extendable up to 365 days. Data is ordered within a shard by partition key.
 - Consumers: Lambda, KCL apps on EC2/ECS, Managed Service for Apache Flink, Firehose.
+
+~~~flow
+# One stream, many consumers reading independently
+Producers -> Kinesis Data Streams (shard: 1 MB/s write) -> Lambda
+Kinesis Data Streams -> Managed Service for Apache Flink (real-time analytics)
+Kinesis Data Streams -> Data Firehose -> S3
+~~~
 
 ### Amazon Data Firehose in detail
 
@@ -743,6 +1049,12 @@ A CDN with hundreds of edge locations. Caches content near users, reducing laten
 - **Glue ETL jobs**: serverless Apache Spark for transformations (for example converting CSV to Parquet). **Job bookmarks** avoid reprocessing old data.
 - **Glue DataBrew**: cleans and normalizes data through a visual interface, no code needed.
 
+~~~flow
+# Low-ops data lake: ingest, catalog, query
+Logs -> Data Firehose (buffer, transform) -[Parquet]-> S3 -> Athena
+S3 -> Glue crawler -> Glue Data Catalog -[schema]-> Athena
+~~~
+
 ### Amazon EMR
 
 - Managed Hadoop/Spark/Hive/Presto/HBase clusters, running on EC2, EKS, or **EMR Serverless**.
@@ -755,6 +1067,12 @@ A CDN with hundreds of edge locations. Caches content near users, reducing laten
 - **Concurrency scaling** adds capacity when many queries run concurrently. **Materialized views** speed up repeated queries.
 - **Redshift Spectrum**: queries data on S3 directly from Redshift, joining with tables in the warehouse without loading.
 - Zero-ETL integration from Aurora/RDS/DynamoDB to Redshift for near real-time analytics.
+
+~~~flow
+# Redshift pulls data from many sources
+Aurora / RDS / DynamoDB -[zero-ETL]-> Redshift -> QuickSight (BI dashboards)
+S3 (data lake) -[Redshift Spectrum, no load]-> Redshift
+~~~
 
 ### Athena vs Redshift vs EMR
 
@@ -770,6 +1088,14 @@ A CDN with hundreds of edge locations. Caches content near users, reducing laten
 - **Amazon QuickSight**: serverless BI, dashboards, the in-memory SPICE engine, ML insights.
 - **Amazon OpenSearch Service**: full-text search, log analytics, dashboards (OpenSearch Dashboards). A Serverless option exists. Often paired with Firehose to ingest logs.
 
+~~~groups
+# A data lake with central governance
+[S3 data lake + Glue Data Catalog]
+Lake Formation: *column/row/cell permissions, tag-based access, cross-account sharing
+Query: Athena, Redshift Spectrum, EMR
+Visualize: QuickSight, OpenSearch Dashboards
+~~~
+
 ## Columnar formats and partitioning
 
 | | CSV/JSON (row) | Parquet/ORC (columnar) |
@@ -779,6 +1105,14 @@ A CDN with hundreds of edge locations. Caches content near users, reducing laten
 | Athena cost | High | Much lower |
 
 - **Partition** by frequently filtered columns (for example s3://bucket/logs/year=2026/month=10/) so Athena scans only the relevant partitions (partition pruning).
+
+~~~ladder
+# Athena charges per data scanned: scan less, pay less
+Uncompressed CSV | reads every column of every row | most expensive
+Gzip CSV | fewer bytes but still whole rows | less
+Compressed Parquet | reads only the needed columns | cheap
+Parquet + partitions | scans only the relevant partitions | cheapest
+~~~
 
 ## Quick selection
 
@@ -821,6 +1155,11 @@ A CDN with hundreds of edge locations. Caches content near users, reducing laten
 - On-premises requires installing a **DataSync agent** (VM). Encrypts in transit automatically, verifies data integrity, supports scheduling, bandwidth limits, and preserves metadata/permissions.
 - Runs over the internet or Direct Connect. Suited to **one-time migrations** or **periodic synchronization**.
 
+~~~flow
+# DataSync: an on-prem agent pushes data to AWS
+NFS / SMB (on-prem) -> DataSync agent -[TLS, internet or DX]-> DataSync -> S3 / EFS / FSx
+~~~
+
 ## AWS Storage Gateway
 
 Hybrid storage: on-premises uses familiar protocols, data lives in AWS, with a local cache for low latency.
@@ -834,10 +1173,22 @@ Hybrid storage: on-premises uses familiar protocols, data lives in AWS, with a l
 
 Note: Amazon FSx File Gateway no longer accepts new customers; for Windows file shares, prefer accessing FSx for Windows File Server directly.
 
+~~~groups
+# Familiar on-prem protocols, data lives in AWS
+S3 File Gateway: NFS, SMB, *objects in S3
+Volume Gateway: iSCSI, cached or stored, *EBS snapshots in S3
+Tape Gateway: iSCSI VTL, *S3 Glacier
+~~~
+
 ## AWS Transfer Family
 
 - Fully managed **SFTP, FTPS, FTP, AS2** endpoints, storing data in **S3 or EFS**.
 - Use when external partners still send files via SFTP and you do not want to change their clients. Authenticate via service-managed users, AD, or a custom identity provider.
+
+~~~flow
+# Partners keep their SFTP clients
+Partner (SFTP client) -[SFTP / FTPS / AS2]-> Transfer Family endpoint -> S3 / EFS
+~~~
 
 ## Snow Family (offline transfer)
 
@@ -852,12 +1203,23 @@ Note: Amazon FSx File Gateway no longer accepts new customers; for Windows file 
 - DMS needs a **replication instance** (or DMS Serverless). Targets can be RDS, Aurora, Redshift, DynamoDB, S3, OpenSearch, Kinesis...
 - Very large DBs: combine Snowball Edge + DMS (if available) or use native backup/restore.
 
+~~~flow
+# Different engines: SCT converts the schema, DMS moves the data
+Oracle (on-prem) -[SCT: schema, stored procedures]-> Aurora PostgreSQL
+Oracle (on-prem) -[DMS: full load + CDC]-> Aurora PostgreSQL (cutover)
+~~~
+
 ## AWS Application Migration Service (MGN)
 
 - **Lift-and-shift (rehost)** of physical servers, VMware, Hyper-V, or other clouds to EC2.
 - Continuous block-level replication, non-disruptive test launches, cutover with a few minutes of downtime.
 - Replaces CloudEndure Migration and Server Migration Service (SMS).
 - **Migration Hub** tracks progress; **Application Discovery Service** collects server information before migration.
+
+~~~flow
+# Rehost with Application Migration Service
+Source server (agent) -[continuous block-level replication]-> Staging area (AWS) -[test launch then cutover]-> EC2
+~~~
 
 ## Calculating data transfer time
 
@@ -873,6 +1235,14 @@ Formula: time = size / effective bandwidth.
 | 1 PB | about 2.5 years | about 3 months | about 9-10 days |
 
 How to approach it: if the network transfer time exceeds the deadline (and Direct Connect takes several weeks to install), choose an offline device. If there is enough time and bandwidth, choose DataSync.
+
+~~~decide
+# Over the network or an offline device
+Network transfer finishes before the deadline => DataSync
+Direct Connect already in place, recurring sync => DataSync over Direct Connect
+Hundreds of TB, limited bandwidth, deadline in weeks => Snowball Edge
+Long-term private link, can wait several weeks => Direct Connect
+~~~
 
 ## Quick selection
 
@@ -920,6 +1290,13 @@ SAA-C03 does not go deep into algorithms; it asks **which service fits which use
 - **Amazon Bedrock**: use ready-made **foundation models (FMs)** through an API for generative AI.
 - **Amazon SageMaker AI**: build, train, and deploy **custom models** yourself when no ready-made service fits.
 
+~~~ladder
+# From least operations to most customization
+Ready-made AI service | Rekognition, Textract, Comprehend: call an API | least
+Amazon Bedrock | foundation models via API, RAG, agents | low
+SageMaker AI | build, train, deploy your own model | most
+~~~
+
 ## Amazon SageMaker AI
 
 - A complete ML platform (the new name of Amazon SageMaker; the name "SageMaker" now refers to the wider data and AI platform with Unified Studio).
@@ -929,6 +1306,14 @@ SAA-C03 does not go deep into algorithms; it asks **which service fits which use
 - **Deployment**: **real-time endpoints** (low latency, with auto scaling), **serverless inference** (intermittent traffic), **asynchronous inference** (large payloads, long processing), **batch transform** (batch predictions, no always-on endpoint).
 - **JumpStart**: prebuilt models and solutions to get started quickly.
 
+~~~decide
+# Pick a SageMaker AI inference option
+Low latency, steady traffic => Real-time endpoint
+Intermittent traffic, cold starts acceptable => Serverless inference
+Large payloads, long processing => Asynchronous inference
+Batch predictions, no always-on endpoint => Batch transform
+~~~
+
 ## Amazon Bedrock
 
 - Fully managed, **serverless**: access FMs from many providers (Anthropic, Meta, Mistral, Amazon Nova...) through one API, with no infrastructure to manage.
@@ -936,6 +1321,12 @@ SAA-C03 does not go deep into algorithms; it asks **which service fits which use
 - **Agents**: FMs call APIs/Lambda to perform multi-step tasks.
 - **Guardrails**: filter harmful content, block topics, mask PII.
 - Supports **fine-tuning** with your own data. Customer data is not used to train the base models.
+
+~~~flow
+# Knowledge Bases: RAG over company documents
+Documents (S3) -[chunk and embed]-> Vector store
+Question -> Knowledge Base -[retrieve relevant passages]-> Foundation model -> Answer (with sources)
+~~~
 
 ## Purpose-built AI services
 
@@ -957,6 +1348,14 @@ SAA-C03 does not go deep into algorithms; it asks **which service fits which use
 - **Kendra**: **intelligent enterprise search**: users ask in natural language and get answers from internal documents; connectors to S3, SharePoint, databases...
 - **Personalize**: real-time **recommendations** (product suggestions, personalized ranking) without ML experience.
 - **Amazon Q**: generative AI assistant. **Q Business** answers questions from enterprise data while respecting access permissions; **Q Developer** helps write code, upgrade code, and work with AWS.
+
+~~~groups
+# Grouped by input data
+Images and video: *Rekognition
+Scanned documents and PDFs: *Textract
+Text: *Comprehend, Translate, Kendra
+Speech: *Transcribe (listens), Polly (speaks), Lex (chatbot)
+~~~
 
 ## Quick selection table
 
@@ -983,6 +1382,11 @@ SAA-C03 does not go deep into algorithms; it asks **which service fits which use
 - Need **generative AI** with existing FMs: choose **Bedrock** first; do not self-host an LLM on EC2/SageMaker unless the question requires it.
 - Typical pipeline: an S3 event triggers Lambda, Lambda calls Textract/Rekognition/Comprehend, and results are stored in DynamoDB or S3.
 
+~~~flow
+# Serverless document processing pipeline
+S3 -[ObjectCreated]-> Lambda -> Textract -> DynamoDB (results)
+~~~
+
 ## Commonly confused pairs
 
 | Pair | How to tell them apart |
@@ -992,6 +1396,11 @@ SAA-C03 does not go deep into algorithms; it asks **which service fits which use
 | Transcribe vs Polly | Transcribe: speech to text. Polly: text to speech |
 | Lex vs Connect | Lex: chatbot engine. Amazon Connect: cloud contact center that can integrate Lex |
 | Comprehend vs Translate | Comprehend detects the language but does not translate; Translate translates |
+
+~~~flow
+# Transcribe listens, Translate translates, Polly speaks
+Speech -[Transcribe]-> Text -[Translate]-> Text in another language -[Polly]-> Speech
+~~~
 
 Note: Amazon Forecast and Amazon Fraud Detector are closed to new customers; do not choose them as the answer for new designs.
 `,

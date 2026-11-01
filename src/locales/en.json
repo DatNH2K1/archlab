@@ -328,8 +328,9 @@
     "mark_read": "Mark as read",
     "all_lessons": "All lessons",
     "practice_on_board": "Practise this on the board:",
+    "in_this_lesson": "In this lesson",
     "keywords": "Exam keywords",
-    "keywords_intro": "See this phrase in a question → think of the answer on the right.",
+    "keywords_intro": "See this phrase in a question → think of the answer just below it.",
     "traps": "Common traps",
     "practice_questions": "Try the {count} questions for this lesson"
   },
@@ -448,6 +449,7 @@
     "backup-replication": "Backup and Replication: AWS Backup, RDS, Aurora, DynamoDB, S3, EBS, EFS",
     "management-iac": "Infrastructure as Code and operations: CloudFormation, Beanstalk, Systems Manager, CloudWatch",
     "application-integration": "Advanced application integration: EventBridge, Step Functions, AppFlow, AppSync, MQ, SES, IoT Core",
+    "security-layers-overview": "Security by system layer: the big picture",
     "iam-fundamentals": "IAM Basics: Users, Groups, Roles and Policies",
     "iam-organizations-scp": "AWS Organizations, SCPs and Cross-Account Access",
     "identity-federation-cognito": "Federation, Amazon Cognito and Directory Service",

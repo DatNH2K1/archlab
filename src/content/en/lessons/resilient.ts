@@ -27,6 +27,14 @@ export const resilientLessonsEn: Lesson[] = [
 - **Wavelength**: AWS infrastructure placed inside carriers' 5G networks, for ultra-low-latency mobile/edge applications.
 - **Outposts**: AWS hardware racks placed in your data center, for workloads that must stay on-premises (latency to legacy systems, data residency) but that want to use the same AWS APIs.
 
+~~~groups
+# AWS infrastructure from the Region out to the user
+Region: AZ a, AZ b, *AZ c (at least 3 AZs)
+Near a city: Local Zones
+Inside a 5G network: Wavelength
+In your data center: Outposts
+~~~
+
 ## Single point of failure (SPOF)
 
 Exam questions often describe "one EC2 instance running web + database" and ask how to increase availability. The way to think about it:
@@ -35,6 +43,14 @@ Exam questions often describe "one EC2 instance running web + database" and ask 
 - A self-managed database on EC2 is a SPOF. Solution: move to **RDS Multi-AZ** or **Aurora**.
 - NAT Gateway is a per-AZ resource: for HA, place **one NAT Gateway per AZ** and point each AZ's route table at the NAT in the same AZ.
 - An EBS volume lives in only 1 AZ. If you need a file system shared across AZs, use **EFS** (Regional, data stored redundantly across multiple AZs).
+
+~~~groups
+# A two-AZ web stack with no SPOF
+[Region ap-southeast-1]
+AZ a: ALB node, EC2 (ASG), NAT Gateway, *RDS primary
+AZ b: ALB node, EC2 (ASG), NAT Gateway, *RDS standby
+Regional: S3, DynamoDB, EFS, SQS
+~~~
 
 ## Multi-AZ per service
 
@@ -48,16 +64,35 @@ Exam questions often describe "one EC2 instance running web + database" and ask 
 | DynamoDB, S3, SQS, Lambda | Regional, Multi-AZ automatically | No extra configuration needed |
 | ElastiCache Redis/Valkey | Multi-AZ replication group + automatic failover | Memcached has no replication |
 
+~~~ladder
+# Downtime when the database fails
+RDS Single-AZ | No standby; recover or restore | Long downtime
+RDS Multi-AZ instance | 1 non-readable standby, failover through DNS | 1–2 min
+RDS Multi-AZ DB cluster | 2 readable standbys across 3 AZs | < 35 s
+~~~
+
 ### RDS: Multi-AZ vs Read Replica
 
 - **Multi-AZ** = high availability, **synchronous** replication, a single endpoint, automatic failover.
 - **Read Replica** = read scaling, **asynchronous** replication, its own endpoint, can be cross-Region, can be manually promoted to a standalone DB.
 - A question that says "offload reads for reporting" → Read Replica. A question that says "automatic failover when an AZ fails" → Multi-AZ.
 
+~~~flow
+# Multi-AZ: synchronous, for failover. Read Replica: asynchronous, for reads
+App -> RDS primary -[sync]-> Standby (other AZ, no reads)
+RDS primary -[async]-> Read Replica (own endpoint, readable)
+~~~
+
 ## Vertical and horizontal scaling
 
 - **Vertical scaling (scale up)**: change to a larger instance type. Simple but limited and usually requires downtime; it is still a SPOF.
 - **Horizontal scaling (scale out)**: add instances. Goes with ELB + ASG, tolerates failure well, and is the default answer for "elastic" and "unpredictable traffic".
+
+~~~groups
+# Scaling up is still one machine; scaling out survives failures
+Scale up: One bigger instance, Has a ceiling and needs downtime, *Still a SPOF
+Scale out: More instances across AZs, ELB + ASG, *Survives losing an instance
+~~~
 
 ## Stateless applications and sessions
 
@@ -66,6 +101,12 @@ To scale horizontally and let the ASG terminate any instance, the application mu
 - Store **sessions** outside the instance: **ElastiCache** (Redis/Valkey, sub-millisecond latency) or **DynamoDB** (serverless, with TTL to automatically delete expired sessions).
 - Store user-uploaded files in **S3** or **EFS**, not on each instance's EBS volume.
 - Sticky sessions on an ALB are a stopgap: they skew load distribution and lose sessions when an instance dies. When the question asks for a durable solution, choose storing sessions externally.
+
+~~~flow
+# State lives outside the instance, so the ASG can terminate any of them
+Users -> ALB -> Any EC2 (ASG) -[session]-> ElastiCache or DynamoDB
+Any EC2 -[uploaded files]-> S3 or EFS
+~~~
 
 ## Elastic IP
 
@@ -138,10 +179,23 @@ Quick selection rules:
 - **Weighted target groups**: split a % of traffic between two target groups, used for blue/green or canary.
 - HTTP → HTTPS redirect is done directly on the ALB listener.
 
+~~~flow
+# One ALB serves many microservices through listener rules
+Users -[HTTPS:443]-> ALB -[/api/*]-> API target group (EC2)
+ALB -[host img.example.com]-> Image target group (ECS)
+ALB -[/report/*]-> Lambda (lambda target type)
+~~~
+
 ## Health checks
 
 - ELB only sends traffic to **healthy** targets. Configure the path (for example /health), interval, and healthy/unhealthy thresholds.
 - When an ASG uses **ELB health checks**, an instance marked unhealthy by the ELB is replaced by the ASG (see the Auto Scaling lesson).
+
+~~~flow
+# A failed health check: ELB stops sending traffic, the ASG replaces the instance
+ELB -[GET /health every interval]-> Target -[fails unhealthy threshold]-> Unhealthy (gets no traffic)
+Unhealthy -[ASG uses ELB health check]-> ASG launches a replacement
+~~~
 
 ## Cross-zone load balancing
 
@@ -149,6 +203,13 @@ Quick selection rules:
 - **ALB**: on by default, no inter-AZ data charge.
 - **NLB and GWLB**: off by default; enabling it incurs inter-AZ data transfer charges.
 - A question that says "uneven number of instances per AZ, load is skewed" → enable cross-zone load balancing.
+
+~~~groups
+# Cross-zone off: each LB node gets 50% and splits it only within its AZ
+AZ a with 2 EC2: each EC2 gets 25%
+AZ b with 8 EC2: each EC2 gets 6.25%
+Cross-zone on: *each of the 10 EC2 gets 10%
+~~~
 
 ## Sticky sessions (session affinity)
 
@@ -161,17 +222,34 @@ Quick selection rules:
 - On a CLB this is called **connection draining**.
 - Short requests → reduce the value to scale in faster.
 
+~~~flow
+# Deregistration delay: in-flight requests finish before the target is removed
+Scale in or deploy -> Target draining (no new requests) -[up to 300 s by default]-> In-flight requests finish -> Removed from target group
+~~~
+
 ## SSL/TLS offload, ACM, and SNI
 
 - Attach a certificate from **AWS Certificate Manager (ACM)** to an HTTPS listener (ALB) or TLS listener (NLB) → the LB decrypts, reducing CPU load on the backend. ACM automatically renews public certificates.
 - **SNI (Server Name Indication)**: one listener holds multiple certificates and the LB picks the certificate based on the hostname the client requests → host multiple domains on **one** ALB/NLB. CLB does not support SNI.
 - Need end-to-end encryption all the way to the instance: use HTTPS from the LB to the target, or NLB TCP passthrough (does not terminate TLS).
 
+~~~flow
+# Terminate TLS at the LB or keep it encrypted all the way to the instance
+Client -[HTTPS, SNI a.com]-> ALB (ACM certificates for a.com and b.com) -[HTTP]-> EC2
+Client -[TLS]-> NLB (TCP passthrough) -[TLS untouched]-> EC2 (decrypts itself)
+~~~
+
 ## Static IP and whitelisting
 
 - ALB has no static IP. When a customer requires a fixed IP to whitelist:
   - **NLB** with an Elastic IP per AZ; you can place an ALB as the NLB's target to get both a static IP and layer 7 routing.
   - Or **Global Accelerator** (2 static anycast IPs) in front of the ALB.
+
+~~~flow
+# Static IPs to allow-list while keeping layer 7 routing
+Partner -[an Elastic IP per AZ]-> NLB -> ALB -> EC2
+Partner -[2 static anycast IPs]-> Global Accelerator -> ALB -> EC2
+~~~
 
 ## ALB with Lambda
 
@@ -217,6 +295,14 @@ Quick selection rules:
 - **Subnets in multiple AZs**: the ASG balances instances across AZs; when an AZ fails, the ASG launches replacement instances in the remaining AZs.
 - **Mixed instances policy**: combine an On-Demand base + Spot, with multiple instance types to improve the chance of getting Spot capacity.
 
+~~~groups
+# An ASG across 2 AZs always keeps desired between min and max
+[Auto Scaling group (launch template)]
+AZ a: EC2, EC2
+AZ b: EC2, EC2
+Capacity: min 2, *desired 4, max 8
+~~~
+
 ## Scaling policy types
 
 | Type | How it works | When to choose |
@@ -228,6 +314,14 @@ Quick selection rules:
 | Predictive scaling | Uses ML on historical data to forecast and launch ahead | Load with a daily/weekly recurring cycle, where capacity must be ready before the load arrives |
 
 You can combine multiple policies; when they conflict, the ASG picks the result giving the **largest capacity**.
+
+~~~decide
+# What the load looks like → which policy to pick
+Keep average CPU around 50% => Target tracking
+Load rises at a known time (Monday 9 AM) => Scheduled scaling
+Load repeats daily/weekly and needs capacity ahead of time => Predictive scaling
+The further past the threshold the more instances to add => Step scaling
+~~~
 
 ## Cooldown and instance warm-up
 
@@ -241,16 +335,37 @@ You can combine multiple policies; when they conflict, the ASG picks the result 
 - Enable **ELB health checks** on the ASG: an instance that is still "running" but whose application returns errors (HTTP health check fails) will be **terminated and replaced** by the ASG.
 - A question like "the app hangs but the instance is still running and the ASG does not replace it" → enable ELB health checks for the ASG.
 
+~~~decide
+# Something is wrong with an instance → how the ASG notices
+Hardware or operating system failure => EC2 status check (default)
+App returns HTTP errors while the instance is still running => Turn on ELB health checks for the ASG
+New instances get replaced before the app finishes starting => Raise the health check grace period
+~~~
+
 ## Lifecycle hooks
 
 - Pause an instance in the **Pending:Wait** state (on launch) or **Terminating:Wait** state (on terminate).
 - Used to: install/configure before receiving traffic, or **collect logs/flush data** before the instance is deleted.
 - Combine with EventBridge or SNS/SQS to trigger Lambda/scripts; call complete-lifecycle-action when done. Default timeout is 1 hour.
 
+~~~flow
+# A lifecycle hook holds the instance so work can run before the state changes
+Scale out -> Pending:Wait -[install, configure]-> InService
+Scale in -> Terminating:Wait -[collect logs, flush data]-> Terminated
+Terminating:Wait -> EventBridge -> Lambda -[complete-lifecycle-action]-> ASG
+~~~
+
 ## Warm pools
 
 - Keep a pool of pre-initialized instances in the **Stopped**, **Running**, or **Hibernated** state.
 - Reduces scale-out latency for applications with long startup (for example needing several minutes to load data). Stopped instances only incur EBS charges.
+
+~~~ladder
+# Instance states in a warm pool: faster → cheaper
+Running | Already running, goes InService almost at once | EC2 cost
+Hibernated | RAM saved to EBS, quick to resume | EBS cost
+Stopped | App already installed, OS must boot again | EBS cost
+~~~
 
 ## Termination policy
 
@@ -266,6 +381,12 @@ For workers processing an SQS queue, the CPU metric does not reflect the real lo
 1. Calculate **backlog per instance** = ApproximateNumberOfMessagesVisible / number of InService instances.
 2. Determine the acceptable value = acceptable latency / average processing time per message (for example 10 seconds / 0.1 seconds = 100 messages/instance).
 3. Publish a custom metric to CloudWatch and use **target tracking** with that target.
+
+~~~flow
+# Scale SQS workers on backlog per instance instead of CPU
+SQS -[ApproximateNumberOfMessagesVisible]-> Backlog per instance (divided by InService instances)
+Backlog per instance -[PutMetricData]-> CloudWatch -[target tracking 100]-> Worker ASG
+~~~
 
 ## Exam notes
 
@@ -303,6 +424,11 @@ For workers processing an SQS queue, the CPU metric does not reflect the real lo
 
 When the web tier calls a slow backend directly, a traffic surge can bring down the whole system. Putting a queue in between helps: absorb spikes, retry on failure, and scale producers and consumers independently. Exam keywords: "decouple", "loosely coupled", "orders must not be lost when the backend fails".
 
+~~~flow
+# A queue in the middle absorbs spikes and lets each side scale on its own
+Users -> ALB -> Web tier (EC2) -> SQS -> Worker (ASG)
+~~~
+
 ## Amazon SQS
 
 | Attribute | Standard | FIFO |
@@ -321,6 +447,14 @@ Commonly tested parameters:
 - **Message size**: the classic limit in exam questions is 256 KB (AWS raised it to 1 MiB in 2025). Larger payloads → **SQS Extended Client Library** stores the payload in **S3**, and the message only contains a pointer.
 - Security: SSE with an SQS-managed key or KMS, queue access policy, VPC endpoint.
 
+~~~flow
+# The life of an SQS message
+Producer -> SQS -[ReceiveMessage]-> Consumer (hidden for the visibility timeout)
+Consumer -[done]-> DeleteMessage
+Consumer -[timeout before delete]-> Message visible again (processed twice)
+SQS -[over maxReceiveCount]-> DLQ (redrive back to the source queue)
+~~~
+
 ## Amazon SNS
 
 - Pub/sub: one **topic**, many subscribers (SQS, Lambda, HTTP/S, email, SMS, mobile push, Firehose).
@@ -329,6 +463,13 @@ Commonly tested parameters:
 - **SNS FIFO topic** combines with SQS FIFO when you need ordered, deduplicated fan-out.
 - SNS does not store messages long-term: offline subscribers may lose messages, so put SQS behind it for durability.
 
+~~~flow
+# Fan-out: one order and three independent consumers
+Order service -> SNS -> Inventory SQS -> Inventory worker (EC2)
+SNS -> Payment SQS -> Lambda
+SNS -[filter policy country = VN]-> VN analytics SQS
+~~~
+
 ## Amazon EventBridge
 
 - Serverless event bus: **default bus** (events from AWS services), **custom bus** (your applications), **partner bus** (SaaS such as Zendesk, Datadog).
@@ -336,6 +477,13 @@ Commonly tested parameters:
 - **EventBridge Scheduler**: scheduling (cron/rate/one-time) that invokes thousands of target types, replacing cron on EC2.
 - **EventBridge Pipes**: point-to-point connections from a source (SQS, Kinesis, DynamoDB Streams...) to a target, with filtering and enrichment, reducing glue code.
 - Choose EventBridge when: reacting to AWS events (for example EC2 state change), integrating SaaS, routing with many complex rules. Choose SNS when you need simple fan-out, high throughput, push to SMS/email/mobile.
+
+~~~flow
+# EventBridge: rules filter events and send them to targets
+EC2 state change -> Default bus -[rule on event pattern]-> Lambda
+Zendesk -> Partner bus -[rule]-> Step Functions
+EventBridge Scheduler -[cron]-> Lambda
+~~~
 
 ## Kinesis Data Streams vs SQS
 
@@ -349,11 +497,24 @@ Commonly tested parameters:
 
 Keywords "real-time", "multiple applications read the same data stream", "replay" → Kinesis. To push a stream into S3/Redshift/OpenSearch without code → **Amazon Data Firehose** (near real-time).
 
+~~~flow
+# Kinesis: many consumers read the same stream and can replay within retention
+Clickstream -[partition key]-> Kinesis Data Streams -> Lambda (real-time analytics)
+Kinesis Data Streams -> Second application (reads the same data, can replay)
+Kinesis Data Streams -> Data Firehose -> S3 or Redshift
+~~~
+
 ## Amazon MQ
 
 - Managed message broker for **Apache ActiveMQ** and **RabbitMQ**, supporting standard protocols: **AMQP, MQTT, STOMP, OpenWire, JMS**.
 - Choose it when you **migrate an existing application** that uses an on-premises broker and you do not want to change code to the SQS/SNS APIs.
 - HA: active/standby brokers across 2 AZs (ActiveMQ) or a 3-node cluster (RabbitMQ). It does not scale "infinitely" like SQS/SNS.
+
+~~~groups
+# Amazon MQ survives an AZ failure with several brokers but does not scale like SQS
+ActiveMQ active/standby: *Active broker in AZ a, Standby broker in AZ b
+RabbitMQ cluster: Node AZ a, Node AZ b, Node AZ c
+~~~
 
 ## Quick selection
 
@@ -414,14 +575,33 @@ Keywords "real-time", "multiple applications read the same data stream", "replay
 - **SnapStart** (Java, Python, .NET): reduces cold starts using snapshots.
 - Lambda connecting to RDS with many concurrent connections → use **RDS Proxy** to pool connections.
 
+~~~groups
+# Reserved caps, provisioned pre-warms
+Reserved concurrency: Concurrency cap for one function, Protects downstream, *Does not remove cold starts
+Provisioned concurrency: Pre-initialized execution environments, *Removes cold starts, Costs extra
+~~~
+
 ### Lambda in a VPC
 
 - Attach Lambda to private subnets to access RDS and ElastiCache in the VPC (Lambda uses Hyperplane ENIs).
 - Lambda in a VPC has **no Internet access** unless routed through a **NAT Gateway**; use a **VPC endpoint** to reach S3/DynamoDB.
 
+~~~flow
+# How a Lambda in a private subnet reaches the outside
+Lambda (private subnet) -> NAT Gateway (public subnet) -> Internet
+Lambda (private subnet) -[VPC endpoint]-> S3 or DynamoDB
+~~~
+
 ### Invoking Lambda and error handling
 
 - Synchronous (API Gateway, ALB), asynchronous (S3, SNS, EventBridge: automatic 2 retries, can configure a **destination** or DLQ), and **event source mapping** (SQS, Kinesis, DynamoDB Streams: Lambda polls).
+
+~~~flow
+# Three ways to invoke Lambda
+API Gateway -[synchronous, waits for result]-> Lambda
+S3 event -[asynchronous, 2 retries]-> Lambda -[still failing]-> Destination or DLQ
+SQS -[event source mapping, Lambda polls]-> Lambda
+~~~
 
 ## Lambda@Edge and CloudFront Functions
 
@@ -432,6 +612,12 @@ Keywords "real-time", "multiple applications read the same data stream", "replay
 | Run time | Under 1 ms | Up to 5 seconds (viewer), 30 seconds (origin) |
 | Network/body access | No | Yes |
 | Use case | Rewrite URLs, headers, redirects, simple token checks, massive scale, cheap | Complex logic, calling external services, processing the body |
+
+~~~groups
+# Where code can run around CloudFront
+Viewer request/response: CloudFront Functions, Lambda@Edge
+Origin request/response: *Lambda@Edge only
+~~~
 
 ## Amazon API Gateway
 
@@ -449,6 +635,11 @@ Keywords "real-time", "multiple applications read the same data stream", "replay
 - Authorizers: IAM, Cognito user pool, Lambda authorizer.
 - Put **SQS** behind API Gateway (service integration) to absorb write spikes.
 
+~~~flow
+# API Gateway writes straight to SQS to absorb write spikes
+Users -> API Gateway -[service integration]-> SQS -> Lambda -> DynamoDB
+~~~
+
 ## AWS Step Functions
 
 - Orchestrate multiple steps (Lambda, ECS, Glue, SageMaker, direct calls to more than 200 AWS services via SDK integrations) with a state machine: retry, catch, parallel, map, wait, choice.
@@ -460,6 +651,13 @@ Keywords "real-time", "multiple applications read the same data stream", "replay
 | Semantics | Exactly-once | At-least-once (async) / at-most-once (sync) |
 | Pricing | Per state transition | Per number of executions + duration + memory |
 | Use case | Long workflows, need audit history, approvals | High-volume event processing, IoT, streaming |
+
+~~~decide
+# What kind of workflow → Standard or Express
+Runs for days and needs a manual approval => Standard
+Needs execution history for audit, exactly-once => Standard
+Thousands of events per second, each workflow a few seconds => Express
+~~~
 
 ## AWS AppSync
 
@@ -515,6 +713,12 @@ Keywords "real-time", "multiple applications read the same data stream", "replay
 - Alias **cannot** point to the DNS name of an EC2 instance.
 - A question that says "point example.com to an ALB" → Alias A record.
 
+~~~flow
+# Alias works at the zone apex; CNAME is for subdomains only
+example.com -[Alias A]-> ALB (free queries)
+www.example.com -[CNAME]-> app.other-host.com (not allowed at the apex)
+~~~
+
 ## Routing policies
 
 | Policy | Behavior | Use case |
@@ -530,6 +734,15 @@ Keywords "real-time", "multiple applications read the same data stream", "replay
 
 - Geolocation is based on **location** (law, language), Latency is based on **measured latency**. A question that says "users in Germany must be served from eu-central-1 because of regulations" → Geolocation.
 
+~~~decide
+# What the question says → which routing policy to pick
+Shift 10% of traffic to a new version => Weighted
+Send users to the fastest Region => Latency
+Legal or language rules by country => Geolocation
+Move to a standby site when the primary fails => Failover + health check
+Gradually shift traffic between areas with bias => Geoproximity
+~~~
+
 ## Health checks
 
 - Three types: **endpoint** (HTTP/HTTPS/TCP to an IP or domain), **calculated** (combines multiple child health checks with AND/OR/threshold), and **CloudWatch alarm** based.
@@ -538,11 +751,25 @@ Keywords "real-time", "multiple applications read the same data stream", "replay
 - For an Alias pointing at an ELB, enable **Evaluate Target Health** instead of creating a separate health check.
 - You can send notifications through CloudWatch alarm + SNS.
 
+~~~flow
+# Failover routing: the health check decides which record to return
+Users -> Route 53 -[primary healthy]-> ALB (ap-southeast-1)
+Route 53 -[primary unhealthy]-> ALB (us-east-1 secondary)
+Private EC2 -> CloudWatch alarm -> Health check (alarm-based)
+~~~
+
 ## TTL
 
 - High TTL: fewer DNS queries (cheaper), but changes propagate slowly.
 - Low TTL: fast switchover during migration/failover, more queries.
 - Migration tip: lower the TTL a few days before changing the record, then raise it again.
+
+~~~ladder
+# Low TTL changes fast; high TTL costs less
+60 seconds | Failover and migration spread fast | More queries
+300 seconds | Balances change speed and cost | Moderate
+1 day | Changes spread very slowly | Fewer queries
+~~~
 
 ## Hosted zones and hybrid DNS
 
@@ -553,6 +780,12 @@ Keywords "real-time", "multiple applications read the same data stream", "replay
   - Rules can be shared across multiple accounts with **AWS RAM**.
 - **Route 53 Resolver DNS Firewall**: blocks queries to malicious domains from the VPC.
 
+~~~flow
+# Hybrid DNS through Route 53 Resolver
+On-premises DNS -[asks for AWS names]-> Inbound endpoint -> Private hosted zone
+EC2 in VPC -> Route 53 Resolver -[forwarding rule corp.local]-> Outbound endpoint -> On-premises DNS
+~~~
+
 ## Route 53 or Global Accelerator
 
 | | Route 53 | Global Accelerator |
@@ -561,6 +794,12 @@ Keywords "real-time", "multiple applications read the same data stream", "replay
 | Failover | Per TTL, can be slow due to client caching | Fast (under 1 minute), independent of DNS caching |
 | Protocols | Anything that uses DNS | TCP, UDP (gaming, VoIP, IoT) |
 | Static IP | No | Yes |
+
+~~~flow
+# DNS failover waits for TTL; Global Accelerator reroutes at the edge
+Users -[DNS lookup, client caches for TTL]-> Route 53 -> ALB (Region A)
+Users -[2 static anycast IPs]-> Nearest edge location -[AWS backbone]-> ALB (Region A, Region B on failure)
+~~~
 
 - Global Accelerator differs from CloudFront: CloudFront **caches** HTTP content at the edge; Global Accelerator **does not cache**, it only accelerates the network path and provides static IPs for TCP/UDP.
 `,
@@ -605,6 +844,11 @@ Keywords "real-time", "multiple applications read the same data stream", "replay
 - **RTO (Recovery Time Objective)**: the maximum time from the incident until the system is running again.
 - The smaller the RPO/RTO → the higher the cost. Exam questions usually give RPO/RTO numbers + "MOST cost-effective" and you choose the **cheapest strategy that still meets the requirements**.
 
+~~~flow
+# RPO looks back to the last backup; RTO looks ahead to recovery
+Last backup or replica write -[RPO: data lost]-> Disaster -[RTO: downtime]-> System running again
+~~~
+
 ## The four DR strategies
 
 | Strategy | What exists in the DR Region | Typical RPO / RTO | Cost |
@@ -613,6 +857,14 @@ Keywords "real-time", "multiple applications read the same data stream", "replay
 | Pilot light | Data continuously replicated (DB replica), minimal core infrastructure; app servers are **off** or not yet created | Minutes / tens of minutes | Low |
 | Warm standby | A scaled-down copy of the entire system that is **running** | Seconds-minutes / minutes | Medium |
 | Multi-site active/active | The full system runs and receives traffic in multiple Regions | Near 0 / near 0 | Highest |
+
+~~~ladder
+# Four DR strategies: cheap and slow → expensive and near instant
+Backup & restore | Backups only, rebuilt with IaC after a disaster | RTO hours
+Pilot light | DB replicated continuously, app servers off | RTO 10+ min
+Warm standby | The whole stack runs at small scale | RTO minutes
+Multi-site active/active | Several Regions take traffic at once | RTO ~0
+~~~
 
 ### Backup & restore
 
@@ -624,6 +876,14 @@ Keywords "real-time", "multiple applications read the same data stream", "replay
 
 - Like the "pilot flame": the core (database) is always replicated, for example an **RDS cross-Region read replica** or **Aurora Global Database**.
 - The app tier only has an AMI and launch template ready; during an incident you launch, scale up, promote the database, and switch DNS.
+
+~~~groups
+# Pilot light: only the data layer is always on in the DR Region
+[DR Region]
+Always running: *DB replica (continuous replication)
+Ready but off: AMI, Launch template, ASG desired 0
+On disaster: Launch the app, Promote the DB, Switch DNS
+~~~
 
 ### Warm standby
 
@@ -648,6 +908,12 @@ Moving to the DR Region is only half the job. The other half is **returning to t
    - **Aurora Global Database**: managed failover, RPO about 1 second, RTO under 1 minute.
 3. Point the app in the DR Region at the new writer endpoint and scale the ASG up to full size.
 
+~~~flow
+# Failover: move traffic and promote the database in the DR Region
+Health check fails -> Route 53 failover -> ALB (DR Region) -> EC2 (ASG scales up)
+Read Replica (DR Region) -[promote]-> New writer DB (loses the replication lag)
+~~~
+
 ### When the primary Region comes back (failback)
 
 - The old database in the primary Region **does not receive** the writes made in the DR Region during the outage. Sending users back right away makes the app write to stale data, and the two copies diverge (**split-brain**).
@@ -658,6 +924,12 @@ Moving to the DR Region is only half the job. The other half is **returning to t
   4. Switch back in a maintenance window: for RDS, promote the replica in the primary Region; for Aurora, use **switchover** (planned, no data loss).
   5. Point DNS back, then rebuild the replica in the DR Region for the next incident.
 - Route 53 failover routing **sends traffic back automatically** as soon as the primary Region's health check turns healthy, before the data has caught up. Prevent that: use **Route 53 Application Recovery Controller (ARC)** to turn Regions on and off by hand, or change the DNS record until failback is done.
+
+~~~flow
+# A planned failback avoids split-brain
+DB in DR Region (current primary) -[reverse replica]-> DB in primary Region
+Wait for lag near 0 -> Promote or switchover -> Point DNS back -> Rebuild replica to DR Region
+~~~
 
 | Service | Failover | Failback |
 |---|---|---|
@@ -672,6 +944,12 @@ Moving to the DR Region is only half the job. The other half is **returning to t
 - Supports **drills** (test launches without affecting replication) and **failback** to the source.
 - Keywords: "on-premises servers", "reduce the cost of the DR site", "RPO seconds, RTO minutes" → AWS Elastic Disaster Recovery. It replaces CloudEndure Disaster Recovery.
 - Differs from **AWS Application Migration Service (MGN)**: MGN is for one-time migration (lift-and-shift), DRS is for continuous DR.
+
+~~~flow
+# AWS DRS: continuous block replication into a low-cost staging area
+On-premises server -[continuous block replication]-> Staging area (EBS + small replication instances)
+Staging area -[failover or drill]-> Recovered EC2 -[failback]-> On-premises server
+~~~
 
 ## Cross-Region snapshot copy
 
@@ -737,6 +1015,12 @@ Moving to the DR Region is only half the job. The other half is **returning to t
 - **Logically air-gapped vault**: an isolated vault that can be shared to another account for recovery during ransomware.
 - **Backup Audit Manager** to check compliance with backup policies.
 
+~~~flow
+# AWS Backup: select resources by tag and copy backups somewhere safe
+Tag backup=daily -> Backup plan -> Backup vault (KMS) -[copy rule]-> Vault in another Region
+Backup vault -[cross-account copy]-> Backup account vault (Vault Lock)
+~~~
+
 ## Amazon RDS
 
 | | Automated backups | Manual snapshot |
@@ -750,6 +1034,13 @@ Moving to the DR Region is only half the job. The other half is **returning to t
 - Keeping backups longer than 35 days → manual snapshots or AWS Backup.
 - **Read replica**: asynchronous replication, can be **cross-Region** (for DR and reads close to users). Promote the replica to a standalone DB when the primary Region fails (a manual action, RPO equals the replication lag).
 
+~~~decide
+# RDS recovery need → what to use
+Restore to a specific second within 35 days => Automated backups + PITR
+Keep backups longer than 35 days => Manual snapshot or AWS Backup
+A copy in another Region for DR or local reads => Cross-Region read replica
+~~~
+
 ## Amazon Aurora
 
 - Continuous backup to S3, PITR within a 1-35 day retention; **Backtrack** (Aurora MySQL) rewinds the DB in place without a restore.
@@ -760,12 +1051,24 @@ Moving to the DR Region is only half the job. The other half is **returning to t
   - **Write forwarding**: secondaries forward write statements to the primary.
   - Low-latency reads for global users.
 
+~~~flow
+# Aurora Global Database: storage-level replication to other Regions
+Primary Region (reads and writes) -[storage replication, usually < 1 s]-> Secondary Region (read only)
+Secondary Region -[write forwarding]-> Primary Region
+~~~
+
 ## Amazon DynamoDB
 
 - **On-demand backup**: full backup with no performance impact, kept until deleted.
 - **PITR**: restore to any second within the last **35 days** at most; a restore creates a **new table**.
 - **Global tables**: multi-Region, **multi-active** (write in any Region), replication typically under 1 second, last-writer-wins conflict resolution. Requires DynamoDB Streams (enabled automatically).
 - Export to S3 uses PITR for analytics without consuming read capacity.
+
+~~~groups
+# Where writes go in a multi-Region setup
+Aurora Global Database: *1 primary Region writes, Secondaries are read-only, Write forwarding to the primary
+DynamoDB global tables: *Every Region accepts writes, Last writer wins on conflict
+~~~
 
 ## Amazon S3
 
@@ -778,6 +1081,12 @@ Moving to the DR Region is only half the job. The other half is **returning to t
   - No chained replication (A → B → C does not happen automatically).
 - **S3 Replication Time Control (RTC)**: an SLA to replicate **99.99% of objects within 15 minutes**, with metrics and notifications. Keywords "require replication within a predictable time / compliance".
 
+~~~flow
+# S3 replication only covers new objects
+Source S3 (versioning) -[CRR, asynchronous]-> Destination S3 in another Region (versioning)
+Objects that existed before -[S3 Batch Replication]-> Destination S3 in another Region
+~~~
+
 ## Amazon EBS
 
 - **Snapshot**: incremental, stored in S3 (managed by AWS), can be copied cross-Region/cross-account, and used to create a volume in any AZ in the Region.
@@ -785,6 +1094,13 @@ Moving to the DR Region is only half the job. The other half is **returning to t
 - **Fast Snapshot Restore (FSR)**: volumes created from a snapshot get full performance immediately, without the "first touch" latency when reading blocks for the first time. Charged hourly per AZ.
 - **Recycle Bin**: retains deleted EBS snapshots and AMIs for the retention period so you can recover from accidental deletion.
 - **EBS Snapshot Archive**: a cheaper storage tier for rarely used snapshots (90-day minimum, restore takes 24-72 hours).
+
+~~~flow
+# A volume lives in one AZ; a snapshot is usable across the Region
+EBS volume (AZ a) -[incremental snapshot]-> Snapshot (Regional) -> New volume (AZ b)
+Snapshot -[cross-Region copy]-> Snapshot in another Region
+Snapshot -[deleted by mistake]-> Recycle Bin (restore within retention)
+~~~
 
 ## Amazon EFS
 
@@ -857,6 +1173,12 @@ You declare infrastructure in a **template** (JSON/YAML) → CloudFormation crea
 - **Drift detection**: detects resources modified manually outside CloudFormation compared with the template.
 - **Stack policy** blocks updates to critical resources; **termination protection** blocks stack deletion.
 
+~~~flow
+# Preview with a change set; catch manual edits with drift detection
+New template -> Change set (add, modify, replace) -[execute]-> Stack updated
+Manual console edit -> Drift detection -> Reports resources that drifted
+~~~
+
 ### DeletionPolicy
 
 | Value | When the stack or resource is deleted |
@@ -872,10 +1194,23 @@ You declare infrastructure in a **template** (JSON/YAML) → CloudFormation crea
 - **Nested stacks**: an AWS::CloudFormation::Stack resource calls a child template, reusing common components inside **one** parent stack.
 - **StackSets**: deploy **the same template to many accounts and many Regions** in one operation. With **service-managed permissions** (AWS Organizations), turn on **automatic deployment** so new accounts added to an OU are deployed automatically.
 
+~~~flow
+# StackSets: one template, many accounts and Regions
+Template -> StackSet (management account) -> Prod account (us-east-1)
+StackSet -> Dev account (ap-southeast-1)
+StackSet -[automatic deployment]-> New account joining the OU
+~~~
+
 ### Bootstrapping EC2
 
 - **cfn-init** reads AWS::CloudFormation::Init metadata to install packages, create files, and start services.
 - **cfn-signal** + **CreationPolicy**: the stack reaches CREATE_COMPLETE only when the instance signals success; on timeout it rolls back.
+
+~~~flow
+# CreationPolicy waits for cfn-signal before completing the stack
+CloudFormation -> EC2 (cfn-init installs packages) -[cfn-signal success]-> CREATE_COMPLETE
+EC2 -[timeout with no signal]-> Rollback
+~~~
 
 ### AWS CDK and AWS SAM
 
@@ -894,6 +1229,16 @@ You declare infrastructure in a **template** (JSON/YAML) → CloudFormation crea
 
 **Blue/green**: create a second environment, then **swap environment URLs** (CNAME) or shift gradually with Route 53 weighted routing.
 
+~~~ladder
+# Beanstalk deployments: fast, cheap and risky → safe and pricier
+All at once | Deploys every instance at once | Downtime
+Rolling | Batch by batch, reduced capacity during deploy | -capacity
+Rolling with additional batch | Adds a temporary batch to keep full capacity | +1 batch
+Immutable | New instances in a temporary ASG, fast rollback | x2
+Traffic splitting | Canary: a % of traffic to new instances | Canary
+Blue/green | A second environment, then swap URLs | x2 env
+~~~
+
 ## AWS Systems Manager (SSM)
 
 Manages **managed nodes** (EC2 and on-premises servers via **hybrid activations**) that run the SSM Agent with an appropriate IAM role.
@@ -905,12 +1250,28 @@ Manages **managed nodes** (EC2 and on-premises servers via **hybrid activations*
 - **State Manager**: associations keep nodes in a desired state.
 - **OpsCenter**: aggregates OpsItems from CloudWatch alarms and EventBridge for central handling. **Parameter Store**: see the Secrets lesson.
 
+~~~groups
+# Systems Manager feature groups
+[AWS Systems Manager (SSM Agent + IAM role)]
+Access: *Session Manager, Run Command
+Maintenance: Patch Manager, Maintenance Window
+Automation: Automation, State Manager
+Operations: OpsCenter, Parameter Store
+~~~
+
 ## Amazon CloudWatch
 
 - **Metrics**: EC2 basic monitoring 5 minutes, detailed monitoring 1 minute. **Memory and disk usage are not available by default** → install the **CloudWatch agent**. Custom metrics via PutMetricData, high-resolution down to 1 second.
 - **Alarms** → actions: SNS, Auto Scaling, **EC2 actions** (stop, terminate, reboot, **recover**), SSM OpsItem. **Composite alarms** reduce alarm noise.
 - **Logs**: log groups, retention; **metric filters** turn log patterns into metrics; **subscription filters** stream in real time to Lambda, Kinesis, Firehose; export to S3 is not real time. **Logs Insights** queries logs.
 - **Dashboards** across Regions and accounts; **cross-account observability**: one monitoring account views the metrics, logs, and traces of source accounts.
+
+~~~flow
+# CloudWatch Logs: alerting, real time or archive
+App log -> CloudWatch Logs -[metric filter]-> Metric -> Alarm -> SNS
+CloudWatch Logs -[subscription filter, real time]-> Lambda / Kinesis / Firehose
+CloudWatch Logs -[export, not real time]-> S3
+~~~
 
 ## X-Ray, Health Dashboard, and Service Catalog
 
@@ -978,11 +1339,22 @@ Manages **managed nodes** (EC2 and on-premises servers via **hybrid activations*
 - **Partner event source**: SaaS (Zendesk, Datadog...) pushes events straight into your account, no webhook/poller.
 - **Cross-account**: a rule in the source account targets the event bus of a central account; the target bus needs a **resource-based policy** allowing the source account (or the whole organization) to send to it. A target can also be a bus in another Region.
 
+~~~flow
+# Collect events from many accounts on one central bus
+EC2 state change -> Default bus (source account) -[rule]-> Central bus (resource-based policy) -> Lambda
+~~~
+
 ### Rules and event patterns
 
 - Patterns filter on source, detail-type, and detail (prefix, suffix, anything-but, numeric...).
 - Each rule has at most 5 targets; an **input transformer** reshapes the payload before sending.
 - Each target has a **retry policy** (by default retries for up to 24 hours) and a **DLQ** (SQS) for events that could not be delivered.
+
+~~~flow
+# A rule filters, reshapes and delivers; failed deliveries retry then go to a DLQ
+Event -> Rule (event pattern) -[input transformer]-> Target (up to 5)
+Rule -[delivery fails, retries up to 24 hours]-> DLQ (SQS)
+~~~
 
 ### Features that often appear on the exam
 
@@ -992,6 +1364,11 @@ Manages **managed nodes** (EC2 and on-premises servers via **hybrid activations*
 - **EventBridge Pipes**: point-to-point **source → filter → enrichment → target**. Sources: SQS, Kinesis, DynamoDB Streams, MSK/Kafka, Amazon MQ. Enrichment: Lambda, Step Functions Express, API Gateway, API destination. Reduces "glue" Lambda code.
 - **API destinations**: call external HTTP endpoints (SaaS, webhooks) as targets, with a **connection** that manages authentication (Basic, API key, OAuth) and an invocation rate limit.
 - **Global endpoints**: fail over event ingestion to a second Region when the primary Region has an issue.
+
+~~~flow
+# EventBridge Pipes: point-to-point wiring without glue Lambdas
+SQS (source) -> Filter -> Lambda (enrichment) -> Step Functions (target)
+~~~
 
 ## Step Functions: patterns
 
@@ -1010,11 +1387,23 @@ Recap: **Standard** (up to 1 year, exactly-once, execution history) for long wor
 | Run a Job | .sync | Waits for the job (ECS task, Glue, Batch) to complete |
 | Wait for Callback | .waitForTaskToken | Pauses until an external system calls SendTaskSuccess/SendTaskFailure with the task token; supports HeartbeatSeconds |
 
+~~~flow
+# Wait for Callback: the workflow pauses until the task token comes back
+Step Functions -[.waitForTaskToken]-> SQS (with task token) -> External system or approver
+External system or approver -[SendTaskSuccess + token]-> Step Functions (resumes)
+~~~
+
 ### Map and saga
 
 - **Map (inline)**: iterates in parallel over an array in the input, maximum concurrency 40.
 - **Distributed Map**: runs **up to 10,000 parallel child executions**, reading items directly from S3 (CSV, JSON, object listings) → processes millions of files.
 - **Saga**: each step (reserve, charge, ship) has a Catch leading to a **compensating step** (release reservation, refund) that runs in reverse order, instead of a distributed transaction.
+
+~~~flow
+# Saga: when a later step fails, compensating steps run in reverse
+Reserve -> Charge -> Ship
+Ship -[Catch error]-> Refund -> Release reservation
+~~~
 
 ## Specialized integration services
 
@@ -1043,6 +1432,12 @@ Recap: **Standard** (up to 1 year, exactly-once, execution history) for long wor
 - Devices connect via **MQTT** (also HTTPS, MQTT over WebSocket), authenticated with **X.509** certificates.
 - **Device Shadow** stores desired/reported state while a device is offline.
 - **Rules engine**: SQL-like statements filter messages by topic and route them to Lambda, DynamoDB, S3, Kinesis, Firehose, SQS, SNS... with no intermediate server.
+
+~~~flow
+# IoT Core: devices publish over MQTT, the rules engine routes without servers
+Device -[MQTT, X.509 certificate]-> IoT Core -[SQL rule]-> DynamoDB
+IoT Core -[another SQL rule]-> Kinesis Data Streams
+~~~
 
 ## Which integration service
 

@@ -328,8 +328,9 @@
     "mark_read": "Đánh dấu đã đọc",
     "all_lessons": "Tất cả bài học",
     "practice_on_board": "Thực hành ý này trong game:",
+    "in_this_lesson": "Trong bài này",
     "keywords": "Từ khoá đề thi",
-    "keywords_intro": "Gặp cụm từ này trong câu hỏi → nghĩ ngay tới đáp án bên phải.",
+    "keywords_intro": "Gặp cụm từ này trong câu hỏi → nghĩ ngay tới đáp án bên dưới.",
     "traps": "Bẫy hay gặp",
     "practice_questions": "Làm {count} câu hỏi của bài này"
   },
@@ -448,6 +449,7 @@
     "backup-replication": "Backup và Replication: AWS Backup, RDS, Aurora, DynamoDB, S3, EBS, EFS",
     "management-iac": "Infrastructure as Code và vận hành: CloudFormation, Beanstalk, Systems Manager, CloudWatch",
     "application-integration": "Tích hợp ứng dụng nâng cao: EventBridge, Step Functions, AppFlow, AppSync, MQ, SES, IoT Core",
+    "security-layers-overview": "Tổng quan bảo mật theo từng lớp hệ thống",
     "iam-fundamentals": "IAM căn bản: User, Group, Role và Policy",
     "iam-organizations-scp": "AWS Organizations, SCP và truy cập cross-account",
     "identity-federation-cognito": "Federation, Amazon Cognito và Directory Service",

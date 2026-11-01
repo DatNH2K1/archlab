@@ -35,6 +35,14 @@ export const costLessons: Lesson[] = [
 - **Regional RI** áp dụng giảm giá cho mọi AZ trong Region nhưng **không giữ capacity**. **Zonal RI** gắn với một AZ và **có reserve capacity**.
 - RI cũng có cho RDS, ElastiCache, OpenSearch, Redshift (reserved nodes), DynamoDB (reserved capacity).
 
+~~~groups
+# Standard RI hay Convertible RI
+Standard RI: *Giảm tới khoảng 72%, Đổi AZ và size trong family, Bán lại trên RI Marketplace
+Convertible RI: Giảm ít hơn, *Đổi family / OS / tenancy, Không bán trên Marketplace
+Regional RI: Giảm giá mọi AZ trong Region, Không giữ capacity
+Zonal RI: Gắn với một AZ, *Có giữ capacity
+~~~
+
 ## Savings Plans
 
 Cam kết **mức chi tiêu theo giờ** (ví dụ cam kết X USD/giờ) trong 1 hoặc 3 năm.
@@ -49,6 +57,13 @@ Cam kết **mức chi tiêu theo giờ** (ví dụ cam kết X USD/giờ) trong 
 - Chắc chắn dùng một family trong một Region và muốn giảm sâu nhất → **EC2 Instance Savings Plans** (hoặc Standard RI).
 - AWS khuyến nghị Savings Plans thay cho RI với EC2 vì ít phải quản lý hơn.
 
+~~~decide
+# Chọn loại Savings Plans
+Có thể đổi Region hoặc chuyển sang Fargate / Lambda => Compute Savings Plans
+Chắc chắn một family trong một Region, muốn giảm sâu nhất => EC2 Instance Savings Plans
+Usage là instance của SageMaker AI => SageMaker Savings Plans
+~~~
+
 ## Spot Instances
 
 - Dùng capacity dư của AWS, **rẻ tới 90%** so với On-Demand.
@@ -56,11 +71,27 @@ Cam kết **mức chi tiêu theo giờ** (ví dụ cam kết X USD/giờ) trong 
 - Hành vi khi bị gián đoạn: terminate (mặc định), stop hoặc hibernate.
 - Phù hợp: batch processing, big data, CI/CD, render, HPC, stateless web có thể chịu lỗi, container workers. **Không** phù hợp: database chính, job phải hoàn thành trong thời hạn cứng mà không có checkpoint.
 
+~~~ladder
+# Mức giảm tối đa so với On-Demand
+On-Demand | Không cam kết, trả theo giây | 0%
+Compute Savings Plans | Mọi family và Region, cả Fargate và Lambda | -66%
+EC2 Instance Savings Plans / Standard RI | Khóa một family trong một Region | -72%
+Spot | Có thể bị thu hồi, báo trước 2 phút | -90%
+~~~
+
 ### Spot Fleet và Auto Scaling mixed instances
 
 - **Spot Fleet / EC2 Fleet**: tập hợp Spot (và tùy chọn On-Demand) để đạt target capacity. Chiến lược phân bổ: lowestPrice, diversified, capacityOptimized, **priceCapacityOptimized** (khuyến nghị: ưu tiên pool ít bị gián đoạn nhưng giá thấp).
 - **Auto Scaling group với mixed instances policy**: đặt một **On-Demand base capacity** (vd 2 instance luôn On-Demand), phần còn lại theo tỷ lệ On-Demand/Spot, khai báo nhiều instance type để đa dạng hóa pool. Đây là đáp án điển hình cho "giữ một baseline ổn định nhưng tối ưu chi phí cho phần tăng tải".
 - Capacity Rebalancing trong ASG chủ động thay instance Spot sắp bị thu hồi.
+
+~~~groups
+# ASG mixed instances: baseline ổn định, phần tăng tải giá rẻ
+[Auto Scaling group]
+On-Demand base: 2 instance luôn chạy, *phủ bằng Savings Plans
+Phần vượt base: 25% On-Demand, *75% Spot
+Instance types: m7g.large, m6g.large, c7g.large, *đa dạng pool Spot
+~~~
 
 ## Dedicated Hosts vs Dedicated Instances
 
@@ -83,11 +114,24 @@ Cam kết **mức chi tiêu theo giờ** (ví dụ cam kết X USD/giờ) trong 
 - Kết hợp với **Regional RI hoặc Savings Plans** để vừa có capacity vừa có giảm giá.
 - Đề hay hỏi: "cần đảm bảo capacity cho sự kiện ngắn hạn (vd Black Friday) trong một AZ" → Capacity Reservation (không phải RI 1 năm).
 
+~~~decide
+# Capacity và license: chọn gì
+Cần chắc chắn có capacity trong một AZ cho sự kiện ngắn => On-Demand Capacity Reservation
+Vừa cần capacity vừa cần giảm giá => Capacity Reservation + Savings Plans hoặc Zonal RI
+License theo socket hoặc core (BYOL) => Dedicated Host
+Chỉ cần không chia sẻ phần cứng với account khác => Dedicated Instance
+~~~
+
 ## Graviton và right-sizing
 
 - **AWS Graviton** (ARM): price/performance tốt hơn tới khoảng 40% so với x86 cùng thế hệ; dùng được cho EC2, Lambda (arm64), Fargate, RDS, Aurora, ElastiCache, OpenSearch. Cần ứng dụng tương thích ARM.
 - **AWS Compute Optimizer**: dùng machine learning trên metric CloudWatch để đề xuất right-size cho EC2, Auto Scaling groups, EBS volumes, Lambda, ECS trên Fargate, RDS. Metric bộ nhớ cần **CloudWatch agent**.
 - Right-size **trước**, rồi mới mua Savings Plans/RI, để không cam kết cho tài nguyên thừa.
+
+~~~flow
+# Tối ưu trước, cam kết sau
+Compute Optimizer (gợi ý size) -> Right-size -> Graviton (nếu app hỗ trợ ARM) -> Mua Savings Plans / RI
+~~~
 
 ## Cây quyết định nhanh
 
@@ -149,6 +193,12 @@ Cam kết **mức chi tiêu theo giờ** (ví dụ cam kết X USD/giờ) trong 
 - **Không có phí truy xuất**, không thời gian lưu tối thiểu; có **phí monitoring nhỏ theo object**. Object nhỏ hơn 128 KB không được monitor và luôn tính giá Frequent tier.
 - Đáp án chuẩn khi đề nói **"unknown or changing access patterns"**.
 
+~~~flow
+# Intelligent-Tiering tự chuyển tier, không phí truy xuất
+Frequent Access -[30 ngày không truy cập]-> Infrequent Access -[90 ngày]-> Archive Instant Access
+Archive Instant Access -[tùy chọn]-> Archive Access -[tùy chọn]-> Deep Archive Access (không lấy tức thì)
+~~~
+
 ### S3 Standard-IA
 - Truy cập ít nhưng cần lấy ngay (mili giây). Nhiều AZ, availability 99.9%.
 - Tối thiểu **30 ngày**, tính tối thiểu 128 KB/object, có **phí truy xuất theo GB**.
@@ -156,6 +206,12 @@ Cam kết **mức chi tiêu theo giờ** (ví dụ cam kết X USD/giờ) trong 
 ### S3 One Zone-IA
 - Như Standard-IA nhưng chỉ **1 AZ**, rẻ hơn khoảng 20%, availability 99.5%.
 - Dùng cho dữ liệu **có thể tạo lại** hoặc bản sao thứ cấp (vd bản replica cross-Region, thumbnail tạo lại được). Mất AZ là mất dữ liệu.
+
+~~~decide
+# Ít truy cập, cần lấy ngay: một AZ hay nhiều AZ
+Bản duy nhất, phải chịu được mất một AZ => S3 Standard-IA
+Tạo lại được hoặc là bản sao thứ cấp => S3 One Zone-IA (rẻ hơn khoảng 20%)
+~~~
 
 ### S3 Glacier Instant Retrieval
 - Dữ liệu lưu trữ lâu dài, truy cập khoảng **một lần mỗi quý**, nhưng khi cần phải lấy trong **mili giây** (vd ảnh y tế, tin tức lưu trữ).
@@ -165,9 +221,26 @@ Cam kết **mức chi tiêu theo giờ** (ví dụ cam kết X USD/giờ) trong 
 - Lưu trữ, truy cập 1–2 lần/năm, không cần lấy ngay. Tối thiểu **90 ngày**.
 - Tùy chọn truy xuất: **Expedited 1–5 phút**, **Standard 3–5 giờ**, **Bulk 5–12 giờ** (Bulk miễn phí truy xuất). Có thể mua Provisioned capacity để đảm bảo Expedited.
 
+~~~ladder
+# Glacier Flexible Retrieval: lấy nhanh hơn thì trả nhiều hơn
+Expedited | 1–5 phút, mua Provisioned capacity để chắc chắn có | $$$
+Standard | 3–5 giờ | $
+Bulk | 5–12 giờ | Miễn phí
+~~~
+
 ### S3 Glacier Deep Archive
 - Rẻ nhất, cho dữ liệu giữ 7–10 năm vì compliance. Tối thiểu **180 ngày**.
 - Standard **trong 12 giờ**, Bulk **trong 48 giờ**. Không có Expedited.
+
+~~~ladder
+# Từ nóng đến lạnh: lưu càng rẻ, lấy càng chậm, tối thiểu càng lâu
+S3 Standard | Truy cập thường xuyên, lấy trong mili giây | 0 ngày
+Standard-IA | Ít truy cập, lấy ngay, có phí truy xuất | 30 ngày
+One Zone-IA | Như Standard-IA nhưng chỉ 1 AZ | 30 ngày
+Glacier Instant Retrieval | Khoảng một lần mỗi quý, lấy trong mili giây | 90 ngày
+Glacier Flexible Retrieval | 1–2 lần mỗi năm, lấy trong vài phút đến 12 giờ | 90 ngày
+Glacier Deep Archive | Lưu 7–10 năm, lấy trong 12–48 giờ | 180 ngày
+~~~
 
 ## Bảng so sánh
 
@@ -190,12 +263,24 @@ Cam kết **mức chi tiêu theo giờ** (ví dụ cam kết X USD/giờ) trong 
 - Ràng buộc: object phải ở Standard tối thiểu 30 ngày trước khi lifecycle chuyển sang Standard-IA hoặc One Zone-IA. Mặc định object nhỏ hơn 128 KB không được chuyển lớp vì không lợi về chi phí.
 - **Storage Class Analysis** quan sát mẫu truy cập để gợi ý thời điểm chuyển sang Standard-IA.
 
+~~~flow
+# Ví dụ lifecycle rule theo tuổi object
+S3 Standard -[30 ngày]-> Standard-IA -[90 ngày]-> Glacier Flexible Retrieval -[365 ngày]-> Glacier Deep Archive
+Noncurrent version -[30 ngày]-> Glacier Flexible Retrieval -[365 ngày]-> Xóa (expiration)
+~~~
+
 ## Công cụ khác
 
 - **S3 Storage Lens**: dashboard cấp organization/account/bucket về dung lượng, hoạt động, khuyến nghị tối ưu chi phí và bảo vệ dữ liệu (vd bucket có nhiều noncurrent version, multipart upload chưa hoàn tất). Có free metrics và advanced metrics (trả phí).
 - **S3 Inventory**: xuất danh sách object và metadata (storage class, encryption, replication status) định kỳ hằng ngày/tuần ra CSV, ORC hoặc Parquet; truy vấn bằng Athena. Thay thế cho việc gọi LIST API trên hàng tỷ object.
 - **Requester Pays**: người gửi request trả phí request và data transfer, chủ bucket chỉ trả phí lưu trữ. Requester phải được xác thực (không anonymous). Dùng khi chia sẻ dataset lớn cho đối tác/bên ngoài.
 - **S3 Batch Operations**: thay đổi storage class hàng loạt cho object có sẵn (kết hợp với S3 Inventory).
+
+~~~flow
+# Đổi storage class cho hàng tỷ object có sẵn
+S3 Inventory (CSV / ORC / Parquet) -[danh sách object]-> S3 Batch Operations -> Đổi storage class hàng loạt
+S3 Inventory -> Athena (lọc theo storage class)
+~~~
 
 ## Mẹo làm bài
 
@@ -271,12 +356,24 @@ Cam kết **mức chi tiêu theo giờ** (ví dụ cam kết X USD/giờ) trong 
 - **Budget actions**: khi vượt ngưỡng có thể tự động **áp dụng IAM policy**, **áp dụng SCP** (trong Organizations) hoặc **dừng EC2/RDS instance** cụ thể; có thể chạy tự động hoặc chờ phê duyệt.
 - Đề hỏi "ngăn developer tạo thêm tài nguyên khi vượt budget với ít công sức nhất" → Budgets + Budget action áp dụng IAM policy/SCP deny.
 
+~~~flow
+# Budget vượt ngưỡng: cảnh báo rồi tự hành động
+AWS Budgets -[vượt ngưỡng]-> SNS -> Email / Chatbot / Lambda
+AWS Budgets -[Budget action]-> IAM policy hoặc SCP deny (chặn tạo thêm)
+AWS Budgets -[Budget action]-> Dừng EC2 / RDS
+~~~
+
 ## Cost and Usage Report / Data Exports
 
 - Bộ dữ liệu billing **chi tiết nhất** (theo giờ, theo resource ID, kèm tag), giao vào **S3 bucket**.
 - **AWS Data Exports** là cách tạo export hiện nay: **CUR 2.0** (chọn cột bằng câu lệnh kiểu SQL, schema ổn định), ngoài ra có export theo chuẩn **FOCUS** và export cho Cost Optimization Recommendations.
 - Phân tích bằng **Amazon Athena**, trực quan bằng **Amazon QuickSight** (giải pháp Cloud Intelligence Dashboards).
 - Đề nói "cần dữ liệu chi phí chi tiết từng resource để truy vấn SQL" → CUR/Data Exports + Athena.
+
+~~~flow
+# Dữ liệu chi phí chi tiết nhất, truy vấn bằng SQL
+Data Exports (CUR 2.0) -[theo giờ, theo resource]-> S3 -> Athena -> QuickSight (Cloud Intelligence Dashboards)
+~~~
 
 ## Cost allocation tags
 
@@ -285,11 +382,24 @@ Cam kết **mức chi tiêu theo giờ** (ví dụ cam kết X USD/giờ) trong 
 - Dùng **Tag Policies** (Organizations) để chuẩn hóa tên/giá trị tag, và SCP/IAM với điều kiện aws:RequestTag để bắt buộc gắn tag khi tạo resource.
 - **Cost Categories** nhóm chi phí theo quy tắc (account, tag, service) thành đơn vị kinh doanh.
 
+~~~flow
+# Từ tag trên resource tới báo cáo theo phòng ban
+Tag Policies + SCP aws:RequestTag -[bắt buộc khi tạo]-> Resource có tag CostCenter
+Resource có tag CostCenter -[activate ở management account]-> Cost Explorer / CUR -> Cost Categories (đơn vị kinh doanh)
+~~~
+
 ## AWS Cost Anomaly Detection
 
 - Dùng **machine learning** học mẫu chi tiêu, phát hiện bất thường và **root cause** (service, account, Region, usage type).
 - Tạo **cost monitor** (theo service, linked account, cost category, tag) và **alert subscription** (gửi ngay qua SNS hoặc tóm tắt hằng ngày/tuần qua email).
 - Khác với Budgets: Budgets dùng **ngưỡng cố định do bạn đặt**; Anomaly Detection **không cần đặt ngưỡng**, tự phát hiện mức tăng bất thường.
+
+~~~decide
+# Budgets hay Cost Anomaly Detection
+Cảnh báo khi chi phí thực tế hoặc dự báo vượt một con số => AWS Budgets
+Tự động chặn hoặc dừng tài nguyên khi vượt => AWS Budgets + Budget actions
+Không muốn đặt ngưỡng, cần phát hiện mức tăng bất thường và root cause => AWS Cost Anomaly Detection
+~~~
 
 ## AWS Trusted Advisor
 
@@ -303,6 +413,13 @@ Cam kết **mức chi tiêu theo giờ** (ví dụ cam kết X USD/giờ) trong 
 - **Trusted Advisor**: danh sách kiểm tra rộng, phát hiện tài nguyên nhàn rỗi.
 - **Cost Explorer**: phân tích chi phí và khuyến nghị mua SP/RI.
 
+~~~groups
+# Ba công cụ, ba câu hỏi khác nhau
+Compute Optimizer: *Size nào là đúng, ML trên CloudWatch metrics, EC2 / ASG / EBS / Lambda / Fargate / RDS
+Trusted Advisor: *Cái gì đang nhàn rỗi, Elastic IP không gắn, Load balancer không dùng
+Cost Explorer: *Đang tiêu bao nhiêu và nên cam kết bao nhiêu, Forecast, Utilization và coverage SP/RI
+~~~
+
 ## Pricing Calculator
 
 - Ước tính chi phí kiến trúc **trước khi xây**; xuất và chia sẻ estimate. Không đọc dữ liệu thực tế của account (trừ tính năng bill estimate mới trong console).
@@ -313,6 +430,14 @@ Cam kết **mức chi tiêu theo giờ** (ví dụ cam kết X USD/giờ) trong 
 - **Gộp usage để đạt mức giá theo bậc (volume tiers)**, ví dụ S3 hay data transfer.
 - **RI và Savings Plans được chia sẻ** giữa các account trong organization (có thể tắt chia sẻ cho từng account).
 - Không tốn phí thêm.
+
+~~~groups
+# Consolidated billing: một hóa đơn, gộp usage, chia sẻ giảm giá
+[AWS Organizations]
+Management account: *Một hóa đơn duy nhất, Activate cost allocation tags, Budgets và Cost Explorer toàn org
+Member account Prod: EC2 có Savings Plans, S3
+Member account Dev: *Dùng chung RI/SP còn dư, S3 cộng dồn volume tier
+~~~
 
 ## AWS Billing Conductor
 
@@ -377,12 +502,27 @@ Mẹo:
 - **CloudFront** giảm egress từ origin, giảm tải origin nhờ cache. Đề nói "giảm chi phí data transfer ra internet cho nội dung tĩnh/video" → CloudFront.
 - S3 Transfer Acceleration tăng tốc upload nhưng **tốn thêm phí**, không phải giải pháp giảm chi phí.
 
+~~~ladder
+# Data transfer: từ đắt nhất đến miễn phí
+AWS → Internet | Egress trực tiếp, giảm theo bậc | $$$
+Giữa các Region | Tính theo GB ở phía gửi | $$
+Giữa các AZ | Tính theo GB cả hai chiều | $
+Origin AWS → CloudFront | Chỉ trả egress từ edge tới người dùng | $0
+Internet → AWS, cùng AZ qua private IP | Inbound và nội bộ AZ | $0
+~~~
+
 ## NAT Gateway vs VPC Endpoints
 
 - **NAT Gateway** tính phí **theo giờ + theo GB dữ liệu xử lý**. Instance private gọi S3/DynamoDB qua NAT thì mỗi GB đều bị tính phí xử lý.
 - **Gateway VPC endpoint** cho **S3 và DynamoDB**: **miễn phí**, chỉ cần thêm route vào route table. Đây là đáp án kinh điển cho "giảm chi phí NAT khi EC2 private đọc/ghi S3 nhiều".
 - **Interface VPC endpoint (PrivateLink)** cho các service khác (SQS, ECR, Secrets Manager, ...): tính phí theo giờ mỗi AZ + theo GB, nhưng phí xử lý thường rẻ hơn NAT.
 - Một NAT Gateway mỗi AZ để HA; dùng chung một NAT cho nhiều AZ rẻ hơn nhưng phát sinh phí cross-AZ và mất HA.
+
+~~~flow
+# Cùng luồng tới S3: qua NAT tốn phí, qua gateway endpoint miễn phí
+EC2 (private subnet) -[phí giờ + phí GB]-> NAT Gateway -> S3
+EC2 (private subnet) -[miễn phí]-> Gateway endpoint (route trong route table) -> S3
+~~~
 
 ## Phí public IPv4
 
@@ -394,6 +534,13 @@ Mẹo:
 - **Lambda/Fargate/API Gateway**: trả theo request và thời gian chạy, không tốn tiền khi nhàn rỗi. Rẻ cho tải **không đều, gián đoạn, nhiều thời gian rảnh**.
 - **EC2 (+ Savings Plans)**: rẻ hơn cho tải **cao và ổn định 24/7**.
 - **Lambda memory tuning**: CPU tỷ lệ với memory; tăng memory có thể giảm thời gian chạy và **giảm tổng chi phí**. Dùng **AWS Lambda Power Tuning** hoặc Compute Optimizer. Lambda trên **arm64 (Graviton)** có giá theo GB-giây thấp hơn x86.
+
+~~~decide
+# Hình dạng tải quyết định compute
+Tải không đều, nhiều thời gian rảnh => Lambda / Fargate / API Gateway
+Tải cao và ổn định 24/7 => EC2 + Savings Plans
+Hàm Lambda chậm vì thiếu CPU => Tăng memory, đo bằng Lambda Power Tuning
+~~~
 
 ## Database capacity mode
 
@@ -419,6 +566,13 @@ Mẹo:
 - Lưu ý: RDS bị stop tự khởi động lại sau 7 ngày.
 - EBS volume vẫn bị tính tiền khi instance stop.
 
+~~~flow
+# Chỉ chạy dev/test trong giờ hành chính
+Instance Scheduler (Lambda + DynamoDB) -[đọc tag lịch]-> EC2 / RDS (start sáng, stop tối)
+EC2 bị stop -> Vẫn trả EBS và public IPv4
+RDS bị stop -[sau 7 ngày]-> Tự khởi động lại
+~~~
+
 ## Lưu trữ
 
 - **EBS gp2 → gp3**: gp3 rẻ hơn khoảng 20% mỗi GB, baseline **3,000 IOPS và 125 MB/s** không phụ thuộc dung lượng, có thể tăng IOPS/throughput độc lập. Chuyển đổi bằng **Elastic Volumes** không cần downtime.
@@ -426,10 +580,22 @@ Mẹo:
 - **EFS**: bật **lifecycle management** để chuyển file ít dùng sang **EFS Infrequent Access** và **EFS Archive**; dùng **EFS One Zone** cho dữ liệu không cần multi-AZ.
 - **Log**: đặt **retention** cho CloudWatch Logs (mặc định giữ vĩnh viễn), dùng **Infrequent Access log class** cho log ít truy vấn, export/stream log sang S3 rồi lifecycle sang Glacier.
 
+~~~ladder
+# EFS lifecycle: file càng lạnh, lưu càng rẻ
+EFS Standard | Truy cập thường xuyên, độ trễ thấp nhất | $$$
+EFS Infrequent Access | Ít truy cập, có phí truy cập theo GB | $$
+EFS Archive | Vài lần mỗi năm, phí truy cập cao hơn IA | $
+~~~
+
 ## Decoupling để chạy fleet nhỏ hơn
 
 - Đặt **SQS** giữa frontend và worker: worker xử lý theo tốc độ của mình, không cần provision theo peak. Scale worker ASG theo **số message tồn đọng mỗi instance** (backlog per instance).
 - Worker xử lý message idempotent có thể chạy trên **Spot**.
+
+~~~flow
+# SQS hấp thụ peak, worker chạy theo tốc độ của mình
+Frontend -> SQS -[backlog per instance]-> Worker ASG (scale theo backlog, chạy Spot)
+~~~
 
 ## Checklist nhanh
 
@@ -491,6 +657,14 @@ Mẹo:
 - Cần file system dùng chung POSIX cho Linux → EFS; tối ưu bằng lifecycle.
 - **st1** (throughput optimized HDD) cho big data/log tuần tự; **sc1** (cold HDD) rẻ nhất cho dữ liệu ít truy cập. Không dùng HDD làm boot volume.
 
+~~~ladder
+# Giá lưu mỗi GB, từ đắt đến rẻ
+EFS Standard | Trả theo dung lượng dùng thực, NFS dùng chung | $$$$
+EBS gp3 | Trả theo dung lượng cấp phát, gắn một instance | $$$
+S3 Standard | Trả theo dung lượng dùng thực, truy cập qua API | $$
+S3 Glacier Deep Archive | Lưu trữ dài hạn, lấy trong 12–48 giờ | $
+~~~
+
 ## Amazon FSx: các tùy chọn tiết kiệm
 
 | FSx | Tùy chọn giảm chi phí |
@@ -502,11 +676,25 @@ Mẹo:
 
 - Đề nói "HPC xử lý dữ liệu từ S3 trong vài giờ rồi bỏ" → **FSx for Lustre scratch** liên kết S3.
 
+~~~flow
+# HPC tạm thời: dữ liệu gốc ở S3, Lustre chỉ sống trong lúc chạy job
+S3 data repository -[lazy load]-> FSx for Lustre scratch -> HPC cluster
+FSx for Lustre scratch -[export kết quả]-> S3 -> Xóa file system sau job
+~~~
+
 ## Redshift Serverless vs provisioned
 
 - **Redshift Serverless**: tự scale, tính theo **RPU-giờ khi có query chạy**, không tốn compute khi nhàn rỗi. Hợp với analytics **thất thường, không đoán được**, nhóm nhỏ.
 - **Redshift provisioned (RA3)** + **Reserved nodes**: rẻ hơn cho warehouse chạy liên tục, tải ổn định. RA3 tách compute và managed storage. Có thể **pause/resume** cluster provisioned.
 - **Redshift Spectrum**: query dữ liệu nằm trên S3 mà không phải nạp hết vào cluster.
+
+~~~decide
+# Warehouse trả theo query hay theo cluster
+Query thất thường, nhiều lúc không ai dùng => Redshift Serverless
+Warehouse chạy liên tục, tải ổn định => Redshift provisioned RA3 + Reserved nodes
+Cluster chỉ cần trong giờ làm việc => Pause / resume cluster provisioned
+Cần join dữ liệu lạnh trên S3 mà không nạp vào => Redshift Spectrum
+~~~
 
 ## Amazon Athena: pay-per-query
 
@@ -517,12 +705,23 @@ Mẹo:
   - Gộp file nhỏ thành file lớn hơn; dùng **CTAS** hoặc AWS Glue ETL để chuyển CSV/JSON sang Parquet.
 - Ad-hoc query trên log S3 (CloudTrail, ALB, VPC Flow Logs) → Athena rẻ hơn dựng cluster.
 
+~~~flow
+# Athena tính theo dữ liệu quét: quét ít hơn, trả ít hơn
+CSV / JSON trên S3 -[CTAS hoặc Glue ETL]-> Parquet nén + partition -> Athena (chỉ quét cột và partition cần)
+~~~
+
 ## ElastiCache để giảm chi phí database
 
 - Đặt **ElastiCache (Redis OSS/Valkey hoặc Memcached)** trước database cho truy vấn đọc lặp lại → giảm tải đọc, có thể **dùng instance DB nhỏ hơn hoặc bớt read replica**.
 - So với tăng size RDS hoặc thêm nhiều read replica, cache thường rẻ hơn với tải đọc nặng, lặp lại.
 - **DynamoDB Accelerator (DAX)** là cache cho DynamoDB, giảm RCU tiêu thụ cho tải đọc lặp.
 - ElastiCache có **reserved nodes** và **ElastiCache Serverless** (trả theo dữ liệu lưu và ECPU).
+
+~~~flow
+# Cache trước database để dùng DB nhỏ hơn
+App -> ElastiCache -[cache miss]-> RDS (instance nhỏ hơn, ít read replica hơn)
+App -> DAX -[cache miss]-> DynamoDB (tiêu thụ ít RCU hơn)
+~~~
 
 ## Chi phí backup
 
@@ -538,6 +737,13 @@ Mẹo:
 - Băng thông đủ, cần đồng bộ liên tục hoặc nhiều lần → **AWS DataSync** (qua internet hoặc Direct Connect).
 - **AWS Direct Connect** tốn thời gian thiết lập (thường nhiều tuần) và phí cố định, không phải lựa chọn cho migration một lần gấp.
 - Snowmobile và Snowcone đã ngừng; đề cũ vẫn có thể nhắc tới nhưng kiến thức cốt lõi là Snowball Edge cho offline transfer.
+
+~~~decide
+# Chuyển dữ liệu lên AWS: chọn đường nào
+Nhiều TB đến PB, mạng chậm, chuyển một lần => Snowball Edge
+Băng thông đủ, cần đồng bộ liên tục hoặc nhiều lần => DataSync
+Cần kết nối riêng ổn định lâu dài => Direct Connect (thiết lập mất nhiều tuần)
+~~~
 
 ## Tóm tắt lựa chọn
 
@@ -594,6 +800,11 @@ Mẹo:
 
 Ý chính: **utilization quyết định**. Serverless không tốn tiền khi rảnh nhưng đơn giá cao hơn; khi tải cao và đều, EC2 hoặc ECS on EC2 kèm cam kết thường rẻ hơn. Amazon EKS có thêm phí control plane theo giờ cho mỗi cluster, ECS thì không.
 
+~~~flow
+# Utilization càng cao, lựa chọn rẻ nhất càng dịch về EC2
+Lambda (tải thưa, nhiều lúc rảnh) -[utilization tăng]-> Fargate (tải biến động) -[utilization tăng]-> ECS on EC2 / EC2 + Savings Plans (tải cao 24/7)
+~~~
+
 ## Workload → lựa chọn rẻ nhất
 
 | Workload | Lựa chọn rẻ nhất thường gặp |
@@ -612,12 +823,26 @@ Mẹo:
 - EC2 Instance Savings Plans và Reserved Instances **không** áp dụng cho Fargate/Lambda.
 - Cam kết bằng mức baseline thấp nhất; phần dao động để On-Demand hoặc Spot.
 
+~~~groups
+# Cam kết nào phủ compute nào
+Compute Savings Plans: *EC2, *Fargate, *Lambda
+EC2 Instance Savings Plans: EC2 một family trong một Region
+Reserved Instances: EC2 theo instance type
+~~~
+
 ## Spot cho container
 
 ### Fargate Spot
 - Chạy task Fargate trên capacity dư, rẻ tới khoảng 70%; khi bị thu hồi, task nhận **cảnh báo 2 phút** (SIGTERM).
 - Dùng **capacity provider strategy** với FARGATE và FARGATE_SPOT: **base** là số task tối thiểu luôn chạy trên provider đó, **weight** chia phần còn lại (vd FARGATE base 2, rồi FARGATE:FARGATE_SPOT = 1:3).
 - Fargate Spot không hỗ trợ task Windows và task ARM64.
+
+~~~flow
+# Capacity provider strategy: base chạy trước, weight chia phần còn lại
+ECS service -[base 2]-> FARGATE (2 task luôn chạy)
+ECS service -[weight 1]-> FARGATE (25% phần thêm)
+ECS service -[weight 3]-> FARGATE_SPOT (75% phần thêm)
+~~~
 
 ### ECS capacity providers trên EC2
 - **Auto Scaling group capacity provider** với managed scaling: ECS tự scale ASG theo số task cần chạy; kết hợp một provider On-Demand (baseline) và một provider Spot trong cùng strategy.
@@ -631,6 +856,13 @@ Mẹo:
 - **Xử lý gián đoạn**: bắt cảnh báo 2 phút và rebalance recommendation qua EventBridge; bật **Capacity Rebalancing** trong ASG.
 - **Thiết kế stateless**: worker lấy việc từ **SQS** và chỉ xóa message khi xong; nếu instance mất, message hiện lại sau visibility timeout. **Checkpoint** tiến độ ra S3/DynamoDB để tiếp tục thay vì chạy lại.
 
+~~~flow
+# Worker Spot không mất việc khi bị thu hồi
+SQS -> EC2 Spot worker -[xong việc]-> Xóa message
+EC2 Spot worker -[checkpoint]-> S3 / DynamoDB
+Spot bị thu hồi -[hết visibility timeout]-> Message hiện lại trong SQS
+~~~
+
 ## AWS Batch với Spot
 
 - AWS Batch không tính phí riêng; bạn trả cho EC2/Fargate bên dưới.
@@ -643,11 +875,26 @@ Mẹo:
 - Price/performance tốt hơn x86 cùng thế hệ; managed database thường chỉ cần đổi instance class, EC2/container cần binary hoặc multi-arch image cho ARM64.
 - Lambda arm64 có đơn giá GB-giây thấp hơn x86; thường chỉ cần đổi architecture nếu code không phụ thuộc thư viện native x86.
 
+~~~groups
+# Chuyển sang Graviton tốn bao nhiêu công
+Chỉ đổi instance class: *RDS / Aurora, *ElastiCache, *OpenSearch
+Đổi architecture: Lambda arm64, Fargate ARM64
+Cần build lại cho ARM64: EC2, Container (multi-arch image)
+~~~
+
 ## Đòn bẩy chi phí Lambda
 
 - Chi phí = request + memory × thời gian chạy. CPU tỷ lệ với memory, nên tăng memory có thể rút ngắn thời gian đủ để tổng tiền giảm.
 - **AWS Lambda Power Tuning** (mã nguồn mở, chạy trên Step Functions) thử nhiều mức memory và chỉ ra cấu hình rẻ nhất hoặc nhanh nhất; Compute Optimizer cũng gợi ý memory.
 - **Không ngồi chờ trong Lambda**: hàm đợi API chậm hoặc polling vẫn bị tính duration. Chuyển việc chờ sang **Step Functions** (Wait state, callback với task token); Standard workflow tính theo state transition, không tính thời gian chờ.
+
+~~~decide
+# Hóa đơn Lambda cao: kéo đòn bẩy nào
+Hàm chạy chậm vì thiếu CPU => Tăng memory, chọn mức rẻ nhất bằng Lambda Power Tuning
+Hàm ngồi chờ API chậm hoặc polling => Step Functions Wait state hoặc callback task token
+Code không phụ thuộc thư viện native x86 => Chuyển sang arm64
+Lưu lượng cao, đều đặn cả ngày => Cân nhắc Fargate hoặc EC2 + Savings Plans
+~~~
 
 ## Right-sizing và tắt non-production
 
@@ -702,6 +949,15 @@ Mẹo:
 - **Trong cùng AZ qua private IP**: miễn phí.
 - EC2 ↔ S3/DynamoDB trong cùng Region: không tính data transfer, nhưng nếu đi qua NAT Gateway thì vẫn trả phí xử lý của NAT.
 
+~~~ladder
+# Data transfer theo hướng: từ đắt đến miễn phí
+Ra internet (egress) | Theo GB, giảm theo bậc | $$$
+Giữa các Region | Theo GB ở phía gửi | $$
+Giữa các AZ | Theo GB ở cả bên gửi và bên nhận | $
+Cùng AZ qua private IP | Không tính data transfer | $0
+Từ internet vào AWS | Inbound | $0
+~~~
+
 ## Bảng so sánh chi phí các thành phần mạng
 
 | Thành phần | Phí theo giờ | Phí theo GB | Ghi chú |
@@ -724,6 +980,13 @@ Mẹo:
 - **Cross-zone load balancing**: với **NLB và GWLB** (mặc định tắt), bật lên sẽ phát sinh phí inter-AZ. ALB luôn bật cross-zone và không tính phí inter-AZ cho phần này.
 - Không hy sinh HA của production chỉ để tránh phí cross-AZ; single-AZ chỉ hợp với batch, dev hoặc cluster tạm.
 
+~~~flow
+# Cùng một lần đọc: qua AZ khác thì trả tiền, cùng AZ thì miễn phí
+App (AZ A) -[phí cross-AZ mỗi GB]-> Cache / database (AZ B)
+App (AZ A) -[miễn phí]-> Read replica (AZ A, private IP)
+NLB (AZ A) -[cross-zone bật, phí inter-AZ]-> Target (AZ B)
+~~~
+
 ## NAT Gateway: nguồn hóa đơn bất ngờ
 
 - NAT tính **theo giờ + theo GB xử lý**, cộng thêm data transfer thông thường.
@@ -731,6 +994,13 @@ Mẹo:
 - Traffic tới ECR, CloudWatch Logs, SQS, STS... → **interface endpoint** khi lượng GB đủ lớn để bù phí theo giờ mỗi AZ.
 - Container kéo image lớn từ ECR qua NAT → interface endpoint cho ECR (ecr.api, ecr.dkr) cộng gateway endpoint S3, vì layer image nằm trên S3.
 - **Một NAT mỗi AZ**: HA, không phát sinh cross-AZ, nhưng trả phí giờ cho nhiều NAT. **Một NAT dùng chung**: rẻ phí giờ nhưng subnet ở AZ khác trả thêm cross-AZ và mất kết nối ra ngoài khi AZ chứa NAT gặp sự cố. Production → một NAT mỗi AZ; dev/test → dùng chung chấp nhận được.
+
+~~~flow
+# Đưa traffic ra khỏi NAT
+Private subnet -[S3 / DynamoDB]-> Gateway endpoint (miễn phí)
+Private subnet -[ECR / Logs / SQS]-> Interface endpoint (phí giờ mỗi AZ + phí GB)
+Private subnet -[còn lại ra internet]-> NAT Gateway (cùng AZ)
+~~~
 
 ## Inter-Region
 
@@ -741,6 +1011,13 @@ Mẹo:
 - Dữ liệu từ origin AWS (S3, ALB, EC2) sang CloudFront **miễn phí**; bạn trả egress từ edge tới người dùng, và cache hit giảm request về origin.
 - **Price class**: All, 200, 100. **Price Class 100** chỉ dùng edge ở các khu vực rẻ nhất (Bắc Mỹ, châu Âu) → rẻ hơn, đổi lại người dùng ở khu vực khác có latency cao hơn.
 
+~~~ladder
+# CloudFront price class: ít edge hơn, rẻ hơn
+Price Class All | Mọi edge location, latency thấp nhất toàn cầu | $$$
+Price Class 200 | Bỏ các khu vực đắt nhất | $$
+Price Class 100 | Chỉ các khu vực rẻ nhất như Bắc Mỹ và châu Âu | $
+~~~
+
 ## S3 Transfer Acceleration
 
 - Thêm phí theo GB ngoài phí data transfer; chỉ tính khi việc tăng tốc thực sự nhanh hơn. Đây là tính năng **tốc độ**, không phải tiết kiệm.
@@ -750,11 +1027,24 @@ Mẹo:
 - **Site-to-Site VPN**: phí theo giờ mỗi connection + egress theo giá internet. Rẻ cho lưu lượng thấp hoặc vừa, dựng nhanh.
 - **Direct Connect**: phí port-hour cố định + egress (DTO) rẻ hơn internet. Với khối lượng lớn đều đặn từ AWS về on-premises, phần tiết kiệm egress bù được phí port, kèm băng thông ổn định.
 
+~~~decide
+# VPN hay Direct Connect theo chi phí
+Lưu lượng thấp hoặc vừa, cần dựng nhanh => Site-to-Site VPN
+Khối lượng lớn đều đặn từ AWS về on-premises => Direct Connect (egress rẻ hơn bù phí port)
+Cần băng thông ổn định lâu dài => Direct Connect
+~~~
+
 ## Transit Gateway vs VPC peering
 
 - **VPC peering**: không phí giờ, không phí xử lý; traffic cùng AZ miễn phí. Nhưng không transitive, full-mesh khó quản khi nhiều VPC.
 - **Transit Gateway**: phí mỗi attachment theo giờ + phí xử lý mỗi GB. Trả tiền để đổi lấy quản trị đơn giản.
 - Hai VPC trao đổi khối lượng rất lớn → thêm peering trực tiếp cho riêng cặp đó, các VPC khác vẫn qua TGW.
+
+~~~flow
+# Đa số VPC qua TGW, cặp trao đổi lớn dùng peering trực tiếp
+VPC C -[phí xử lý mỗi GB]-> Transit Gateway (phí giờ mỗi attachment) -> VPC D
+VPC A -[peering]-> VPC B (không phí giờ, không phí xử lý)
+~~~
 
 ## Public IPv4 và IPv6
 

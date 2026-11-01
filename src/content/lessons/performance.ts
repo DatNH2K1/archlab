@@ -25,6 +25,15 @@ Tên instance có dạng m7g.2xlarge: **m** = family, **7** = thế hệ, **g** 
 | Storage optimized | I, D, H | IOPS cao trên instance store (NVMe), NoSQL, data warehouse, HDFS |
 | Accelerated computing | P, G, Inf, Trn, F | GPU training (P), graphics/inference (G), Inferentia (Inf), Trainium (Trn), FPGA (F) |
 
+~~~decide
+# Workload nào, family nào
+Web hoặc app server cân bằng CPU và RAM => M (T nếu tải thấp có burst)
+Transcoding, HPC, game server nặng CPU => C
+In-memory database, SAP HANA, cache lớn => R hoặc X
+IOPS rất cao trên NVMe instance store => I
+Training ML trên GPU => P hoặc Trn
+~~~
+
 ### Graviton
 
 - CPU ARM do AWS thiết kế, giá/hiệu năng tốt hơn tới khoảng 40% so với x86 cùng thế hệ.
@@ -41,11 +50,23 @@ Tên instance có dạng m7g.2xlarge: **m** = family, **7** = thế hệ, **g** 
 
 Mẹo: "lowest latency, highest throughput between nodes" là Cluster; "critical instances must not share hardware" là Spread; "big data distributed, rack-aware" là Partition.
 
+~~~groups
+# Ba kiểu placement group
+Cluster: Rack 1 (mọi instance), *latency thấp nhất trong 1 AZ
+Spread: Rack 1 (A), Rack 2 (B), Rack 3 (C), *tối đa 7 instance mỗi AZ
+Partition: P1 (nhóm rack riêng), P2 (nhóm rack riêng), P3 (nhóm rack riêng), *tối đa 7 partition mỗi AZ
+~~~
+
 ## Enhanced networking: ENA và EFA
 
 - **ENA (Elastic Network Adapter)**: dùng SR-IOV, băng thông cao (tới 100 Gbps trở lên tùy instance), PPS cao, latency thấp. Hầu hết instance hiện đại đã bật sẵn.
 - **EFA (Elastic Fabric Adapter)**: ENA + khả năng **OS-bypass** cho ứng dụng HPC/ML phân tán dùng MPI hoặc NCCL. Chỉ hỗ trợ Linux. Kết hợp với cluster placement group.
 - Câu hỏi nhắc "tightly coupled HPC, MPI, inter-node communication" thì nghĩ tới EFA + cluster placement group.
+
+~~~flow
+# HPC tightly coupled: EFA bên trong cluster placement group
+EC2 (EFA) -[MPI / NCCL, OS-bypass]-> EC2 (EFA) -[MPI / NCCL, OS-bypass]-> EC2 (EFA)
+~~~
 
 ## Instance store vs EBS
 
@@ -58,17 +79,36 @@ Mẹo: "lowest latency, highest throughput between nodes" là Cluster; "critical
 
 Reboot thì instance store vẫn giữ dữ liệu; stop/terminate thì mất.
 
+~~~ladder
+# Dữ liệu instance store còn hay mất
+Reboot | vẫn chạy trên cùng host | còn
+Stop hoặc hibernate | start lại trên host khác | mất
+Terminate | instance bị xóa | mất
+Host phần cứng lỗi | không có bản sao | mất
+~~~
+
 ## EC2 Hibernate
 
 - Lưu nội dung RAM xuống **EBS root volume (phải được mã hóa)**, khi start lại thì khôi phục RAM, app khởi động nhanh hơn (không phải warm-up lại cache, không phải boot lại OS).
 - Yêu cầu: root là EBS, đủ dung lượng chứa RAM, RAM giới hạn (ví dụ dưới 150 GB), không hibernate quá 60 ngày, chỉ hỗ trợ một số family và On-Demand/Spot.
 - Câu hỏi: "long initialization time, preserve in-memory state" thì chọn Hibernate.
 
+~~~flow
+# Hibernate lưu RAM xuống EBS root đã mã hóa
+EC2 (RAM đang chạy) -[stop kiểu hibernate]-> EBS root (mã hóa, chứa RAM) -[start]-> EC2 (RAM khôi phục, không warm-up)
+~~~
+
 ## User data, AMI và EC2 Image Builder
 
 - **User data**: script chạy **một lần khi boot lần đầu** (mặc định) với quyền root; dùng để cài package, kéo code. Nhược điểm: làm boot chậm hơn nếu cài nhiều.
 - **AMI**: image để launch instance. AMI thuộc **một Region**; muốn dùng Region khác thì copy AMI. **Golden AMI** (cài sẵn mọi thứ) giúp giảm thời gian khởi động khi Auto Scaling scale out.
 - **EC2 Image Builder**: pipeline tự động build, test, patch và phân phối AMI (và container image) theo lịch, có thể share sang nhiều Region/account. Câu hỏi "automate creation and patching of AMIs" thì chọn Image Builder.
+
+~~~flow
+# Golden AMI: build một lần, scale out nhanh
+EC2 Image Builder -[build, test, patch]-> Golden AMI -[copy]-> AMI ở Region khác
+Golden AMI -> Launch template -> Auto Scaling group (boot nhanh, ít user data)
+~~~
 
 ## Mẹo chọn nhanh trong đề
 
@@ -118,6 +158,14 @@ AWS có nhiều cách chạy code. Đề thi thường cho một tình huống r
 
 Từ khóa "already uses Kubernetes, migrate without changing manifests" thì chọn EKS.
 
+~~~decide
+# ECS hay EKS
+Muốn chạy container nhanh, tích hợp sâu với AWS => ECS
+Không muốn trả phí control plane theo giờ => ECS
+Đã dùng Kubernetes, giữ nguyên manifest và Helm => EKS
+Chạy cùng Kubernetes ở on-prem => EKS Anywhere
+~~~
+
 ## EC2 launch type vs Fargate
 
 | | EC2 launch type / node group | Fargate |
@@ -131,10 +179,23 @@ Từ khóa "already uses Kubernetes, migrate without changing manifests" thì ch
 - **ECS task role** gán IAM cho từng task; **EC2 instance profile** là quyền của host.
 - ECS service auto scaling dùng target tracking (CPU, RAM, ALB request count). Trên EC2 launch type, dùng **capacity provider** để cluster tự scale EC2 theo nhu cầu task.
 
+~~~groups
+# Ai quản lý phần nào
+[ECS hoặc EKS]
+EC2 launch type: bạn quản lý EC2, AMI và patch, scale cluster, *GPU và Spot và daemon
+Fargate: AWS quản lý host, chỉ khai báo vCPU và RAM, *ít overhead nhất
+~~~
+
 ## Amazon ECR
 
 - Registry Docker/OCI private (và public), tích hợp IAM, image scanning, lifecycle policy, cross-Region và cross-account replication.
 - Câu hỏi "store container images securely, scan for vulnerabilities" thì chọn ECR.
+
+~~~flow
+# Đường đi của container image
+CI build -[docker push]-> ECR (image scanning) -[pull]-> ECS / EKS
+ECR -[replication]-> ECR (Region hoặc account khác)
+~~~
 
 ## AWS App Runner
 
@@ -153,6 +214,15 @@ Từ khóa "already uses Kubernetes, migrate without changing manifests" thì ch
 - Vẫn truy cập được tài nguyên bên dưới. Hợp với lift-and-shift web app truyền thống, developer muốn tập trung code.
 - Deployment policies: all at once, rolling, rolling with additional batch, immutable, traffic splitting, blue/green (swap URL).
 
+~~~ladder
+# Deployment policy: từ nhanh nhất tới an toàn nhất
+All at once | mọi instance cùng lúc | có downtime
+Rolling | từng batch, capacity giảm khi deploy | không downtime
+Rolling with additional batch | thêm batch mới trước | giữ đủ capacity
+Immutable | Auto Scaling group mới, rollback nhanh | an toàn
+Blue/green | môi trường riêng, swap URL | an toàn nhất
+~~~
+
 ## Lambda vs container vs EC2
 
 | Tiêu chí | Lambda | Container (ECS/EKS/Fargate) | EC2 |
@@ -168,12 +238,25 @@ Quy tắc nhanh:
 - Job dài hơn 15 phút hoặc cần runtime tùy biến/microservice chạy liên tục: container trên Fargate.
 - Cần GPU đặc thù, quyền kernel, license gắn host: EC2 (hoặc Dedicated Host).
 
+~~~decide
+# Chạy code ở đâu
+Event-driven, mỗi lần chạy dưới 15 phút => Lambda
+Service chạy liên tục hoặc job dài hơn 15 phút => ECS/EKS trên Fargate
+Hàng nghìn batch job có hàng đợi và phụ thuộc => AWS Batch
+Cần GPU, quyền kernel hoặc license gắn host => EC2
+~~~
+
 ### Hiệu năng Lambda cần nhớ
 
 - Tăng memory cũng tăng CPU tương ứng; function nặng CPU nên tăng memory.
 - **Provisioned Concurrency** giữ môi trường đã khởi tạo sẵn để loại bỏ cold start cho tải dự đoán được.
 - **Reserved concurrency** giới hạn/đảm bảo concurrency cho một function.
 - Lambda kết nối RDS với nhiều kết nối đồng thời: đặt **RDS Proxy** ở giữa.
+
+~~~flow
+# Lambda dùng chung pool kết nối qua RDS Proxy
+Lambda (hàng nghìn invocation) -> RDS Proxy (connection pool) -> RDS
+~~~
 `,
     keywords: [
       { trigger: 'run containers without managing servers or clusters', answer: 'Fargate (ECS hoặc EKS)' },
@@ -219,10 +302,27 @@ EBS là block storage qua mạng, gắn vào EC2 trong **cùng một AZ**. Snaps
 - Muốn database cần IOPS ổn định, latency thấp, trên 16,000 IOPS: io2 Block Express.
 - Instance cũng có giới hạn băng thông EBS: chọn instance **EBS-optimized** đủ lớn, nếu không volume nhanh vẫn bị nghẽn.
 
+~~~ladder
+# Các loại EBS volume từ nhanh nhất tới rẻ nhất
+io2 Block Express | SSD provisioned IOPS, latency dưới ms | 256k IOPS
+io1 | SSD provisioned IOPS thế hệ trước | 64k IOPS
+gp3 | SSD mặc định, IOPS chỉnh độc lập dung lượng | 3k IOPS base
+gp2 | SSD, IOPS tăng theo dung lượng | 3 IOPS/GiB
+st1 | HDD đọc tuần tự, không làm boot | 500 MiB/s
+sc1 | HDD lạnh, rẻ nhất, không làm boot | 250 MiB/s
+~~~
+
 ### Multi-Attach
 
 - Chỉ **io1/io2**, gắn một volume cho tối đa **16 instance Nitro trong cùng AZ**.
 - Ứng dụng phải tự quản lý ghi đồng thời (cluster-aware file system), không dùng ext4/XFS thông thường.
+
+~~~groups
+# Multi-Attach: một volume io1/io2 cho tối đa 16 instance Nitro
+[Cùng một AZ]
+Volume: *io1 hoặc io2, Multi-Attach bật
+Instances: EC2 Nitro 1, EC2 Nitro 2, tới 16 instance, *cluster-aware file system
+~~~
 
 ### Snapshots
 
@@ -230,6 +330,13 @@ EBS là block storage qua mạng, gắn vào EC2 trong **cùng một AZ**. Snaps
 - **Fast Snapshot Restore (FSR)**: loại bỏ độ trễ khởi tạo khi tạo volume từ snapshot (không cần pre-warm).
 - **Snapshot Archive**: rẻ hơn tới 75%, restore mất 24 đến 72 giờ. **Recycle Bin** chống xóa nhầm.
 - **Data Lifecycle Manager (DLM)** tự động tạo/xóa snapshot theo lịch.
+
+~~~flow
+# Vòng đời snapshot
+EBS volume -[DLM theo lịch]-> Snapshot (incremental) -[copy]-> Region khác
+Snapshot -[Fast Snapshot Restore]-> Volume mới (đủ hiệu năng ngay)
+Snapshot -[archive]-> Snapshot Archive (rẻ hơn tới 75%, restore 24-72 giờ)
+~~~
 
 ## Amazon EFS
 
@@ -240,6 +347,12 @@ EBS là block storage qua mạng, gắn vào EC2 trong **cùng một AZ**. Snaps
   - **Provisioned**: đặt trước throughput cố định, độc lập dung lượng.
   - **Bursting**: throughput tăng theo dung lượng lưu trữ, dùng burst credits.
 - **Storage classes**: Standard, Infrequent Access (IA), Archive; **One Zone** và One Zone-IA cho dữ liệu không cần multi-AZ (rẻ hơn). **Lifecycle management** tự chuyển file ít dùng sang IA/Archive.
+
+~~~groups
+# EFS storage class, lifecycle tự chuyển file ít dùng xuống tier rẻ hơn
+Regional (nhiều AZ): *Standard, Infrequent Access, Archive
+One Zone (1 AZ): *One Zone, One Zone-IA
+~~~
 
 ### EFS vs EBS
 
@@ -260,11 +373,25 @@ EBS là block storage qua mạng, gắn vào EC2 trong **cùng một AZ**. Snaps
 | FSx for NetApp ONTAP | NFS, SMB, iSCSI (đa giao thức) | Di chuyển NetApp on-prem, cần snapshot, clone, dedup, compression, SnapMirror; truy cập từ Linux, Windows, macOS |
 | FSx for OpenZFS | NFS | Di chuyển ZFS on-prem, latency rất thấp, snapshot và clone tức thời |
 
+~~~decide
+# Bốn dòng FSx theo giao thức và nguồn
+Windows, SMB, Active Directory => FSx for Windows File Server
+HPC, ML training, hàng trăm GB/s => FSx for Lustre
+NFS + SMB + iSCSI hoặc đang dùng NetApp => FSx for NetApp ONTAP
+Đang dùng ZFS, cần NFS latency rất thấp => FSx for OpenZFS
+~~~
+
 ### FSx for Lustre chi tiết
 
 - **Scratch**: lưu trữ tạm, không replicate, throughput burst cao, rẻ; dùng cho xử lý ngắn hạn.
 - **Persistent**: dữ liệu được replicate trong cùng AZ, dùng cho xử lý dài hạn, dữ liệu nhạy cảm.
 - **Tích hợp S3** (data repository association): S3 bucket hiển thị như file trong Lustre, dữ liệu lazy load khi đọc lần đầu, kết quả có thể export ngược về S3. Đây là đáp án kinh điển cho "process data stored in S3 with a high-performance file system".
+
+~~~flow
+# FSx for Lustre xử lý dữ liệu nằm ở S3
+S3 -[lazy load khi đọc lần đầu]-> FSx for Lustre -> EC2 (HPC / ML training)
+FSx for Lustre -[export kết quả]-> S3
+~~~
 
 ## Chọn nhanh
 
@@ -313,6 +440,15 @@ EBS là block storage qua mạng, gắn vào EC2 trong **cùng một AZ**. Snaps
 - Không giới hạn số prefix trong bucket. Muốn tăng throughput: **phân tán object qua nhiều prefix** (ví dụ chia theo ngày, theo hash). 4 prefix có thể đạt 22,000 GET/s.
 - S3 tự động scale; khi tăng tải đột ngột có thể gặp lỗi 503 Slow Down tạm thời, client nên retry với exponential backoff.
 
+~~~groups
+# Giới hạn tính theo prefix: 4 prefix cho tới 22k GET/s
+[Một bucket]
+logs/a/: 3.5k PUT/s, 5.5k GET/s
+logs/b/: 3.5k PUT/s, 5.5k GET/s
+logs/c/: 3.5k PUT/s, 5.5k GET/s
+logs/d/: 3.5k PUT/s, 5.5k GET/s
+~~~
+
 ## Tăng tốc upload và download
 
 | Kỹ thuật | Khi dùng |
@@ -322,10 +458,23 @@ EBS là block storage qua mạng, gắn vào EC2 trong **cùng một AZ**. Snaps
 | **Byte-range fetches** | Tải song song nhiều đoạn của một object bằng header Range; cũng dùng để chỉ lấy phần đầu file (header) |
 | **CloudFront** | Cache nội dung đọc nhiều gần người dùng, giảm request tới S3 |
 
+~~~flow
+# Upload nhanh: chia part song song, đi qua edge khi ở xa
+File lớn (trên 100 MB) -[multipart, song song]-> S3 (ghép thành 1 object)
+Users (châu lục khác) -> Edge location -[backbone AWS]-> S3 (Region xa)
+~~~
+
 ## S3 Select
 
 - Dùng SQL đơn giản để lọc dữ liệu **bên trong một object** (CSV, JSON, Parquet), giảm dữ liệu truyền về.
 - Lưu ý: AWS đã ngừng mở S3 Select cho khách hàng mới (từ 2024), khuyến nghị dùng Athena hoặc lọc phía client. Đề thi cũ vẫn có thể nhắc S3 Select; với truy vấn nhiều object, Athena luôn là lựa chọn chuẩn.
+
+~~~decide
+# Lọc hoặc biến đổi dữ liệu trong S3
+Lọc trong một object với account cũ đã dùng S3 Select => S3 Select
+SQL trên nhiều object => Athena
+Mỗi app cần một bản biến đổi khác khi GET => S3 Object Lambda
+~~~
 
 ## S3 Express One Zone
 
@@ -333,6 +482,12 @@ EBS là block storage qua mạng, gắn vào EC2 trong **cùng một AZ**. Snaps
 - Dữ liệu chỉ ở **một AZ**, dùng **directory bucket** (khác general purpose bucket).
 - Dùng cho ML training, analytics tương tác, đặt cùng AZ với compute để giảm latency.
 - Đánh đổi: độ sẵn sàng thấp hơn vì chỉ 1 AZ.
+
+~~~groups
+# General purpose bucket vs directory bucket
+S3 Standard: general purpose bucket, ít nhất 3 AZ, *chịu được mất 1 AZ
+S3 Express One Zone: *directory bucket, *1 AZ cùng compute, latency một chữ số ms
+~~~
 
 ## Event notifications
 
@@ -344,6 +499,11 @@ EBS là block storage qua mạng, gắn vào EC2 trong **cùng một AZ**. Snaps
 - Bucket phục vụ HTML/CSS/JS tĩnh qua website endpoint (HTTP). Cần tắt Block Public Access và có bucket policy cho phép đọc công khai, **hoặc** tốt hơn: dùng **CloudFront + Origin Access Control (OAC)** để giữ bucket private và có HTTPS.
 - Nội dung động (server-side) không chạy được trên S3.
 
+~~~flow
+# Website tĩnh có HTTPS mà bucket vẫn private
+Users -[HTTPS]-> CloudFront -[OAC]-> S3 (private bucket)
+~~~
+
 ## CORS
 
 - Khi trang web ở domain A gọi JavaScript tải tài nguyên từ bucket ở domain B, trình duyệt cần bucket B trả header CORS.
@@ -353,6 +513,11 @@ EBS là block storage qua mạng, gắn vào EC2 trong **cùng một AZ**. Snaps
 
 - Gắn Lambda vào luồng GET để **biến đổi dữ liệu khi đọc** (ẩn PII, resize ảnh, đổi định dạng) mà không lưu nhiều bản copy.
 - Đi qua S3 Access Point + Object Lambda Access Point.
+
+~~~flow
+# S3 Object Lambda biến đổi dữ liệu trên đường GET
+App -[GET]-> Object Lambda Access Point -> Lambda (ẩn PII, resize) -> S3 Access Point -> S3 (bản gốc duy nhất)
+~~~
 
 ## Bảng chọn nhanh
 
@@ -414,11 +579,24 @@ EBS là block storage qua mạng, gắn vào EC2 trong **cùng một AZ**. Snaps
 - App phải tự gửi query đọc tới endpoint của replica (connection string riêng).
 - Replication cross-Region tính phí data transfer.
 
+~~~groups
+# Read replica để scale đọc, Multi-AZ để HA
+Read Replica: async, *nhận traffic đọc, tới 15, cross-Region được
+Multi-AZ instance: sync, standby không nhận đọc, *failover tự động
+Multi-AZ DB cluster: semi-sync, *2 readable standby, 3 AZ
+~~~
+
 ## RDS Proxy
 
 - Connection pooling được quản lý, nằm giữa app và RDS/Aurora.
 - Giải quyết **quá nhiều kết nối** (đặc biệt từ Lambda), giảm thời gian failover (tới khoảng 66%), giữ kết nối khi failover.
 - Hỗ trợ IAM authentication và lấy credential từ Secrets Manager; chỉ truy cập được trong VPC.
+
+~~~flow
+# RDS Proxy giữ kết nối của app khi failover
+App / Lambda -> RDS Proxy (connection pool, IAM auth) -> RDS primary
+RDS Proxy -[failover]-> RDS standby (app không phải mở lại kết nối)
+~~~
 
 ## Amazon Aurora
 
@@ -427,6 +605,14 @@ EBS là block storage qua mạng, gắn vào EC2 trong **cùng một AZ**. Snaps
 - Tương thích **MySQL** và **PostgreSQL**, hiệu năng cao hơn RDS cùng engine (AWS công bố tới 5 lần MySQL, 3 lần PostgreSQL).
 - Storage cluster volume tự tăng, lưu **6 bản copy trên 3 AZ**; ghi cần 4/6, đọc cần 3/6; tự sửa lỗi.
 - Tới **15 Aurora Replica** dùng chung storage nên replica lag rất thấp (thường dưới 100 ms). Failover sang replica thường dưới 30 giây.
+
+~~~groups
+# Cluster volume: 6 bản copy trên 3 AZ, ghi cần 4/6, đọc cần 3/6
+[Aurora cluster volume dùng chung]
+AZ a: *Writer, copy 1, copy 2
+AZ b: Aurora Replica, copy 3, copy 4
+AZ c: Aurora Replica, copy 5, copy 6
+~~~
 
 ### Endpoints
 
@@ -437,6 +623,13 @@ EBS là block storage qua mạng, gắn vào EC2 trong **cùng một AZ**. Snaps
 | Custom endpoint | Nhóm một tập replica cụ thể (ví dụ replica lớn cho analytics) |
 | Instance endpoint | Kết nối trực tiếp một instance |
 
+~~~flow
+# Mỗi loại traffic đi vào một endpoint
+App -[ghi]-> Cluster endpoint -> Aurora (writer)
+App -[đọc]-> Reader endpoint -> Aurora Replica (cân bằng tải)
+Báo cáo -> Custom endpoint -> Aurora Replica (instance lớn)
+~~~
+
 ### Các tính năng hiệu năng
 
 - **Aurora Auto Scaling**: tự thêm/bớt Aurora Replica theo CPU hoặc số kết nối.
@@ -445,6 +638,15 @@ EBS là block storage qua mạng, gắn vào EC2 trong **cùng một AZ**. Snaps
 - **Aurora I/O-Optimized**: không tính phí I/O, giá instance và storage cao hơn; tiết kiệm khi chi phí I/O chiếm hơn khoảng 25% tổng chi phí Aurora.
 - **Babelfish for Aurora PostgreSQL**: hiểu T-SQL và giao thức SQL Server, giúp app SQL Server chuyển sang Aurora PostgreSQL với ít thay đổi code.
 - **Parallel Query**, **Backtrack** (MySQL), **Database cloning** nhanh dùng cho test.
+
+~~~decide
+# Tính năng Aurora theo yêu cầu đề
+Tải đọc tăng giảm trong ngày => Aurora Auto Scaling (thêm bớt replica)
+Workload thất thường, dev/test => Aurora Serverless v2
+Đọc toàn cầu latency thấp, DR cross-Region => Aurora Global Database
+Phí I/O chiếm hơn khoảng 25% hóa đơn => Aurora I/O-Optimized
+App SQL Server sang PostgreSQL ít sửa code => Babelfish
+~~~
 
 ## Redshift vs RDS
 
@@ -457,6 +659,14 @@ EBS là block storage qua mạng, gắn vào EC2 trong **cùng một AZ**. Snaps
 
 - Báo cáo nặng chạy trên DB OLTP làm chậm production: giải pháp thường là **read replica** (nếu báo cáo đơn giản) hoặc **đưa dữ liệu sang Redshift** (nếu là analytics phức tạp, khối lượng lớn).
 - Redshift Serverless cho tải phân tích không đều, không muốn quản lý cluster.
+
+~~~decide
+# Báo cáo làm chậm database production
+Nhiều giao dịch nhỏ: đơn hàng, user, giỏ hàng => RDS / Aurora (OLTP)
+Báo cáo đơn giản làm nặng primary => Read Replica
+Analytics phức tạp trên TB tới PB => Redshift (OLAP, columnar)
+Tải phân tích không đều, không muốn quản lý cluster => Redshift Serverless
+~~~
 
 ## Mẹo đề thi
 
@@ -503,11 +713,24 @@ NoSQL key-value và document, serverless, latency một chữ số mili giây �
 - Key kém: status, ngày hiện tại, giá trị ít lựa chọn. Có thể thêm hậu tố ngẫu nhiên (write sharding) để rải ghi.
 - **Composite key** = partition key + sort key, cho phép query theo khoảng trên sort key.
 
+~~~groups
+# Partition key tốt rải đều tải, key kém tạo hot partition
+Key tốt: *userId, *orderId, deviceId + hậu tố ngẫu nhiên
+Key kém: status, ngày hiện tại, country
+~~~
+
 ### Capacity
 
 - **1 RCU** = 1 strongly consistent read/giây cho item tới **4 KB**, hoặc 2 eventually consistent read/giây. Transactional read tốn gấp đôi.
 - **1 WCU** = 1 write/giây cho item tới **1 KB**. Transactional write tốn gấp đôi.
 - Ví dụ: đọc strongly consistent 10 item 6 KB/giây: mỗi item làm tròn lên 8 KB = 2 RCU, tổng 20 RCU.
+
+~~~ladder
+# Đọc một item 4 KB tốn bao nhiêu RCU
+Eventually consistent | có thể chưa thấy lần ghi mới nhất | 0.5 RCU
+Strongly consistent | luôn đọc bản mới nhất | 1 RCU
+Transactional | ACID trên nhiều item | 2 RCU
+~~~
 
 | Mode | Khi dùng |
 |---|---|
@@ -526,6 +749,14 @@ NoSQL key-value và document, serverless, latency một chữ số mili giây �
 
 Lưu ý: GSI bị throttle ghi có thể làm throttle ghi trên bảng chính, nên cấp đủ capacity cho GSI.
 
+~~~decide
+# GSI hay LSI
+Query theo thuộc tính khác trên bảng đã có => GSI
+Partition key khác hẳn bảng chính => GSI
+Cùng partition key, đổi sort key, đang tạo bảng => LSI
+Cần strongly consistent read trên index => LSI
+~~~
+
 ### Các tính năng khác
 
 - **DAX**: cache in-memory cho DynamoDB, đọc từ **mili giây xuống micro giây**, API tương thích (ít thay đổi code). Chỉ giúp đọc (eventually consistent), không giúp ghi.
@@ -534,6 +765,12 @@ Lưu ý: GSI bị throttle ghi có thể làm throttle ghi trên bảng chính, 
 - **Transactions**: TransactWriteItems/TransactGetItems, ACID trên nhiều item/bảng.
 - **Global Tables**: multi-Region, multi-active, latency thấp cho người dùng toàn cầu.
 - **Export to S3** (point-in-time) để phân tích bằng Athena mà không tốn RCU.
+
+~~~flow
+# DAX tăng tốc đọc, Streams phản ứng với thay đổi
+App -[đọc]-> DAX (micro giây) -[cache miss]-> DynamoDB
+DynamoDB -[Streams, 24 giờ]-> Lambda (xử lý thay đổi)
+~~~
 
 ## Amazon ElastiCache
 
@@ -558,10 +795,23 @@ Lưu ý: GSI bị throttle ghi có thể làm throttle ghi trên bảng chính, 
 
 Thường kết hợp lazy loading + write-through + TTL.
 
+~~~flow
+# Lazy loading: cache miss tốn 3 bước
+App -[1. đọc cache]-> ElastiCache (miss)
+App -[2. đọc DB]-> RDS
+App -[3. ghi vào cache, kèm TTL]-> ElastiCache
+~~~
+
 ## Amazon MemoryDB
 
 - Redis/Valkey-compatible nhưng là **database chính bền vững** (transaction log Multi-AZ), đọc micro giây, ghi mili giây một chữ số.
 - Chọn khi cần tốc độ in-memory **và** không được mất dữ liệu. ElastiCache chủ yếu là cache.
+
+~~~groups
+# Cache hay database chính
+ElastiCache: cache trước database, *session store, không thay database chính
+MemoryDB: *database chính bền vững, transaction log Multi-AZ, đọc micro giây
+~~~
 
 ## Purpose-built databases
 
@@ -613,6 +863,13 @@ CDN với hàng trăm edge location. Cache nội dung gần người dùng, gi�
 - **Custom origin**: ALB, EC2, API Gateway, bất kỳ HTTP server nào (kể cả on-premises). Với ALB/EC2, origin phải truy cập được qua internet (hoặc dùng **VPC origins** cho ALB/EC2 trong private subnet).
 - **S3 website endpoint** được xem là custom origin.
 
+~~~groups
+# Các loại origin của CloudFront
+S3 origin: *S3 bucket private qua OAC
+Custom origin: ALB, EC2, API Gateway, HTTP server on-prem, S3 website endpoint
+VPC origin: *ALB, NLB hoặc EC2 trong private subnet
+~~~
+
 ### Behaviors và cache
 
 - **Cache behavior**: định tuyến theo path pattern (ví dụ /api/* tới ALB, /static/* tới S3), mỗi behavior có cache policy, viewer protocol policy, allowed methods riêng.
@@ -621,12 +878,24 @@ CDN với hàng trăm edge location. Cache nội dung gần người dùng, gi�
 - **TTL**: origin có thể điều khiển bằng Cache-Control/Expires trong giới hạn min/max TTL.
 - **Invalidation**: xóa object khỏi cache trước khi hết TTL (có phí khi vượt mức miễn phí). Cách tốt hơn cho deploy thường xuyên: **versioned file name** (app.v2.js).
 
+~~~flow
+# Cache behavior định tuyến theo path
+Users -> CloudFront -[/static/*]-> S3 (OAC)
+CloudFront -[/api/*]-> ALB -> EC2
+~~~
+
 ### Tính sẵn sàng và bảo mật
 
 - **Origin failover (origin group)**: primary và secondary origin; khi primary trả mã lỗi cấu hình (ví dụ 500, 502, 503, 504) hoặc timeout, CloudFront thử secondary. Áp dụng cho request GET, HEAD, OPTIONS.
 - **Geo restriction**: allowlist/blocklist theo quốc gia.
 - **Field-level encryption**: mã hóa các trường cụ thể trong POST (ví dụ số thẻ) tại edge bằng public key, chỉ backend có private key mới giải mã.
 - **Signed URL / signed cookies** cho nội dung riêng tư; tích hợp AWS WAF và Shield.
+
+~~~flow
+# Origin failover trong origin group
+Users -> CloudFront -> Origin chính (trả 5xx hoặc timeout)
+CloudFront -[thử lại GET / HEAD / OPTIONS]-> Origin phụ
+~~~
 
 ### Compute tại edge
 
@@ -642,6 +911,12 @@ CDN với hàng trăm edge location. Cache nội dung gần người dùng, gi�
 - Health check và **failover giữa Region rất nhanh** (không phụ thuộc DNS cache). Traffic dial và endpoint weight để điều phối.
 - Hỗ trợ **TCP và UDP**: gaming, IoT, VoIP, ứng dụng cần IP cố định để whitelist.
 
+~~~flow
+# 2 static anycast IP, đi backbone AWS, failover Region không chờ DNS
+Users -> Global Accelerator (2 static IP) -[backbone AWS]-> ALB (Region chính)
+Global Accelerator -[health check lỗi thì failover]-> ALB (Region dự phòng)
+~~~
+
 ### CloudFront vs Global Accelerator
 
 | | CloudFront | Global Accelerator |
@@ -650,6 +925,15 @@ CDN với hàng trăm edge location. Cache nội dung gần người dùng, gi�
 | Giao thức | HTTP/HTTPS (WebSocket) | TCP, UDP |
 | IP | Nhiều IP động (dùng DNS) | 2 static anycast IP |
 | Tình huống | Nội dung tĩnh/động web, video | Non-HTTP, IP cố định, failover đa Region nhanh |
+
+~~~decide
+# Từ khóa trong đề
+Website, video, cần cache nội dung => CloudFront
+Game UDP, VoIP, IoT => Global Accelerator
+Cần IP cố định để whitelist => Global Accelerator
+Failover đa Region trong vài giây, không chờ DNS => Global Accelerator
+Chỉ cần upload nhanh vào S3 từ xa => S3 Transfer Acceleration
+~~~
 
 ## Enhanced networking trên EC2
 
@@ -666,6 +950,13 @@ CDN với hàng trăm edge location. Cache nội dung gần người dùng, gi�
 - Mặc định **không mã hóa**: dùng MACsec (trên cổng dedicated hỗ trợ) hoặc VPN chạy trên Direct Connect.
 - **LAG** gộp nhiều kết nối để tăng băng thông. **Direct Connect Gateway** kết nối tới nhiều VPC/Region.
 - HA: 2 kết nối ở 2 location khác nhau, hoặc Site-to-Site VPN làm backup.
+
+~~~flow
+# Direct Connect HA: 2 location, VPN làm dự phòng
+Data center -[kết nối 1]-> DX location A -> Direct Connect Gateway -> VPC
+Data center -[kết nối 2]-> DX location B -> Direct Connect Gateway
+Data center -[Site-to-Site VPN dự phòng]-> VPC
+~~~
 
 ## S3 Transfer Acceleration
 
@@ -714,6 +1005,14 @@ CDN với hàng trăm edge location. Cache nội dung gần người dùng, gi�
 | **Managed Service for Apache Flink** (trước đây Kinesis Data Analytics) | Xử lý stream bằng Apache Flink (SQL, Java, Python) | Phân tích real-time: windowing, aggregate, phát hiện bất thường trên stream |
 | **Amazon MSK** | Apache Kafka managed (có MSK Serverless) | Đã dùng Kafka, cần tương thích Kafka API |
 
+~~~decide
+# Chọn dịch vụ streaming
+Xử lý tùy biến, nhiều consumer, cần replay => Kinesis Data Streams
+Chỉ đổ vào S3, Redshift, OpenSearch mà không viết code => Data Firehose
+Windowing, aggregate real-time trên stream => Managed Service for Apache Flink
+Đã dùng Kafka => Amazon MSK
+~~~
+
 ### Kinesis Data Streams chi tiết
 
 - Provisioned mode: mỗi **shard** nhận **1 MB/s hoặc 1,000 record/s** ghi, **2 MB/s** đọc (chia sẻ giữa các consumer).
@@ -721,6 +1020,13 @@ CDN với hàng trăm edge location. Cache nội dung gần người dùng, gi�
 - **On-demand mode**: tự scale, không quản lý shard.
 - Retention mặc định 24 giờ, tăng được tới 365 ngày. Dữ liệu có thứ tự trong một shard theo partition key.
 - Consumer: Lambda, KCL app trên EC2/ECS, Managed Service for Apache Flink, Firehose.
+
+~~~flow
+# Một stream, nhiều consumer đọc độc lập
+Producers -> Kinesis Data Streams (shard: 1 MB/s ghi) -> Lambda
+Kinesis Data Streams -> Managed Service for Apache Flink (phân tích real-time)
+Kinesis Data Streams -> Data Firehose -> S3
+~~~
 
 ### Amazon Data Firehose chi tiết
 
@@ -743,6 +1049,12 @@ CDN với hàng trăm edge location. Cache nội dung gần người dùng, gi�
 - **Glue ETL jobs**: Apache Spark serverless để transform (ví dụ chuyển CSV sang Parquet). **Job bookmarks** tránh xử lý lại dữ liệu cũ.
 - **Glue DataBrew**: làm sạch, chuẩn hóa dữ liệu bằng giao diện trực quan, không cần code.
 
+~~~flow
+# Data lake ít vận hành: ingest, catalog, query
+Logs -> Data Firehose (buffer, transform) -[Parquet]-> S3 -> Athena
+S3 -> Glue crawler -> Glue Data Catalog -[schema]-> Athena
+~~~
+
 ### Amazon EMR
 
 - Cluster Hadoop/Spark/Hive/Presto/HBase managed, chạy trên EC2, EKS hoặc **EMR Serverless**.
@@ -755,6 +1067,12 @@ CDN với hàng trăm edge location. Cache nội dung gần người dùng, gi�
 - **Concurrency scaling** thêm capacity khi nhiều truy vấn đồng thời. **Materialized views** tăng tốc truy vấn lặp lại.
 - **Redshift Spectrum**: truy vấn dữ liệu trên S3 trực tiếp từ Redshift, join với bảng trong warehouse mà không cần load.
 - Zero-ETL integration từ Aurora/RDS/DynamoDB sang Redshift để phân tích gần real-time.
+
+~~~flow
+# Redshift lấy dữ liệu từ nhiều nguồn
+Aurora / RDS / DynamoDB -[zero-ETL]-> Redshift -> QuickSight (dashboard BI)
+S3 (data lake) -[Redshift Spectrum, không load]-> Redshift
+~~~
 
 ### Athena vs Redshift vs EMR
 
@@ -770,6 +1088,14 @@ CDN với hàng trăm edge location. Cache nội dung gần người dùng, gi�
 - **Amazon QuickSight**: BI serverless, dashboard, engine in-memory SPICE, tính năng ML insights.
 - **Amazon OpenSearch Service**: search full-text, log analytics, dashboards (OpenSearch Dashboards). Có bản Serverless. Hay đi cùng Firehose để ingest log.
 
+~~~groups
+# Data lake có governance tập trung
+[Data lake trên S3 + Glue Data Catalog]
+Lake Formation: *quyền tới cột/hàng/cell, tag-based access, chia sẻ cross-account
+Truy vấn: Athena, Redshift Spectrum, EMR
+Hiển thị: QuickSight, OpenSearch Dashboards
+~~~
+
 ## Định dạng cột và partitioning
 
 | | CSV/JSON (row) | Parquet/ORC (columnar) |
@@ -779,6 +1105,14 @@ CDN với hàng trăm edge location. Cache nội dung gần người dùng, gi�
 | Chi phí Athena | Cao | Thấp hơn nhiều |
 
 - **Partition** theo cột hay lọc (ví dụ s3://bucket/logs/year=2026/month=10/) để Athena chỉ quét partition liên quan (partition pruning).
+
+~~~ladder
+# Athena tính tiền theo dữ liệu quét: quét càng ít càng rẻ
+CSV không nén | đọc mọi cột của mọi dòng | đắt nhất
+CSV nén gzip | ít byte hơn nhưng vẫn đọc cả dòng | bớt
+Parquet nén | chỉ đọc cột cần | rẻ
+Parquet + partition | chỉ quét partition liên quan | rẻ nhất
+~~~
 
 ## Chọn nhanh
 
@@ -821,6 +1155,11 @@ CDN với hàng trăm edge location. Cache nội dung gần người dùng, gi�
 - On-premises cần cài **DataSync agent** (VM). Tự mã hóa khi truyền, kiểm tra toàn vẹn dữ liệu, lập lịch, giới hạn băng thông, giữ metadata/permission.
 - Chạy qua internet hoặc Direct Connect. Phù hợp **migration một lần** hoặc **đồng bộ định kỳ**.
 
+~~~flow
+# DataSync: agent on-prem đẩy dữ liệu lên AWS
+NFS / SMB (on-prem) -> DataSync agent -[TLS, internet hoặc DX]-> DataSync -> S3 / EFS / FSx
+~~~
+
 ## AWS Storage Gateway
 
 Hybrid storage: on-premises dùng giao thức quen thuộc, dữ liệu nằm ở AWS, có cache cục bộ cho latency thấp.
@@ -834,10 +1173,22 @@ Hybrid storage: on-premises dùng giao thức quen thuộc, dữ liệu nằm �
 
 Lưu ý: Amazon FSx File Gateway đã ngừng nhận khách hàng mới; với Windows file share, ưu tiên FSx for Windows File Server truy cập trực tiếp.
 
+~~~groups
+# Giao thức on-prem quen thuộc, dữ liệu nằm ở AWS
+S3 File Gateway: NFS, SMB, *object trong S3
+Volume Gateway: iSCSI, cached hoặc stored, *EBS snapshot trên S3
+Tape Gateway: iSCSI VTL, *S3 Glacier
+~~~
+
 ## AWS Transfer Family
 
 - Endpoint **SFTP, FTPS, FTP, AS2** fully managed, lưu dữ liệu vào **S3 hoặc EFS**.
 - Dùng khi đối tác bên ngoài vẫn gửi file qua SFTP, không muốn thay đổi client. Xác thực qua service-managed user, AD, hoặc identity provider tùy chỉnh.
+
+~~~flow
+# Đối tác giữ nguyên SFTP client
+Đối tác (SFTP client) -[SFTP / FTPS / AS2]-> Transfer Family endpoint -> S3 / EFS
+~~~
 
 ## Snow Family (offline transfer)
 
@@ -852,12 +1203,23 @@ Lưu ý: Amazon FSx File Gateway đã ngừng nhận khách hàng mới; với W
 - DMS cần **replication instance** (hoặc DMS Serverless). Target có thể là RDS, Aurora, Redshift, DynamoDB, S3, OpenSearch, Kinesis...
 - DB rất lớn: kết hợp Snowball Edge + DMS (nếu khả dụng) hoặc dùng native backup/restore.
 
+~~~flow
+# Khác engine: SCT chuyển schema, DMS chuyển dữ liệu
+Oracle (on-prem) -[SCT: schema, stored procedure]-> Aurora PostgreSQL
+Oracle (on-prem) -[DMS: full load + CDC]-> Aurora PostgreSQL (cutover)
+~~~
+
 ## AWS Application Migration Service (MGN)
 
 - **Lift-and-shift (rehost)** server vật lý, VMware, Hyper-V, hoặc cloud khác sang EC2.
 - Replication block-level liên tục, test launch không gián đoạn, cutover với downtime vài phút.
 - Thay thế CloudEndure Migration và Server Migration Service (SMS).
 - **Migration Hub** theo dõi tiến độ; **Application Discovery Service** thu thập thông tin server trước khi migrate.
+
+~~~flow
+# Rehost bằng Application Migration Service
+Server nguồn (agent) -[replication block-level liên tục]-> Staging area (AWS) -[test launch rồi cutover]-> EC2
+~~~
 
 ## Tính thời gian truyền dữ liệu
 
@@ -873,6 +1235,14 @@ Công thức: thời gian = dung lượng / băng thông thực tế.
 | 1 PB | khoảng 2.5 năm | khoảng 3 tháng | khoảng 9-10 ngày |
 
 Cách làm bài: nếu thời gian truyền qua mạng vượt quá deadline (và Direct Connect mất nhiều tuần để lắp), chọn thiết bị offline. Nếu đủ thời gian và có băng thông, chọn DataSync.
+
+~~~decide
+# Qua mạng hay thiết bị offline
+Truyền qua mạng xong trước deadline => DataSync
+Đã có Direct Connect, cần đồng bộ thường xuyên => DataSync qua Direct Connect
+Hàng trăm TB, băng thông hạn chế, deadline vài tuần => Snowball Edge
+Cần đường truyền riêng lâu dài, chờ được nhiều tuần => Direct Connect
+~~~
 
 ## Chọn nhanh
 
@@ -920,6 +1290,13 @@ Cách làm bài: nếu thời gian truyền qua mạng vượt quá deadline (v�
 - **Amazon Bedrock**: dùng **foundation model (FM)** có sẵn qua API cho generative AI.
 - **Amazon SageMaker AI**: tự xây, huấn luyện, triển khai **model tùy chỉnh** khi dịch vụ có sẵn không đáp ứng.
 
+~~~ladder
+# Từ ít vận hành nhất tới tùy biến nhất
+AI service có sẵn | Rekognition, Textract, Comprehend: gọi API | ít nhất
+Amazon Bedrock | foundation model qua API, RAG, agent | ít
+SageMaker AI | tự build, train, deploy model riêng | nhiều nhất
+~~~
+
 ## Amazon SageMaker AI
 
 - Nền tảng ML đầy đủ (tên mới của Amazon SageMaker; tên "SageMaker" giờ chỉ cả nền tảng dữ liệu và AI với Unified Studio).
@@ -929,6 +1306,14 @@ Cách làm bài: nếu thời gian truyền qua mạng vượt quá deadline (v�
 - **Triển khai**: **real-time endpoint** (latency thấp, có auto scaling), **serverless inference** (traffic thất thường), **asynchronous inference** (payload lớn, xử lý lâu), **batch transform** (dự đoán theo lô, không cần endpoint thường trực).
 - **JumpStart**: model và giải pháp dựng sẵn để bắt đầu nhanh.
 
+~~~decide
+# Chọn kiểu inference của SageMaker AI
+Latency thấp, traffic đều => Real-time endpoint
+Traffic thất thường, chấp nhận cold start => Serverless inference
+Payload lớn, xử lý lâu => Asynchronous inference
+Dự đoán theo lô, không cần endpoint thường trực => Batch transform
+~~~
+
 ## Amazon Bedrock
 
 - Fully managed, **serverless**: truy cập FM của nhiều nhà cung cấp (Anthropic, Meta, Mistral, Amazon Nova...) qua một API, không quản lý hạ tầng.
@@ -936,6 +1321,12 @@ Cách làm bài: nếu thời gian truyền qua mạng vượt quá deadline (v�
 - **Agents**: FM gọi API/Lambda để thực hiện tác vụ nhiều bước.
 - **Guardrails**: lọc nội dung có hại, chặn chủ đề, ẩn PII.
 - Hỗ trợ **fine-tuning** với dữ liệu riêng. Dữ liệu của khách hàng không được dùng để huấn luyện model gốc.
+
+~~~flow
+# Knowledge Bases: RAG trên tài liệu công ty
+Tài liệu (S3) -[chunk và embedding]-> Vector store
+Câu hỏi -> Knowledge Base -[lấy đoạn liên quan]-> Foundation model -> Câu trả lời (kèm nguồn)
+~~~
 
 ## Dịch vụ AI chuyên biệt
 
@@ -957,6 +1348,14 @@ Cách làm bài: nếu thời gian truyền qua mạng vượt quá deadline (v�
 - **Kendra**: **intelligent enterprise search**: người dùng hỏi bằng ngôn ngữ tự nhiên, tìm câu trả lời trong tài liệu nội bộ; connector tới S3, SharePoint, database...
 - **Personalize**: **recommendation** real-time (gợi ý sản phẩm, xếp hạng cá nhân hóa) không cần kinh nghiệm ML.
 - **Amazon Q**: trợ lý generative AI. **Q Business** trả lời câu hỏi dựa trên dữ liệu doanh nghiệp, tôn trọng quyền truy cập; **Q Developer** hỗ trợ viết code, nâng cấp code, thao tác AWS.
+
+~~~groups
+# Nhóm theo dữ liệu đầu vào
+Ảnh và video: *Rekognition
+Tài liệu scan và PDF: *Textract
+Text: *Comprehend, Translate, Kendra
+Giọng nói: *Transcribe (nghe), Polly (nói), Lex (chatbot)
+~~~
 
 ## Bảng chọn nhanh
 
@@ -983,6 +1382,11 @@ Cách làm bài: nếu thời gian truyền qua mạng vượt quá deadline (v�
 - Cần **generative AI** với FM có sẵn: chọn **Bedrock** trước, không tự host LLM trên EC2/SageMaker trừ khi đề yêu cầu.
 - Pipeline điển hình: S3 event kích hoạt Lambda, Lambda gọi Textract/Rekognition/Comprehend, lưu kết quả vào DynamoDB hoặc S3.
 
+~~~flow
+# Pipeline xử lý tài liệu serverless
+S3 -[ObjectCreated]-> Lambda -> Textract -> DynamoDB (kết quả)
+~~~
+
 ## Các cặp dễ nhầm
 
 | Cặp | Phân biệt |
@@ -992,6 +1396,11 @@ Cách làm bài: nếu thời gian truyền qua mạng vượt quá deadline (v�
 | Transcribe vs Polly | Transcribe: speech sang text. Polly: text sang speech |
 | Lex vs Connect | Lex: engine chatbot. Amazon Connect: contact center trên cloud, có thể tích hợp Lex |
 | Comprehend vs Translate | Comprehend phát hiện ngôn ngữ, không dịch; Translate dịch |
+
+~~~flow
+# Transcribe nghe, Translate dịch, Polly nói
+Giọng nói -[Transcribe]-> Text -[Translate]-> Text ngôn ngữ khác -[Polly]-> Giọng nói
+~~~
 
 Lưu ý: Amazon Forecast và Amazon Fraud Detector đã ngừng nhận khách hàng mới; không chọn chúng làm đáp án cho thiết kế mới.
 `,

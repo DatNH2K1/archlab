@@ -28,27 +28,41 @@ body {
   background-image: radial-gradient(circle, #34413c 1px, transparent 1px);
 }
 
+.prose-lesson {
+  counter-reset: section;
+}
+
 .prose-lesson h2 {
-  @apply mt-8 mb-3 text-xl font-bold text-chalk;
+  @apply mt-10 mb-4 flex items-center gap-3 border-t border-line pt-6 text-xl font-bold text-chalk;
+  counter-increment: section;
+}
+
+.prose-lesson h2::before {
+  @apply flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent/15 font-mono text-sm text-accent;
+  content: counter(section, decimal-leading-zero);
+}
+
+.prose-lesson > h2:first-child {
+  @apply mt-0 border-t-0 pt-0;
 }
 
 .prose-lesson h3 {
   @apply mt-6 mb-2 text-lg font-semibold text-accent;
 }
 
-.prose-lesson p {
+.prose-lesson p:not(figure *) {
   @apply my-3 leading-7 text-chalk/90;
 }
 
-.prose-lesson ul {
-  @apply my-3 list-disc space-y-1 pl-6;
+.prose-lesson ul:not(figure *) {
+  @apply my-3 list-disc space-y-1.5 pl-6 marker:text-accent;
 }
 
-.prose-lesson ol {
-  @apply my-3 list-decimal space-y-1 pl-6;
+.prose-lesson ol:not(figure *) {
+  @apply my-3 list-decimal space-y-1.5 pl-6 marker:font-mono marker:text-accent;
 }
 
-.prose-lesson li {
+.prose-lesson li:not(figure *) {
   @apply leading-7 text-chalk/90;
 }
 
@@ -60,8 +74,12 @@ body {
   @apply rounded bg-panel-2 px-1 font-mono text-sm;
 }
 
+.prose-lesson blockquote {
+  @apply my-4 rounded-r-lg border-l-4 border-info bg-info/10 px-4 py-1;
+}
+
 .prose-lesson table {
-  @apply my-4 block w-full overflow-x-auto text-sm;
+  @apply my-4 block w-full overflow-x-auto rounded-lg text-sm;
 }
 
 .prose-lesson th {
@@ -70,6 +88,14 @@ body {
 
 .prose-lesson td {
   @apply border border-line px-3 py-2 align-top;
+}
+
+.prose-lesson tbody tr:nth-child(even) {
+  @apply bg-panel/60;
+}
+
+.prose-lesson td:first-child {
+  @apply font-semibold text-chalk;
 }
 
 @keyframes flow {
