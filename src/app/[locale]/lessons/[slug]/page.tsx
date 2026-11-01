@@ -44,11 +44,8 @@ export default async function LessonPage(props: LessonPageProps) {
   const next = lessons[index + 1];
 
   return (
-    <PageShell title={t('title')}>
-      <Link href="/lessons" className="text-sm text-muted hover:text-chalk">
-        ← {t('all_lessons')}
-      </Link>
-      <p className="mt-4 font-mono text-xs tracking-widest text-accent uppercase">
+    <PageShell title={t('title')} back={{ href: '/lessons', label: t('all_lessons') }}>
+      <p className="font-mono text-xs tracking-widest text-accent uppercase">
         {DOMAINS[lesson.domain].code} · {td(lesson.domain)} · {t('minutes', { minutes: lesson.minutes })}
       </p>
       <h1 className="mt-1 text-3xl font-bold">{lesson.title}</h1>

@@ -459,6 +459,7 @@
   },
   "ScenariosPage": {
     "title": "Bài toán thiết kế",
+    "all_scenarios": "Tất cả bài toán thiết kế",
     "intro": "Mỗi bài là một sản phẩm thật, qua nhiều màn: lưu lượng tăng dần, sự cố mới, yêu cầu mới. Có sẵn mọi thành phần, bạn tự chọn kiến trúc.",
     "easy": "Dễ",
     "medium": "Vừa",

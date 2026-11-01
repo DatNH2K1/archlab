@@ -459,6 +459,7 @@
   },
   "ScenariosPage": {
     "title": "Design problems",
+    "all_scenarios": "All design problems",
     "intro": "Each problem is one real product over several rounds: more traffic, new incidents, new requirements. Every component is available; you pick the architecture.",
     "easy": "Easy",
     "medium": "Medium",

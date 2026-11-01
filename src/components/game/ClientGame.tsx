@@ -61,6 +61,7 @@ const LearnGame = (props: { requested: string | null }) => {
 const TrackGame = (props: { trackId: string; requested: string | null }) => {
   const progress = useProgress();
   const locale = useLocale();
+  const t = useTranslations('ScenariosPage');
   const track = TRACKS.find((item) => item.id === props.trackId);
   const [firstOpen] = useState(() => track?.rounds.find((round) => !progress.stars[round.id]) ?? track?.rounds.at(-1));
 
@@ -83,6 +84,7 @@ const TrackGame = (props: { trackId: string; requested: string | null }) => {
       palette={COMPONENT_TYPES_IN_PALETTE}
       heading={inLocale(track.text, locale).title}
       roundHref={(id) => `/scenarios/${track.id}?round=${id}`}
+      back={{ href: '/scenarios', label: t('all_scenarios') }}
     />
   );
 };

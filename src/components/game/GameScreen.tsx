@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { AppMenu } from '@/components/AppMenu';
+import { BackLink } from '@/components/BackLink';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { canAdd, canConnect, createNode, emptyBoard, newId } from '@/game/board';
 import { CATALOG, COMPONENT_TYPES_IN_PALETTE, LINKS, MAX_PER_BOARD } from '@/game/catalog';
@@ -69,6 +70,8 @@ export type PlayProps = {
   heading: string;
   /** Link to another round of the same sequence. */
   roundHref: (id: string) => string;
+  /** List page this round was opened from, shown as a back link. */
+  back?: { href: string; label: string };
 };
 
 export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
@@ -442,7 +445,8 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
       />
 
       <header className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 border-b border-line bg-ink/85 px-3 py-2 backdrop-blur">
-        <div className="pointer-events-auto">
+        <div className="pointer-events-auto flex items-center gap-2">
+          {play?.back && <BackLink href={play.back.href} label={play.back.label} />}
           <AppMenu title={play ? play.heading : t('sandbox')} />
         </div>
         <dl className="pointer-events-auto flex items-stretch gap-4 font-mono">
