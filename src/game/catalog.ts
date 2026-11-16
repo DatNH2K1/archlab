@@ -1,9 +1,9 @@
 import type { ComponentType, NodeConfig, RequestClass, Size } from './types';
 
-export type ComponentCategory = 'entry' | 'edge' | 'network' | 'compute' | 'data' | 'messaging';
+type ComponentCategory = 'entry' | 'edge' | 'network' | 'compute' | 'data' | 'messaging';
 
 /** Inspector settings a component exposes. */
-export type ConfigField =
+type ConfigField =
   | 'size'
   | 'count'
   | 'az'
@@ -33,8 +33,24 @@ type ComponentSpec = {
 const ALL: RequestClass[] = ['read', 'write', 'static', 'job', 'attack'];
 
 export const CATALOG: Record<ComponentType, ComponentSpec> = {
-  users: { category: 'entry', label: 'Users', accepts: [], fields: [], regional: true, global: true, latency: 0 },
-  route53: { category: 'network', label: 'Route 53', accepts: ALL, fields: [], regional: true, global: true, latency: 0 },
+  users: {
+    category: 'entry',
+    label: 'Users',
+    accepts: [],
+    fields: [],
+    regional: true,
+    global: true,
+    latency: 0,
+  },
+  route53: {
+    category: 'network',
+    label: 'Route 53',
+    accepts: ALL,
+    fields: [],
+    regional: true,
+    global: true,
+    latency: 0,
+  },
   globalAccelerator: {
     category: 'network',
     label: 'Global Accelerator',
@@ -44,7 +60,15 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: true,
     latency: 2,
   },
-  waf: { category: 'edge', label: 'WAF', accepts: ALL, fields: [], regional: true, global: true, latency: 1 },
+  waf: {
+    category: 'edge',
+    label: 'WAF',
+    accepts: ALL,
+    fields: [],
+    regional: true,
+    global: true,
+    latency: 1,
+  },
   cloudfront: {
     category: 'edge',
     label: 'CloudFront',
@@ -54,7 +78,15 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: true,
     latency: 8,
   },
-  alb: { category: 'network', label: 'ALB', accepts: ALL, fields: ['region'], regional: true, global: false, latency: 4 },
+  alb: {
+    category: 'network',
+    label: 'ALB',
+    accepts: ALL,
+    fields: ['region'],
+    regional: true,
+    global: false,
+    latency: 4,
+  },
   apiGateway: {
     category: 'network',
     label: 'API Gateway',
@@ -161,11 +193,23 @@ export const DATABASE_TYPES = new Set<ComponentType>(['rds', 'aurora', 'readRepl
 export const DATA_STORE_TYPES = new Set<ComponentType>([...DATABASE_TYPES, 'elasticache', 's3']);
 export const QUEUE_TYPES = new Set<ComponentType>(['sqs', 'sns']);
 /** Components that only send traffic to healthy targets. */
-export const HEALTH_AWARE_TYPES = new Set<ComponentType>(['alb', 'route53', 'cloudfront', 'globalAccelerator']);
+export const HEALTH_AWARE_TYPES = new Set<ComponentType>([
+  'alb',
+  'route53',
+  'cloudfront',
+  'globalAccelerator',
+]);
 /** Parents that share work across every instance of an EC2 group: a load balancer, or workers polling a queue. */
 export const BALANCER_TYPES = new Set<ComponentType>(['alb', 'sqs']);
 
-const DATA_TARGETS: ComponentType[] = ['elasticache', 'rds', 'aurora', 'readReplica', 'dynamodb', 's3'];
+const DATA_TARGETS: ComponentType[] = [
+  'elasticache',
+  'rds',
+  'aurora',
+  'readReplica',
+  'dynamodb',
+  's3',
+];
 const SERVER_TARGETS: ComponentType[] = ['ec2', 'lambda', 'alb', ...DATA_TARGETS, 'sqs', 'sns'];
 
 /** Components each component may send requests to, as in AWS. */

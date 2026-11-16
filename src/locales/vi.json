@@ -476,5 +476,179 @@
     "intro": "Các cặp, nhóm dịch vụ mà đề thi hay đặt cạnh nhau để gài bẫy. Mỗi mục có bảng so sánh, khi nào chọn cái nào và cụm từ gợi ý trong câu hỏi.",
     "pick_when": "Chọn khi",
     "jump_to": "Đi tới mục"
+  },
+  "Glossary": {
+    "ACM": {
+      "name": "AWS Certificate Manager",
+      "desc": "Cấp phát, quản lý và tự động gia hạn chứng chỉ bảo mật SSL/TLS miễn phí."
+    },
+    "ALB": {
+      "name": "Application Load Balancer",
+      "desc": "Cân bằng tải tầng ứng dụng Layer 7 (HTTP/HTTPS, định tuyến URL path/host)."
+    },
+    "AMI": {
+      "name": "Amazon Machine Image",
+      "desc": "Bản đóng gói mẫu hệ điều hành và phần mềm dùng để khởi động EC2."
+    },
+    "ASG": {
+      "name": "Auto Scaling Group",
+      "desc": "Nhóm máy chủ EC2 tự động tăng hoặc giảm số lượng máy theo tải."
+    },
+    "AZ": {
+      "name": "Availability Zone",
+      "desc": "Khu vực khả dụng: trung tâm dữ liệu độc lập về nguồn điện, làm mát và mạng."
+    },
+    "CLB": {
+      "name": "Classic Load Balancer",
+      "desc": "Bộ cân bằng tải thế hệ cũ của AWS (hỗ trợ HTTP/HTTPS/TCP cơ bản)."
+    },
+    "DAX": {
+      "name": "DynamoDB Accelerator",
+      "desc": "Bộ nhớ đệm in-memory hoàn toàn tương thích đặt trước DynamoDB, giảm độ trễ về microsecond."
+    },
+    "DLQ": {
+      "name": "Dead-Letter Queue",
+      "desc": "Hàng đợi chứa các thông điệp bị lỗi hoặc xử lý thất bại nhiều lần."
+    },
+    "DR": {
+      "name": "Disaster Recovery",
+      "desc": "Quy trình và chiến lược khôi phục hệ thống khi xảy ra thảm hoạ."
+    },
+    "DX": {
+      "name": "Direct Connect",
+      "desc": "Đường truyền mạng vật lý chuyên dụng tốc độ cao từ on-premise vào thẳng AWS."
+    },
+    "EBS": {
+      "name": "Elastic Block Store",
+      "desc": "Ổ cứng lưu trữ dạng khối (Block Storage) gắn trực tiếp cho máy chủ EC2."
+    },
+    "EC2": {
+      "name": "Elastic Compute Cloud",
+      "desc": "Máy chủ ảo có thể tuỳ biến CPU, RAM, OS để chạy ứng dụng."
+    },
+    "ECS": {
+      "name": "Elastic Container Service",
+      "desc": "Dịch vụ điều phối container Docker do AWS quản lý."
+    },
+    "EFS": {
+      "name": "Elastic File System",
+      "desc": "Hệ thống tệp dùng chung serverless chuẩn NFS, chia sẻ cho nhiều máy tính cùng lúc."
+    },
+    "EIP": {
+      "name": "Elastic IP Address",
+      "desc": "Địa chỉ IPv4 tĩnh public cố định có thể gắn hoặc chuyển đổi giữa các máy chủ."
+    },
+    "EKS": {
+      "name": "Elastic Kubernetes Service",
+      "desc": "Dịch vụ Kubernetes chuẩn do AWS quản lý, tương thích hoàn toàn với hệ sinh thái K8s."
+    },
+    "ELB": {
+      "name": "Elastic Load Balancing",
+      "desc": "Họ dịch vụ cân bằng tải tự động của AWS (ALB, NLB, GWLB)."
+    },
+    "ENI": {
+      "name": "Elastic Network Interface",
+      "desc": "Card mạng ảo gắn vào EC2 hoặc các tài nguyên trong VPC."
+    },
+    "FIFO": {
+      "name": "First-In-First-Out",
+      "desc": "Cơ chế xử lý thông điệp đúng thứ tự gửi và chống trùng lặp."
+    },
+    "FSX": {
+      "name": "Amazon FSx",
+      "desc": "Hệ thống tệp hiệu năng cao chuyên biệt (Windows File Server, Lustre, NetApp ONTAP, OpenZFS)."
+    },
+    "GWLB": {
+      "name": "Gateway Load Balancer",
+      "desc": "Cân bằng tải và mở rộng cụm thiết bị mạng ảo/firewall bên thứ ba."
+    },
+    "HA": {
+      "name": "High Availability",
+      "desc": "Tính sẵn sàng cao, hệ thống tiếp tục hoạt động trơn tru khi một số thành phần gặp sự cố."
+    },
+    "IAM": {
+      "name": "Identity and Access Management",
+      "desc": "Quản lý quyền truy cập, danh tính người dùng, nhóm và vai trò (Role) trên AWS."
+    },
+    "IGW": {
+      "name": "Internet Gateway",
+      "desc": "Cổng kết nối 2 chiều giữa VPC và Internet."
+    },
+    "IOPS": {
+      "name": "Input/Output Operations Per Second",
+      "desc": "Số phép toán đọc/ghi trên giây - chỉ số đo lường hiệu năng ổ cứng."
+    },
+    "KMS": {
+      "name": "Key Management Service",
+      "desc": "Quản lý khoá mã hoá và thực hiện mã hoá dữ liệu an toàn."
+    },
+    "MFA": {
+      "name": "Multi-Factor Authentication",
+      "desc": "Xác thực đa yếu tố yêu cầu thêm mã bảo mật ngoài mật khẩu để tăng độ an toàn."
+    },
+    "NACL": {
+      "name": "Network Access Control List",
+      "desc": "Tường lửa cấp subnet, kiểm tra gói tin stateless (cần mở cả cổng đi và về)."
+    },
+    "NAT": {
+      "name": "Network Address Translation",
+      "desc": "Cho phép máy chủ trong private subnet gọi ra Internet nhưng chặn chiều vào."
+    },
+    "NLB": {
+      "name": "Network Load Balancer",
+      "desc": "Cân bằng tải tầng giao vận Layer 4 (TCP/UDP, độ trễ cực thấp, hỗ trợ IP tĩnh)."
+    },
+    "RDS": {
+      "name": "Relational Database Service",
+      "desc": "Dịch vụ cơ sở dữ liệu quan hệ được AWS vận hành (PostgreSQL, MySQL, MariaDB...)."
+    },
+    "RI": {
+      "name": "Reserved Instances",
+      "desc": "Cam kết thuê máy chủ 1 hoặc 3 năm để được giảm giá tới 72% so với On-Demand."
+    },
+    "RPO": {
+      "name": "Recovery Point Objective",
+      "desc": "Lượng dữ liệu tối đa chấp nhận bị mất mát (đo bằng khoảng thời gian)."
+    },
+    "RTO": {
+      "name": "Recovery Time Objective",
+      "desc": "Thời gian tối đa cho phép để khôi phục hệ thống hoạt động trở lại sau sự cố."
+    },
+    "S3": {
+      "name": "Simple Storage Service",
+      "desc": "Lưu trữ đối tượng (Object Storage) dung lượng vô hạn, độ bền dữ liệu 99.999999999%."
+    },
+    "SCP": {
+      "name": "Service Control Policy",
+      "desc": "Chính sách quản trị phân quyền trần (guardrails) áp đặt lên toàn bộ tài khoản AWS."
+    },
+    "SG": {
+      "name": "Security Group",
+      "desc": "Tường lửa ảo cấp máy chủ/ENI, kiểm tra gói tin stateful (tự động cho phép traffic trả về)."
+    },
+    "SNS": {
+      "name": "Simple Notification Service",
+      "desc": "Dịch vụ thông báo và phân tán tin nhắn theo mô hình Pub/Sub (Publish/Subscribe)."
+    },
+    "SPOF": {
+      "name": "Single Point of Failure",
+      "desc": "Điểm lỗi đơn lẻ - thành phần nếu gặp sự cố sẽ làm toàn bộ hệ thống ngưng trệ."
+    },
+    "SQS": {
+      "name": "Simple Queue Service",
+      "desc": "Hàng đợi tin nhắn phân tán giúp tách rời (decouple) các dịch vụ và xử lý bất đồng bộ."
+    },
+    "TGW": {
+      "name": "Transit Gateway",
+      "desc": "Hub định tuyến trung tâm kết nối hàng nghìn VPC và mạng on-premises."
+    },
+    "VPC": {
+      "name": "Virtual Private Cloud",
+      "desc": "Mạng riêng ảo cô lập trên AWS, do bạn toàn quyền cấu hình dải IP và subnet."
+    },
+    "WAF": {
+      "name": "Web Application Firewall",
+      "desc": "Tường lửa bảo vệ ứng dụng web chống tấn công HTTP/HTTPS (SQLi, XSS, bot, rate-limit)."
+    }
   }
 }

@@ -9,7 +9,7 @@ import { Link } from '@/libs/I18nNavigation';
 import { ComponentIcon } from './ComponentIcon';
 
 /** Lesson that explains each component. */
-export const COMPONENT_LESSON: Record<ComponentType, string> = {
+const COMPONENT_LESSON: Record<ComponentType, string> = {
   users: 'high-availability-multi-az',
   route53: 'route53-routing',
   globalAccelerator: 'edge-networking',
@@ -37,7 +37,9 @@ const Segmented = <T extends string>(props: {
   disabled: boolean;
 }) => (
   <div>
-    <div className="mb-1 text-[11px] font-bold tracking-wider text-muted uppercase">{props.label}</div>
+    <div className="mb-1 text-[11px] font-bold tracking-wider text-muted uppercase">
+      {props.label}
+    </div>
     <div className="flex rounded-lg border border-line p-0.5">
       {props.options.map((option) => (
         <button
@@ -48,7 +50,9 @@ const Segmented = <T extends string>(props: {
           className={`flex-1 rounded-md px-1.5 py-1 text-xs font-semibold ${
             option.value === props.value ? 'bg-accent text-ink' : 'text-chalk/80 hover:bg-panel-2'
           }`}
-          onClick={() => props.onChange(option.value)}
+          onClick={() => {
+            props.onChange(option.value);
+          }}
         >
           {option.label}
         </button>
@@ -57,7 +61,13 @@ const Segmented = <T extends string>(props: {
   </div>
 );
 
-const Toggle = (props: { label: string; hint?: string; value: boolean; onChange: (value: boolean) => void; disabled: boolean }) => (
+const Toggle = (props: {
+  label: string;
+  hint?: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+  disabled: boolean;
+}) => (
   <Checkbox
     boxAfter
     label={
@@ -72,7 +82,14 @@ const Toggle = (props: { label: string; hint?: string; value: boolean; onChange:
   />
 );
 
-const Stepper = (props: { label: string; value: number; min: number; max: number; onChange: (value: number) => void; disabled: boolean }) => (
+const Stepper = (props: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (value: number) => void;
+  disabled: boolean;
+}) => (
   <div className="flex items-center justify-between">
     <span className="text-sm font-semibold">{props.label}</span>
     <div className="flex items-center gap-2">
@@ -80,7 +97,9 @@ const Stepper = (props: { label: string; value: number; min: number; max: number
         type="button"
         disabled={props.disabled || props.value <= props.min}
         className="size-7 rounded-md border border-line font-bold disabled:opacity-30"
-        onClick={() => props.onChange(props.value - 1)}
+        onClick={() => {
+          props.onChange(props.value - 1);
+        }}
         aria-label="−"
       >
         −
@@ -90,7 +109,9 @@ const Stepper = (props: { label: string; value: number; min: number; max: number
         type="button"
         disabled={props.disabled || props.value >= props.max}
         className="size-7 rounded-md border border-line font-bold disabled:opacity-30"
-        onClick={() => props.onChange(props.value + 1)}
+        onClick={() => {
+          props.onChange(props.value + 1);
+        }}
         aria-label="+"
       >
         +
@@ -127,7 +148,12 @@ export const Inspector = (props: {
           <ComponentIcon type={node.type} className="size-6" />
           <h2 className="text-lg font-bold">{node.type === 'users' ? tg('users') : spec.label}</h2>
         </div>
-        <button type="button" className="text-muted hover:text-chalk" onClick={props.onClose} aria-label={tg('close')}>
+        <button
+          type="button"
+          className="text-muted hover:text-chalk"
+          onClick={props.onClose}
+          aria-label={tg('close')}
+        >
           ✕
         </button>
       </header>
@@ -135,7 +161,10 @@ export const Inspector = (props: {
       <details className="mt-2 text-sm">
         <summary className="cursor-pointer text-muted hover:text-chalk">{tg('exam_tip')}</summary>
         <p className="mt-1 text-chalk/80">{tc(`${node.type}.tip`)}</p>
-        <Link href={`/lessons/${COMPONENT_LESSON[node.type]}`} className="mt-1 inline-block text-accent underline">
+        <Link
+          href={`/lessons/${COMPONENT_LESSON[node.type]}`}
+          className="mt-1 inline-block text-accent underline"
+        >
           {tg('read_lesson')}
         </Link>
       </details>
@@ -147,7 +176,9 @@ export const Inspector = (props: {
             value={c.size}
             disabled={props.locked}
             options={SIZES.map((size) => ({ value: size, label: t(`size_${size}`) }))}
-            onChange={(size) => props.onChange({ size })}
+            onChange={(size) => {
+              props.onChange({ size });
+            }}
           />
         )}
         {has('count') && (
@@ -157,7 +188,9 @@ export const Inspector = (props: {
             min={1}
             max={8}
             disabled={props.locked}
-            onChange={(count) => props.onChange({ count, maxCount: Math.max(c.maxCount, count) })}
+            onChange={(count) => {
+              props.onChange({ count, maxCount: Math.max(c.maxCount, count) });
+            }}
           />
         )}
         {has('autoScaling') && (
@@ -166,7 +199,9 @@ export const Inspector = (props: {
             hint={t('auto_scaling_hint')}
             value={c.autoScaling}
             disabled={props.locked}
-            onChange={(autoScaling) => props.onChange({ autoScaling })}
+            onChange={(autoScaling) => {
+              props.onChange({ autoScaling });
+            }}
           />
         )}
         {has('autoScaling') && c.autoScaling && (
@@ -176,7 +211,9 @@ export const Inspector = (props: {
             min={c.count}
             max={12}
             disabled={props.locked}
-            onChange={(maxCount) => props.onChange({ maxCount })}
+            onChange={(maxCount) => {
+              props.onChange({ maxCount });
+            }}
           />
         )}
         {has('az') && (
@@ -189,7 +226,9 @@ export const Inspector = (props: {
               { value: 'b', label: 'AZ b' },
               ...(node.type === 'ec2' ? [{ value: 'spread' as const, label: t('az_spread') }] : []),
             ]}
-            onChange={(az) => props.onChange({ az })}
+            onChange={(az) => {
+              props.onChange({ az });
+            }}
           />
         )}
         {has('pricing') && (
@@ -202,7 +241,9 @@ export const Inspector = (props: {
               { value: 'reserved', label: t('pricing_reserved') },
               { value: 'spot', label: t('pricing_spot') },
             ]}
-            onChange={(pricing) => props.onChange({ pricing })}
+            onChange={(pricing) => {
+              props.onChange({ pricing });
+            }}
           />
         )}
         {has('multiAz') && (
@@ -211,16 +252,22 @@ export const Inspector = (props: {
             hint={node.type === 'rds' ? t('multi_az_rds_hint') : t('multi_az_cache_hint')}
             value={c.multiAz}
             disabled={props.locked}
-            onChange={(multiAz) => props.onChange({ multiAz })}
+            onChange={(multiAz) => {
+              props.onChange({ multiAz });
+            }}
           />
         )}
         {has('provisioned') && (
           <Toggle
             label={node.type === 'lambda' ? t('provisioned_lambda') : t('provisioned_dynamodb')}
-            hint={node.type === 'lambda' ? t('provisioned_lambda_hint') : t('provisioned_dynamodb_hint')}
+            hint={
+              node.type === 'lambda' ? t('provisioned_lambda_hint') : t('provisioned_dynamodb_hint')
+            }
             value={c.provisioned}
             disabled={props.locked}
-            onChange={(provisioned) => props.onChange({ provisioned })}
+            onChange={(provisioned) => {
+              props.onChange({ provisioned });
+            }}
           />
         )}
         {has('cacheApi') && (
@@ -229,7 +276,9 @@ export const Inspector = (props: {
             hint={t('cache_api_hint')}
             value={c.cacheApi}
             disabled={props.locked}
-            onChange={(cacheApi) => props.onChange({ cacheApi })}
+            onChange={(cacheApi) => {
+              props.onChange({ cacheApi });
+            }}
           />
         )}
         {has('encrypted') && (
@@ -238,7 +287,9 @@ export const Inspector = (props: {
             hint={t('encrypted_hint')}
             value={c.encrypted}
             disabled={props.locked}
-            onChange={(encrypted) => props.onChange({ encrypted })}
+            onChange={(encrypted) => {
+              props.onChange({ encrypted });
+            }}
           />
         )}
         {has('region') && (
@@ -247,14 +298,18 @@ export const Inspector = (props: {
             value={c.region}
             disabled={props.locked}
             options={REGIONS.map((region) => ({ value: region, label: t(`region_${region}`) }))}
-            onChange={(region) => props.onChange({ region })}
+            onChange={(region) => {
+              props.onChange({ region });
+            }}
           />
         )}
       </div>
 
       {node.type !== 'users' && (
         <footer className="mt-4 flex items-center justify-between border-t border-line pt-3">
-          <span className="font-mono text-sm text-muted">{tg('cost_per_month', { cost: props.cost.toFixed(1) })}</span>
+          <span className="font-mono text-sm text-muted">
+            {tg('cost_per_month', { cost: props.cost.toFixed(1) })}
+          </span>
           <button
             type="button"
             disabled={props.locked}

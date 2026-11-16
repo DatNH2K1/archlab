@@ -1,4 +1,4 @@
-export const COMPONENT_TYPES = [
+const COMPONENT_TYPES = [
   'users',
   'route53',
   'globalAccelerator',
@@ -23,14 +23,14 @@ export type ComponentType = (typeof COMPONENT_TYPES)[number];
 export type Size = 'small' | 'medium' | 'large' | 'xlarge';
 
 /** Where the instances of a zonal component live. */
-export type Az = 'a' | 'b' | 'spread';
+type Az = 'a' | 'b' | 'spread';
 
 /** AWS Regions on the board. They are peers: none is primary by nature. */
 export const REGIONS = ['us-east-1', 'eu-west-1'] as const;
 
 export type Region = (typeof REGIONS)[number];
 
-export type Pricing = 'onDemand' | 'reserved' | 'spot';
+type Pricing = 'onDemand' | 'reserved' | 'spot';
 
 export type NodeConfig = {
   size: Size;
@@ -56,7 +56,7 @@ export type BoardNode = {
   config: NodeConfig;
 };
 
-export type BoardEdge = { id: string; from: string; to: string };
+type BoardEdge = { id: string; from: string; to: string };
 
 export type Board = { nodes: BoardNode[]; edges: BoardEdge[] };
 
@@ -103,7 +103,7 @@ export type Scenario = {
   requirements: RequirementId[];
 };
 
-export const ISSUE_CODES = [
+const ISSUE_CODES = [
   'users_unconnected',
   'loop',
   'nowhere_read',

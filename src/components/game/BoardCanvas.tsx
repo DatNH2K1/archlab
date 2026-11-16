@@ -34,7 +34,12 @@ const facingSides = (from: BoardNode, to: BoardNode): [Side, Side] => {
   return dy >= 0 ? ['bottom', 'top'] : ['top', 'bottom'];
 };
 
-const curve = (start: { x: number; y: number }, startSide: Side, end: { x: number; y: number }, endSide: Side) => {
+const curve = (
+  start: { x: number; y: number },
+  startSide: Side,
+  end: { x: number; y: number },
+  endSide: Side,
+) => {
   const bend = Math.max(40, Math.hypot(end.x - start.x, end.y - start.y) / 3);
   const c1 = { x: start.x + OFFSET[startSide].x * bend, y: start.y + OFFSET[startSide].y * bend };
   const c2 = { x: end.x + OFFSET[endSide].x * bend, y: end.y + OFFSET[endSide].y * bend };
@@ -87,7 +92,7 @@ export const BoardCanvas = (props: {
     const element = props.containerRef.current;
 
     if (!element) {
-      return undefined;
+      return;
     }
 
     const onWheel = (event: WheelEvent) => {
@@ -112,7 +117,9 @@ export const BoardCanvas = (props: {
 
     element.addEventListener('wheel', onWheel, { passive: false });
 
-    return () => element.removeEventListener('wheel', onWheel);
+    return () => {
+      element.removeEventListener('wheel', onWheel);
+    };
   }, [props.containerRef]);
 
   const toBoard = (clientX: number, clientY: number) => {
@@ -212,11 +219,16 @@ export const BoardCanvas = (props: {
 
     setWire({ from: node.id, side, ...origin });
     track(
-      (move) => setWire({ from: node.id, side, ...toBoard(move.clientX, move.clientY) }),
+      (move) => {
+        setWire({ from: node.id, side, ...toBoard(move.clientX, move.clientY) });
+      },
       (up) => {
         setWire(null);
         const hit = document.elementFromPoint(up.clientX, up.clientY)?.closest('[data-node-id]');
-        const target = hit?.getAttribute('data-node-id');
+        const target =
+          hit instanceof HTMLElement
+            ? hit.dataset.nodeId
+            : (hit?.getAttribute('data-node-id') ?? undefined);
 
         if (target && target !== node.id) {
           props.onConnect(node.id, target);
@@ -227,7 +239,9 @@ export const BoardCanvas = (props: {
 
   const byId = new Map(props.board.nodes.map((node) => [node.id, node]));
   const regions = new Set(
-    props.board.nodes.filter((node) => CATALOG[node.type].fields.includes('region')).map((node) => node.config.region),
+    props.board.nodes
+      .filter((node) => CATALOG[node.type].fields.includes('region'))
+      .map((node) => node.config.region),
   );
   const wireFrom = wire ? byId.get(wire.from) : undefined;
 
@@ -243,12 +257,33 @@ export const BoardCanvas = (props: {
     >
       <div
         className="absolute top-0 left-0 origin-top-left"
-        style={{ transform: `translate(${props.view.x}px, ${props.view.y}px) scale(${props.view.zoom})` }}
+        style={{
+          transform: `translate(${props.view.x}px, ${props.view.y}px) scale(${props.view.zoom})`,
+        }}
       >
-        <svg className="absolute top-0 left-0 overflow-visible" width="1" height="1" aria-hidden="true">
+        <svg
+          className="absolute top-0 left-0 overflow-visible"
+          width="1"
+          height="1"
+          aria-hidden="true"
+        >
           <defs>
-            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-              <path d="M 0 1 L 9 5 L 0 9" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-chalk" />
+            <marker
+              id="arrow"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto"
+            >
+              <path
+                d="M 0 1 L 9 5 L 0 9"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                className="text-chalk"
+              />
             </marker>
           </defs>
           {props.board.edges.map((edge) => {
@@ -309,8 +344,12 @@ export const BoardCanvas = (props: {
             dimmed={wire !== null && wire.from !== node.id && !props.canLink(wire.from, node.id)}
             showRegion={regions.size > 1}
             showDots={wire !== null}
-            onPointerDown={(event) => startNodeDrag(event, node)}
-            onDotPointerDown={(event, side) => startWire(event, node, side)}
+            onPointerDown={(event) => {
+              startNodeDrag(event, node);
+            }}
+            onDotPointerDown={(event, side) => {
+              startWire(event, node, side);
+            }}
           />
         ))}
       </div>

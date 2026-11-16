@@ -7,8 +7,8 @@ import { ComponentIcon } from './ComponentIcon';
 
 export const NODE_W = 150;
 export const NODE_H = 70;
-export const USERS_W = 120;
-export const USERS_H = 96;
+const USERS_W = 120;
+const USERS_H = 96;
 
 export type Side = 'top' | 'right' | 'bottom' | 'left';
 
@@ -30,14 +30,18 @@ export const dotPosition = (node: BoardNode, side: Side) => {
   const { w, h } = nodeSize(node);
 
   switch (side) {
-    case 'top':
+    case 'top': {
       return { x: node.x + w / 2, y: node.y };
-    case 'right':
+    }
+    case 'right': {
       return { x: node.x + w, y: node.y + h / 2 };
-    case 'bottom':
+    }
+    case 'bottom': {
       return { x: node.x + w / 2, y: node.y + h };
-    case 'left':
+    }
+    case 'left': {
       return { x: node.x, y: node.y + h / 2 };
+    }
   }
 };
 
@@ -45,10 +49,15 @@ const SIDES: Side[] = ['top', 'right', 'bottom', 'left'];
 
 const REGION_TONE: Record<Region, string> = { 'us-east-1': 'text-info', 'eu-west-1': 'text-warn' };
 
-const DB_ROLE_TONE: Record<DbRole, string> = { primary: 'bg-info', replica: 'bg-muted', stale: 'bg-bad' };
+const DB_ROLE_TONE: Record<DbRole, string> = {
+  primary: 'bg-info',
+  replica: 'bg-muted',
+  stale: 'bg-bad',
+};
 
 /** Prints a load compactly, such as 850 or 12.4k. */
-const formatLoad = (load: number) => (load >= 1000 ? `${(load / 1000).toFixed(1)}k` : `${Math.round(load)}`);
+const formatLoad = (load: number) =>
+  load >= 1000 ? `${(load / 1000).toFixed(1)}k` : `${Math.round(load)}`;
 
 const utilText = (util: number) => {
   if (util >= 1) {
@@ -97,7 +106,10 @@ const useBadges = (node: BoardNode, showRegion: boolean) => {
   const badges: { label: string; tone: string }[] = [];
 
   if (spec.fields.includes('az') && node.type === 'ec2') {
-    badges.push({ label: c.az === 'spread' ? 'AZ a+b' : `AZ ${c.az}`, tone: c.az === 'spread' ? 'text-good' : 'text-muted' });
+    badges.push({
+      label: c.az === 'spread' ? 'AZ a+b' : `AZ ${c.az}`,
+      tone: c.az === 'spread' ? 'text-good' : 'text-muted',
+    });
   }
 
   if (node.type === 'readReplica') {
@@ -124,7 +136,10 @@ const useBadges = (node: BoardNode, showRegion: boolean) => {
     badges.push({ label: tg('badge_api_cache'), tone: 'text-info' });
   }
 
-  if (spec.fields.includes('region') && (showRegion || c.region !== defaultConfig(node.type).region)) {
+  if (
+    spec.fields.includes('region') &&
+    (showRegion || c.region !== defaultConfig(node.type).region)
+  ) {
     badges.push({ label: c.region, tone: REGION_TONE[c.region] });
   }
 
@@ -154,7 +169,7 @@ export const NodeBox = (props: {
   const subtitle = useSubtitle(props.node);
   const badges = useBadges(props.node, props.showRegion);
   const { w, h } = nodeSize(props.node);
-  const live = props.live;
+  const { live } = props;
   const down = live && !live.alive;
   const isUsers = props.node.type === 'users';
 
@@ -176,7 +191,11 @@ export const NodeBox = (props: {
       ) : (
         <div
           className={`relative flex size-full cursor-grab flex-col justify-center overflow-hidden rounded-lg border-2 bg-panel px-3 py-1.5 transition-colors ${
-            props.selected ? 'border-accent' : down ? 'border-dashed border-muted' : 'border-chalk/80'
+            props.selected
+              ? 'border-accent'
+              : (down
+                ? 'border-dashed border-muted'
+                : 'border-chalk/80')
           } ${down ? 'opacity-50' : ''}`}
         >
           <div className="flex items-center justify-between gap-2">
@@ -195,7 +214,10 @@ export const NodeBox = (props: {
           </div>
           {live && !down && (
             <div className="absolute inset-x-0 bottom-0 h-1 bg-line">
-              <div className={`h-full ${utilColor(live.util)}`} style={{ width: `${Math.min(100, live.util * 100)}%` }} />
+              <div
+                className={`h-full ${utilColor(live.util)}`}
+                style={{ width: `${Math.min(100, live.util * 100)}%` }}
+              />
             </div>
           )}
           {live?.dbRole && !down && (
@@ -240,10 +262,14 @@ export const NodeBox = (props: {
             data-dot={side}
             aria-label={t('connect_from')}
             className={`group/dot absolute grid size-6 -translate-1/2 cursor-crosshair place-items-center transition-opacity ${
-              props.showDots || props.selected ? 'opacity-100' : 'opacity-60 group-hover:opacity-100'
+              props.showDots || props.selected
+                ? 'opacity-100'
+                : 'opacity-60 group-hover:opacity-100'
             }`}
             style={{ left: dot.x, top: dot.y }}
-            onPointerDown={(event) => props.onDotPointerDown(event, side)}
+            onPointerDown={(event) => {
+              props.onDotPointerDown(event, side);
+            }}
           >
             <span className="size-3 rounded-full border-2 border-chalk bg-ink group-hover/dot:scale-125 group-hover/dot:bg-accent" />
           </button>
