@@ -1,5 +1,5 @@
 /** The ArchLab mark: three stacked layers of an architecture. */
-export const LogoMark = (props: { className?: string }) => (
+const LogoMark = (props: { className?: string }) => (
   <svg viewBox="0 0 64 64" className={props.className ?? 'size-7'} aria-hidden="true">
     <path d="M32 12 51 22 32 32 13 22Z" className="fill-accent" />
     <path

@@ -7,8 +7,10 @@ const LESSON = /slug: '([^']+)',\s*\n\s*domain: '[^']+',\s*\n\s*title: '((?:[^'\
 const titles = (folder) => {
   const out = {};
 
-  for (const file of readdirSync(folder).filter((name) => name.endsWith('.ts')).sort()) {
-    for (const match of readFileSync(`${folder}/${file}`, 'utf8').matchAll(LESSON)) {
+  for (const file of readdirSync(folder)
+    .filter((name) => name.endsWith('.ts'))
+    .sort()) {
+    for (const match of readFileSync(`${folder}/${file}`, 'utf-8').matchAll(LESSON)) {
       out[match[1]] = match[2].replaceAll("\\'", "'");
     }
   }
@@ -25,7 +27,7 @@ if (missing.length > 0) {
 
 for (const [locale, lessonTitles] of Object.entries(sources)) {
   const path = `src/locales/${locale}.json`;
-  const messages = JSON.parse(readFileSync(path, 'utf8'));
+  const messages = JSON.parse(readFileSync(path, 'utf-8'));
 
   messages.LessonTitles = lessonTitles;
   writeFileSync(path, `${JSON.stringify(messages, null, 2)}\n`);

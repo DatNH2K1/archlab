@@ -8,10 +8,10 @@ import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { canAdd, canConnect, createNode, emptyBoard, newId } from '@/game/board';
 import { CATALOG, COMPONENT_TYPES_IN_PALETTE, LINKS, MAX_PER_BOARD } from '@/game/catalog';
 import type { Round } from '@/game/rounds';
-import { inLocale } from '@/libs/Localize';
 import { simulate, TICKS } from '@/game/simulate';
 import type { Board, ComponentType, NodeConfig, Scenario, SimResult } from '@/game/types';
 import { useRouter } from '@/libs/I18nNavigation';
+import { inLocale } from '@/libs/Localize';
 import { loadBoard, saveBoard, updateProgress } from '@/libs/Progress';
 import type { Selection, View } from './BoardCanvas';
 import { BoardCanvas } from './BoardCanvas';
@@ -88,13 +88,18 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
 
   const [history, setHistory] = useState(() => {
     // A new round grows from the design of the previous one, like a real app.
-    const previous = play && roundIndex > 0 ? loadBoard(play.sequence[roundIndex - 1]?.id ?? '') : null;
+    const previous =
+      play && roundIndex > 0 ? loadBoard(play.sequence[roundIndex - 1]?.id ?? '') : null;
     const initial = loadBoard(slot) ?? structuredClone(round?.starter ?? previous ?? emptyBoard());
 
     return { past: [] as Board[], present: initial, future: [] as Board[] };
   });
   const board = history.present;
-  const [view, setView] = useState<View>({ x: props.mode === 'sandbox' ? 320 : 40, y: 80, zoom: 1 });
+  const [view, setView] = useState<View>({
+    x: props.mode === 'sandbox' ? 320 : 40,
+    y: 80,
+    zoom: 1,
+  });
   const [selection, setSelection] = useState<Selection>(null);
   const [run, setRun] = useState<Run | null>(null);
   const [sandbox, setSandbox] = useState<Scenario>(SANDBOX_SCENARIO);
@@ -115,7 +120,9 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
     setRun(null);
     setNotice(null);
     setHistory((old) =>
-      record ? { past: [...old.past.slice(-60), old.present], present: next, future: [] } : { ...old, present: next },
+      record
+        ? { past: [...old.past.slice(-60), old.present], present: next, future: [] }
+        : { ...old, present: next },
     );
   };
 
@@ -125,7 +132,11 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
     if (previous) {
       saveBoard(slot, previous);
       setRun(null);
-      setHistory({ past: history.past.slice(0, -1), present: previous, future: [history.present, ...history.future] });
+      setHistory({
+        past: history.past.slice(0, -1),
+        present: previous,
+        future: [history.present, ...history.future],
+      });
     }
   };
 
@@ -150,7 +161,10 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
         // Using the revealed fix caps the round at two stars.
         const earned = old.fixesShown.includes(round.id) ? Math.min(stars, 2) : stars;
 
-        return { ...old, stars: { ...old.stars, [round.id]: Math.max(old.stars[round.id] ?? 0, earned) } };
+        return {
+          ...old,
+          stars: { ...old.stars, [round.id]: Math.max(old.stars[round.id] ?? 0, earned) },
+        };
       });
     }
   };
@@ -248,7 +262,13 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
   const dropAt = (type: ComponentType, clientX: number, clientY: number) => {
     const rect = containerRef.current?.getBoundingClientRect();
 
-    if (!rect || clientX < rect.left || clientY < rect.top || clientX > rect.right || clientY > rect.bottom) {
+    if (
+      !rect ||
+      clientX < rect.left ||
+      clientY < rect.top ||
+      clientX > rect.right ||
+      clientY > rect.bottom
+    ) {
       return;
     }
 
@@ -297,11 +317,14 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
     window.addEventListener('pointerup', onUp);
   };
 
-  const changeNode = (id: string, config: Partial<NodeConfig>) =>
+  const changeNode = (id: string, config: Partial<NodeConfig>) => {
     apply({
       ...board,
-      nodes: board.nodes.map((node) => (node.id === id ? { ...node, config: { ...node.config, ...config } } : node)),
+      nodes: board.nodes.map((node) =>
+        node.id === id ? { ...node, config: { ...node.config, ...config } } : node,
+      ),
     });
+  };
 
   const zoomBy = (factor: number) => {
     const rect = containerRef.current?.getBoundingClientRect();
@@ -309,7 +332,11 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
     const cy = (rect?.height ?? 600) / 2;
     const zoom = Math.min(2, Math.max(0.3, view.zoom * factor));
 
-    setView({ zoom, x: cx - ((cx - view.x) / view.zoom) * zoom, y: cy - ((cy - view.y) / view.zoom) * zoom });
+    setView({
+      zoom,
+      x: cx - ((cx - view.x) / view.zoom) * zoom,
+      y: cy - ((cy - view.y) / view.zoom) * zoom,
+    });
   };
 
   const fit = () => {
@@ -323,7 +350,13 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
     const minY = Math.min(...board.nodes.map((node) => node.y));
     const maxX = Math.max(...board.nodes.map((node) => node.x + NODE_W));
     const maxY = Math.max(...board.nodes.map((node) => node.y + NODE_H + 30));
-    const zoom = Math.min(1.4, Math.max(0.3, Math.min((rect.width - 340) / (maxX - minX + 80), (rect.height - 160) / (maxY - minY + 80))));
+    const zoom = Math.min(
+      1.4,
+      Math.max(
+        0.3,
+        Math.min((rect.width - 340) / (maxX - minX + 80), (rect.height - 160) / (maxY - minY + 80)),
+      ),
+    );
 
     setView({ zoom, x: 40 - minX * zoom, y: 90 - minY * zoom });
   };
@@ -331,7 +364,8 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
   const live = run ? run.result.ticks[run.tick] : undefined;
   const result = run?.done ? run.result : undefined;
   const topIssue = result && !result.passed ? result.issues[0] : undefined;
-  const selectedNode = selection?.kind === 'node' ? board.nodes.find((node) => node.id === selection.id) : undefined;
+  const selectedNode =
+    selection?.kind === 'node' ? board.nodes.find((node) => node.id === selection.id) : undefined;
   const estimate = simulate(board, { ...scenario, twist: undefined });
   const shownCost = result?.cost ?? estimate.cost;
   const users = board.nodes.find((node) => node.type === 'users');
@@ -358,7 +392,10 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
     if (run && !run.done && live) {
       return {
         tone: 'info',
-        text: t('live', { answered: (live.answered * 100).toFixed(1), latency: Math.round(live.latency) }),
+        text: t('live', {
+          answered: (live.answered * 100).toFixed(1),
+          latency: Math.round(live.latency),
+        }),
       };
     }
 
@@ -393,7 +430,13 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
   const hint = round && result && !result.passed && (
     <div className="mt-3 rounded-lg border border-accent/30 bg-accent/5 p-2 text-sm">
       {hintLevel === 0 && (
-        <button type="button" className="font-semibold text-accent" onClick={() => setHintLevel(1)}>
+        <button
+          type="button"
+          className="font-semibold text-accent"
+          onClick={() => {
+            setHintLevel(1);
+          }}
+        >
           💡 {t('hint')}
         </button>
       )}
@@ -405,7 +448,10 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
           onClick={() => {
             setHintLevel(2);
             apply(structuredClone(round.solution));
-            updateProgress((old) => ({ ...old, fixesShown: [...new Set([...old.fixesShown, round.id])] }));
+            updateProgress((old) => ({
+              ...old,
+              fixesShown: [...new Set([...old.fixesShown, round.id])],
+            }));
           }}
         >
           🔧 {t('show_fix')}
@@ -423,10 +469,22 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
         onViewChange={setView}
         selection={selection}
         onSelect={setSelection}
-        onMoveStart={() => setHistory((old) => ({ past: [...old.past.slice(-60), old.present], present: old.present, future: [] }))}
-        onMove={(id, x, y) =>
-          apply({ ...board, nodes: board.nodes.map((node) => (node.id === id ? { ...node, x, y } : node)) }, false)
-        }
+        onMoveStart={() => {
+          setHistory((old) => ({
+            past: [...old.past.slice(-60), old.present],
+            present: old.present,
+            future: [],
+          }));
+        }}
+        onMove={(id, x, y) => {
+          apply(
+            {
+              ...board,
+              nodes: board.nodes.map((node) => (node.id === id ? { ...node, x, y } : node)),
+            },
+            false,
+          );
+        }}
         onConnect={(from, to) => {
           const source = board.nodes.find((node) => node.id === from);
           const target = board.nodes.find((node) => node.id === to);
@@ -462,9 +520,13 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
           </div>
           <div className="border-l border-line pl-4">
             <dt className="text-[10px] font-bold tracking-widest text-muted">{t('budget')}</dt>
-            <dd className={`text-sm ${scenario.budget !== undefined && shownCost > scenario.budget ? 'text-bad' : ''}`}>
+            <dd
+              className={`text-sm ${scenario.budget !== undefined && shownCost > scenario.budget ? 'text-bad' : ''}`}
+            >
               ${shownCost.toFixed(0)}
-              {scenario.budget !== undefined && <span className="text-muted"> / ${scenario.budget}</span>}
+              {scenario.budget !== undefined && (
+                <span className="text-muted"> / ${scenario.budget}</span>
+              )}
             </dd>
           </div>
           {scenario.twist && (
@@ -479,7 +541,9 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
             <button
               type="button"
               className="hidden rounded-lg border border-line px-3 py-1.5 text-sm hover:bg-panel-2 sm:block"
-              onClick={() => setIntro(true)}
+              onClick={() => {
+                setIntro(true);
+              }}
             >
               {t('brief')}
             </button>
@@ -497,7 +561,10 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
           </button>
         </div>
         {run && !run.done && (
-          <div className="absolute bottom-0 left-0 h-0.5 bg-warn" style={{ width: `${((run.tick + 1) / TICKS) * 100}%` }} />
+          <div
+            className="absolute bottom-0 left-0 h-0.5 bg-warn"
+            style={{ width: `${((run.tick + 1) / TICKS) * 100}%` }}
+          />
         )}
       </header>
 
@@ -508,7 +575,7 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
               { info: 'bg-info', good: 'bg-good', bad: 'bg-bad', warn: 'bg-accent' }[message.tone]
             }`}
           >
-            {message.tone === 'bad' ? '✕' : message.tone === 'good' ? '✓' : '!'}
+            {message.tone === 'bad' ? '✕' : (message.tone === 'good' ? '✓' : '!')}
           </span>
           <span className="font-semibold">{message.text}</span>
         </div>
@@ -520,7 +587,14 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
         )}
         {props.mode === 'sandbox' && (
           <div className="pointer-events-auto">
-            <SandboxPanel scenario={sandbox} onChange={(next) => { setSandbox(next); setRun(null); }} disabled={locked} />
+            <SandboxPanel
+              scenario={sandbox}
+              onChange={(next) => {
+                setSandbox(next);
+                setRun(null);
+              }}
+              disabled={locked}
+            />
           </div>
         )}
       </div>
@@ -531,16 +605,22 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
             node={selectedNode}
             cost={estimate.costByNode[selectedNode.id] ?? 0}
             locked={locked}
-            onChange={(config) => changeNode(selectedNode.id, config)}
+            onChange={(config) => {
+              changeNode(selectedNode.id, config);
+            }}
             onDelete={deleteSelection}
-            onClose={() => setSelection(null)}
+            onClose={() => {
+              setSelection(null);
+            }}
           />
         ) : (
           <>
             <button
               type="button"
               className="self-end rounded-lg border border-line bg-panel/95 px-3 py-1 text-xs font-semibold sm:hidden"
-              onClick={() => setPaletteOpen(!paletteOpen)}
+              onClick={() => {
+                setPaletteOpen(!paletteOpen);
+              }}
             >
               {t('components')} {paletteOpen ? '−' : '+'}
             </button>
@@ -560,7 +640,11 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
           </>
         )}
         {selection?.kind === 'edge' && !locked && (
-          <button type="button" className="rounded-lg border border-bad/60 bg-panel px-3 py-1.5 text-sm text-bad" onClick={deleteSelection}>
+          <button
+            type="button"
+            className="rounded-lg border border-bad/60 bg-panel px-3 py-1.5 text-sm text-bad"
+            onClick={deleteSelection}
+          >
             {t('delete_connection')}
           </button>
         )}
@@ -574,10 +658,14 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
             board={board}
             stars={stars}
             describeIssue={describeIssue}
-            onRetry={() => setRun(null)}
+            onRetry={() => {
+              setRun(null);
+            }}
             onNext={
               play && result.passed && nextRound
-                ? () => router.push(play.roundHref(nextRound.id))
+                ? () => {
+                    router.push(play.roundHref(nextRound.id));
+                  }
                 : undefined
             }
             hint={hint}
@@ -586,22 +674,59 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
       )}
 
       <div className="absolute right-3 bottom-3 z-10 flex items-center gap-1 rounded-xl border border-line bg-panel/95 p-1 font-mono text-xs shadow-lg">
-        <button type="button" className="size-8 rounded-lg hover:bg-panel-2" onClick={undo} disabled={history.past.length === 0} title={t('undo')}>
+        <button
+          type="button"
+          className="size-8 rounded-lg hover:bg-panel-2"
+          onClick={undo}
+          disabled={history.past.length === 0}
+          title={t('undo')}
+        >
           ↶
         </button>
-        <button type="button" className="size-8 rounded-lg hover:bg-panel-2" onClick={redo} disabled={history.future.length === 0} title={t('redo')}>
+        <button
+          type="button"
+          className="size-8 rounded-lg hover:bg-panel-2"
+          onClick={redo}
+          disabled={history.future.length === 0}
+          title={t('redo')}
+        >
           ↷
         </button>
-        <button type="button" className="size-8 rounded-lg hover:bg-panel-2" onClick={() => zoomBy(1 / 1.2)} aria-label={t('zoom_out')}>
+        <button
+          type="button"
+          className="size-8 rounded-lg hover:bg-panel-2"
+          onClick={() => {
+            zoomBy(1 / 1.2);
+          }}
+          aria-label={t('zoom_out')}
+        >
           −
         </button>
-        <button type="button" className="w-12 rounded-lg py-2 hover:bg-panel-2" onClick={() => setView({ ...view, zoom: 1 })}>
+        <button
+          type="button"
+          className="w-12 rounded-lg py-2 hover:bg-panel-2"
+          onClick={() => {
+            setView({ ...view, zoom: 1 });
+          }}
+        >
           {Math.round(view.zoom * 100)}%
         </button>
-        <button type="button" className="size-8 rounded-lg hover:bg-panel-2" onClick={() => zoomBy(1.2)} aria-label={t('zoom_in')}>
+        <button
+          type="button"
+          className="size-8 rounded-lg hover:bg-panel-2"
+          onClick={() => {
+            zoomBy(1.2);
+          }}
+          aria-label={t('zoom_in')}
+        >
           +
         </button>
-        <button type="button" className="size-8 rounded-lg hover:bg-panel-2" onClick={fit} aria-label={t('fit')}>
+        <button
+          type="button"
+          className="size-8 rounded-lg hover:bg-panel-2"
+          onClick={fit}
+          aria-label={t('fit')}
+        >
           ⛶
         </button>
       </div>
@@ -617,7 +742,14 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
       )}
 
       {play && intro && (
-        <RoundIntro round={play.round} number={roundIndex + 1} heading={play.heading} onStart={() => setIntro(false)} />
+        <RoundIntro
+          round={play.round}
+          number={roundIndex + 1}
+          heading={play.heading}
+          onStart={() => {
+            setIntro(false);
+          }}
+        />
       )}
     </div>
   );

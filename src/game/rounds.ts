@@ -3,11 +3,19 @@ import { makeBoard } from './board';
 import { LEARN_TEXT } from './learnText';
 import type { Board, ComponentType, Scenario } from './types';
 
-export const CHAPTERS = ['basics', 'resilience', 'performance', 'decoupling', 'security', 'cost', 'final'] as const;
+export const CHAPTERS = [
+  'basics',
+  'resilience',
+  'performance',
+  'decoupling',
+  'security',
+  'cost',
+  'final',
+] as const;
 
-export type ChapterId = (typeof CHAPTERS)[number];
+type ChapterId = (typeof CHAPTERS)[number];
 
-export type LessonSlug = keyof typeof messages.LessonTitles;
+type LessonSlug = keyof typeof messages.LessonTitles;
 
 /** What the player reads about a round, in one language. */
 export type RoundText = {
@@ -54,7 +62,14 @@ const ROUNDS_DATA: Omit<LearnRound, 'text'>[] = [
   {
     id: 'first-users',
     chapter: 'basics',
-    scenario: { traffic: 50, mix: { read: 0.7, write: 0.3 }, audience: { 'us-east-1': 1 }, latencyTarget: 300, budget: 35, requirements: [] },
+    scenario: {
+      traffic: 50,
+      mix: { read: 0.7, write: 0.3 },
+      audience: { 'us-east-1': 1 },
+      latencyTarget: 300,
+      budget: 35,
+      requirements: [],
+    },
     unlocks: ['ec2', 'rds'],
     lessons: ['ec2-compute', 'relational-databases'],
     solution: makeBoard(
@@ -72,7 +87,14 @@ const ROUNDS_DATA: Omit<LearnRound, 'text'>[] = [
   {
     id: 'scale-up',
     chapter: 'basics',
-    scenario: { traffic: 350, mix: { read: 0.7, write: 0.3 }, audience: { 'us-east-1': 1 }, latencyTarget: 300, budget: 70, requirements: [] },
+    scenario: {
+      traffic: 350,
+      mix: { read: 0.7, write: 0.3 },
+      audience: { 'us-east-1': 1 },
+      latencyTarget: 300,
+      budget: 70,
+      requirements: [],
+    },
     unlocks: [],
     lessons: ['ec2-compute'],
     solution: makeBoard(
@@ -472,7 +494,14 @@ const ROUNDS_DATA: Omit<LearnRound, 'text'>[] = [
   {
     id: 'serverless',
     chapter: 'cost',
-    scenario: { traffic: 20, mix: { read: 0.6, write: 0.4 }, audience: { 'us-east-1': 1 }, latencyTarget: 300, budget: 12, requirements: [] },
+    scenario: {
+      traffic: 20,
+      mix: { read: 0.6, write: 0.4 },
+      audience: { 'us-east-1': 1 },
+      latencyTarget: 300,
+      budget: 12,
+      requirements: [],
+    },
     unlocks: ['apiGateway', 'lambda', 'dynamodb'],
     lessons: ['serverless-workflows', 'cost-optimized-architectures'],
     solution: makeBoard(
@@ -591,14 +620,25 @@ const ROUNDS_DATA: Omit<LearnRound, 'text'>[] = [
       requirements: ['encryptData', 'privateData', 'noPublicServers', 'drainQueue'],
     },
     unlocks: [],
-    lessons: ['high-availability-multi-az', 'edge-networking', 'decoupling-messaging', 'data-encryption-kms'],
+    lessons: [
+      'high-availability-multi-az',
+      'edge-networking',
+      'decoupling-messaging',
+      'data-encryption-kms',
+    ],
     solution: makeBoard(
       [
         ['users', 'users', 80, 280],
         ['cdn', 'cloudfront', 240, 280, { cacheApi: true }],
         ['files', 's3', 420, 100],
         ['lb', 'alb', 420, 280],
-        ['web', 'ec2', 600, 280, { size: 'medium', count: 2, az: 'spread', autoScaling: true, maxCount: 4 }],
+        [
+          'web',
+          'ec2',
+          600,
+          280,
+          { size: 'medium', count: 2, az: 'spread', autoScaling: true, maxCount: 4 },
+        ],
         ['cache', 'elasticache', 820, 140, { multiAz: true, encrypted: true }],
         ['db', 'rds', 820, 300, { size: 'medium', multiAz: true, encrypted: true }],
         ['queue', 'sqs', 600, 460, { encrypted: true }],
@@ -634,4 +674,5 @@ export const ROUNDS: LearnRound[] = ROUNDS_DATA.map((round) => {
  * @param index Position of the round in the campaign.
  * @returns Unlocked component types, oldest first.
  */
-export const unlockedAt = (index: number) => ROUNDS.slice(0, index + 1).flatMap((round) => round.unlocks);
+export const unlockedAt = (index: number) =>
+  ROUNDS.slice(0, index + 1).flatMap((round) => round.unlocks);

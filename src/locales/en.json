@@ -476,5 +476,179 @@
     "intro": "Services the exam likes to put side by side to trip you up. Each entry has a comparison table, when to pick which, and the phrases in a question that give it away.",
     "pick_when": "Pick when",
     "jump_to": "Jump to"
+  },
+  "Glossary": {
+    "ACM": {
+      "name": "AWS Certificate Manager",
+      "desc": "Provisions, manages and automatically renews public/private SSL/TLS certificates."
+    },
+    "ALB": {
+      "name": "Application Load Balancer",
+      "desc": "Layer 7 load balancer routing HTTP/HTTPS traffic by path or host."
+    },
+    "AMI": {
+      "name": "Amazon Machine Image",
+      "desc": "Template that contains the software configuration (OS, apps) to launch EC2."
+    },
+    "ASG": {
+      "name": "Auto Scaling Group",
+      "desc": "Group of EC2 instances that scales out or in based on traffic demand."
+    },
+    "AZ": {
+      "name": "Availability Zone",
+      "desc": "One or more discrete data centers with redundant power, networking and cooling."
+    },
+    "CLB": {
+      "name": "Classic Load Balancer",
+      "desc": "Legacy AWS load balancer across multiple EC2 instances."
+    },
+    "DAX": {
+      "name": "DynamoDB Accelerator",
+      "desc": "In-memory cache for DynamoDB reducing response times from milliseconds to microseconds."
+    },
+    "DLQ": {
+      "name": "Dead-Letter Queue",
+      "desc": "Queue that receives messages when handling fails repeatedly."
+    },
+    "DR": {
+      "name": "Disaster Recovery",
+      "desc": "Strategies and processes to recover IT infrastructure and operations after a catastrophe."
+    },
+    "DX": {
+      "name": "Direct Connect",
+      "desc": "Dedicated physical network connection from your premises to AWS."
+    },
+    "EBS": {
+      "name": "Elastic Block Store",
+      "desc": "High-performance block storage volumes for use with EC2 instances."
+    },
+    "EC2": {
+      "name": "Elastic Compute Cloud",
+      "desc": "Resizable virtual compute instances in the cloud."
+    },
+    "ECS": {
+      "name": "Elastic Container Service",
+      "desc": "Fully managed container orchestration service for Docker containers."
+    },
+    "EFS": {
+      "name": "Elastic File System",
+      "desc": "Serverless, fully managed elastic NFS file system for Linux workloads."
+    },
+    "EIP": {
+      "name": "Elastic IP Address",
+      "desc": "Static public IPv4 address designed for dynamic cloud computing."
+    },
+    "EKS": {
+      "name": "Elastic Kubernetes Service",
+      "desc": "Managed Kubernetes service to run K8s on AWS without operating control planes."
+    },
+    "ELB": {
+      "name": "Elastic Load Balancing",
+      "desc": "AWS family of managed load balancers (ALB, NLB, GWLB)."
+    },
+    "ENI": {
+      "name": "Elastic Network Interface",
+      "desc": "Virtual network interface attached to instances in a VPC."
+    },
+    "FIFO": {
+      "name": "First-In-First-Out",
+      "desc": "Message delivery that preserves exact send order and guarantees exactly-once processing."
+    },
+    "FSX": {
+      "name": "Amazon FSx",
+      "desc": "Fully managed shared storage with feature-rich native support for popular file systems."
+    },
+    "GWLB": {
+      "name": "Gateway Load Balancer",
+      "desc": "Deploys and scales virtual appliances like third-party firewalls."
+    },
+    "HA": {
+      "name": "High Availability",
+      "desc": "Architecture designed to remain operational and accessible with minimal downtime."
+    },
+    "IAM": {
+      "name": "Identity and Access Management",
+      "desc": "Controls identity, users, roles and permissions for AWS resources."
+    },
+    "IGW": {
+      "name": "Internet Gateway",
+      "desc": "Horizontally scaled, redundant VPC component allowing communication with the Internet."
+    },
+    "IOPS": {
+      "name": "Input/Output Operations Per Second",
+      "desc": "Standard unit of measurement for the maximum number of reads and writes per second."
+    },
+    "KMS": {
+      "name": "Key Management Service",
+      "desc": "Managed service for creating and controlling cryptographic keys."
+    },
+    "MFA": {
+      "name": "Multi-Factor Authentication",
+      "desc": "Security process requiring two or more authentication factors to log in."
+    },
+    "NACL": {
+      "name": "Network Access Control List",
+      "desc": "Stateless subnet-level firewall controlling inbound and outbound traffic."
+    },
+    "NAT": {
+      "name": "Network Address Translation",
+      "desc": "Enables instances in private subnets to connect to the Internet while blocking inbound traffic."
+    },
+    "NLB": {
+      "name": "Network Load Balancer",
+      "desc": "Ultra-low latency Layer 4 load balancer handling millions of TCP/UDP requests."
+    },
+    "RDS": {
+      "name": "Relational Database Service",
+      "desc": "Managed relational database service for MySQL, PostgreSQL, MariaDB, Oracle, SQL Server."
+    },
+    "RI": {
+      "name": "Reserved Instances",
+      "desc": "Significant billing discount (up to 72%) in exchange for a 1- or 3-year term commitment."
+    },
+    "RPO": {
+      "name": "Recovery Point Objective",
+      "desc": "Maximum acceptable amount of data loss measured in time."
+    },
+    "RTO": {
+      "name": "Recovery Time Objective",
+      "desc": "Target duration of time within which a business process must be restored after a disaster."
+    },
+    "S3": {
+      "name": "Simple Storage Service",
+      "desc": "Scalable object storage service offering 99.999999999% (11 9s) of data durability."
+    },
+    "SCP": {
+      "name": "Service Control Policy",
+      "desc": "Policy guardrail in AWS Organizations that sets the maximum permissions for member accounts."
+    },
+    "SG": {
+      "name": "Security Group",
+      "desc": "Stateful virtual firewall controlling traffic for EC2 instances and network interfaces."
+    },
+    "SNS": {
+      "name": "Simple Notification Service",
+      "desc": "Fully managed pub/sub messaging and mobile notification service."
+    },
+    "SPOF": {
+      "name": "Single Point of Failure",
+      "desc": "Component that will cause the entire system to fail if it stops functioning."
+    },
+    "SQS": {
+      "name": "Simple Queue Service",
+      "desc": "Fully managed message queuing service for decoupling and scaling microservices."
+    },
+    "TGW": {
+      "name": "Transit Gateway",
+      "desc": "Central hub that connects multiple VPCs and on-premises networks."
+    },
+    "VPC": {
+      "name": "Virtual Private Cloud",
+      "desc": "Isolated virtual network dedicated to your AWS account."
+    },
+    "WAF": {
+      "name": "Web Application Firewall",
+      "desc": "Web application firewall protecting against common exploits like SQLi, XSS and floods."
+    }
   }
 }

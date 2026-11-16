@@ -1,21 +1,23 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { MarkReadButton } from '@/components/LessonReadBadge';
 import { KeywordCards } from '@/components/lesson/KeywordCards';
 import { LessonMarkdown, lessonHeadings } from '@/components/lesson/LessonMarkdown';
+import { MarkReadButton } from '@/components/LessonReadBadge';
 import { PageShell } from '@/components/PageShell';
 import { getLessons, getQuestions } from '@/content';
 import { DOMAINS } from '@/content/types';
 import { ALL_ROUNDS, roundHref } from '@/game/tracks';
-import { inLocale } from '@/libs/Localize';
 import { Link } from '@/libs/I18nNavigation';
 import { routing } from '@/libs/I18nRouting';
+import { inLocale } from '@/libs/Localize';
 
 type LessonPageProps = { params: Promise<{ locale: string; slug: string }> };
 
 export function generateStaticParams() {
-  return routing.locales.flatMap((locale) => getLessons(locale).map((lesson) => ({ locale, slug: lesson.slug })));
+  return routing.locales.flatMap((locale) =>
+    getLessons(locale).map((lesson) => ({ locale, slug: lesson.slug })),
+  );
 }
 
 export async function generateMetadata(props: LessonPageProps): Promise<Metadata> {
@@ -47,7 +49,8 @@ export default async function LessonPage(props: LessonPageProps) {
   return (
     <PageShell title={t('title')} back={{ href: '/lessons', label: t('all_lessons') }}>
       <p className="font-mono text-xs tracking-widest text-accent uppercase">
-        {DOMAINS[lesson.domain].code} · {td(lesson.domain)} · {t('minutes', { minutes: lesson.minutes })}
+        {DOMAINS[lesson.domain].code} · {td(lesson.domain)} ·{' '}
+        {t('minutes', { minutes: lesson.minutes })}
       </p>
       <h1 className="mt-1 text-3xl font-bold">{lesson.title}</h1>
       <p className="mt-2 text-lg text-muted">{lesson.summary}</p>
@@ -63,7 +66,11 @@ export default async function LessonPage(props: LessonPageProps) {
           <p className="text-sm font-semibold">🎮 {t('practice_on_board')}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {rounds.map((round) => (
-              <Link key={round.id} href={roundHref(round.id)} className="rounded-lg bg-accent px-3 py-1 text-sm font-bold text-ink">
+              <Link
+                key={round.id}
+                href={roundHref(round.id)}
+                className="rounded-lg bg-accent px-3 py-1 text-sm font-bold text-ink"
+              >
                 {inLocale(round.text, locale).title}
               </Link>
             ))}
@@ -71,8 +78,13 @@ export default async function LessonPage(props: LessonPageProps) {
         </div>
       )}
       {headings.length > 1 && (
-        <nav className="mt-6 rounded-xl border border-line bg-panel p-4" aria-label={t('in_this_lesson')}>
-          <p className="text-xs font-semibold tracking-widest text-muted uppercase">{t('in_this_lesson')}</p>
+        <nav
+          className="mt-6 rounded-xl border border-line bg-panel p-4"
+          aria-label={t('in_this_lesson')}
+        >
+          <p className="text-xs font-semibold tracking-widest text-muted uppercase">
+            {t('in_this_lesson')}
+          </p>
           <ol className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-2">
             {headings.map((heading, i) => (
               <li key={heading.id}>
@@ -108,8 +120,13 @@ export default async function LessonPage(props: LessonPageProps) {
       <div className="mt-10 flex flex-wrap items-center gap-3">
         <MarkReadButton slug={lesson.slug} />
         {questionCount > 0 && (
-          <Link href={`/practice?lesson=${lesson.slug}`} className="rounded-lg border border-line px-4 py-2 font-semibold hover:bg-panel-2">
-            {t('practice_questions', { count: questionCount })}
+          <Link
+            href={`/practice?lesson=${lesson.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg border border-line px-4 py-2 font-semibold hover:bg-panel-2"
+          >
+            {t('practice_questions', { count: questionCount })} ↗
           </Link>
         )}
       </div>

@@ -46,7 +46,7 @@ const WAF_BLOCK = 0.98;
 const SECONDS_PER_MONTH_FACTOR = 1 / 100;
 
 /** Share of the round each twist is active, as [start, end). */
-export const TWIST_WINDOW: Record<TwistId, [number, number]> = {
+const TWIST_WINDOW: Record<TwistId, [number, number]> = {
   azOutage: [0.35, 0.75],
   regionOutage: [0.4, 0.8],
   spotInterruption: [0.3, 0.6],
@@ -214,14 +214,17 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       .filter((node) => DATABASE_TYPES.has(node.type))
       .map((node) => [
         node.id,
-        (parents.get(node.id) ?? []).some((parent) => DATABASE_TYPES.has(parent.type)) ? 'replica' : 'primary',
+        (parents.get(node.id) ?? []).some((parent) => DATABASE_TYPES.has(parent.type))
+          ? 'replica'
+          : 'primary',
       ]),
   );
   const initialRoles = new Map(roles);
   const role = (db: BoardNode) => roles.get(db.id) ?? 'primary';
 
   /** Without a load balancer, or a queue polled by workers, every request lands on the same instance. */
-  const balanced = (node: BoardNode) => (parents.get(node.id) ?? []).every((parent) => BALANCER_TYPES.has(parent.type));
+  const balanced = (node: BoardNode) =>
+    (parents.get(node.id) ?? []).every((parent) => BALANCER_TYPES.has(parent.type));
 
   const rt = new Map<string, Runtime>(
     board.nodes.map((node) => [
@@ -266,7 +269,12 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     }
   };
 
-  const failed = (code: IssueCode | null, nodeId: string | undefined, rate: number, cls: RequestClass): Outcome => {
+  const failed = (
+    code: IssueCode | null,
+    nodeId: string | undefined,
+    rate: number,
+    cls: RequestClass,
+  ): Outcome => {
     if (cls === 'attack') {
       return EMPTY;
     }
@@ -279,11 +287,14 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
   };
 
   let t = 0;
-  const twist = scenario.twist;
+  const { twist } = scenario;
 
   const aliveFraction = (node: BoardNode): number => {
     const spec = CATALOG[node.type];
-    const regionDown = inWindow(twist, 'regionOutage', t) && !spec.global && node.config.region === scenario.outageRegion;
+    const regionDown =
+      inWindow(twist, 'regionOutage', t) &&
+      !spec.global &&
+      node.config.region === scenario.outageRegion;
 
     if (regionDown) {
       return 0;
@@ -388,7 +399,8 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     const total = caps.reduce((acc, cap) => acc + cap, 0);
 
     return targets.reduce(
-      (acc, target, i) => sum(acc, route(target, { ...flow, rate: (flow.rate * (caps[i] ?? 0)) / total }, path)),
+      (acc, target, i) =>
+        sum(acc, route(target, { ...flow, rate: (flow.rate * (caps[i] ?? 0)) / total }, path)),
       EMPTY,
     );
   };
@@ -439,7 +451,9 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
     // Latency routing: send users to the closest Region that passes health checks.
     if (node.type === 'route53') {
-      const near = targets.filter((target) => target.config.region === flow.origin && alive(target));
+      const near = targets.filter(
+        (target) => target.config.region === flow.origin && alive(target),
+      );
 
       if (near.length > 0) {
         targets = near;
@@ -468,11 +482,13 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     const up = dbs.filter(alive);
     const local = up.filter((db) => db.config.region === node.config.region);
 
-    return local.length > 0 ? local : up.length > 0 ? up : dbs;
+    return local.length > 0 ? local : (up.length > 0 ? up : dbs);
   };
 
   const readFromData = (node: BoardNode, flow: Flow, path: string[]): Outcome => {
-    const caches = (children.get(node.id) ?? []).filter((child) => child.type === 'elasticache' && alive(child));
+    const caches = (children.get(node.id) ?? []).filter(
+      (child) => child.type === 'elasticache' && alive(child),
+    );
     let result = EMPTY;
     let misses = flow.rate;
 
@@ -518,8 +534,9 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     const withCold = (outcome: Outcome) => ({ ...outcome, lat: outcome.lat + extra * outcome.ok });
 
     switch (flow.cls) {
-      case 'attack':
+      case 'attack': {
         return EMPTY;
+      }
       case 'static': {
         const buckets = kids.filter((child) => child.type === 's3');
 
@@ -529,8 +546,9 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
         return served(node, flow, flow.rate, 15 + extra);
       }
-      case 'read':
+      case 'read': {
         return withCold(readFromData(node, flow, path));
+      }
       case 'write': {
         const dbs = databases(node, 'write');
 
@@ -542,7 +560,12 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
         if (dbs.length === 0) {
           const onlyReplicas = kids.some((child) => DATABASE_TYPES.has(child.type));
 
-          return failed(onlyReplicas ? 'replica_write' : 'nowhere_write', node.id, flow.rate, flow.cls);
+          return failed(
+            onlyReplicas ? 'replica_write' : 'nowhere_write',
+            node.id,
+            flow.rate,
+            flow.cls,
+          );
         }
 
         return withCold(spread(dbs, flow, path));
@@ -592,26 +615,44 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
   const behave = (node: BoardNode, flow: Flow, path: string[]): Outcome => {
     switch (node.type) {
-      case 'users':
+      case 'users': {
         return EMPTY;
-      case 'waf':
-        return passThrough(node, flow.cls === 'attack' ? { ...flow, rate: flow.rate * (1 - WAF_BLOCK) } : flow, path);
-      case 'globalAccelerator':
+      }
+      case 'waf': {
+        return passThrough(
+          node,
+          flow.cls === 'attack' ? { ...flow, rate: flow.rate * (1 - WAF_BLOCK) } : flow,
+          path,
+        );
+      }
+      case 'globalAccelerator': {
         return passThrough(node, { ...flow, reach: flow.reach * 0.5 }, path);
+      }
       case 'cloudfront': {
-        const hit = flow.cls === 'static' ? EDGE_STATIC_HIT : flow.cls === 'read' && node.config.cacheApi ? EDGE_API_HIT : 0;
+        const hit =
+          flow.cls === 'static'
+            ? EDGE_STATIC_HIT
+            : (flow.cls === 'read' && node.config.cacheApi
+              ? EDGE_API_HIT
+              : 0);
         const atEdge = served(node, flow, flow.rate * hit);
-        const origin = passThrough(node, { ...flow, rate: flow.rate * (1 - hit), reach: flow.reach * 0.6 }, path);
+        const origin = passThrough(
+          node,
+          { ...flow, rate: flow.rate * (1 - hit), reach: flow.reach * 0.6 },
+          path,
+        );
 
         return sum(atEdge, origin);
       }
       case 'route53':
       case 'alb':
-      case 'apiGateway':
+      case 'apiGateway': {
         return passThrough(node, flow, path);
+      }
       case 'ec2':
-      case 'lambda':
+      case 'lambda': {
         return compute(node, flow, path);
+      }
       case 'elasticache': {
         const hits = served(node, flow, flow.rate * CACHE_HIT);
         const missRate = flow.rate * (1 - CACHE_HIT);
@@ -623,20 +664,23 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
         return { ...hits, miss: missRate };
       }
-      case 'readReplica':
+      case 'readReplica': {
         if (flow.cls === 'write') {
           return failed('replica_write', node.id, flow.rate, flow.cls);
         }
 
         return served(node, flow, flow.rate);
+      }
       case 'rds':
       case 'aurora':
       case 'dynamodb':
-      case 's3':
+      case 's3': {
         return served(node, flow, flow.rate);
+      }
       case 'sqs':
-      case 'sns':
+      case 'sns': {
         return enqueue(node, flow, path);
+      }
     }
   };
 
@@ -655,7 +699,8 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
     const own = state(node.id);
     const spec = CATALOG[node.type];
-    const hop = flow.region && !spec.global && node.config.region !== flow.region ? CROSS_REGION : 0;
+    const hop =
+      flow.region && !spec.global && node.config.region !== flow.region ? CROSS_REGION : 0;
 
     own.load += flow.rate * weight(node.type, flow.cls);
 
@@ -732,14 +777,22 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       // Target tracking: aim for 60% utilization.
       const wanted = Math.min(max, Math.ceil((own.util * Math.max(healthyCount, 1)) / 0.6));
 
-      if (azDown && node.config.az === 'spread' && healthyCount + own.pending.length < node.config.count) {
+      if (
+        azDown &&
+        node.config.az === 'spread' &&
+        healthyCount + own.pending.length < node.config.count
+      ) {
         // Replace lost capacity in the healthy AZ.
         own.pending.push({ az: 'b', readyAt: t + 2 });
       } else if (own.util > 0.6 && total < max) {
         for (let i = total; i < Math.max(wanted, total + 1); i += 1) {
           own.pending.push({ az: targetAz(), readyAt: t + 2 });
         }
-      } else if (own.util < 0.3 && own.pending.length === 0 && own.instances.a + own.instances.b > node.config.count) {
+      } else if (
+        own.util < 0.3 &&
+        own.pending.length === 0 &&
+        own.instances.a + own.instances.b > node.config.count
+      ) {
         if (own.instances.a > own.instances.b && !azDown) {
           own.instances.a -= 1;
         } else if (own.instances.b > 0) {
@@ -756,7 +809,9 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       }
 
       const own = state(queue.id);
-      const consumers = (children.get(queue.id) ?? []).filter((child) => COMPUTE_TYPES.has(child.type) && alive(child));
+      const consumers = (children.get(queue.id) ?? []).filter(
+        (child) => COMPUTE_TYPES.has(child.type) && alive(child),
+      );
 
       if (consumers.length === 0 || own.backlog <= 0) {
         continue;
@@ -765,7 +820,9 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       // Jobs cost three units on a consumer, writes one.
       const writeShare = own.backlogWrite / own.backlog;
       const unitsPerMessage = writeShare + (1 - writeShare) * 3;
-      const free = consumers.map((consumer) => Math.max(0, capacity(consumer) * 0.9 - state(consumer.id).load));
+      const free = consumers.map((consumer) =>
+        Math.max(0, capacity(consumer) * 0.9 - state(consumer.id).load),
+      );
       const room = free.reduce((acc, value) => acc + value, 0);
       const amount = Math.min(own.backlog, room / unitsPerMessage);
 
@@ -780,8 +837,12 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       consumers.forEach((consumer, i) => {
         const share = (amount * (free[i] ?? 0)) / room;
         const base = { origin: null, reach: 0, region: queue.config.region, fromQueue: true };
-        const writes = route(consumer, { ...base, cls: 'write', rate: share * writeShare }, [queue.id]);
-        const jobs = route(consumer, { ...base, cls: 'job', rate: share * (1 - writeShare) }, [queue.id]);
+        const writes = route(consumer, { ...base, cls: 'write', rate: share * writeShare }, [
+          queue.id,
+        ]);
+        const jobs = route(consumer, { ...base, cls: 'job', rate: share * (1 - writeShare) }, [
+          queue.id,
+        ]);
 
         lost += writes.fail + jobs.fail;
       });
@@ -805,7 +866,10 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
       const copy = board.nodes.find(
         (other) =>
-          other.type === db.type && role(other) === 'replica' && alive(other) && dataset(other.id) === dataset(db.id),
+          other.type === db.type &&
+          role(other) === 'replica' &&
+          alive(other) &&
+          dataset(other.id) === dataset(db.id),
       );
 
       if (copy) {
@@ -822,7 +886,9 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     const wave = 1 + 0.08 * Math.sin(t / 3);
     // The sale ramps up over six ticks, so Auto Scaling has a chance to follow.
     const saleStart = Math.ceil(TWIST_WINDOW.flashSale[0] * TICKS);
-    const surge = inWindow(twist, 'flashSale', t) ? 1 + 2 * Math.min(1, (t - saleStart + 1) / 6) : 1;
+    const surge = inWindow(twist, 'flashSale', t)
+      ? 1 + 2 * Math.min(1, (t - saleStart + 1) / 6)
+      : 1;
     const growth = twist === 'viral' ? 1 + (3 * t) / TICKS : 1;
     const traffic = scenario.traffic * wave * surge * growth;
     const attack = inWindow(twist, 'ddos', t) ? scenario.traffic * 6 : 0;
@@ -852,7 +918,11 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
         if (targets.length === 0) {
           if (cls !== 'attack') {
-            report(entries.length === 0 ? 'users_unconnected' : (NOWHERE[cls] ?? 'users_unconnected'), users?.id, rate);
+            report(
+              entries.length === 0 ? 'users_unconnected' : (NOWHERE[cls] ?? 'users_unconnected'),
+              users?.id,
+              rate,
+            );
           }
 
           return;
@@ -887,7 +957,8 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
         const cap = capacity(node);
 
         own.lastLoad = own.load;
-        own.util = cap === Number.POSITIVE_INFINITY ? 0 : cap <= 0 ? (own.load > 0 ? 2 : 0) : own.load / cap;
+        own.util =
+          cap === Number.POSITIVE_INFINITY ? 0 : cap <= 0 ? (own.load > 0 ? 2 : 0) : own.load / cap;
         own.drop = own.util > 1 ? 1 - 1 / own.util : 0;
       }
     }
@@ -953,7 +1024,9 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
   for (const queue of queued) {
     const own = state(queue.id);
     const enqueued = own.handled;
-    const consumers = (children.get(queue.id) ?? []).filter((child) => COMPUTE_TYPES.has(child.type));
+    const consumers = (children.get(queue.id) ?? []).filter((child) =>
+      COMPUTE_TYPES.has(child.type),
+    );
 
     recording = true;
 
@@ -1072,12 +1145,13 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
         return ok;
       }
-      case 'drainQueue':
+      case 'drainQueue': {
         return !queued.some((queue) => {
           const own = state(queue.id);
 
           return own.handled > 0 && own.backlog > own.handled * 0.05;
         });
+      }
     }
   }
 
@@ -1127,7 +1201,8 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
   if (!costOk) {
     const priciest = board.nodes.reduce<BoardNode | undefined>(
-      (best, node) => (!best || (costByNode[node.id] ?? 0) > (costByNode[best.id] ?? 0) ? node : best),
+      (best, node) =>
+        !best || (costByNode[node.id] ?? 0) > (costByNode[best.id] ?? 0) ? node : best,
       undefined,
     );
 
@@ -1153,6 +1228,11 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       integrity: integrityOk,
       requirements: requirementChecks,
     },
-    passed: answeredOk && latencyOk && costOk && integrityOk && requirementChecks.every((check) => check.ok),
+    passed:
+      answeredOk &&
+      latencyOk &&
+      costOk &&
+      integrityOk &&
+      requirementChecks.every((check) => check.ok),
   };
 };

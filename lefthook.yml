@@ -7,17 +7,6 @@ commit-msg:
 # Validate content before committing
 pre-commit:
   jobs:
-    - name: ultracite
-      run: npx ultracite fix --type-aware --type-check
-      glob:
-        - '**/*.js'
-        - '**/*.jsx'
-        - '**/*.ts'
-        - '**/*.tsx'
-        - '**/*.json'
-        - '**/*.jsonc'
-        - '**/*.css'
-      stage_fixed: true
-    - name: knip
-      run: npm run check:deps
+    - name: check
+      run: npm run check
       glob: '*'
