@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AppMenu } from '@/components/AppMenu';
 import { BackLink } from '@/components/BackLink';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
-import { canAdd, canConnect, createNode, emptyBoard, newId } from '@/game/board';
+import { canAdd, canConnect, copyNodes, createNode, emptyBoard, newId, pasteNodes, removeNodes } from '@/game/board';
 import { CATALOG, COMPONENT_TYPES_IN_PALETTE, LINKS, MAX_PER_BOARD, WRITE_DATABASE_TYPES } from '@/game/catalog';
 import type { ConfigField } from '@/game/catalog';
 import type { Round } from '@/game/rounds';
@@ -16,6 +16,7 @@ import { useRouter } from '@/libs/I18nNavigation';
 import { loadBoard, saveBoard, updateProgress } from '@/libs/Progress';
 import type { Selection, View } from './BoardCanvas';
 import { BoardCanvas } from './BoardCanvas';
+import { BoardMenu } from './BoardMenu';
 import { ComponentIcon } from './ComponentIcon';
 import { Inspector } from './Inspector';
 import { NODE_H, NODE_W } from './NodeBox';
@@ -36,6 +37,9 @@ const SANDBOX_SCENARIO: Scenario = {
 };
 
 const TICK_MS = 110;
+
+/** How far a paste or duplicate shifts the copies, in board units. */
+const PASTE_SHIFT = 30;
 
 /**
  * Scores a passed run: one star to pass, two when well under budget, three at the reference cost.
@@ -112,6 +116,10 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
   const [paletteOpen, setPaletteOpen] = useState(true);
   /** Why the last edit was refused, shown until the next change. */
   const [notice, setNotice] = useState<string | null>(null);
+  /** Nodes copied with Ctrl+C or Ctrl+X, ready to paste. */
+  const [clip, setClip] = useState<Board | null>(null);
+  /** Right-click menu position on screen. */
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const timer = useRef<number | undefined>(undefined);
 
@@ -197,6 +205,18 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
     }, TICK_MS);
   };
 
+  const selectedIds = selection?.kind === 'nodes' ? selection.ids : [];
+
+  /** Converts a screen point to board coordinates. */
+  const toBoardPoint = (clientX: number, clientY: number) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+
+    return {
+      x: (clientX - (rect?.left ?? 0) - view.x) / view.zoom,
+      y: (clientY - (rect?.top ?? 0) - view.y) / view.zoom,
+    };
+  };
+
   const deleteSelection = () => {
     if (!selection || locked) {
       return;
@@ -205,26 +225,117 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
     if (selection.kind === 'edge') {
       apply({ ...board, edges: board.edges.filter((edge) => edge.id !== selection.id) });
     } else {
-      const node = board.nodes.find((item) => item.id === selection.id);
+      const next = removeNodes(board, selection.ids);
 
-      if (!node || node.type === ComponentType.Users) {
+      if (next.nodes.length === board.nodes.length) {
         return;
       }
 
-      apply({
-        nodes: board.nodes.filter((item) => item.id !== node.id),
-        edges: board.edges.filter((edge) => edge.from !== node.id && edge.to !== node.id),
-      });
+      apply(next);
     }
 
     setSelection(null);
   };
 
-  const keys = useRef({ start, undo, redo, deleteSelection });
+  const copy = () => {
+    const copied = copyNodes(board, selectedIds);
 
-  keys.current = { start, undo, redo, deleteSelection };
+    if (copied.nodes.length > 0) {
+      setClip(copied);
+    }
+  };
 
-  // Global shortcuts: Ctrl+Enter runs, Ctrl+Z / Ctrl+Shift+Z undo and redo, Delete removes.
+  const cut = () => {
+    if (!locked) {
+      copy();
+      deleteSelection();
+    }
+  };
+
+  /**
+   * Adds copies of nodes, selects them and reports the ones over a limit.
+   * @param source Nodes and edges to paste.
+   * @param at Board point for the top-left of the copies; shifted from the originals when absent.
+   * @returns The copies, or undefined when none fit.
+   */
+  const pasteFrom = (source: Board, at?: { x: number; y: number }) => {
+    if (locked || source.nodes.length === 0) {
+      return undefined;
+    }
+
+    const offset = at
+      ? {
+          x: Math.round((at.x - Math.min(...source.nodes.map((node) => node.x))) / 10) * 10,
+          y: Math.round((at.y - Math.min(...source.nodes.map((node) => node.y))) / 10) * 10,
+        }
+      : { x: PASTE_SHIFT, y: PASTE_SHIFT };
+    const pasted = pasteNodes(board, source, offset);
+
+    if (pasted.ids.length > 0) {
+      apply(pasted.board);
+      setSelection({ kind: 'nodes', ids: pasted.ids });
+    }
+
+    if (pasted.skipped > 0) {
+      setNotice(t('paste_skipped', { count: pasted.skipped }));
+    }
+
+    return pasted.ids.length > 0 ? copyNodes(pasted.board, pasted.ids) : undefined;
+  };
+
+  const paste = (at?: { x: number; y: number }) => {
+    // The next paste lands one shift further, so repeated pastes do not stack.
+    const pasted = clip && pasteFrom(clip, at);
+
+    if (pasted) {
+      setClip(pasted);
+    }
+  };
+
+  const duplicate = () => {
+    pasteFrom(copyNodes(board, selectedIds));
+  };
+
+  const selectAll = () => {
+    setSelection({ kind: 'nodes', ids: board.nodes.map((node) => node.id) });
+  };
+
+  const nudge = (dx: number, dy: number) => {
+    if (locked || selectedIds.length === 0) {
+      return;
+    }
+
+    apply({
+      ...board,
+      nodes: board.nodes.map((node) =>
+        selectedIds.includes(node.id) ? { ...node, x: node.x + dx, y: node.y + dy } : node,
+      ),
+    });
+  };
+
+  const actions = { start, undo, redo, deleteSelection, copy, cut, paste, duplicate, selectAll, nudge };
+  const keys = useRef(actions);
+
+  keys.current = actions;
+
+  /** Ctrl+letter shortcuts on the board. */
+  const MOD_KEYS: Record<string, () => void> = {
+    c: () => keys.current.copy(),
+    x: () => keys.current.cut(),
+    v: () => keys.current.paste(),
+    d: () => keys.current.duplicate(),
+    a: () => keys.current.selectAll(),
+    y: () => keys.current.redo(),
+  };
+  const ARROWS: Record<string, [number, number]> = {
+    ArrowUp: [0, -1],
+    ArrowDown: [0, 1],
+    ArrowLeft: [-1, 0],
+    ArrowRight: [1, 0],
+  };
+
+  // Global shortcuts: Ctrl+Enter runs, Ctrl+Z / Ctrl+Shift+Z undo and redo, Ctrl+C/X/V/D/A copy, cut,
+  // paste, duplicate and select all, arrows nudge, Delete removes and Escape clears the selection.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -234,11 +345,25 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
       }
 
       const mod = event.ctrlKey || event.metaKey;
+      const key = event.key.toLowerCase();
+      const arrow = ARROWS[event.key];
 
-      if (mod && event.key === 'Enter') {
+      setMenu(null);
+
+      if (mod && MOD_KEYS[key]) {
+        event.preventDefault();
+        MOD_KEYS[key]();
+      } else if (arrow) {
+        event.preventDefault();
+        const step = event.shiftKey ? 50 : 10;
+
+        keys.current.nudge(arrow[0] * step, arrow[1] * step);
+      } else if (event.key === 'Escape') {
+        setSelection(null);
+      } else if (mod && event.key === 'Enter') {
         event.preventDefault();
         keys.current.start();
-      } else if (mod && event.key.toLowerCase() === 'z') {
+      } else if (mod && key === 'z') {
         event.preventDefault();
 
         if (event.shiftKey) {
@@ -246,9 +371,6 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
         } else {
           keys.current.undo();
         }
-      } else if (mod && event.key.toLowerCase() === 'y') {
-        event.preventDefault();
-        keys.current.redo();
       } else if (event.key === 'Delete' || event.key === 'Backspace') {
         keys.current.deleteSelection();
       }
@@ -275,8 +397,9 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
       return;
     }
 
-    const x = Math.round(((clientX - rect.left - view.x) / view.zoom - NODE_W / 2) / 10) * 10;
-    const y = Math.round(((clientY - rect.top - view.y) / view.zoom - NODE_H / 2) / 10) * 10;
+    const point = toBoardPoint(clientX, clientY);
+    const x = Math.round((point.x - NODE_W / 2) / 10) * 10;
+    const y = Math.round((point.y - NODE_H / 2) / 10) * 10;
     if (!canAdd(board, type)) {
       setNotice(
         WRITE_DATABASE_TYPES.has(type) && MAX_PER_BOARD[type] === undefined
@@ -372,7 +495,11 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
   const result = run?.done ? run.result : undefined;
   const topIssue = result && !result.passed ? result.issues[0] : undefined;
   const selectedNode =
-    selection?.kind === 'node' ? board.nodes.find((node) => node.id === selection.id) : undefined;
+    selectedIds.length === 1 ? board.nodes.find((node) => node.id === selectedIds[0]) : undefined;
+  const removableCount = board.nodes.filter(
+    (node) => selectedIds.includes(node.id) && node.type !== ComponentType.Users,
+  ).length;
+  const removable = removableCount > 0;
   const estimate = simulate(board, { ...scenario, twist: undefined });
   const shownCost = result?.cost ?? estimate.cost;
   const users = board.nodes.find((node) => node.type === ComponentType.Users);
@@ -483,14 +610,21 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
             future: [],
           }));
         }}
-        onMove={(id, x, y) => {
+        onMove={(moves) => {
           apply(
             {
               ...board,
-              nodes: board.nodes.map((node) => (node.id === id ? { ...node, x, y } : node)),
+              nodes: board.nodes.map((node) => {
+                const move = moves.find((item) => item.id === node.id);
+
+                return move ? { ...node, x: move.x, y: move.y } : node;
+              }),
             },
             false,
           );
+        }}
+        onMenu={(x, y) => {
+          setMenu({ x, y });
         }}
         onConnect={(from, to) => {
           const source = board.nodes.find((node) => node.id === from);
@@ -601,7 +735,7 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
         )}
       </div>
 
-      <aside className="absolute top-16 right-3 z-10 flex w-64 flex-col gap-2">
+      <aside className="absolute top-16 right-3 z-10 flex max-h-[calc(100dvh-8rem)] w-64 flex-col gap-2">
         {selectedNode ? (
           <Inspector
             node={selectedNode}
@@ -641,6 +775,15 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
               />
             )}
           </>
+        )}
+        {selectedIds.length > 1 && removable && !locked && (
+          <button
+            type="button"
+            className="rounded-lg border border-bad/60 bg-panel px-3 py-1.5 text-sm text-bad"
+            onClick={deleteSelection}
+          >
+            {t('delete_selected', { count: removableCount })}
+          </button>
         )}
         {selection?.kind === 'edge' && !locked && (
           <button
@@ -742,6 +885,56 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
           <ComponentIcon type={ghost.type} />
           <span className="font-bold">{CATALOG[ghost.type].label}</span>
         </div>
+      )}
+
+      {menu && (
+        <BoardMenu
+          x={menu.x}
+          y={menu.y}
+          onClose={() => {
+            setMenu(null);
+          }}
+          items={[
+            {
+              key: 'menu_cut',
+              label: t('menu_cut'),
+              hint: 'Ctrl+X',
+              disabled: locked || !removable,
+              onClick: cut,
+            },
+            { key: 'menu_copy', label: t('menu_copy'), hint: 'Ctrl+C', disabled: !removable, onClick: copy },
+            {
+              key: 'menu_paste',
+              label: t('menu_paste'),
+              hint: 'Ctrl+V',
+              disabled: locked || !clip,
+              onClick: () => {
+                paste(toBoardPoint(menu.x, menu.y));
+              },
+            },
+            {
+              key: 'menu_duplicate',
+              label: t('menu_duplicate'),
+              hint: 'Ctrl+D',
+              disabled: locked || !removable,
+              onClick: duplicate,
+            },
+            {
+              key: 'menu_delete',
+              label: t('menu_delete'),
+              hint: 'Del',
+              disabled: locked || (selection?.kind !== 'edge' && !removable),
+              onClick: deleteSelection,
+            },
+            {
+              key: 'menu_select_all',
+              label: t('menu_select_all'),
+              hint: 'Ctrl+A',
+              disabled: false,
+              onClick: selectAll,
+            },
+          ]}
+        />
       )}
 
       {play && intro && (

@@ -86,3 +86,69 @@ export const canAdd = (board: Board, type: ComponentType) => {
 
   return board.nodes.filter((node) => node.type === type).length < (MAX_PER_BOARD[type] ?? Number.POSITIVE_INFINITY);
 };
+
+/**
+ * Takes the nodes to copy and the edges between them; the users are left out.
+ * @param board The current board.
+ * @param ids Ids of the nodes to copy.
+ * @returns The copied part of the board.
+ */
+export const copyNodes = (board: Board, ids: string[]): Board => {
+  const picked = new Set(ids);
+  const nodes = board.nodes.filter((node) => picked.has(node.id) && node.type !== ComponentType.Users);
+  const kept = new Set(nodes.map((node) => node.id));
+
+  return {
+    nodes,
+    edges: board.edges.filter((edge) => kept.has(edge.from) && kept.has(edge.to)),
+  };
+};
+
+/**
+ * Removes nodes and their edges; the users always stay.
+ * @param board The current board.
+ * @param ids Ids of the nodes to remove.
+ * @returns The board without those nodes.
+ */
+export const removeNodes = (board: Board, ids: string[]): Board => {
+  const removed = new Set(
+    board.nodes.filter((node) => ids.includes(node.id) && node.type !== ComponentType.Users).map((node) => node.id),
+  );
+
+  return {
+    nodes: board.nodes.filter((node) => !removed.has(node.id)),
+    edges: board.edges.filter((edge) => !removed.has(edge.from) && !removed.has(edge.to)),
+  };
+};
+
+/**
+ * Pastes copied nodes with new ids, skipping those over a board limit.
+ * @param board The current board.
+ * @param clip Nodes and edges from {@link copyNodes}.
+ * @param offset How far to shift the pasted nodes.
+ * @returns The new board, the ids of the pasted nodes and how many were skipped.
+ */
+export const pasteNodes = (board: Board, clip: Board, offset: { x: number; y: number }) => {
+  const ids = new Map<string, string>();
+  let next = board;
+
+  for (const node of clip.nodes) {
+    if (canAdd(next, node.type)) {
+      const id = newId(node.type);
+
+      ids.set(node.id, id);
+      next = { ...next, nodes: [...next.nodes, { ...node, id, x: node.x + offset.x, y: node.y + offset.y }] };
+    }
+  }
+
+  for (const edge of clip.edges) {
+    const from = ids.get(edge.from);
+    const to = ids.get(edge.to);
+
+    if (from && to && canConnect(next, from, to)) {
+      next = { ...next, edges: [...next.edges, { id: newId('edge'), from, to }] };
+    }
+  }
+
+  return { board: next, ids: [...ids.values()], skipped: clip.nodes.length - ids.size };
+};

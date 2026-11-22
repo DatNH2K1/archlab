@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canAdd, canConnect, makeBoard } from './board';
+import { canAdd, canConnect, copyNodes, makeBoard, pasteNodes, removeNodes } from './board';
 import { ComponentType } from './types';
 
 const board = makeBoard(
@@ -49,5 +49,46 @@ describe('canAdd', () => {
 
   it('allows Read Replicas next to the write database', () => {
     expect(canAdd(board, ComponentType.ReadReplica)).toBe(true);
+  });
+});
+
+describe('copyNodes', () => {
+  it('keeps edges between copied nodes and leaves out the users', () => {
+    const clip = copyNodes(makeBoard(board.nodes, [['users', 'lb'], ['lb', 'web']]), ['users', 'lb', 'web']);
+
+    expect(clip.nodes.map((node) => node.id)).toEqual(['lb', 'web']);
+    expect(clip.edges.map((edge) => edge.id)).toEqual(['lb->web']);
+  });
+});
+
+describe('removeNodes', () => {
+  it('removes nodes with their edges but keeps the users', () => {
+    const next = removeNodes(board, ['users', 'lb']);
+
+    expect(next.nodes.map((node) => node.id)).toEqual(['users', 'web', 'db', 'dns']);
+    expect(next.edges).toEqual([]);
+  });
+});
+
+describe('pasteNodes', () => {
+  const source = makeBoard(board.nodes, [['users', 'lb'], ['lb', 'web']]);
+
+  it('pastes shifted copies with new ids and their edges', () => {
+    const pasted = pasteNodes(source, copyNodes(source, ['lb', 'web']), { x: 30, y: 40 });
+    const added = pasted.board.nodes.filter((node) => pasted.ids.includes(node.id));
+
+    expect(added.map((node) => [node.type, node.x, node.y])).toEqual([
+      [ComponentType.Alb, 30, 40],
+      [ComponentType.Ec2, 30, 40],
+    ]);
+    expect(pasted.board.edges).toHaveLength(3);
+    expect(pasted.skipped).toBe(0);
+  });
+
+  it('skips nodes over a board limit', () => {
+    const pasted = pasteNodes(source, copyNodes(source, ['dns', 'db', 'web']), { x: 0, y: 0 });
+
+    expect(pasted.ids).toHaveLength(1);
+    expect(pasted.skipped).toBe(2);
   });
 });

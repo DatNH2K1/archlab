@@ -72,7 +72,15 @@
     "fit": "Vừa khung hình",
     "per_month": "/tháng",
     "per_100": "/100 req/s",
-    "badge_api_cache": "Cache API"
+    "badge_api_cache": "Cache API",
+    "menu_cut": "Cắt",
+    "menu_copy": "Sao chép",
+    "menu_paste": "Dán",
+    "menu_duplicate": "Nhân bản",
+    "menu_delete": "Xoá",
+    "menu_select_all": "Chọn tất cả",
+    "delete_selected": "Xoá {count} ô đã chọn",
+    "paste_skipped": "Bỏ qua {count} ô vì đã đạt giới hạn trên bảng"
   },
   "Fields": {
     "size": "Kích cỡ",
@@ -433,7 +441,12 @@
       "run": "Ctrl+Enter (⌘ Enter): Chạy, hoặc tua hết khi đang chạy.",
       "undo": "Ctrl+Z (⌘ Z): hoàn tác.",
       "redo": "Ctrl+Shift+Z hoặc Ctrl+Y: làm lại.",
-      "delete": "Delete / Backspace: xoá ô hoặc đường nối đang chọn."
+      "delete": "Delete / Backspace: xoá ô hoặc đường nối đang chọn.",
+      "copy": "Ctrl+C / Ctrl+X / Ctrl+V: sao chép, cắt, dán các ô đang chọn.",
+      "duplicate": "Ctrl+D: nhân bản các ô đang chọn.",
+      "select_all": "Ctrl+A: chọn tất cả; Esc: bỏ chọn.",
+      "select_area": "Kéo chuột phải để chọn một vùng; Shift+click để thêm/bớt ô; chuột phải mở menu.",
+      "nudge": "Phím mũi tên: dịch ô đang chọn (giữ Shift để dịch xa hơn)."
     }
   },
   "ScenariosPage": {

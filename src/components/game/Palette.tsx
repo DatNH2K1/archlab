@@ -31,9 +31,9 @@ export const Palette = (props: {
   const t = useTranslations('Game');
 
   return (
-    <section className="rounded-xl border border-line bg-panel/95 p-3 shadow-xl backdrop-blur">
+    <section className="flex min-h-0 flex-col rounded-xl border border-line bg-panel/95 p-3 shadow-xl backdrop-blur">
       <h2 className="mb-2 font-mono text-[11px] font-bold tracking-widest text-muted uppercase">{t('components')}</h2>
-      <div className="grid max-h-[46vh] grid-cols-2 gap-2 overflow-y-auto pt-2 pr-1">
+      <div className="grid max-h-[46vh] min-h-0 grid-cols-2 gap-2 overflow-y-auto pt-2 pr-1">
         {props.types.map((type) => (
           <button
             key={type}
@@ -57,7 +57,7 @@ export const Palette = (props: {
       <button
         type="button"
         disabled={props.disabled}
-        className="mt-3 w-full rounded-lg border border-line py-1.5 text-sm font-semibold hover:bg-panel-2 disabled:opacity-40"
+        className="mt-3 w-full shrink-0 rounded-lg border border-line py-1.5 text-sm font-semibold hover:bg-panel-2 disabled:opacity-40"
         onClick={props.onClear}
       >
         {t('clear_board')}

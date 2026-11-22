@@ -183,7 +183,9 @@ export const NodeBox = (props: {
         <div className="pulse-ring pointer-events-none absolute -inset-4 rounded-[50%] border-2 border-bad" />
       )}
       {isUsers ? (
-        <div className="flex size-full cursor-grab flex-col items-center justify-center gap-1 text-chalk">
+        <div
+          className={`flex size-full cursor-grab flex-col items-center justify-center gap-1 rounded-lg text-chalk ${props.selected ? 'ring-2 ring-accent' : ''}`}
+        >
           <ComponentIcon type="users" className="size-14" />
           <span className="text-base font-bold">{t('users')}</span>
         </div>

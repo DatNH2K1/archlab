@@ -11,7 +11,7 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
 }
 
 const SECTIONS = ['draw', 'run', 'aws', 'fail', 'study'] as const;
-const SHORTCUTS = ['run', 'undo', 'redo', 'delete'] as const;
+const SHORTCUTS = ['run', 'undo', 'redo', 'delete', 'copy', 'duplicate', 'select_all', 'select_area', 'nudge'] as const;
 
 export default async function HowToPlayPage(props: { params: Promise<{ locale: string }> }) {
   const { locale } = await props.params;

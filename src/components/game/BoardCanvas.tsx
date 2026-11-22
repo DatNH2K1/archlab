@@ -8,7 +8,9 @@ import { dotPosition, NodeBox, nodeSize } from './NodeBox';
 
 export type View = { x: number; y: number; zoom: number };
 
-export type Selection = { kind: 'node' | 'edge'; id: string } | null;
+export type Selection = { kind: 'nodes'; ids: string[] } | { kind: 'edge'; id: string } | null;
+
+type Box = { x1: number; y1: number; x2: number; y2: number };
 
 const SNAP = 10;
 const snap = (value: number) => Math.round(value / SNAP) * SNAP;
@@ -72,7 +74,9 @@ export const BoardCanvas = (props: {
   selection: Selection;
   onSelect: (selection: Selection) => void;
   onMoveStart: () => void;
-  onMove: (id: string, x: number, y: number) => void;
+  onMove: (moves: { id: string; x: number; y: number }[]) => void;
+  /** Opens the board menu at a screen point. */
+  onMenu: (clientX: number, clientY: number) => void;
   onConnect: (from: string, to: string) => void;
   canLink: (from: string, to: string) => boolean;
   live?: TickSample;
@@ -81,6 +85,8 @@ export const BoardCanvas = (props: {
   containerRef: React.RefObject<HTMLDivElement | null>;
 }) => {
   const [wire, setWire] = useState<{ from: string; side: Side; x: number; y: number } | null>(null);
+  const [box, setBox] = useState<Box | null>(null);
+  const selectedIds = props.selection?.kind === 'nodes' ? props.selection.ids : [];
   const viewRef = useRef(props.view);
   const onViewChange = useRef(props.onViewChange);
 
@@ -143,7 +149,55 @@ export const BoardCanvas = (props: {
     window.addEventListener('pointerup', up);
   };
 
+  /** Right-drag marks an area and selects the nodes it touches; a plain right click opens the menu. */
+  const startMarquee = (event: React.PointerEvent) => {
+    const origin = toBoard(event.clientX, event.clientY);
+    let moved = false;
+
+    track(
+      (move) => {
+        const point = toBoard(move.clientX, move.clientY);
+
+        moved ||= Math.abs(move.clientX - event.clientX) + Math.abs(move.clientY - event.clientY) > 4;
+
+        if (moved) {
+          setBox({ x1: origin.x, y1: origin.y, x2: point.x, y2: point.y });
+        }
+      },
+      (up) => {
+        setBox(null);
+
+        if (moved) {
+          const end = toBoard(up.clientX, up.clientY);
+          const [left, right] = [Math.min(origin.x, end.x), Math.max(origin.x, end.x)];
+          const [top, bottom] = [Math.min(origin.y, end.y), Math.max(origin.y, end.y)];
+          const ids = props.board.nodes
+            .filter((node) => {
+              const size = nodeSize(node);
+
+              return node.x < right && node.x + size.w > left && node.y < bottom && node.y + size.h > top;
+            })
+            .map((node) => node.id);
+
+          props.onSelect(ids.length > 0 ? { kind: 'nodes', ids } : null);
+
+          if (ids.length === 0) {
+            return;
+          }
+        }
+
+        props.onMenu(up.clientX, up.clientY);
+      },
+    );
+  };
+
   const startPan = (event: React.PointerEvent) => {
+    if (event.button === 2) {
+      startMarquee(event);
+
+      return;
+    }
+
     if (event.button !== 0) {
       return;
     }
@@ -172,18 +226,41 @@ export const BoardCanvas = (props: {
 
   const startNodeDrag = (event: React.PointerEvent, node: BoardNode) => {
     event.stopPropagation();
+    const inSelection = selectedIds.includes(node.id);
+
+    if (event.button === 2) {
+      if (!inSelection) {
+        props.onSelect({ kind: 'nodes', ids: [node.id] });
+      }
+
+      props.onMenu(event.clientX, event.clientY);
+
+      return;
+    }
 
     if (event.button !== 0) {
       return;
     }
 
+    if (event.shiftKey) {
+      const ids = inSelection ? selectedIds.filter((id) => id !== node.id) : [...selectedIds, node.id];
+
+      props.onSelect(ids.length > 0 ? { kind: 'nodes', ids } : null);
+
+      return;
+    }
+
     if (props.locked) {
-      props.onSelect({ kind: 'node', id: node.id });
+      props.onSelect({ kind: 'nodes', ids: [node.id] });
 
       return;
     }
 
     const start = { x: event.clientX, y: event.clientY };
+    // Dragging a node of the selection moves the whole selection.
+    const group = props.board.nodes.filter((item) =>
+      inSelection ? selectedIds.includes(item.id) : item.id === node.id,
+    );
     let moved = false;
 
     track(
@@ -197,12 +274,12 @@ export const BoardCanvas = (props: {
         }
 
         if (moved) {
-          props.onMove(node.id, snap(node.x + dx), snap(node.y + dy));
+          props.onMove(group.map((item) => ({ id: item.id, x: snap(item.x + dx), y: snap(item.y + dy) })));
         }
       },
       () => {
         if (!moved) {
-          props.onSelect({ kind: 'node', id: node.id });
+          props.onSelect({ kind: 'nodes', ids: [node.id] });
         }
       },
     );
@@ -254,6 +331,9 @@ export const BoardCanvas = (props: {
         backgroundPosition: `${props.view.x}px ${props.view.y}px`,
       }}
       onPointerDown={startPan}
+      onContextMenu={(event) => {
+        event.preventDefault();
+      }}
     >
       <div
         className="absolute top-0 left-0 origin-top-left"
@@ -309,6 +389,10 @@ export const BoardCanvas = (props: {
                   onPointerDown={(event) => {
                     event.stopPropagation();
                     props.onSelect({ kind: 'edge', id: edge.id });
+
+                    if (event.button === 2) {
+                      props.onMenu(event.clientX, event.clientY);
+                    }
                   }}
                 />
                 <path
@@ -337,7 +421,7 @@ export const BoardCanvas = (props: {
           <NodeBox
             key={node.id}
             node={node}
-            selected={props.selection?.kind === 'node' && props.selection.id === node.id}
+            selected={selectedIds.includes(node.id)}
             failing={props.failingId === node.id}
             live={props.live?.nodes[node.id]}
             idle={Boolean(props.live) && !props.live?.nodes[node.id]}
@@ -352,6 +436,17 @@ export const BoardCanvas = (props: {
             }}
           />
         ))}
+        {box && (
+          <div
+            className="pointer-events-none absolute rounded-sm border border-accent bg-accent/10"
+            style={{
+              left: Math.min(box.x1, box.x2),
+              top: Math.min(box.y1, box.y2),
+              width: Math.abs(box.x2 - box.x1),
+              height: Math.abs(box.y2 - box.y1),
+            }}
+          />
+        )}
       </div>
     </div>
   );

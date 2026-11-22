@@ -72,7 +72,15 @@
     "fit": "Fit",
     "per_month": "/mo",
     "per_100": "/100 req/s",
-    "badge_api_cache": "API cache"
+    "badge_api_cache": "API cache",
+    "menu_cut": "Cut",
+    "menu_copy": "Copy",
+    "menu_paste": "Paste",
+    "menu_duplicate": "Duplicate",
+    "menu_delete": "Delete",
+    "menu_select_all": "Select all",
+    "delete_selected": "Delete {count} selected boxes",
+    "paste_skipped": "Skipped {count} boxes over the board limit"
   },
   "Fields": {
     "size": "Size",
@@ -433,7 +441,12 @@
       "run": "Ctrl+Enter (⌘ Enter): run, or fast-forward a running simulation.",
       "undo": "Ctrl+Z (⌘ Z): undo.",
       "redo": "Ctrl+Shift+Z or Ctrl+Y: redo.",
-      "delete": "Delete / Backspace: remove the selected box or wire."
+      "delete": "Delete / Backspace: remove the selected box or wire.",
+      "copy": "Ctrl+C / Ctrl+X / Ctrl+V: copy, cut and paste the selected boxes.",
+      "duplicate": "Ctrl+D: duplicate the selected boxes.",
+      "select_all": "Ctrl+A: select all; Esc: clear the selection.",
+      "select_area": "Right-drag to select an area; Shift+click to add or remove a box; right-click opens the menu.",
+      "nudge": "Arrow keys: nudge the selected boxes (hold Shift to move further)."
     }
   },
   "ScenariosPage": {
