@@ -1,6 +1,6 @@
-import { makeBoard } from '../board';
-import type { Track } from '../rounds';
-import type { NodeConfig, RequirementId } from '../types';
+import { makeBoard } from '@/game/board';
+import type { Track } from '@/game/rounds';
+import type { NodeConfig, RequirementId } from '@/game/types';
 
 /** Card-data rules that hold in every round. */
 const RULES: RequirementId[] = ['encryptData', 'privateData'];

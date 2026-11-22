@@ -1,5 +1,5 @@
-import { makeBoard } from '../board';
-import type { Track } from '../rounds';
+import { makeBoard } from '@/game/board';
+import type { Track } from '@/game/rounds';
 
 const serverless = makeBoard(
   [

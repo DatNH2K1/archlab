@@ -1,6 +1,6 @@
-import { makeBoard } from '../board';
-import type { Track } from '../rounds';
-import type { NodeConfig } from '../types';
+import { makeBoard } from '@/game/board';
+import type { Track } from '@/game/rounds';
+import type { NodeConfig } from '@/game/types';
 
 type Cfg = Partial<NodeConfig>;
 type NodeSpec = Parameters<typeof makeBoard>[0][number];

@@ -1,16 +1,14 @@
 import { ROUNDS } from '../rounds';
 import type { Round, Track } from '../rounds';
-import { GROUP_A } from './group-a';
-import { GROUP_B } from './group-b';
-import { GROUP_C } from './group-c';
-import { GROUP_D } from './group-d';
-import { GROUP_E } from './group-e';
-import { urlShortener } from './url-shortener';
+import { COST_TRACKS } from './cost';
+import { PERFORMANCE_TRACKS } from './performance';
+import { RESILIENT_TRACKS } from './resilient';
+import { SECURE_TRACKS } from './secure';
 
-/** Design problems, easiest first. Each file in this folder exports one track. */
+/** Design problems, easiest first. Each subfolder groups tracks by the SAA-C03 domain they focus on. */
 const LEVEL = { easy: 0, medium: 1, hard: 2 } as const;
 
-export const TRACKS: Track[] = [urlShortener, ...GROUP_A, ...GROUP_B, ...GROUP_C, ...GROUP_D, ...GROUP_E].sort(
+export const TRACKS: Track[] = [...COST_TRACKS, ...RESILIENT_TRACKS, ...PERFORMANCE_TRACKS, ...SECURE_TRACKS].sort(
   (a, b) => LEVEL[a.difficulty] - LEVEL[b.difficulty],
 );
 
