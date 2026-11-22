@@ -234,6 +234,14 @@
       "title": "No public servers",
       "desc": "EC2 must sit behind an ALB, CloudFront or API Gateway."
     },
+    "privateBucket": {
+      "title": "Private bucket",
+      "desc": "S3 must not be public: users reach files only through CloudFront (Origin Access Control) or a server."
+    },
+    "webFirewall": {
+      "title": "Web firewall",
+      "desc": "Every request must pass through WAF before it reaches a server (EC2/Lambda)."
+    },
     "fanOut": {
       "title": "Fan-out",
       "desc": "Every event must reach at least 2 systems through SNS → SQS → worker."
@@ -261,6 +269,8 @@
     "unencrypted": "{name} is not encrypted (KMS).",
     "public_data": "{name} is exposed: only servers may talk to databases.",
     "public_server": "{name} takes traffic straight from the internet: put an ALB, CloudFront or API Gateway in front.",
+    "public_bucket": "{name} is open to the internet: serve it through CloudFront with Origin Access Control.",
+    "no_firewall": "Requests reach {name} without passing through WAF: put WAF in front of every entry point.",
     "no_fan_out": "You need SNS sending to at least 2 SQS queues, each with a worker.",
     "backlog": "Queue {name} still has a backlog: add workers or bigger ones.",
     "slow": "Average response time is over target; {name} adds the most delay.",

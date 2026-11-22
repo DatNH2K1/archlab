@@ -214,4 +214,79 @@ describe('simulate', () => {
 
     expect(simulate(board, scenario).issues.map((issue) => issue.code)).toContain('replica_write');
   });
+
+  describe('with security rules', () => {
+    const files: Scenario = { ...scenario, mix: { static: 1 }, requirements: ['privateBucket'] };
+    const api: Scenario = { ...scenario, requirements: ['webFirewall'] };
+
+    it('reports a bucket users reach directly', () => {
+      const board = makeBoard(
+        [
+          ['users', 'users', 0, 0],
+          ['files', 's3', 0, 0],
+        ],
+        [['users', 'files']],
+      );
+      const result = simulate(board, files);
+
+      expect(result.checks.requirements).toEqual([{ id: 'privateBucket', ok: false }]);
+      expect(result.issues.map((issue) => issue.code)).toContain('public_bucket');
+    });
+
+    it('accepts a bucket behind CloudFront', () => {
+      const board = makeBoard(
+        [
+          ['users', 'users', 0, 0],
+          ['cdn', 'cloudfront', 0, 0],
+          ['files', 's3', 0, 0],
+        ],
+        [
+          ['users', 'cdn'],
+          ['cdn', 'files'],
+        ],
+      );
+
+      expect(simulate(board, files).checks.requirements).toEqual([{ id: 'privateBucket', ok: true }]);
+    });
+
+    it('reports a server reached without WAF', () => {
+      const board = makeBoard(
+        [
+          ['users', 'users', 0, 0],
+          ['api', 'apiGateway', 0, 0],
+          ['fn', 'lambda', 0, 0],
+          ['db', 'dynamodb', 0, 0],
+        ],
+        [
+          ['users', 'api'],
+          ['api', 'fn'],
+          ['fn', 'db'],
+        ],
+      );
+      const result = simulate(board, api);
+
+      expect(result.checks.requirements).toEqual([{ id: 'webFirewall', ok: false }]);
+      expect(result.issues).toContainEqual({ code: 'no_firewall', nodeId: 'fn', count: 1 });
+    });
+
+    it('accepts servers behind WAF', () => {
+      const board = makeBoard(
+        [
+          ['users', 'users', 0, 0],
+          ['shield', 'waf', 0, 0],
+          ['api', 'apiGateway', 0, 0],
+          ['fn', 'lambda', 0, 0],
+          ['db', 'dynamodb', 0, 0],
+        ],
+        [
+          ['users', 'shield'],
+          ['shield', 'api'],
+          ['api', 'fn'],
+          ['fn', 'db'],
+        ],
+      );
+
+      expect(simulate(board, api).checks.requirements).toEqual([{ id: 'webFirewall', ok: true }]);
+    });
+  });
 });

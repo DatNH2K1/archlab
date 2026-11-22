@@ -98,6 +98,8 @@ const ISSUE_RANK: Record<IssueCode, number> = {
   unencrypted: 4,
   public_data: 4,
   public_server: 4,
+  public_bucket: 4,
+  no_firewall: 4,
   no_fan_out: 4,
   cold_start: 5,
   slow: 6,
@@ -1100,6 +1102,44 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
         for (const node of exposed) {
           report('public_server', node.id, 1);
+        }
+
+        return exposed.length === 0;
+      }
+      case 'privateBucket': {
+        const exposed = board.nodes.filter(
+          (node) =>
+            node.type === 's3' &&
+            (parents.get(node.id) ?? []).some((parent) => ['users', 'route53'].includes(parent.type)),
+        );
+
+        for (const node of exposed) {
+          report('public_bucket', node.id, 1);
+        }
+
+        return exposed.length === 0;
+      }
+      case 'webFirewall': {
+        // Walk from the users without crossing a WAF; the first servers reached this way are unprotected.
+        const open = new Set<string>();
+        const stack = board.nodes.filter((node) => node.type === 'users');
+
+        for (let node = stack.pop(); node; node = stack.pop()) {
+          for (const child of children.get(node.id) ?? []) {
+            if (child.type !== 'waf' && !open.has(child.id)) {
+              open.add(child.id);
+
+              if (!COMPUTE_TYPES.has(child.type)) {
+                stack.push(child);
+              }
+            }
+          }
+        }
+
+        const exposed = board.nodes.filter((node) => open.has(node.id) && COMPUTE_TYPES.has(node.type));
+
+        for (const node of exposed) {
+          report('no_firewall', node.id, 1);
         }
 
         return exposed.length === 0;

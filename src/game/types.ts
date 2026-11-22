@@ -82,6 +82,8 @@ export const REQUIREMENTS = [
   'encryptData',
   'privateData',
   'noPublicServers',
+  'privateBucket',
+  'webFirewall',
   'fanOut',
   'drainQueue',
 ] as const;
@@ -123,6 +125,8 @@ const ISSUE_CODES = [
   'unencrypted',
   'public_data',
   'public_server',
+  'public_bucket',
+  'no_firewall',
   'no_fan_out',
   'backlog',
   'slow',

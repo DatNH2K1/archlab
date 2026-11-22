@@ -234,6 +234,14 @@
       "title": "Không để lộ máy chủ",
       "desc": "EC2 phải đứng sau ALB, CloudFront hoặc API Gateway."
     },
+    "privateBucket": {
+      "title": "Bucket riêng tư",
+      "desc": "S3 không được public: người dùng chỉ lấy tệp qua CloudFront (Origin Access Control) hoặc qua máy chủ."
+    },
+    "webFirewall": {
+      "title": "Tường lửa web",
+      "desc": "Mọi yêu cầu phải đi qua WAF trước khi tới máy chủ (EC2/Lambda)."
+    },
     "fanOut": {
       "title": "Fan-out",
       "desc": "Mỗi sự kiện phải tới ít nhất 2 hệ thống qua SNS → SQS → worker."
@@ -261,6 +269,8 @@
     "unencrypted": "{name} chưa bật mã hoá (KMS).",
     "public_data": "{name} đang bị lộ ra ngoài: chỉ máy chủ mới được kết nối tới database.",
     "public_server": "{name} nhận lưu lượng thẳng từ Internet: đặt ALB, CloudFront hoặc API Gateway phía trước.",
+    "public_bucket": "{name} đang mở ra Internet: phục vụ qua CloudFront với Origin Access Control.",
+    "no_firewall": "Yêu cầu tới {name} mà không đi qua WAF: đặt WAF trước mọi điểm vào.",
     "no_fan_out": "Cần SNS gửi tới ít nhất 2 hàng đợi SQS, mỗi hàng đợi có worker riêng.",
     "backlog": "Hàng đợi {name} còn tồn việc: thêm worker hoặc dùng worker mạnh hơn.",
     "slow": "Phản hồi quá chậm, chậm nhất ở {name}.",
