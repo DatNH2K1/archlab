@@ -1,10 +1,11 @@
+import { LessonSlug } from '@/content/types';
 import type { QuestionData } from '@/content/types';
 
 export const costQuestions: QuestionData[] = [
   {
     id: 'cost-001',
     domain: 'cost',
-    lesson: 'ec2-pricing-models',
+    lesson: LessonSlug.Ec2PricingModels,
     stem: 'A company runs a fleet of Amazon EC2 instances for a web application 24 hours a day. The company expects to keep the workload for at least 3 years, but it plans to migrate part of the application to AWS Fargate and AWS Lambda over the next year and might move to a different AWS Region. Which purchasing option meets these requirements MOST cost-effectively?',
     options: [
       'Purchase 3-year Standard Reserved Instances for the current instance family',
@@ -17,7 +18,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-002',
     domain: 'cost',
-    lesson: 'ec2-pricing-models',
+    lesson: LessonSlug.Ec2PricingModels,
     stem: 'A media company runs nightly video transcoding jobs. Each job processes files from Amazon S3, checkpoints progress, and can be restarted at any time without data loss. The jobs must finish by the next morning, but the start time is flexible. Which solution is the MOST cost-effective?',
     options: [
       'Run the jobs on On-Demand Instances in an Auto Scaling group',
@@ -30,7 +31,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-003',
     domain: 'cost',
-    lesson: 'ec2-pricing-models',
+    lesson: LessonSlug.Ec2PricingModels,
     stem: 'A company wants to migrate an on-premises application to Amazon EC2. The application uses Microsoft SQL Server Enterprise licenses that are licensed per physical core. The company wants to use its existing licenses and must be able to track license usage against physical cores. Which EC2 option should a solutions architect recommend?',
     options: [
       'Dedicated Hosts',
@@ -43,7 +44,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-004',
     domain: 'cost',
-    lesson: 'ec2-pricing-models',
+    lesson: LessonSlug.Ec2PricingModels,
     stem: 'An ecommerce company needs to guarantee EC2 capacity in a specific Availability Zone for a 2-week holiday sales event. After the event, the capacity will no longer be needed. Which solution meets these requirements with the LEAST commitment?',
     options: [
       'Purchase a 1-year zonal Reserved Instance',
@@ -56,7 +57,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-005',
     domain: 'cost',
-    lesson: 'ec2-pricing-models',
+    lesson: LessonSlug.Ec2PricingModels,
     stem: 'A company runs a stateless web tier in an Auto Scaling group. At least four instances must always be running to handle baseline traffic. During peaks, the group scales to 20 instances. The company wants to minimize cost while keeping the baseline reliable. What should a solutions architect do?',
     options: [
       'Use only Spot Instances in the Auto Scaling group with capacity rebalancing',
@@ -69,7 +70,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-006',
     domain: 'cost',
-    lesson: 'ec2-pricing-models',
+    lesson: LessonSlug.Ec2PricingModels,
     stem: 'A company purchased 3-year Standard Reserved Instances for the m5 instance family. After a performance review, the company wants to move the workload to the c6g instance family. The company also wants to avoid losing the remaining value of the commitment where possible. Which approach should the company have used when purchasing the commitment to allow this change?',
     options: [
       'Zonal Standard Reserved Instances',
@@ -82,7 +83,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-007',
     domain: 'cost',
-    lesson: 'ec2-pricing-models',
+    lesson: LessonSlug.Ec2PricingModels,
     stem: 'A company has hundreds of EC2 instances across multiple accounts. A solutions architect suspects that many instances are over-provisioned. The company wants recommendations for smaller instance types based on historical CPU and memory utilization, with the LEAST operational effort. What should the solutions architect do?',
     options: [
       'Install the Amazon CloudWatch agent to collect memory metrics and use AWS Compute Optimizer recommendations',
@@ -95,7 +96,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-008',
     domain: 'cost',
-    lesson: 'ec2-pricing-models',
+    lesson: LessonSlug.Ec2PricingModels,
     stem: 'A company runs a batch processing application on Spot Instances. The application must gracefully save its state before an instance is reclaimed. Which mechanisms can the application use to detect an upcoming Spot interruption? (Choose TWO.)',
     options: [
       'Poll the instance metadata service for the spot instance-action notice',
@@ -109,7 +110,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-009',
     domain: 'cost',
-    lesson: 's3-storage-classes',
+    lesson: LessonSlug.S3StorageClasses,
     stem: 'A company stores user-uploaded files in Amazon S3. Access patterns are unpredictable: some files are accessed frequently for months, while others are never accessed after upload. The company wants to optimize storage costs automatically without retrieval fees or operational overhead. Which storage class should be used?',
     options: ['S3 Standard-IA', 'S3 One Zone-IA', 'S3 Intelligent-Tiering', 'S3 Glacier Instant Retrieval'],
     answer: [2],
@@ -117,7 +118,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-010',
     domain: 'cost',
-    lesson: 's3-storage-classes',
+    lesson: LessonSlug.S3StorageClasses,
     stem: 'A hospital must retain medical images for 10 years. The images are rarely accessed after the first month, but when a doctor requests an image, it must be available within milliseconds. Which storage solution is MOST cost-effective?',
     options: [
       'Store the images in S3 Standard and use a lifecycle rule to transition them to S3 Glacier Deep Archive after 30 days',
@@ -130,7 +131,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-011',
     domain: 'cost',
-    lesson: 's3-storage-classes',
+    lesson: LessonSlug.S3StorageClasses,
     stem: 'A company generates thumbnails from original images stored in S3 Standard. The thumbnails are accessed infrequently and can be regenerated from the originals at any time. Which storage class is MOST cost-effective for the thumbnails while still providing millisecond access?',
     options: ['S3 One Zone-IA', 'S3 Standard', 'S3 Glacier Deep Archive', 'S3 Glacier Flexible Retrieval'],
     answer: [0],
@@ -138,7 +139,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-012',
     domain: 'cost',
-    lesson: 's3-storage-classes',
+    lesson: LessonSlug.S3StorageClasses,
     stem: 'A financial company must keep transaction archives for 7 years to meet regulatory requirements. Auditors request data about once a year and accept a retrieval time of up to 48 hours. Which storage class provides the LOWEST cost?',
     options: [
       'S3 Glacier Instant Retrieval',
@@ -151,7 +152,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-013',
     domain: 'cost',
-    lesson: 's3-storage-classes',
+    lesson: LessonSlug.S3StorageClasses,
     stem: 'A company stores data in S3 Glacier Flexible Retrieval. Occasionally, an urgent legal request requires that a few files be restored within 5 minutes. Which retrieval option should be used?',
     options: [
       'Bulk retrieval',
@@ -164,7 +165,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-014',
     domain: 'cost',
-    lesson: 's3-storage-classes',
+    lesson: LessonSlug.S3StorageClasses,
     stem: 'A company has versioning enabled on an S3 bucket that stores frequently updated reports. Storage costs have grown much faster than the size of the current data. A solutions architect discovers that old object versions and incomplete multipart uploads are accumulating. What is the MOST cost-effective solution with the LEAST operational overhead?',
     options: [
       'Disable versioning on the bucket',
@@ -177,7 +178,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-015',
     domain: 'cost',
-    lesson: 's3-storage-classes',
+    lesson: LessonSlug.S3StorageClasses,
     stem: 'A research institute publishes a multi-terabyte genomics dataset in Amazon S3 for other organizations to download. The institute wants the organizations that download the data to pay for the data transfer and request costs. What should the institute configure?',
     options: [
       'Enable Requester Pays on the bucket',
@@ -190,7 +191,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-016',
     domain: 'cost',
-    lesson: 's3-storage-classes',
+    lesson: LessonSlug.S3StorageClasses,
     stem: 'A company has hundreds of S3 buckets across multiple AWS accounts in an organization. The company wants organization-wide visibility into storage usage and activity trends, and recommendations to reduce storage costs, such as identifying buckets with many incomplete multipart uploads. It also needs a daily list of objects with their storage class for a large bucket to plan a transition. Which features should a solutions architect use? (Choose TWO.)',
     options: [
       'Amazon S3 Storage Lens',
@@ -204,7 +205,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-017',
     domain: 'cost',
-    lesson: 's3-storage-classes',
+    lesson: LessonSlug.S3StorageClasses,
     stem: 'A company stores application logs in S3 Standard. Logs are queried frequently for the first 30 days, occasionally for the next 60 days, and must then be retained for 1 year for audit purposes with retrieval within hours acceptable. After 1 year, the logs can be deleted. Which lifecycle configuration is MOST cost-effective?',
     options: [
       'Keep logs in S3 Standard for 1 year, then delete them',
@@ -217,7 +218,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-018',
     domain: 'cost',
-    lesson: 'cost-management-tools',
+    lesson: LessonSlug.CostManagementTools,
     stem: 'A company wants to receive an alert when its forecasted monthly AWS spend for a development account is expected to exceed $5,000. If actual spend exceeds the threshold, the company wants to automatically apply an IAM policy that prevents developers from launching new EC2 instances. Which solution meets these requirements with the LEAST operational overhead?',
     options: [
       'Use AWS Cost Explorer reports and review them daily',
@@ -230,7 +231,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-019',
     domain: 'cost',
-    lesson: 'cost-management-tools',
+    lesson: LessonSlug.CostManagementTools,
     stem: 'A finance team needs hourly, resource-level billing data for all accounts in an organization, including cost allocation tags, so that analysts can run SQL queries and build dashboards. Which solution meets these requirements?',
     options: [
       'Create a CUR 2.0 export with AWS Data Exports to an S3 bucket, and query it with Amazon Athena',
@@ -243,7 +244,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-020',
     domain: 'cost',
-    lesson: 'cost-management-tools',
+    lesson: LessonSlug.CostManagementTools,
     stem: 'A company tagged all resources with a CostCenter tag. However, when the finance team opens AWS Cost Explorer, they cannot group costs by CostCenter. What should a solutions architect do?',
     options: [
       'Enable AWS Config rules for required tags',
@@ -256,7 +257,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-021',
     domain: 'cost',
-    lesson: 'cost-management-tools',
+    lesson: LessonSlug.CostManagementTools,
     stem: 'A company wants to be notified when spending on any AWS service suddenly increases in an unusual way, for example because of a misconfigured resource. The company does not want to define and maintain fixed thresholds for each service. Which AWS service should be used?',
     options: ['AWS Budgets', 'AWS Trusted Advisor', 'AWS Compute Optimizer', 'AWS Cost Anomaly Detection'],
     answer: [3],
@@ -264,7 +265,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-022',
     domain: 'cost',
-    lesson: 'cost-management-tools',
+    lesson: LessonSlug.CostManagementTools,
     stem: 'A company has 15 AWS accounts, each billed separately. The company wants a single bill, wants to benefit from volume pricing tiers across all accounts, and wants unused Reserved Instance discounts in one account to apply to usage in other accounts. What should a solutions architect recommend?',
     options: [
       'Purchase Reserved Instances separately in each account',
@@ -277,7 +278,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-023',
     domain: 'cost',
-    lesson: 'cost-management-tools',
+    lesson: LessonSlug.CostManagementTools,
     stem: 'A company wants to identify unassociated Elastic IP addresses, idle load balancers, and underutilized Amazon EBS volumes across its account. The company has an Enterprise Support plan. Which service provides these checks with the LEAST effort?',
     options: ['AWS Trusted Advisor', 'AWS Pricing Calculator', 'Amazon Inspector', 'AWS CloudTrail'],
     answer: [0],
@@ -285,7 +286,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-024',
     domain: 'cost',
-    lesson: 'cost-management-tools',
+    lesson: LessonSlug.CostManagementTools,
     stem: 'A company that runs workloads in many accounts in AWS Organizations wants to analyze how much of its EC2 usage is covered by Savings Plans and how much of its purchased commitment is actually used. The company also wants purchase recommendations based on past usage. Which tools provide this information? (Choose TWO.)',
     options: [
       'AWS Cost Explorer Savings Plans coverage and utilization reports',
@@ -299,7 +300,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-025',
     domain: 'cost',
-    lesson: 'cost-management-tools',
+    lesson: LessonSlug.CostManagementTools,
     stem: "An AWS Partner resells AWS to several customers and manages their accounts in one organization. The partner needs to present each customer with a bill that reflects custom pricing rates rather than the partner's actual AWS invoice. Which service should the partner use?",
     options: ['AWS Cost Anomaly Detection', 'AWS Billing Conductor', 'AWS Budgets', 'AWS Cost Explorer forecasting'],
     answer: [1],
@@ -307,7 +308,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-026',
     domain: 'cost',
-    lesson: 'cost-optimized-architectures',
+    lesson: LessonSlug.CostOptimizedArchitectures,
     stem: 'EC2 instances in private subnets process large volumes of data stored in Amazon S3 in the same Region. Traffic flows through a NAT gateway, and NAT gateway data processing charges have become a large part of the monthly bill. What is the MOST cost-effective way to reduce these charges?',
     options: [
       'Replace the NAT gateway with a NAT instance on a larger EC2 instance type',
@@ -320,7 +321,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-027',
     domain: 'cost',
-    lesson: 'cost-optimized-architectures',
+    lesson: LessonSlug.CostOptimizedArchitectures,
     stem: 'A company serves large video files from an Amazon S3 bucket directly to users around the world. Data transfer out to the internet is the largest item on the bill. Which solution will reduce costs and improve performance?',
     options: [
       'Enable S3 Transfer Acceleration on the bucket',
@@ -333,7 +334,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-028',
     domain: 'cost',
-    lesson: 'cost-optimized-architectures',
+    lesson: LessonSlug.CostOptimizedArchitectures,
     stem: 'A company runs development and test EC2 instances and Amazon RDS DB instances that are used only from 8 AM to 6 PM on weekdays. The company wants to reduce costs with the LEAST operational overhead. What should a solutions architect do?',
     options: [
       'Deploy Instance Scheduler on AWS and tag the resources with a weekday business-hours schedule',
@@ -346,7 +347,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-029',
     domain: 'cost',
-    lesson: 'cost-optimized-architectures',
+    lesson: LessonSlug.CostOptimizedArchitectures,
     stem: 'A company has hundreds of Amazon EBS gp2 volumes. Most are 100 GB volumes attached to application servers that need about 3,000 IOPS. The company wants to reduce storage costs without downtime and without reducing performance. What should a solutions architect do?',
     options: [
       'Change the volumes to st1 by using snapshots and restoring new volumes',
@@ -359,7 +360,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-030',
     domain: 'cost',
-    lesson: 'cost-optimized-architectures',
+    lesson: LessonSlug.CostOptimizedArchitectures,
     stem: 'A startup is launching a new mobile app backed by Amazon DynamoDB. Traffic is unpredictable, with long idle periods and occasional sharp spikes. The company wants to pay only for what it uses with no capacity planning. Which configuration should be used?',
     options: [
       'Provisioned capacity with reserved capacity',
@@ -372,7 +373,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-031',
     domain: 'cost',
-    lesson: 'cost-optimized-architectures',
+    lesson: LessonSlug.CostOptimizedArchitectures,
     stem: 'A company runs an internal reporting application backed by an Amazon Aurora PostgreSQL provisioned DB cluster. The database is heavily used for a few hours at the beginning of each month and is mostly idle the rest of the time. The company wants to reduce database costs with minimal changes. What should a solutions architect recommend?',
     options: [
       'Migrate to Aurora Serverless v2 and configure appropriate minimum and maximum ACUs',
@@ -385,7 +386,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-032',
     domain: 'cost',
-    lesson: 'cost-optimized-architectures',
+    lesson: LessonSlug.CostOptimizedArchitectures,
     stem: "A company's order-processing application uses a fleet of EC2 instances that is sized for peak load, but load is bursty and orders do not need to be processed in real time. The company wants to reduce compute costs. Which actions should a solutions architect take? (Choose TWO.)",
     options: [
       'Place an Amazon SQS queue between the web tier and the processing tier',
@@ -399,7 +400,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-033',
     domain: 'cost',
-    lesson: 'cost-optimized-architectures',
+    lesson: LessonSlug.CostOptimizedArchitectures,
     stem: 'After reviewing the bill, a company notices new charges for public IPv4 addresses on many EC2 instances in public subnets. Most instances only need to be reached by administrators for maintenance and make outbound calls to Amazon S3. Which solution reduces these charges while maintaining access?',
     options: [
       'Allocate Elastic IP addresses to all instances, because in-use Elastic IP addresses are free',
@@ -412,7 +413,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-034',
     domain: 'cost',
-    lesson: 'cost-optimized-architectures',
+    lesson: LessonSlug.CostOptimizedArchitectures,
     stem: 'A company runs an AWS Lambda function that performs CPU-intensive image processing. The function is configured with 128 MB of memory and often runs for close to its timeout. A solutions architect wants to reduce cost and duration. What should the solutions architect do FIRST?',
     options: [
       'Move the function to EC2 On-Demand Instances',
@@ -425,7 +426,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-035',
     domain: 'cost',
-    lesson: 'cost-database-storage-choices',
+    lesson: LessonSlug.CostDatabaseStorageChoices,
     stem: 'A data analytics team runs ad hoc SQL queries with Amazon Athena on several terabytes of CSV log files stored in Amazon S3. Most queries filter by date. Athena costs are increasing. Which actions will MOST reduce query costs? (Choose TWO.)',
     options: [
       'Convert the data to compressed Apache Parquet format',
@@ -439,7 +440,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-036',
     domain: 'cost',
-    lesson: 'cost-database-storage-choices',
+    lesson: LessonSlug.CostDatabaseStorageChoices,
     stem: 'A marketing team runs data warehouse queries a few times each week at unpredictable times. Between queries, the warehouse is idle. The team wants to minimize cost without managing cluster capacity. Which solution should a solutions architect recommend?',
     options: [
       'An Amazon Redshift provisioned cluster with 3-year reserved nodes',
@@ -452,7 +453,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-037',
     domain: 'cost',
-    lesson: 'cost-database-storage-choices',
+    lesson: LessonSlug.CostDatabaseStorageChoices,
     stem: 'An application on Amazon RDS for MySQL is experiencing high CPU utilization caused by the same product catalog queries being executed repeatedly. The company is considering scaling to a much larger DB instance class. Which solution is MOST cost-effective?',
     options: [
       'Scale the DB instance to the largest available instance class',
@@ -465,7 +466,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-038',
     domain: 'cost',
-    lesson: 'cost-database-storage-choices',
+    lesson: LessonSlug.CostDatabaseStorageChoices,
     stem: 'A company needs to migrate 500 TB of archived data from its on-premises data center to Amazon S3. The data center has a 100 Mbps internet connection that is already heavily used. The migration must be completed within 1 month. Which solution is MOST cost-effective?',
     options: [
       'Order AWS Snowball Edge devices to transfer the data offline',
@@ -478,7 +479,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-039',
     domain: 'cost',
-    lesson: 'cost-database-storage-choices',
+    lesson: LessonSlug.CostDatabaseStorageChoices,
     stem: 'A company runs a genomics pipeline that processes 50 TB of input data stored in Amazon S3 for about 6 hours each week. The pipeline needs a high-performance parallel file system during processing, and results are written back to S3. Which storage solution is MOST cost-effective?',
     options: [
       'Amazon FSx for Lustre persistent file system kept running all week',
@@ -491,7 +492,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-040',
     domain: 'cost',
-    lesson: 'cost-database-storage-choices',
+    lesson: LessonSlug.CostDatabaseStorageChoices,
     stem: 'A company stores 200 TB of rarely accessed engineering documents on an Amazon FSx for Windows File Server SSD file system. Users tolerate higher latency, and many files are duplicates. The company wants to reduce costs while continuing to use SMB access with Active Directory integration. Which actions should a solutions architect take? (Choose TWO.)',
     options: [
       'Migrate the data to Amazon EFS',
@@ -505,7 +506,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-041',
     domain: 'cost',
-    lesson: 'cost-compute-serverless-containers',
+    lesson: LessonSlug.CostComputeServerlessContainers,
     stem: 'A company is building an image-thumbnail API. The API receives a few hundred requests per day in unpredictable bursts and is idle most of the time. Each request completes in less than 2 seconds. Which compute option is the MOST cost-effective?',
     options: [
       'Amazon EC2 On-Demand Instances behind an Application Load Balancer',
@@ -518,7 +519,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-042',
     domain: 'cost',
-    lesson: 'cost-compute-serverless-containers',
+    lesson: LessonSlug.CostComputeServerlessContainers,
     stem: 'A company runs a business-critical containerized application on Amazon ECS with AWS Fargate 24 hours a day. The usage is steady and the tasks must not be interrupted. Over the next year, the company plans to move some components to AWS Lambda and others to Amazon EC2. Which purchasing option will provide the MOST cost savings for this usage?',
     options: [
       'Purchase an EC2 Instance Savings Plan for the current Region',
@@ -531,7 +532,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-043',
     domain: 'cost',
-    lesson: 'cost-compute-serverless-containers',
+    lesson: LessonSlug.CostComputeServerlessContainers,
     stem: 'A company runs an Amazon ECS service on AWS Fargate. The tasks process messages from an Amazon SQS queue and are idempotent. At least two tasks must always be running, but any additional tasks can be interrupted. The company wants to reduce compute costs. What should a solutions architect do?',
     options: [
       'Configure a capacity provider strategy with FARGATE as base 2 and weight 1, and FARGATE_SPOT with weight 3',
@@ -544,7 +545,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-044',
     domain: 'cost',
-    lesson: 'cost-compute-serverless-containers',
+    lesson: LessonSlug.CostComputeServerlessContainers,
     stem: 'A research company runs thousands of containerized simulation jobs each week by using AWS Batch with an On-Demand compute environment. The jobs can be retried if they fail, and they have no strict completion deadline. The company wants to reduce costs with the LEAST operational overhead. Which solution meets these requirements?',
     options: [
       'Purchase Reserved Instances for the largest instance type that the jobs use',
@@ -557,7 +558,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-045',
     domain: 'cost',
-    lesson: 'cost-compute-serverless-containers',
+    lesson: LessonSlug.CostComputeServerlessContainers,
     stem: 'A company runs long image-processing jobs on Amazon EC2 Spot Instances. When an instance is interrupted, all work in progress is lost and the job must restart from the beginning. The company wants to keep using Spot Instances. Which actions will improve resilience to interruptions MOST cost-effectively? (Choose TWO.)',
     options: [
       'Pull work items from an Amazon SQS queue and delete each message only after processing completes',
@@ -571,7 +572,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-046',
     domain: 'cost',
-    lesson: 'cost-compute-serverless-containers',
+    lesson: LessonSlug.CostComputeServerlessContainers,
     stem: 'An AWS Lambda function is configured with 128 MB of memory. The function is CPU-bound and runs for about 9 seconds per invocation, millions of times each month. The code has no architecture-specific dependencies. A solutions architect needs to reduce the cost of the function. What should the solutions architect do?',
     options: [
       'Reduce the function timeout to 5 seconds',
@@ -584,7 +585,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-047',
     domain: 'cost',
-    lesson: 'cost-compute-serverless-containers',
+    lesson: LessonSlug.CostComputeServerlessContainers,
     stem: 'An AWS Lambda function submits a report-generation job to a third-party API and then polls the API every 30 seconds until the job finishes, which takes up to 10 minutes. Most of the function duration is spent waiting. Which solution will reduce costs the MOST?',
     options: [
       'Increase the memory of the function so that each poll completes faster',
@@ -597,7 +598,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-048',
     domain: 'cost',
-    lesson: 'cost-compute-serverless-containers',
+    lesson: LessonSlug.CostComputeServerlessContainers,
     stem: 'A company runs development and test environments on Amazon EC2 Auto Scaling groups and Amazon ECS services. The environments run 24 hours a day, but developers use them only from 8 AM to 6 PM on weekdays. Which solution is the MOST cost-effective?',
     options: [
       'Purchase 3-year Reserved Instances for the development instances',
@@ -610,7 +611,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-049',
     domain: 'cost',
-    lesson: 'cost-network-transfer',
+    lesson: LessonSlug.CostNetworkTransfer,
     stem: 'Amazon EC2 instances in private subnets download several terabytes of data each day from an Amazon S3 bucket in the same AWS Region. The traffic goes through a NAT gateway, and NAT gateway data processing charges are high. Which solution will reduce these costs MOST cost-effectively?',
     options: [
       'Create a gateway VPC endpoint for Amazon S3 and add it to the private subnet route tables',
@@ -623,7 +624,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-050',
     domain: 'cost',
-    lesson: 'cost-network-transfer',
+    lesson: LessonSlug.CostNetworkTransfer,
     stem: 'A production VPC spans three Availability Zones. All private subnets route internet-bound traffic to a single NAT gateway in the first Availability Zone. The company sees significant inter-AZ data transfer charges and is concerned about availability if that Availability Zone fails. Which solution addresses both concerns?',
     options: [
       'Move all instances into the Availability Zone that contains the NAT gateway',
@@ -636,7 +637,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-051',
     domain: 'cost',
-    lesson: 'cost-network-transfer',
+    lesson: LessonSlug.CostNetworkTransfer,
     stem: 'A company serves large video files directly from an Amazon S3 bucket to users worldwide. Data transfer out costs are high. Most users are in North America and Europe, and slightly higher latency for users in other regions is acceptable. Which solution is the MOST cost-effective?',
     options: [
       'Enable S3 Transfer Acceleration on the bucket',
@@ -649,7 +650,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-052',
     domain: 'cost',
-    lesson: 'cost-network-transfer',
+    lesson: LessonSlug.CostNetworkTransfer,
     stem: 'A company sends about 50 TB of data each month from AWS to its on-premises data center over an AWS Site-to-Site VPN connection. The transfer volume is steady and expected to grow. The company wants to reduce data transfer costs and get more consistent network performance. Which solution meets these requirements?',
     options: [
       'Add more VPN tunnels and use equal-cost multi-path routing',
@@ -662,7 +663,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-053',
     domain: 'cost',
-    lesson: 'cost-network-transfer',
+    lesson: LessonSlug.CostNetworkTransfer,
     stem: 'An application runs on Amazon ECS with AWS Fargate in private subnets. The tasks frequently pull large container images from Amazon ECR and send logs to Amazon CloudWatch Logs. All traffic goes through NAT gateways, and NAT gateway data processing charges are high. Which actions will reduce these charges? (Choose TWO.)',
     options: [
       'Move the tasks to public subnets and assign public IP addresses',
@@ -676,7 +677,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-054',
     domain: 'cost',
-    lesson: 'cost-network-transfer',
+    lesson: LessonSlug.CostNetworkTransfer,
     stem: 'A company connects dozens of VPCs in one AWS Region through a transit gateway. Two of the VPCs exchange many terabytes of data each month between application tiers. Cost Explorer shows high transit gateway data processing charges for this traffic. Which solution will reduce costs with the LEAST effort?',
     options: [
       'Create a VPC peering connection between the two VPCs and update their route tables to send traffic to each other over the peering connection',
@@ -689,7 +690,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-055',
     domain: 'cost',
-    lesson: 'cost-network-transfer',
+    lesson: LessonSlug.CostNetworkTransfer,
     stem: 'A company runs a self-managed Apache Kafka cluster on Amazon EC2 instances across three Availability Zones, together with many producer and consumer applications. Inter-AZ data transfer charges have grown sharply. A solutions architect needs to identify which source and destination instances generate the cross-AZ traffic. What should the solutions architect do?',
     options: [
       'Review the AWS Trusted Advisor cost optimization checks',
@@ -702,7 +703,7 @@ export const costQuestions: QuestionData[] = [
   {
     id: 'cost-056',
     domain: 'cost',
-    lesson: 'cost-network-transfer',
+    lesson: LessonSlug.CostNetworkTransfer,
     stem: 'A company uses a Network Load Balancer with cross-zone load balancing enabled across three Availability Zones. The targets are evenly distributed, with the same number of targets in each Availability Zone, and clients are spread evenly across the zones. The company notices high regional data transfer charges. Which change will reduce costs without reducing availability?',
     options: [
       'Replace the Network Load Balancer with AWS Global Accelerator',

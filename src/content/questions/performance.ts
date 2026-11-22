@@ -1,10 +1,11 @@
+import { LessonSlug } from '@/content/types';
 import type { QuestionData } from '@/content/types';
 
 export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-001',
     domain: 'performance',
-    lesson: 'ec2-compute',
+    lesson: LessonSlug.Ec2Compute,
     stem: 'A research company runs a tightly coupled computational fluid dynamics simulation that uses MPI across 64 Linux EC2 instances. The nodes exchange large volumes of data and the job is sensitive to inter-node latency. Which solution provides the HIGHEST network performance between the nodes?',
     options: [
       'Launch the instances in a spread placement group across three Availability Zones and enable enhanced networking with ENA.',
@@ -17,7 +18,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-002',
     domain: 'performance',
-    lesson: 'ec2-compute',
+    lesson: LessonSlug.Ec2Compute,
     stem: 'A company runs a small application tier of five critical EC2 instances. Each instance holds a unique role, and the company must minimize the risk that a single hardware failure affects more than one instance. Which placement strategy should a solutions architect use?',
     options: [
       'A spread placement group',
@@ -30,7 +31,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-003',
     domain: 'performance',
-    lesson: 'ec2-compute',
+    lesson: LessonSlug.Ec2Compute,
     stem: 'A company runs an analytics application on EC2 instances that take more than 20 minutes to load reference data into memory after the operating system starts. The instances are stopped every night to save cost. The company wants the application to be ready faster each morning. What should a solutions architect do?',
     options: [
       'Move the reference data to an instance store volume so it is available immediately after the instance starts.',
@@ -43,7 +44,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-004',
     domain: 'performance',
-    lesson: 'ec2-compute',
+    lesson: LessonSlug.Ec2Compute,
     stem: 'An Auto Scaling group launches EC2 instances that run a long user data script to install packages and dependencies. New instances take 15 minutes to become healthy, which causes poor performance during traffic spikes. The company also needs the operating system to be patched monthly. Which solution meets these requirements with the LEAST operational overhead?',
     options: [
       'Increase the health check grace period of the Auto Scaling group to 20 minutes.',
@@ -56,7 +57,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-005',
     domain: 'performance',
-    lesson: 'ec2-compute',
+    lesson: LessonSlug.Ec2Compute,
     stem: 'A company is deploying a self-managed Apache Cassandra cluster on EC2. The database requires very high random I/O with low latency. Cassandra already replicates data across nodes, and the company wants to reduce the impact of correlated rack failures. Which combination of actions meets these requirements MOST cost-effectively? (Choose TWO.)',
     options: [
       'Use General Purpose instances with Provisioned IOPS SSD (io2) volumes for all data.',
@@ -70,7 +71,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-006',
     domain: 'performance',
-    lesson: 'containers-compute',
+    lesson: LessonSlug.ContainersCompute,
     stem: 'A company is containerizing a stateless web application. The operations team is small and does not want to provision, patch, or scale EC2 instances for the containers. The application does not use Kubernetes. Which solution meets these requirements with the LEAST operational overhead?',
     options: [
       'Deploy the containers on Amazon EKS with self-managed node groups.',
@@ -83,7 +84,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-007',
     domain: 'performance',
-    lesson: 'containers-compute',
+    lesson: LessonSlug.ContainersCompute,
     stem: 'A company runs a nightly data processing job as an AWS Lambda function. As data volume has grown, the job now needs about 45 minutes to finish and fails with timeouts. The job is packaged as a container image. Which solution meets these requirements with the LEAST operational overhead?',
     options: [
       'Run the job as an Amazon ECS task on AWS Fargate, scheduled by an Amazon EventBridge rule.',
@@ -96,7 +97,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-008',
     domain: 'performance',
-    lesson: 'containers-compute',
+    lesson: LessonSlug.ContainersCompute,
     stem: 'A company runs dozens of microservices on a self-managed Kubernetes cluster in its data center. The company uses Helm charts and Kubernetes operators and wants to move to AWS without rewriting deployment manifests while reducing control plane management. Which solution should a solutions architect recommend?',
     options: [
       'Migrate the services to Amazon ECS and convert the Helm charts to ECS task definitions.',
@@ -109,7 +110,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-009',
     domain: 'performance',
-    lesson: 'containers-compute',
+    lesson: LessonSlug.ContainersCompute,
     stem: 'A company uses AWS Lambda functions behind Amazon API Gateway for a mobile backend. Every weekday at 9:00 AM, traffic increases sharply and users report slow responses for the first requests because of function initialization. The traffic pattern is predictable. What should a solutions architect do to improve response time?',
     options: [
       'Increase the reserved concurrency of the functions.',
@@ -122,7 +123,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-010',
     domain: 'performance',
-    lesson: 'containers-compute',
+    lesson: LessonSlug.ContainersCompute,
     stem: 'A startup wants to deploy a containerized REST API from its source code repository. The developers have no experience with load balancers, VPC design, or container orchestration. The service must scale automatically with traffic and be served over HTTPS. Which AWS service meets these requirements with the LEAST operational overhead?',
     options: [
       'Amazon EKS with the AWS Load Balancer Controller',
@@ -135,7 +136,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-011',
     domain: 'performance',
-    lesson: 'block-file-storage',
+    lesson: LessonSlug.BlockFileStorage,
     stem: 'A company is migrating a mission-critical Oracle database to a single large EC2 instance. The database requires 120,000 IOPS with consistent sub-millisecond latency and high durability for a 20 TiB data volume. Which EBS volume type should a solutions architect choose?',
     options: [
       'General Purpose SSD (gp3)',
@@ -148,7 +149,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-012',
     domain: 'performance',
-    lesson: 'block-file-storage',
+    lesson: LessonSlug.BlockFileStorage,
     stem: 'An application runs on an EC2 instance with a 500 GiB General Purpose SSD (gp2) volume, which provides a baseline of 1,500 IOPS. The application now needs a consistent 6,000 IOPS, but the data size will not grow. Which solution meets this requirement MOST cost-effectively?',
     options: [
       'Modify the volume to gp3 and provision 6,000 IOPS.',
@@ -161,7 +162,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-013',
     domain: 'performance',
-    lesson: 'block-file-storage',
+    lesson: LessonSlug.BlockFileStorage,
     stem: 'A content management system runs on Linux EC2 instances in an Auto Scaling group across three Availability Zones. All instances must read and write the same set of files. Throughput demand is spiky and difficult to predict. Which storage solution meets these requirements with the LEAST operational overhead?',
     options: [
       'An EBS io2 volume with Multi-Attach enabled and attached to all instances',
@@ -174,7 +175,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-014',
     domain: 'performance',
-    lesson: 'block-file-storage',
+    lesson: LessonSlug.BlockFileStorage,
     stem: "A company is migrating Windows-based file servers to AWS. Users access shares through SMB, and permissions are managed with the company's Microsoft Active Directory. The solution must remain available if an Availability Zone fails. Which solution should a solutions architect recommend?",
     options: [
       'Amazon EFS with One Zone storage and a backup policy',
@@ -187,7 +188,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-015',
     domain: 'performance',
-    lesson: 'block-file-storage',
+    lesson: LessonSlug.BlockFileStorage,
     stem: 'A machine learning team stores a 50 TB training dataset in Amazon S3. Training jobs run for a few days on a GPU cluster and require a POSIX file system with hundreds of GB/s of throughput. The file system is needed only while the job runs, and the results must be written back to S3. Which solution is MOST cost-effective?',
     options: [
       'Copy the dataset to an Amazon EFS file system with Provisioned throughput.',
@@ -200,7 +201,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-016',
     domain: 'performance',
-    lesson: 'block-file-storage',
+    lesson: LessonSlug.BlockFileStorage,
     stem: 'A company runs a cluster-aware application that requires shared block storage with high IOPS. Several EC2 instances must write to the same volume concurrently, and the application coordinates the writes. Which actions must a solutions architect take to meet these requirements? (Choose TWO.)',
     options: [
       'Use a Provisioned IOPS SSD (io2) volume and enable Multi-Attach.',
@@ -214,7 +215,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-017',
     domain: 'performance',
-    lesson: 's3-performance',
+    lesson: LessonSlug.S3Performance,
     stem: 'An application stores millions of images in a single S3 bucket under the prefix images/. During peak hours, the application issues about 20,000 GET requests per second and receives HTTP 503 Slow Down errors. Which solution will improve performance with the LEAST changes to the architecture?',
     options: [
       'Enable S3 Transfer Acceleration on the bucket.',
@@ -227,7 +228,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-018',
     domain: 'performance',
-    lesson: 's3-performance',
+    lesson: LessonSlug.S3Performance,
     stem: 'A media company has users in Asia, Europe, and South America who upload video files of 2-10 GB to an S3 bucket in us-east-1. Uploads are slow and often fail partway through. Which combination of features should a solutions architect recommend to improve upload speed and reliability?',
     options: [
       'Enable S3 Transfer Acceleration and use multipart upload.',
@@ -240,7 +241,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-019',
     domain: 'performance',
-    lesson: 's3-performance',
+    lesson: LessonSlug.S3Performance,
     stem: 'A company trains machine learning models on EC2 instances in a single Availability Zone. The training job reads millions of small objects and requires consistent single-digit millisecond latency with very high request rates. The dataset can be re-created if it is lost. Which storage option provides the BEST performance?',
     options: [
       'S3 Standard with S3 Transfer Acceleration enabled',
@@ -253,7 +254,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-020',
     domain: 'performance',
-    lesson: 's3-performance',
+    lesson: LessonSlug.S3Performance,
     stem: 'A company allows users to upload profile photos to an S3 bucket. Each uploaded photo must be resized into three thumbnail sizes within seconds. Which solution meets these requirements with the LEAST operational overhead?',
     options: [
       'Run a cron job on an EC2 instance every minute to list new objects and resize them.',
@@ -266,7 +267,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-021',
     domain: 'performance',
-    lesson: 's3-performance',
+    lesson: LessonSlug.S3Performance,
     stem: 'A company hosts a static single-page application in an S3 bucket. The site must be served globally over HTTPS with low latency, and the bucket must not be publicly accessible. Which combination of steps meets these requirements? (Choose TWO.)',
     options: [
       'Enable static website hosting and add a bucket policy that allows public s3:GetObject.',
@@ -280,7 +281,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-022',
     domain: 'performance',
-    lesson: 'relational-databases',
+    lesson: LessonSlug.RelationalDatabases,
     stem: 'An e-commerce application uses an Amazon RDS for MySQL DB instance. Business analysts run read-only reporting queries during business hours, which increases CPU utilization on the database and slows down customer transactions. What should a solutions architect do to improve application performance?',
     options: [
       'Create a read replica and direct the reporting queries to the read replica endpoint.',
@@ -293,7 +294,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-023',
     domain: 'performance',
-    lesson: 'relational-databases',
+    lesson: LessonSlug.RelationalDatabases,
     stem: 'A serverless application uses AWS Lambda functions that connect to an Amazon Aurora PostgreSQL cluster. During traffic spikes, thousands of concurrent function invocations open new database connections, and the database returns "too many connections" errors. Which solution resolves this issue with the LEAST code changes?',
     options: [
       'Increase the instance size of the Aurora writer to raise the max_connections parameter.',
@@ -306,7 +307,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-024',
     domain: 'performance',
-    lesson: 'relational-databases',
+    lesson: LessonSlug.RelationalDatabases,
     stem: 'A company has an Amazon Aurora MySQL cluster with one writer and five Aurora Replicas. Two of the replicas use a larger instance class and should serve only long-running analytics queries, while the other three replicas serve application reads. Which solution meets these requirements?',
     options: [
       'Use the cluster endpoint for analytics and the reader endpoint for application reads.',
@@ -319,7 +320,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-025',
     domain: 'performance',
-    lesson: 'relational-databases',
+    lesson: LessonSlug.RelationalDatabases,
     stem: 'A SaaS company runs an internal reporting database that is idle most of the day but experiences unpredictable bursts of heavy activity lasting a few minutes. The company wants a MySQL-compatible database that scales capacity automatically and quickly to match demand without manual intervention. Which solution meets these requirements?',
     options: [
       'Amazon RDS for MySQL with storage autoscaling enabled',
@@ -332,7 +333,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-026',
     domain: 'performance',
-    lesson: 'relational-databases',
+    lesson: LessonSlug.RelationalDatabases,
     stem: 'A global gaming company runs its player profile database on Amazon Aurora PostgreSQL in us-east-1. Players in Europe and Asia experience high read latency. The company also needs disaster recovery in another Region with an RPO of about 1 second. Which solution meets these requirements?',
     options: [
       'Configure Aurora Global Database with secondary Regions in Europe and Asia and route local reads to the secondary clusters.',
@@ -345,7 +346,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-027',
     domain: 'performance',
-    lesson: 'relational-databases',
+    lesson: LessonSlug.RelationalDatabases,
     stem: 'A company is moving an application from Microsoft SQL Server to Amazon Aurora PostgreSQL to reduce licensing costs. The development team wants to keep most existing T-SQL queries unchanged. After migration, the workload is expected to be very I/O intensive, with I/O charges forecast to exceed 30% of the Aurora bill. Which actions should a solutions architect recommend? (Choose TWO.)',
     options: [
       'Migrate to Aurora MySQL instead, because it supports T-SQL natively.',
@@ -359,7 +360,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-028',
     domain: 'performance',
-    lesson: 'nosql-caching',
+    lesson: LessonSlug.NoSqlCaching,
     stem: 'A retail application uses Amazon DynamoDB to store product catalog data. During flash sales, read traffic for popular items increases dramatically, and the business requires response times in microseconds. The company wants to minimize application code changes. What should a solutions architect recommend?',
     options: [
       'Switch the table to on-demand capacity mode.',
@@ -372,7 +373,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-029',
     domain: 'performance',
-    lesson: 'nosql-caching',
+    lesson: LessonSlug.NoSqlCaching,
     stem: 'A company stores order events in a DynamoDB table that uses order_status (PENDING, SHIPPED, DELIVERED) as the partition key. Even though the table has enough provisioned capacity in total, write requests are throttled during peak hours. What should a solutions architect do to resolve the throttling?',
     options: [
       'Enable DynamoDB Streams on the table.',
@@ -385,7 +386,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-030',
     domain: 'performance',
-    lesson: 'nosql-caching',
+    lesson: LessonSlug.NoSqlCaching,
     stem: 'An existing DynamoDB table uses customer_id as the partition key and order_date as the sort key. The application now needs to efficiently query orders by product_id. The table is already in production. What should a solutions architect do?',
     options: [
       'Create a local secondary index with product_id as the sort key.',
@@ -398,7 +399,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-031',
     domain: 'performance',
-    lesson: 'nosql-caching',
+    lesson: LessonSlug.NoSqlCaching,
     stem: 'A web application runs on EC2 instances behind an Application Load Balancer and stores user session data in local memory. Users are logged out when Auto Scaling terminates instances. The company wants the web tier to be stateless and the session store to be highly available with sub-millisecond latency. Which solution meets these requirements?',
     options: [
       'Store session data in Amazon ElastiCache for Redis OSS (or Valkey) with Multi-AZ and automatic failover enabled.',
@@ -411,7 +412,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-032',
     domain: 'performance',
-    lesson: 'nosql-caching',
+    lesson: LessonSlug.NoSqlCaching,
     stem: 'A financial services company wants to detect fraud rings by analyzing relationships among accounts, devices, IP addresses, and transactions. Queries need to traverse many levels of connections with low latency. Which database should a solutions architect recommend?',
     options: [
       'Amazon DynamoDB with global secondary indexes',
@@ -424,7 +425,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-033',
     domain: 'performance',
-    lesson: 'nosql-caching',
+    lesson: LessonSlug.NoSqlCaching,
     stem: 'An application needs to perform 20 strongly consistent reads per second on a DynamoDB table using provisioned capacity. Each item is 6 KB. How many read capacity units (RCUs) must be provisioned?',
     options: ['20 RCUs', '30 RCUs', '40 RCUs', '60 RCUs'],
     answer: [2],
@@ -432,7 +433,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-034',
     domain: 'performance',
-    lesson: 'edge-networking',
+    lesson: LessonSlug.EdgeNetworking,
     stem: "A gaming company runs a multiplayer game server on EC2 instances behind Network Load Balancers in two AWS Regions. The game uses UDP. Players worldwide need low latency, and the company's partners require a fixed set of IP addresses to allowlist. If one Region fails, traffic must fail over within seconds. Which solution meets these requirements?",
     options: [
       'Amazon CloudFront with both NLBs configured as an origin group',
@@ -445,7 +446,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-035',
     domain: 'performance',
-    lesson: 'edge-networking',
+    lesson: LessonSlug.EdgeNetworking,
     stem: 'A news website runs on EC2 instances behind an Application Load Balancer in a single Region. Most traffic consists of images, CSS, and JavaScript files that rarely change. Users on other continents report slow page loads, and the EC2 instances are heavily loaded. Which solution will MOST improve performance?',
     options: [
       'Add more EC2 instances to the Auto Scaling group.',
@@ -458,7 +459,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-036',
     domain: 'performance',
-    lesson: 'edge-networking',
+    lesson: LessonSlug.EdgeNetworking,
     stem: 'A company serves a website through Amazon CloudFront with an S3 bucket in us-east-1 as the origin. The company wants CloudFront to automatically retrieve content from a replica bucket in us-west-2 if the primary bucket returns 5xx errors. What should a solutions architect configure?',
     options: [
       'Create an origin group with the us-east-1 bucket as the primary origin and the us-west-2 bucket as the secondary origin, and set failover criteria for 5xx status codes.',
@@ -471,7 +472,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-037',
     domain: 'performance',
-    lesson: 'edge-networking',
+    lesson: LessonSlug.EdgeNetworking,
     stem: 'An online payment form is served through Amazon CloudFront. The company requires that the credit card number field be encrypted at the edge and remain encrypted as it passes through the web servers, so that only a specific backend payment service can decrypt it. Which feature should a solutions architect use?',
     options: [
       'Origin Access Control',
@@ -484,7 +485,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-038',
     domain: 'performance',
-    lesson: 'edge-networking',
+    lesson: LessonSlug.EdgeNetworking,
     stem: 'A company uses Amazon CloudFront in front of an API that returns product pages. The cache hit ratio is below 10% because the distribution forwards all headers, cookies, and query strings to the origin and includes them in the cache key. The origin needs a tracking cookie for logging, but the response does not vary by that cookie. How can a solutions architect improve the cache hit ratio?',
     options: [
       'Create an invalidation for all paths every 5 minutes.',
@@ -497,7 +498,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-039',
     domain: 'performance',
-    lesson: 'data-analytics',
+    lesson: LessonSlug.DataAnalytics,
     stem: 'A company collects clickstream data from its website. Three different applications must process the same data in real time: a fraud detector, a recommendation engine, and an archiving job. The company must be able to reprocess the last 3 days of data if a bug is found. Which service should be used to ingest the data?',
     options: [
       'Amazon Kinesis Data Streams with the retention period increased to 3 days',
@@ -510,7 +511,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-040',
     domain: 'performance',
-    lesson: 'data-analytics',
+    lesson: LessonSlug.DataAnalytics,
     stem: 'A company wants to deliver application logs from thousands of servers to Amazon S3 in Apache Parquet format so that analysts can query them with Amazon Athena. A delay of a few minutes is acceptable. Which solution meets these requirements with the LEAST operational overhead?',
     options: [
       'Send the logs to Kinesis Data Streams and write a custom consumer on EC2 that converts the records to Parquet.',
@@ -523,7 +524,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-041',
     domain: 'performance',
-    lesson: 'data-analytics',
+    lesson: LessonSlug.DataAnalytics,
     stem: 'Analysts use Amazon Athena to query several terabytes of uncompressed CSV log files stored in S3. Most queries filter by date and select only a few columns. Queries are slow and expensive. Which solution will improve query performance and reduce cost the MOST?',
     options: [
       'Move the files to S3 Glacier Instant Retrieval.',
@@ -536,7 +537,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-042',
     domain: 'performance',
-    lesson: 'data-analytics',
+    lesson: LessonSlug.DataAnalytics,
     stem: 'A company has built a data lake on Amazon S3 that is cataloged in the AWS Glue Data Catalog. Different teams query the data with Athena and Redshift Spectrum. The company must restrict access so that the marketing team cannot see specific columns containing personal data, and must manage these permissions centrally. Which solution meets these requirements?',
     options: [
       'Create separate S3 buckets for each team and copy the allowed columns into each bucket.',
@@ -549,7 +550,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-043',
     domain: 'performance',
-    lesson: 'data-analytics',
+    lesson: LessonSlug.DataAnalytics,
     stem: 'A company stores 5 years of historical sales data as Parquet files in Amazon S3 and keeps the most recent 3 months in an Amazon Redshift cluster. Analysts want to run SQL queries that join recent data in Redshift with historical data in S3 without loading the historical data into the cluster. Which steps should a solutions architect take? (Choose TWO.)',
     options: [
       'Create external tables in Redshift and query the S3 data with Redshift Spectrum.',
@@ -563,7 +564,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-044',
     domain: 'performance',
-    lesson: 'data-migration',
+    lesson: LessonSlug.DataMigration,
     stem: 'A company needs to migrate 50 TB of data from an on-premises NFS server to Amazon EFS over an existing AWS Direct Connect connection. The transfer must be automated, verify data integrity, preserve file metadata, and run on a schedule until cutover. Which solution meets these requirements with the LEAST operational overhead?',
     options: [
       'Mount the EFS file system on-premises and use rsync with a cron job.',
@@ -576,7 +577,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-045',
     domain: 'performance',
-    lesson: 'data-migration',
+    lesson: LessonSlug.DataMigration,
     stem: 'A company wants to migrate an on-premises Oracle database to Amazon Aurora PostgreSQL. The database must stay online during the migration, and downtime at cutover must be minimal. Which approach should a solutions architect recommend?',
     options: [
       'Use AWS SCT (or DMS Schema Conversion) to convert the schema, then use AWS DMS with full load and change data capture (CDC) to migrate and replicate the data until cutover.',
@@ -589,7 +590,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-046',
     domain: 'performance',
-    lesson: 'data-migration',
+    lesson: LessonSlug.DataMigration,
     stem: 'A company uses backup software that writes to a physical tape library in its data center. The company wants to stop managing physical tapes and store backups durably in AWS with low-cost long-term archiving, without changing its backup software or processes. Which solution should a solutions architect recommend?',
     options: [
       'Deploy an S3 File Gateway and point the backup software to an SMB share.',
@@ -602,7 +603,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-047',
     domain: 'performance',
-    lesson: 'data-migration',
+    lesson: LessonSlug.DataMigration,
     stem: 'A logistics company receives daily inventory files from hundreds of external partners over SFTP. The company is moving to AWS and wants the files to land in Amazon S3. Partners must not change their existing SFTP clients or workflows. Which solution meets these requirements with the LEAST operational overhead?',
     options: [
       'Run an SFTP server on an EC2 instance and use a cron job to copy uploaded files to S3.',
@@ -615,7 +616,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-048',
     domain: 'performance',
-    lesson: 'data-migration',
+    lesson: LessonSlug.DataMigration,
     stem: 'A company must migrate 40 TB of file data from its data center to Amazon S3 within 10 days. The data center has a 1 Gbps internet connection, and about 80% of the bandwidth can be dedicated to the migration. Which solution meets the deadline with the LEAST effort?',
     options: [
       'Order a new 10 Gbps AWS Direct Connect dedicated connection and transfer the data over it.',
@@ -628,7 +629,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-049',
     domain: 'performance',
-    lesson: 'ai-ml-services',
+    lesson: LessonSlug.AiMlServices,
     stem: 'A company receives thousands of scanned loan application forms as PDF files in an Amazon S3 bucket each day. The company needs to extract the applicant names, addresses, and the values from tables in each form, and store the results in Amazon DynamoDB. The company has no machine learning expertise. Which solution meets these requirements with the LEAST operational overhead?',
     options: [
       'Use Amazon Rekognition text detection on each page and parse the output with an AWS Lambda function.',
@@ -641,7 +642,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-050',
     domain: 'performance',
-    lesson: 'ai-ml-services',
+    lesson: LessonSlug.AiMlServices,
     stem: 'A social media company allows users to upload images and videos. The company must automatically detect and flag explicit or violent content before it is published. The solution must scale with demand and require minimal development effort. Which AWS service should a solutions architect use?',
     options: [
       'Amazon Rekognition content moderation',
@@ -654,7 +655,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-051',
     domain: 'performance',
-    lesson: 'ai-ml-services',
+    lesson: LessonSlug.AiMlServices,
     stem: 'A company stores thousands of internal documents, including policies, manuals, and FAQs, in Amazon S3 and Microsoft SharePoint. Employees want to ask questions in natural language, such as "How many vacation days do new employees get?", and receive precise answers from the documents. Which service meets these requirements?',
     options: ['Amazon Comprehend', 'Amazon Lex', 'Amazon Athena', 'Amazon Kendra'],
     answer: [3],
@@ -662,7 +663,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-052',
     domain: 'performance',
-    lesson: 'ai-ml-services',
+    lesson: LessonSlug.AiMlServices,
     stem: 'A news website wants to offer an audio version of every article so that users can listen instead of read. New articles are published every few minutes. The solution must generate natural-sounding speech with minimal operational overhead. Which solution should a solutions architect recommend?',
     options: [
       'Use Amazon Transcribe to convert each article into an audio file and store it in Amazon S3.',
@@ -675,7 +676,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-053',
     domain: 'performance',
-    lesson: 'ai-ml-services',
+    lesson: LessonSlug.AiMlServices,
     stem: 'A call center records all customer calls and stores the audio files in Amazon S3. The company wants to determine whether each customer was satisfied or dissatisfied during the call, and must remove credit card numbers and other PII from any stored text. Which combination of services should a solutions architect use with the LEAST development effort? (Choose TWO.)',
     options: [
       'Amazon Transcribe to convert the audio to text with PII redaction enabled',
@@ -689,7 +690,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-054',
     domain: 'performance',
-    lesson: 'ai-ml-services',
+    lesson: LessonSlug.AiMlServices,
     stem: 'A company wants to build a generative AI assistant that summarizes internal reports and answers employee questions grounded in documents stored in Amazon S3. The company does not want to manage any infrastructure or train a model from scratch. Which solution meets these requirements?',
     options: [
       'Train a large language model with Amazon SageMaker AI training jobs on GPU instances and host it on a real-time endpoint.',
@@ -702,7 +703,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-055',
     domain: 'performance',
-    lesson: 'ai-ml-services',
+    lesson: LessonSlug.AiMlServices,
     stem: "An e-commerce company wants to show each user a personalized list of recommended products based on the user's browsing and purchase history. Recommendations must update in real time as users interact with the website. The company has no data scientists. Which AWS service should the company use?",
     options: ['Amazon Kendra', 'Amazon Personalize', 'Amazon SageMaker AI', 'Amazon Comprehend'],
     answer: [1],
@@ -710,7 +711,7 @@ export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-056',
     domain: 'performance',
-    lesson: 'ai-ml-services',
+    lesson: LessonSlug.AiMlServices,
     stem: 'A data science team needs to train a model with a proprietary algorithm on 5 TB of data stored in Amazon S3. The team wants managed Jupyter notebooks for experimentation, managed training on GPU instances, and a fully managed HTTPS endpoint for low-latency real-time predictions. Which solution meets these requirements?',
     options: [
       'Use Amazon Rekognition Custom Labels to train and host the model.',

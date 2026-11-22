@@ -1,11 +1,13 @@
+import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
+import { ComponentType } from '@/game/types';
 
 const cdnOnly = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['cdn', 'cloudfront', 280, 240],
-    ['files', 's3', 500, 240],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 280, y: 240 },
+    { id: 'files', type: ComponentType.S3, x: 500, y: 240 },
   ],
   [
     ['users', 'cdn'],
@@ -15,12 +17,12 @@ const cdnOnly = makeBoard(
 
 const withApi = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['cdn', 'cloudfront', 280, 240],
-    ['files', 's3', 500, 100],
-    ['api', 'apiGateway', 500, 320],
-    ['fn', 'lambda', 700, 320],
-    ['table', 'dynamodb', 900, 320],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 280, y: 240 },
+    { id: 'files', type: ComponentType.S3, x: 500, y: 100 },
+    { id: 'api', type: ComponentType.ApiGateway, x: 500, y: 320 },
+    { id: 'fn', type: ComponentType.Lambda, x: 700, y: 320 },
+    { id: 'table', type: ComponentType.DynamoDb, x: 900, y: 320 },
   ],
   [
     ['users', 'cdn'],
@@ -33,12 +35,12 @@ const withApi = makeBoard(
 
 const cachedApi = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['cdn', 'cloudfront', 280, 240, { cacheApi: true }],
-    ['files', 's3', 500, 100],
-    ['api', 'apiGateway', 500, 320],
-    ['fn', 'lambda', 700, 320],
-    ['table', 'dynamodb', 900, 320],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 280, y: 240, config: { cacheApi: true } },
+    { id: 'files', type: ComponentType.S3, x: 500, y: 100 },
+    { id: 'api', type: ComponentType.ApiGateway, x: 500, y: 320 },
+    { id: 'fn', type: ComponentType.Lambda, x: 700, y: 320 },
+    { id: 'table', type: ComponentType.DynamoDb, x: 900, y: 320 },
   ],
   [
     ['users', 'cdn'],
@@ -52,13 +54,13 @@ const cachedApi = makeBoard(
 const shielded = (table: { encrypted?: boolean; provisioned?: boolean } = {}) =>
   makeBoard(
     [
-      ['users', 'users', 80, 240],
-      ['shield', 'waf', 260, 240],
-      ['cdn', 'cloudfront', 440, 240, { cacheApi: true }],
-      ['files', 's3', 660, 100],
-      ['api', 'apiGateway', 660, 320],
-      ['fn', 'lambda', 860, 320],
-      ['table', 'dynamodb', 1060, 320, table],
+      { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+      { id: 'shield', type: ComponentType.Waf, x: 260, y: 240 },
+      { id: 'cdn', type: ComponentType.CloudFront, x: 440, y: 240, config: { cacheApi: true } },
+      { id: 'files', type: ComponentType.S3, x: 660, y: 100 },
+      { id: 'api', type: ComponentType.ApiGateway, x: 660, y: 320 },
+      { id: 'fn', type: ComponentType.Lambda, x: 860, y: 320 },
+      { id: 'table', type: ComponentType.DynamoDb, x: 1060, y: 320, config: table },
     ],
     [
       ['users', 'shield'],
@@ -78,12 +80,12 @@ export const staticWebsite: Track = {
       id: 'site-1-launch',
       scenario: { traffic: 300, mix: { static: 1 }, audience: { 'us-east-1': 0.7, 'eu-west-1': 0.3 }, latencyTarget: 60, budget: 8, requirements: [] },
       unlocks: [],
-      lessons: ['edge-networking', 's3-storage-classes'],
+      lessons: [LessonSlug.EdgeNetworking, LessonSlug.S3StorageClasses],
       solution: cdnOnly,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['web', 'ec2', 320, 240],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 320, y: 240 },
         ],
         [['users', 'web']],
       ),
@@ -99,15 +101,15 @@ export const staticWebsite: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['serverless-workflows', 'nosql-caching'],
+      lessons: [LessonSlug.ServerlessWorkflows, LessonSlug.NoSqlCaching],
       solution: withApi,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['cdn', 'cloudfront', 280, 240],
-          ['files', 's3', 500, 100],
-          ['web', 'ec2', 500, 320],
-          ['db', 'rds', 700, 320],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'cdn', type: ComponentType.CloudFront, x: 280, y: 240 },
+          { id: 'files', type: ComponentType.S3, x: 500, y: 100 },
+          { id: 'web', type: ComponentType.Ec2, x: 500, y: 320 },
+          { id: 'db', type: ComponentType.Rds, x: 700, y: 320 },
         ],
         [
           ['users', 'cdn'],
@@ -128,7 +130,7 @@ export const staticWebsite: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['edge-networking'],
+      lessons: [LessonSlug.EdgeNetworking],
       solution: cachedApi,
       naive: withApi,
     },
@@ -144,7 +146,7 @@ export const staticWebsite: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['threat-detection-waf-shield'],
+      lessons: [LessonSlug.ThreatDetectionWafShield],
       solution: shielded(),
       naive: cachedApi,
     },
@@ -159,7 +161,7 @@ export const staticWebsite: Track = {
         requirements: ['encryptData', 'privateData'],
       },
       unlocks: [],
-      lessons: ['data-encryption-kms'],
+      lessons: [LessonSlug.DataEncryptionKms],
       solution: shielded({ encrypted: true }),
       naive: shielded(),
     },
@@ -174,7 +176,7 @@ export const staticWebsite: Track = {
         requirements: ['encryptData', 'privateData'],
       },
       unlocks: [],
-      lessons: ['cost-database-storage-choices', 'nosql-caching'],
+      lessons: [LessonSlug.CostDatabaseStorageChoices, LessonSlug.NoSqlCaching],
       solution: shielded({ encrypted: true, provisioned: true }),
       naive: shielded({ encrypted: true }),
     },

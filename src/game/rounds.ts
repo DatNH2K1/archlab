@@ -1,7 +1,8 @@
 import type { Messages } from 'next-intl';
-import type { LessonSlug } from '@/content/types';
+import { LessonSlug } from '@/content/types';
 import { makeBoard } from './board';
-import type { Board, ComponentType, Scenario } from './types';
+import { ComponentType } from './types';
+import type { Board, Scenario } from './types';
 
 export const CHAPTERS = [
   'basics',
@@ -56,13 +57,13 @@ export const ROUNDS: LearnRound[] = [
       budget: 35,
       requirements: [],
     },
-    unlocks: ['ec2', 'rds'],
-    lessons: ['ec2-compute', 'relational-databases'],
+    unlocks: [ComponentType.Ec2, ComponentType.Rds],
+    lessons: [LessonSlug.Ec2Compute, LessonSlug.RelationalDatabases],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['web', 'ec2', 360, 240],
-        ['db', 'rds', 640, 240],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'web', type: ComponentType.Ec2, x: 360, y: 240 },
+        { id: 'db', type: ComponentType.Rds, x: 640, y: 240 },
       ],
       [
         ['users', 'web'],
@@ -82,12 +83,12 @@ export const ROUNDS: LearnRound[] = [
       requirements: [],
     },
     unlocks: [],
-    lessons: ['ec2-compute'],
+    lessons: [LessonSlug.Ec2Compute],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['web', 'ec2', 360, 240, { size: 'medium' }],
-        ['db', 'rds', 640, 240, { size: 'medium' }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'web', type: ComponentType.Ec2, x: 360, y: 240, config: { size: 'medium' } },
+        { id: 'db', type: ComponentType.Rds, x: 640, y: 240, config: { size: 'medium' } },
       ],
       [
         ['users', 'web'],
@@ -106,14 +107,14 @@ export const ROUNDS: LearnRound[] = [
       budget: 170,
       requirements: [],
     },
-    unlocks: ['alb'],
-    lessons: ['elastic-load-balancing'],
+    unlocks: [ComponentType.Alb],
+    lessons: [LessonSlug.ElasticLoadBalancing],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['lb', 'alb', 300, 240],
-        ['web', 'ec2', 520, 240, { size: 'medium', count: 3 }],
-        ['db', 'rds', 760, 240, { size: 'large' }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'lb', type: ComponentType.Alb, x: 300, y: 240 },
+        { id: 'web', type: ComponentType.Ec2, x: 520, y: 240, config: { size: 'medium', count: 3 } },
+        { id: 'db', type: ComponentType.Rds, x: 760, y: 240, config: { size: 'large' } },
       ],
       [
         ['users', 'lb'],
@@ -135,13 +136,13 @@ export const ROUNDS: LearnRound[] = [
       requirements: [],
     },
     unlocks: [],
-    lessons: ['high-availability-multi-az'],
+    lessons: [LessonSlug.HighAvailabilityMultiAz],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['lb', 'alb', 300, 240],
-        ['web', 'ec2', 520, 240, { size: 'medium', count: 2, az: 'spread' }],
-        ['db', 'rds', 760, 240, { size: 'medium', multiAz: true }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'lb', type: ComponentType.Alb, x: 300, y: 240 },
+        { id: 'web', type: ComponentType.Ec2, x: 520, y: 240, config: { size: 'medium', count: 2, az: 'spread' } },
+        { id: 'db', type: ComponentType.Rds, x: 760, y: 240, config: { size: 'medium', multiAz: true } },
       ],
       [
         ['users', 'lb'],
@@ -163,13 +164,13 @@ export const ROUNDS: LearnRound[] = [
       requirements: [],
     },
     unlocks: [],
-    lessons: ['auto-scaling'],
+    lessons: [LessonSlug.AutoScaling],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['lb', 'alb', 300, 240],
-        ['web', 'ec2', 520, 240, { size: 'medium', count: 1, autoScaling: true, maxCount: 3 }],
-        ['db', 'rds', 760, 240, { size: 'large' }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'lb', type: ComponentType.Alb, x: 300, y: 240 },
+        { id: 'web', type: ComponentType.Ec2, x: 520, y: 240, config: { size: 'medium', count: 1, autoScaling: true, maxCount: 3 } },
+        { id: 'db', type: ComponentType.Rds, x: 760, y: 240, config: { size: 'large' } },
       ],
       [
         ['users', 'lb'],
@@ -191,18 +192,18 @@ export const ROUNDS: LearnRound[] = [
       budget: 220,
       requirements: [],
     },
-    unlocks: ['route53', 'aurora'],
-    lessons: ['disaster-recovery', 'route53-routing', 'backup-replication'],
+    unlocks: [ComponentType.Route53, ComponentType.Aurora],
+    lessons: [LessonSlug.DisasterRecovery, LessonSlug.Route53Routing, LessonSlug.BackupReplication],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 280],
-        ['dns', 'route53', 260, 280],
-        ['lb1', 'alb', 440, 140],
-        ['web1', 'ec2', 640, 140, { size: 'medium', count: 2, az: 'spread' }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 280 },
+        { id: 'dns', type: ComponentType.Route53, x: 260, y: 280 },
+        { id: 'lb1', type: ComponentType.Alb, x: 440, y: 140 },
+        { id: 'web1', type: ComponentType.Ec2, x: 640, y: 140, config: { size: 'medium', count: 2, az: 'spread' } },
         // Aurora Global Database: one cluster with a managed copy in eu-west-1.
-        ['db', 'aurora', 860, 280, { globalDb: true }],
-        ['lb2', 'alb', 440, 420, { region: 'eu-west-1' }],
-        ['web2', 'ec2', 640, 420, { size: 'medium', region: 'eu-west-1' }],
+        { id: 'db', type: ComponentType.Aurora, x: 860, y: 280, config: { globalDb: true } },
+        { id: 'lb2', type: ComponentType.Alb, x: 440, y: 420, config: { region: 'eu-west-1' } },
+        { id: 'web2', type: ComponentType.Ec2, x: 640, y: 420, config: { size: 'medium', region: 'eu-west-1' } },
       ],
       [
         ['users', 'dns'],
@@ -226,15 +227,15 @@ export const ROUNDS: LearnRound[] = [
       budget: 200,
       requirements: [],
     },
-    unlocks: ['elasticache'],
-    lessons: ['nosql-caching'],
+    unlocks: [ComponentType.ElastiCache],
+    lessons: [LessonSlug.NoSqlCaching],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['lb', 'alb', 300, 240],
-        ['web', 'ec2', 520, 240, { size: 'large', count: 2 }],
-        ['cache', 'elasticache', 760, 120],
-        ['db', 'rds', 760, 340, { size: 'medium' }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'lb', type: ComponentType.Alb, x: 300, y: 240 },
+        { id: 'web', type: ComponentType.Ec2, x: 520, y: 240, config: { size: 'large', count: 2 } },
+        { id: 'cache', type: ComponentType.ElastiCache, x: 760, y: 120 },
+        { id: 'db', type: ComponentType.Rds, x: 760, y: 340, config: { size: 'medium' } },
       ],
       [
         ['users', 'lb'],
@@ -256,15 +257,15 @@ export const ROUNDS: LearnRound[] = [
       budget: 215,
       requirements: [],
     },
-    unlocks: ['readReplica'],
-    lessons: ['nosql-caching', 'relational-databases'],
+    unlocks: [ComponentType.ReadReplica],
+    lessons: [LessonSlug.NoSqlCaching, LessonSlug.RelationalDatabases],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['lb', 'alb', 300, 240],
-        ['web', 'ec2', 520, 240, { size: 'large', count: 2 }],
-        ['cache', 'elasticache', 760, 120, { multiAz: true }],
-        ['db', 'rds', 760, 340, { size: 'medium' }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'lb', type: ComponentType.Alb, x: 300, y: 240 },
+        { id: 'web', type: ComponentType.Ec2, x: 520, y: 240, config: { size: 'large', count: 2 } },
+        { id: 'cache', type: ComponentType.ElastiCache, x: 760, y: 120, config: { multiAz: true } },
+        { id: 'db', type: ComponentType.Rds, x: 760, y: 340, config: { size: 'medium' } },
       ],
       [
         ['users', 'lb'],
@@ -285,16 +286,16 @@ export const ROUNDS: LearnRound[] = [
       budget: 200,
       requirements: [],
     },
-    unlocks: ['s3', 'cloudfront'],
-    lessons: ['s3-performance', 'edge-networking'],
+    unlocks: [ComponentType.S3, ComponentType.CloudFront],
+    lessons: [LessonSlug.S3Performance, LessonSlug.EdgeNetworking],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['cdn', 'cloudfront', 260, 240],
-        ['files', 's3', 480, 100],
-        ['lb', 'alb', 480, 300],
-        ['web', 'ec2', 680, 300, { size: 'large' }],
-        ['db', 'rds', 880, 300, { size: 'large' }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'cdn', type: ComponentType.CloudFront, x: 260, y: 240 },
+        { id: 'files', type: ComponentType.S3, x: 480, y: 100 },
+        { id: 'lb', type: ComponentType.Alb, x: 480, y: 300 },
+        { id: 'web', type: ComponentType.Ec2, x: 680, y: 300, config: { size: 'large' } },
+        { id: 'db', type: ComponentType.Rds, x: 880, y: 300, config: { size: 'large' } },
       ],
       [
         ['users', 'cdn'],
@@ -316,16 +317,16 @@ export const ROUNDS: LearnRound[] = [
       budget: 120,
       requirements: [],
     },
-    unlocks: ['globalAccelerator'],
-    lessons: ['edge-networking'],
+    unlocks: [ComponentType.GlobalAccelerator],
+    lessons: [LessonSlug.EdgeNetworking],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['cdn', 'cloudfront', 260, 240, { cacheApi: true }],
-        ['files', 's3', 480, 100],
-        ['lb', 'alb', 480, 300],
-        ['web', 'ec2', 680, 300, { size: 'medium' }],
-        ['db', 'rds', 880, 300, { size: 'medium' }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'cdn', type: ComponentType.CloudFront, x: 260, y: 240, config: { cacheApi: true } },
+        { id: 'files', type: ComponentType.S3, x: 480, y: 100 },
+        { id: 'lb', type: ComponentType.Alb, x: 480, y: 300 },
+        { id: 'web', type: ComponentType.Ec2, x: 680, y: 300, config: { size: 'medium' } },
+        { id: 'db', type: ComponentType.Rds, x: 880, y: 300, config: { size: 'medium' } },
       ],
       [
         ['users', 'cdn'],
@@ -347,16 +348,16 @@ export const ROUNDS: LearnRound[] = [
       budget: 130,
       requirements: ['drainQueue'],
     },
-    unlocks: ['sqs'],
-    lessons: ['decoupling-messaging'],
+    unlocks: [ComponentType.Sqs],
+    lessons: [LessonSlug.DecouplingMessaging],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['lb', 'alb', 280, 240],
-        ['web', 'ec2', 480, 240, { size: 'medium' }],
-        ['db', 'rds', 720, 240, { size: 'medium' }],
-        ['queue', 'sqs', 480, 420],
-        ['worker', 'ec2', 720, 420, { size: 'medium' }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+        { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'medium' } },
+        { id: 'db', type: ComponentType.Rds, x: 720, y: 240, config: { size: 'medium' } },
+        { id: 'queue', type: ComponentType.Sqs, x: 480, y: 420 },
+        { id: 'worker', type: ComponentType.Ec2, x: 720, y: 420, config: { size: 'medium' } },
       ],
       [
         ['users', 'lb'],
@@ -379,19 +380,19 @@ export const ROUNDS: LearnRound[] = [
       budget: 145,
       requirements: ['fanOut', 'drainQueue'],
     },
-    unlocks: ['sns'],
-    lessons: ['decoupling-messaging'],
+    unlocks: [ComponentType.Sns],
+    lessons: [LessonSlug.DecouplingMessaging],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['lb', 'alb', 260, 240],
-        ['web', 'ec2', 440, 240, { size: 'medium' }],
-        ['db', 'rds', 680, 120, { size: 'small' }],
-        ['topic', 'sns', 440, 420],
-        ['q1', 'sqs', 640, 340],
-        ['q2', 'sqs', 640, 500],
-        ['mail', 'ec2', 860, 340, { size: 'medium' }],
-        ['stats', 'ec2', 860, 500, { size: 'medium' }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'lb', type: ComponentType.Alb, x: 260, y: 240 },
+        { id: 'web', type: ComponentType.Ec2, x: 440, y: 240, config: { size: 'medium' } },
+        { id: 'db', type: ComponentType.Rds, x: 680, y: 120, config: { size: 'small' } },
+        { id: 'topic', type: ComponentType.Sns, x: 440, y: 420 },
+        { id: 'q1', type: ComponentType.Sqs, x: 640, y: 340 },
+        { id: 'q2', type: ComponentType.Sqs, x: 640, y: 500 },
+        { id: 'mail', type: ComponentType.Ec2, x: 860, y: 340, config: { size: 'medium' } },
+        { id: 'stats', type: ComponentType.Ec2, x: 860, y: 500, config: { size: 'medium' } },
       ],
       [
         ['users', 'lb'],
@@ -417,12 +418,12 @@ export const ROUNDS: LearnRound[] = [
       requirements: ['encryptData', 'privateData', 'noPublicServers'],
     },
     unlocks: [],
-    lessons: ['vpc-networking-security', 'data-encryption-kms'],
+    lessons: [LessonSlug.VpcNetworkingSecurity, LessonSlug.DataEncryptionKms],
     starter: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['web', 'ec2', 360, 240, { size: 'medium' }],
-        ['db', 'rds', 640, 240, { size: 'medium' }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'web', type: ComponentType.Ec2, x: 360, y: 240, config: { size: 'medium' } },
+        { id: 'db', type: ComponentType.Rds, x: 640, y: 240, config: { size: 'medium' } },
       ],
       [
         ['users', 'web'],
@@ -432,10 +433,10 @@ export const ROUNDS: LearnRound[] = [
     ),
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['lb', 'alb', 280, 240],
-        ['web', 'ec2', 480, 240, { size: 'medium' }],
-        ['db', 'rds', 720, 240, { size: 'medium', encrypted: true }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+        { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'medium' } },
+        { id: 'db', type: ComponentType.Rds, x: 720, y: 240, config: { size: 'medium', encrypted: true } },
       ],
       [
         ['users', 'lb'],
@@ -456,15 +457,15 @@ export const ROUNDS: LearnRound[] = [
       budget: 110,
       requirements: [],
     },
-    unlocks: ['waf'],
-    lessons: ['threat-detection-waf-shield'],
+    unlocks: [ComponentType.Waf],
+    lessons: [LessonSlug.ThreatDetectionWafShield],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['shield', 'waf', 260, 240],
-        ['lb', 'alb', 440, 240],
-        ['web', 'ec2', 620, 240, { size: 'medium' }],
-        ['db', 'rds', 820, 240, { size: 'medium' }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'shield', type: ComponentType.Waf, x: 260, y: 240 },
+        { id: 'lb', type: ComponentType.Alb, x: 440, y: 240 },
+        { id: 'web', type: ComponentType.Ec2, x: 620, y: 240, config: { size: 'medium' } },
+        { id: 'db', type: ComponentType.Rds, x: 820, y: 240, config: { size: 'medium' } },
       ],
       [
         ['users', 'shield'],
@@ -485,14 +486,14 @@ export const ROUNDS: LearnRound[] = [
       budget: 12,
       requirements: [],
     },
-    unlocks: ['apiGateway', 'lambda', 'dynamodb'],
-    lessons: ['serverless-workflows', 'cost-optimized-architectures'],
+    unlocks: [ComponentType.ApiGateway, ComponentType.Lambda, ComponentType.DynamoDb],
+    lessons: [LessonSlug.ServerlessWorkflows, LessonSlug.CostOptimizedArchitectures],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['api', 'apiGateway', 300, 240],
-        ['fn', 'lambda', 520, 240],
-        ['table', 'dynamodb', 740, 240],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'api', type: ComponentType.ApiGateway, x: 300, y: 240 },
+        { id: 'fn', type: ComponentType.Lambda, x: 520, y: 240 },
+        { id: 'table', type: ComponentType.DynamoDb, x: 740, y: 240 },
       ],
       [
         ['users', 'api'],
@@ -514,15 +515,15 @@ export const ROUNDS: LearnRound[] = [
       requirements: ['drainQueue'],
     },
     unlocks: [],
-    lessons: ['ec2-pricing-models'],
+    lessons: [LessonSlug.Ec2PricingModels],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['lb', 'alb', 280, 240],
-        ['web', 'ec2', 480, 240, { size: 'medium' }],
-        ['db', 'rds', 720, 240, { size: 'small' }],
-        ['queue', 'sqs', 480, 420],
-        ['worker', 'ec2', 720, 420, { size: 'large', count: 2, pricing: 'spot' }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+        { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'medium' } },
+        { id: 'db', type: ComponentType.Rds, x: 720, y: 240, config: { size: 'small' } },
+        { id: 'queue', type: ComponentType.Sqs, x: 480, y: 420 },
+        { id: 'worker', type: ComponentType.Ec2, x: 720, y: 420, config: { size: 'large', count: 2, pricing: 'spot' } },
       ],
       [
         ['users', 'lb'],
@@ -546,13 +547,13 @@ export const ROUNDS: LearnRound[] = [
       requirements: [],
     },
     unlocks: [],
-    lessons: ['nosql-caching', 'cost-database-storage-choices'],
+    lessons: [LessonSlug.NoSqlCaching, LessonSlug.CostDatabaseStorageChoices],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['lb', 'alb', 300, 240],
-        ['web', 'ec2', 520, 240, { size: 'large', count: 2, az: 'spread' }],
-        ['table', 'dynamodb', 760, 240, { provisioned: true, size: 'large' }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'lb', type: ComponentType.Alb, x: 300, y: 240 },
+        { id: 'web', type: ComponentType.Ec2, x: 520, y: 240, config: { size: 'large', count: 2, az: 'spread' } },
+        { id: 'table', type: ComponentType.DynamoDb, x: 760, y: 240, config: { provisioned: true, size: 'large' } },
       ],
       [
         ['users', 'lb'],
@@ -573,14 +574,14 @@ export const ROUNDS: LearnRound[] = [
       requirements: [],
     },
     unlocks: [],
-    lessons: ['ec2-pricing-models', 'cost-management-tools'],
+    lessons: [LessonSlug.Ec2PricingModels, LessonSlug.CostManagementTools],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 240],
-        ['lb', 'alb', 300, 240],
-        ['web', 'ec2', 520, 240, { size: 'medium', count: 3, pricing: 'reserved' }],
-        ['db', 'rds', 760, 240, { size: 'medium' }],
-        ['cache', 'elasticache', 760, 80],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+        { id: 'lb', type: ComponentType.Alb, x: 300, y: 240 },
+        { id: 'web', type: ComponentType.Ec2, x: 520, y: 240, config: { size: 'medium', count: 3, pricing: 'reserved' } },
+        { id: 'db', type: ComponentType.Rds, x: 760, y: 240, config: { size: 'medium' } },
+        { id: 'cache', type: ComponentType.ElastiCache, x: 760, y: 80 },
       ],
       [
         ['users', 'lb'],
@@ -604,28 +605,22 @@ export const ROUNDS: LearnRound[] = [
     },
     unlocks: [],
     lessons: [
-      'high-availability-multi-az',
-      'edge-networking',
-      'decoupling-messaging',
-      'data-encryption-kms',
+      LessonSlug.HighAvailabilityMultiAz,
+      LessonSlug.EdgeNetworking,
+      LessonSlug.DecouplingMessaging,
+      LessonSlug.DataEncryptionKms,
     ],
     solution: makeBoard(
       [
-        ['users', 'users', 80, 280],
-        ['cdn', 'cloudfront', 240, 280, { cacheApi: true }],
-        ['files', 's3', 420, 100],
-        ['lb', 'alb', 420, 280],
-        [
-          'web',
-          'ec2',
-          600,
-          280,
-          { size: 'medium', count: 2, az: 'spread', autoScaling: true, maxCount: 4 },
-        ],
-        ['cache', 'elasticache', 820, 140, { multiAz: true, encrypted: true }],
-        ['db', 'rds', 820, 300, { size: 'medium', multiAz: true, encrypted: true }],
-        ['queue', 'sqs', 600, 460, { encrypted: true }],
-        ['worker', 'ec2', 820, 460, { size: 'medium', count: 2, az: 'spread' }],
+        { id: 'users', type: ComponentType.Users, x: 80, y: 280 },
+        { id: 'cdn', type: ComponentType.CloudFront, x: 240, y: 280, config: { cacheApi: true } },
+        { id: 'files', type: ComponentType.S3, x: 420, y: 100 },
+        { id: 'lb', type: ComponentType.Alb, x: 420, y: 280 },
+        { id: 'web', type: ComponentType.Ec2, x: 600, y: 280, config: { size: 'medium', count: 2, az: 'spread', autoScaling: true, maxCount: 4 } },
+        { id: 'cache', type: ComponentType.ElastiCache, x: 820, y: 140, config: { multiAz: true, encrypted: true } },
+        { id: 'db', type: ComponentType.Rds, x: 820, y: 300, config: { size: 'medium', multiAz: true, encrypted: true } },
+        { id: 'queue', type: ComponentType.Sqs, x: 600, y: 460, config: { encrypted: true } },
+        { id: 'worker', type: ComponentType.Ec2, x: 820, y: 460, config: { size: 'medium', count: 2, az: 'spread' } },
       ],
       [
         ['users', 'cdn'],

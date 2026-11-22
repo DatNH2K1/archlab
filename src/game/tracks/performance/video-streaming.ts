@@ -1,13 +1,15 @@
+import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
+import { ComponentType } from '@/game/types';
 
 const origin = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 300, 240],
-    ['web', 'ec2', 500, 240, { size: 'large' }],
-    ['files', 's3', 700, 100],
-    ['db', 'rds', 700, 300, { size: 'medium' }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 300, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 500, y: 240, config: { size: 'large' } },
+    { id: 'files', type: ComponentType.S3, x: 700, y: 100 },
+    { id: 'db', type: ComponentType.Rds, x: 700, y: 300, config: { size: 'medium' } },
   ],
   [
     ['users', 'lb'],
@@ -19,12 +21,12 @@ const origin = makeBoard(
 
 const cdn = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['cdn', 'cloudfront', 260, 240],
-    ['files', 's3', 460, 100],
-    ['lb', 'alb', 460, 300],
-    ['web', 'ec2', 660, 300, { size: 'medium' }],
-    ['db', 'rds', 860, 300, { size: 'medium' }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 260, y: 240 },
+    { id: 'files', type: ComponentType.S3, x: 460, y: 100 },
+    { id: 'lb', type: ComponentType.Alb, x: 460, y: 300 },
+    { id: 'web', type: ComponentType.Ec2, x: 660, y: 300, config: { size: 'medium' } },
+    { id: 'db', type: ComponentType.Rds, x: 860, y: 300, config: { size: 'medium' } },
   ],
   [
     ['users', 'cdn'],
@@ -38,14 +40,14 @@ const cdn = makeBoard(
 const queued = (worker: Record<string, unknown>) =>
   makeBoard(
     [
-      ['users', 'users', 80, 240],
-      ['cdn', 'cloudfront', 260, 240],
-      ['files', 's3', 460, 100],
-      ['lb', 'alb', 460, 300],
-      ['web', 'ec2', 660, 300, { size: 'medium' }],
-      ['db', 'rds', 860, 300, { size: 'medium' }],
-      ['queue', 'sqs', 660, 460],
-      ['worker', 'ec2', 860, 460, worker],
+      { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+      { id: 'cdn', type: ComponentType.CloudFront, x: 260, y: 240 },
+      { id: 'files', type: ComponentType.S3, x: 460, y: 100 },
+      { id: 'lb', type: ComponentType.Alb, x: 460, y: 300 },
+      { id: 'web', type: ComponentType.Ec2, x: 660, y: 300, config: { size: 'medium' } },
+      { id: 'db', type: ComponentType.Rds, x: 860, y: 300, config: { size: 'medium' } },
+      { id: 'queue', type: ComponentType.Sqs, x: 660, y: 460 },
+      { id: 'worker', type: ComponentType.Ec2, x: 860, y: 460, config: worker },
     ],
     [
       ['users', 'cdn'],
@@ -63,15 +65,15 @@ const spot = queued({ size: 'large', pricing: 'spot' });
 
 const catalog = (webs: Record<string, unknown>) => makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['cdn', 'cloudfront', 260, 240, { cacheApi: true }],
-    ['files', 's3', 460, 100],
-    ['lb', 'alb', 460, 300],
-    ['web', 'ec2', 660, 300, webs],
-    ['cache', 'elasticache', 860, 160],
-    ['db', 'rds', 860, 300, { size: 'medium' }],
-    ['queue', 'sqs', 660, 460],
-    ['worker', 'ec2', 860, 460, { size: 'large', pricing: 'spot' }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 260, y: 240, config: { cacheApi: true } },
+    { id: 'files', type: ComponentType.S3, x: 460, y: 100 },
+    { id: 'lb', type: ComponentType.Alb, x: 460, y: 300 },
+    { id: 'web', type: ComponentType.Ec2, x: 660, y: 300, config: webs },
+    { id: 'cache', type: ComponentType.ElastiCache, x: 860, y: 160 },
+    { id: 'db', type: ComponentType.Rds, x: 860, y: 300, config: { size: 'medium' } },
+    { id: 'queue', type: ComponentType.Sqs, x: 660, y: 460 },
+    { id: 'worker', type: ComponentType.Ec2, x: 860, y: 460, config: { size: 'large', pricing: 'spot' } },
   ],
   [
     ['users', 'cdn'],
@@ -89,20 +91,20 @@ const browse = catalog({ size: 'medium', count: 2 });
 const twoRegions = (web: Record<string, unknown>, web2: Record<string, unknown>) =>
   makeBoard(
     [
-      ['users', 'users', 80, 340],
-      ['cdn', 'cloudfront', 240, 340, { cacheApi: true }],
-      ['dns', 'route53', 400, 340],
-      ['files', 's3', 600, 60],
-      ['lb', 'alb', 600, 200],
-      ['web', 'ec2', 800, 200, web],
-      ['cache', 'elasticache', 1000, 100],
+      { id: 'users', type: ComponentType.Users, x: 80, y: 340 },
+      { id: 'cdn', type: ComponentType.CloudFront, x: 240, y: 340, config: { cacheApi: true } },
+      { id: 'dns', type: ComponentType.Route53, x: 400, y: 340 },
+      { id: 'files', type: ComponentType.S3, x: 600, y: 60 },
+      { id: 'lb', type: ComponentType.Alb, x: 600, y: 200 },
+      { id: 'web', type: ComponentType.Ec2, x: 800, y: 200, config: web },
+      { id: 'cache', type: ComponentType.ElastiCache, x: 1000, y: 100 },
       // Aurora Global Database: one cluster with a managed copy in eu-west-1.
-      ['db', 'aurora', 1000, 240, { size: 'small', globalDb: true }],
-      ['queue', 'sqs', 800, 360],
-      ['worker', 'ec2', 1000, 380, { size: 'large', pricing: 'spot' }],
-      ['files2', 's3', 600, 500, { region: 'eu-west-1' }],
-      ['lb2', 'alb', 600, 640, { region: 'eu-west-1' }],
-      ['web2', 'ec2', 800, 640, { ...web2, region: 'eu-west-1' }],
+      { id: 'db', type: ComponentType.Aurora, x: 1000, y: 240, config: { size: 'small', globalDb: true } },
+      { id: 'queue', type: ComponentType.Sqs, x: 800, y: 360 },
+      { id: 'worker', type: ComponentType.Ec2, x: 1000, y: 380, config: { size: 'large', pricing: 'spot' } },
+      { id: 'files2', type: ComponentType.S3, x: 600, y: 500, config: { region: 'eu-west-1' } },
+      { id: 'lb2', type: ComponentType.Alb, x: 600, y: 640, config: { region: 'eu-west-1' } },
+      { id: 'web2', type: ComponentType.Ec2, x: 800, y: 640, config: { ...web2, region: 'eu-west-1' } },
     ],
     [
       ['users', 'cdn'],
@@ -131,7 +133,7 @@ export const videoStreaming: Track = {
       id: 'vid-1-launch',
       scenario: { traffic: 2000, mix: { static: 0.85, read: 0.12, write: 0.03 }, audience: { 'us-east-1': 0.5, 'eu-west-1': 0.5 }, latencyTarget: 110, budget: 115, requirements: [] },
       unlocks: [],
-      lessons: ['edge-networking', 's3-performance'],
+      lessons: [LessonSlug.EdgeNetworking, LessonSlug.S3Performance],
       solution: cdn,
       naive: origin,
     },
@@ -139,7 +141,7 @@ export const videoStreaming: Track = {
       id: 'vid-2-transcode',
       scenario: { traffic: 2500, mix: { static: 0.8, read: 0.12, write: 0.03, job: 0.05 }, audience: { 'us-east-1': 0.5, 'eu-west-1': 0.5 }, latencyTarget: 110, budget: 150, requirements: ['drainQueue'] },
       unlocks: [],
-      lessons: ['decoupling-messaging'],
+      lessons: [LessonSlug.DecouplingMessaging],
       solution: transcode,
       naive: cdn,
     },
@@ -147,7 +149,7 @@ export const videoStreaming: Track = {
       id: 'vid-3-spot',
       scenario: { traffic: 2500, mix: { static: 0.8, read: 0.12, write: 0.03, job: 0.05 }, audience: { 'us-east-1': 0.5, 'eu-west-1': 0.5 }, twist: 'spotInterruption', latencyTarget: 110, budget: 135, requirements: ['drainQueue'] },
       unlocks: [],
-      lessons: ['ec2-pricing-models'],
+      lessons: [LessonSlug.Ec2PricingModels],
       solution: spot,
       naive: queued({ size: 'medium', pricing: 'spot' }),
     },
@@ -155,7 +157,7 @@ export const videoStreaming: Track = {
       id: 'vid-4-catalog',
       scenario: { traffic: 4000, mix: { static: 0.72, read: 0.2, write: 0.03, job: 0.05 }, audience: { 'us-east-1': 0.5, 'eu-west-1': 0.5 }, latencyTarget: 100, budget: 200, requirements: ['drainQueue'] },
       unlocks: [],
-      lessons: ['nosql-caching', 'edge-networking'],
+      lessons: [LessonSlug.NoSqlCaching, LessonSlug.EdgeNetworking],
       solution: browse,
       naive: catalog({ size: 'large', count: 2 }),
     },
@@ -163,7 +165,7 @@ export const videoStreaming: Track = {
       id: 'vid-5-region',
       scenario: { traffic: 4000, mix: { static: 0.72, read: 0.2, write: 0.03, job: 0.05 }, audience: { 'us-east-1': 0.5, 'eu-west-1': 0.5 }, twist: 'regionOutage', outageRegion: 'us-east-1', latencyTarget: 120, budget: 330, requirements: ['drainQueue'] },
       unlocks: [],
-      lessons: ['disaster-recovery', 'route53-routing'],
+      lessons: [LessonSlug.DisasterRecovery, LessonSlug.Route53Routing],
       solution: failover,
       naive: browse,
     },
@@ -171,7 +173,7 @@ export const videoStreaming: Track = {
       id: 'vid-6-sale',
       scenario: { traffic: 4000, mix: { static: 0.72, read: 0.2, write: 0.03, job: 0.05 }, audience: { 'us-east-1': 0.5, 'eu-west-1': 0.5 }, twist: 'flashSale', latencyTarget: 120, budget: 440, requirements: ['drainQueue'] },
       unlocks: [],
-      lessons: ['auto-scaling'],
+      lessons: [LessonSlug.AutoScaling],
       solution: sale,
       naive: failover,
     },

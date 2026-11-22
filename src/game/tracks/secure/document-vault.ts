@@ -1,5 +1,7 @@
+import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
+import { ComponentType } from '@/game/types';
 import type { NodeConfig, RequirementId } from '@/game/types';
 
 /** Rules for company documents that hold in every round. */
@@ -9,12 +11,12 @@ const DB = { encrypted: true } satisfies Partial<NodeConfig>;
 
 const shared = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['cdn', 'cloudfront', 280, 240],
-    ['files', 's3', 480, 80],
-    ['api', 'apiGateway', 480, 240],
-    ['fn', 'lambda', 680, 240],
-    ['db', 'dynamodb', 880, 240, DB],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 280, y: 240 },
+    { id: 'files', type: ComponentType.S3, x: 480, y: 80 },
+    { id: 'api', type: ComponentType.ApiGateway, x: 480, y: 240 },
+    { id: 'fn', type: ComponentType.Lambda, x: 680, y: 240 },
+    { id: 'db', type: ComponentType.DynamoDb, x: 880, y: 240, config: DB },
   ],
   [
     ['users', 'cdn'],
@@ -28,23 +30,23 @@ const shared = makeBoard(
 const scanned = (o: { waf: boolean; queue: Partial<NodeConfig> }) =>
   makeBoard(
     [
-      ['users', 'users', 80, 240],
-      ...(o.waf ? [['shield', 'waf', 220, 240] as const] : []),
-      ['cdn', 'cloudfront', 380, 240],
-      ['files', 's3', 580, 80],
-      ['api', 'apiGateway', 580, 240],
-      ['fn', 'lambda', 780, 240],
-      ['db', 'dynamodb', 980, 240, DB],
-      ['queue', 'sqs', 780, 420, o.queue],
-      ['scanner', 'lambda', 980, 420],
-    ] as Parameters<typeof makeBoard>[0],
+      { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+      ...(o.waf ? [{ id: 'shield', type: ComponentType.Waf, x: 220, y: 240 } as const] : []),
+      { id: 'cdn', type: ComponentType.CloudFront, x: 380, y: 240 },
+      { id: 'files', type: ComponentType.S3, x: 580, y: 80 },
+      { id: 'api', type: ComponentType.ApiGateway, x: 580, y: 240 },
+      { id: 'fn', type: ComponentType.Lambda, x: 780, y: 240 },
+      { id: 'db', type: ComponentType.DynamoDb, x: 980, y: 240, config: DB },
+      { id: 'queue', type: ComponentType.Sqs, x: 780, y: 420, config: o.queue },
+      { id: 'scanner', type: ComponentType.Lambda, x: 980, y: 420 },
+    ],
     [
       ...(o.waf
-        ? ([
+        ? [
             ['users', 'shield'],
             ['shield', 'cdn'],
-          ] as [string, string][])
-        : ([['users', 'cdn']] as [string, string][])),
+          ] as const
+        : [['users', 'cdn']] as const),
       ['cdn', 'files'],
       ['cdn', 'api'],
       ['api', 'fn'],
@@ -57,22 +59,22 @@ const scanned = (o: { waf: boolean; queue: Partial<NodeConfig> }) =>
 const twoRegions = (o: { replicaBucket: Partial<NodeConfig> }) =>
   makeBoard(
     [
-      ['users', 'users', 80, 300],
-      ['shield', 'waf', 220, 300],
-      ['cdn', 'cloudfront', 380, 300],
-      ['files', 's3', 580, 40],
-      ['files2', 's3', 580, 560, { ...o.replicaBucket, region: 'eu-west-1' }],
-      ['dns', 'route53', 560, 300],
-      ['api', 'apiGateway', 740, 180],
-      ['fn', 'lambda', 920, 180],
-      ['api2', 'apiGateway', 740, 420, { region: 'eu-west-1' }],
-      ['fn2', 'lambda', 920, 420, { region: 'eu-west-1' }],
+      { id: 'users', type: ComponentType.Users, x: 80, y: 300 },
+      { id: 'shield', type: ComponentType.Waf, x: 220, y: 300 },
+      { id: 'cdn', type: ComponentType.CloudFront, x: 380, y: 300 },
+      { id: 'files', type: ComponentType.S3, x: 580, y: 40 },
+      { id: 'files2', type: ComponentType.S3, x: 580, y: 560, config: { ...o.replicaBucket, region: 'eu-west-1' } },
+      { id: 'dns', type: ComponentType.Route53, x: 560, y: 300 },
+      { id: 'api', type: ComponentType.ApiGateway, x: 740, y: 180 },
+      { id: 'fn', type: ComponentType.Lambda, x: 920, y: 180 },
+      { id: 'api2', type: ComponentType.ApiGateway, x: 740, y: 420, config: { region: 'eu-west-1' } },
+      { id: 'fn2', type: ComponentType.Lambda, x: 920, y: 420, config: { region: 'eu-west-1' } },
       // DynamoDB global table: one table with a managed copy in eu-west-1.
-      ['db', 'dynamodb', 1120, 300, { ...DB, globalDb: true }],
-      ['queue', 'sqs', 1120, 120, { encrypted: true }],
-      ['scanner', 'lambda', 1300, 120],
-      ['queue2', 'sqs', 1120, 480, { encrypted: true, region: 'eu-west-1' }],
-      ['scanner2', 'lambda', 1300, 480, { region: 'eu-west-1' }],
+      { id: 'db', type: ComponentType.DynamoDb, x: 1120, y: 300, config: { ...DB, globalDb: true } },
+      { id: 'queue', type: ComponentType.Sqs, x: 1120, y: 120, config: { encrypted: true } },
+      { id: 'scanner', type: ComponentType.Lambda, x: 1300, y: 120 },
+      { id: 'queue2', type: ComponentType.Sqs, x: 1120, y: 480, config: { encrypted: true, region: 'eu-west-1' } },
+      { id: 'scanner2', type: ComponentType.Lambda, x: 1300, y: 480, config: { region: 'eu-west-1' } },
     ],
     [
       ['users', 'shield'],
@@ -108,15 +110,15 @@ export const documentVault: Track = {
         requirements: RULES,
       },
       unlocks: [],
-      lessons: ['identity-federation-cognito', 'edge-networking'],
+      lessons: [LessonSlug.IdentityFederationCognito, LessonSlug.EdgeNetworking],
       solution: shared,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['files', 's3', 280, 80],
-          ['api', 'apiGateway', 280, 240],
-          ['fn', 'lambda', 480, 240],
-          ['db', 'dynamodb', 680, 240, DB],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'files', type: ComponentType.S3, x: 280, y: 80 },
+          { id: 'api', type: ComponentType.ApiGateway, x: 280, y: 240 },
+          { id: 'fn', type: ComponentType.Lambda, x: 480, y: 240 },
+          { id: 'db', type: ComponentType.DynamoDb, x: 680, y: 240, config: DB },
         ],
         [
           ['users', 'files'],
@@ -137,7 +139,7 @@ export const documentVault: Track = {
         requirements: [...RULES, 'drainQueue'],
       },
       unlocks: [],
-      lessons: ['decoupling-messaging', 'threat-detection-waf-shield'],
+      lessons: [LessonSlug.DecouplingMessaging, LessonSlug.ThreatDetectionWafShield],
       solution: scanned({ waf: false, queue: { encrypted: true } }),
       naive: scanned({ waf: false, queue: {} }),
     },
@@ -153,7 +155,7 @@ export const documentVault: Track = {
         requirements: [...RULES, 'drainQueue', 'webFirewall'],
       },
       unlocks: [],
-      lessons: ['threat-detection-waf-shield'],
+      lessons: [LessonSlug.ThreatDetectionWafShield],
       solution: scanned({ waf: true, queue: { encrypted: true } }),
       naive: scanned({ waf: false, queue: { encrypted: true } }),
     },
@@ -170,7 +172,7 @@ export const documentVault: Track = {
         requirements: [...RULES, 'drainQueue', 'webFirewall'],
       },
       unlocks: [],
-      lessons: ['disaster-recovery', 'data-encryption-kms'],
+      lessons: [LessonSlug.DisasterRecovery, LessonSlug.DataEncryptionKms],
       solution: twoRegions({ replicaBucket: {} }),
       naive: twoRegions({ replicaBucket: { encrypted: false } }),
     },

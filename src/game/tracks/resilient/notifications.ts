@@ -1,16 +1,18 @@
+import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
+import type { NodeSpec } from '@/game/board';
 import type { Track } from '@/game/rounds';
+import { ComponentType } from '@/game/types';
 import type { NodeConfig } from '@/game/types';
 
 type Cfg = Partial<NodeConfig>;
-type NodeSpec = Parameters<typeof makeBoard>[0][number];
 type EdgeSpec = [string, string];
 
 const api = (table: Cfg = {}): NodeSpec[] => [
-  ['users', 'users', 80, 240],
-  ['api', 'apiGateway', 280, 240],
-  ['fn', 'lambda', 480, 240],
-  ['table', 'dynamodb', 700, 100, table],
+  { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+  { id: 'api', type: ComponentType.ApiGateway, x: 280, y: 240 },
+  { id: 'fn', type: ComponentType.Lambda, x: 480, y: 240 },
+  { id: 'table', type: ComponentType.DynamoDb, x: 700, y: 100, config: table },
 ];
 
 const apiEdges: EdgeSpec[] = [
@@ -22,7 +24,11 @@ const apiEdges: EdgeSpec[] = [
 const inline = makeBoard(api(), apiEdges);
 
 const queued = makeBoard(
-  [...api(), ['queue', 'sqs', 700, 380], ['sender', 'ec2', 920, 380, { size: 'medium' }]],
+  [
+    ...api(),
+    { id: 'queue', type: ComponentType.Sqs, x: 700, y: 380 },
+    { id: 'sender', type: ComponentType.Ec2, x: 920, y: 380, config: { size: 'medium' } },
+  ],
   [...apiEdges, ['fn', 'queue'], ['queue', 'sender']],
 );
 
@@ -32,14 +38,14 @@ const CHANNELS: [name: string, y: number][] = [
   ['Sms', 700],
 ];
 
-const fanOut = (worker: 'ec2' | 'lambda', workerConfig: Cfg = {}, encrypted = false) =>
+const fanOut = (worker: (typeof ComponentType)['Ec2' | 'Lambda'], workerConfig: Cfg = {}, encrypted = false) =>
   makeBoard(
     [
       ...api({ encrypted }),
-      ['topic', 'sns', 700, 380],
+      { id: 'topic', type: ComponentType.Sns, x: 700, y: 380 },
       ...CHANNELS.flatMap(([name, y]): NodeSpec[] => [
-        [`q${name}`, 'sqs', 920, y, { encrypted }],
-        [`w${name}`, worker, 1140, y, workerConfig],
+        { id: `q${name}`, type: ComponentType.Sqs, x: 920, y, config: { encrypted } },
+        { id: `w${name}`, type: worker, x: 1140, y, config: workerConfig },
       ]),
     ],
     [
@@ -60,15 +66,22 @@ export const notifications: Track = {
   rounds: [
     {
       id: 'notif-1-mvp',
-      scenario: { traffic: 40, mix: MIX, audience: { 'us-east-1': 1 }, latencyTarget: 250, budget: 7, requirements: [] },
+      scenario: {
+        traffic: 40,
+        mix: MIX,
+        audience: { 'us-east-1': 1 },
+        latencyTarget: 250,
+        budget: 7,
+        requirements: [],
+      },
       unlocks: [],
-      lessons: ['serverless-workflows'],
+      lessons: [LessonSlug.ServerlessWorkflows],
       solution: inline,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['web', 'ec2', 320, 240],
-          ['db', 'rds', 560, 240],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 320, y: 240 },
+          { id: 'db', type: ComponentType.Rds, x: 560, y: 240 },
         ],
         [
           ['users', 'web'],
@@ -78,9 +91,16 @@ export const notifications: Track = {
     },
     {
       id: 'notif-2-queue',
-      scenario: { traffic: 250, mix: MIX, audience: { 'us-east-1': 1 }, latencyTarget: 100, budget: 85, requirements: ['drainQueue'] },
+      scenario: {
+        traffic: 250,
+        mix: MIX,
+        audience: { 'us-east-1': 1 },
+        latencyTarget: 100,
+        budget: 85,
+        requirements: ['drainQueue'],
+      },
       unlocks: [],
-      lessons: ['decoupling-messaging'],
+      lessons: [LessonSlug.DecouplingMessaging],
       solution: queued,
       naive: inline,
     },
@@ -95,10 +115,14 @@ export const notifications: Track = {
         requirements: ['fanOut', 'drainQueue'],
       },
       unlocks: [],
-      lessons: ['decoupling-messaging', 'application-integration'],
-      solution: fanOut('ec2', { size: 'medium' }),
+      lessons: [LessonSlug.DecouplingMessaging, LessonSlug.ApplicationIntegration],
+      solution: fanOut(ComponentType.Ec2, { size: 'medium' }),
       naive: makeBoard(
-        [...api(), ['queue', 'sqs', 700, 380], ['sender', 'ec2', 920, 380, { size: 'xlarge' }]],
+        [
+          ...api(),
+          { id: 'queue', type: ComponentType.Sqs, x: 700, y: 380 },
+          { id: 'sender', type: ComponentType.Ec2, x: 920, y: 380, config: { size: 'xlarge' } },
+        ],
         [...apiEdges, ['fn', 'queue'], ['queue', 'sender']],
       ),
     },
@@ -114,9 +138,9 @@ export const notifications: Track = {
         requirements: ['fanOut', 'drainQueue'],
       },
       unlocks: [],
-      lessons: ['auto-scaling', 'decoupling-messaging'],
-      solution: fanOut('ec2', { size: 'medium', autoScaling: true }),
-      naive: fanOut('ec2', { size: 'medium' }),
+      lessons: [LessonSlug.AutoScaling, LessonSlug.DecouplingMessaging],
+      solution: fanOut(ComponentType.Ec2, { size: 'medium', autoScaling: true }),
+      naive: fanOut(ComponentType.Ec2, { size: 'medium' }),
     },
     {
       id: 'notif-5-lambda',
@@ -130,9 +154,9 @@ export const notifications: Track = {
         requirements: ['fanOut', 'drainQueue'],
       },
       unlocks: [],
-      lessons: ['cost-compute-serverless-containers', 'serverless-workflows'],
-      solution: fanOut('lambda'),
-      naive: fanOut('ec2', { size: 'small', autoScaling: true }),
+      lessons: [LessonSlug.CostComputeServerlessContainers, LessonSlug.ServerlessWorkflows],
+      solution: fanOut(ComponentType.Lambda),
+      naive: fanOut(ComponentType.Ec2, { size: 'small', autoScaling: true }),
     },
     {
       id: 'notif-6-encrypt',
@@ -145,9 +169,9 @@ export const notifications: Track = {
         requirements: ['fanOut', 'drainQueue', 'encryptData'],
       },
       unlocks: [],
-      lessons: ['data-encryption-kms'],
-      solution: fanOut('lambda', {}, true),
-      naive: fanOut('lambda'),
+      lessons: [LessonSlug.DataEncryptionKms],
+      solution: fanOut(ComponentType.Lambda, {}, true),
+      naive: fanOut(ComponentType.Lambda),
     },
   ],
 };

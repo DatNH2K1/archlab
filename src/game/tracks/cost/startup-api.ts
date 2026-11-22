@@ -1,12 +1,14 @@
+import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
+import { ComponentType } from '@/game/types';
 
 const serverless = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['api', 'apiGateway', 280, 240],
-    ['fn', 'lambda', 480, 240],
-    ['db', 'dynamodb', 680, 240],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'api', type: ComponentType.ApiGateway, x: 280, y: 240 },
+    { id: 'fn', type: ComponentType.Lambda, x: 480, y: 240 },
+    { id: 'db', type: ComponentType.DynamoDb, x: 680, y: 240 },
   ],
   [
     ['users', 'api'],
@@ -17,10 +19,10 @@ const serverless = makeBoard(
 
 const servers = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280, 240],
-    ['web', 'ec2', 480, 240, { size: 'large' }],
-    ['db', 'dynamodb', 680, 240, { provisioned: true, size: 'medium' }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'large' } },
+    { id: 'db', type: ComponentType.DynamoDb, x: 680, y: 240, config: { provisioned: true, size: 'medium' } },
   ],
   [
     ['users', 'lb'],
@@ -31,10 +33,10 @@ const servers = makeBoard(
 
 const multiAz = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280, 240],
-    ['web', 'ec2', 480, 240, { size: 'large', count: 2, az: 'spread' }],
-    ['db', 'dynamodb', 680, 240, { provisioned: true, size: 'medium' }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'large', count: 2, az: 'spread' } },
+    { id: 'db', type: ComponentType.DynamoDb, x: 680, y: 240, config: { provisioned: true, size: 'medium' } },
   ],
   [
     ['users', 'lb'],
@@ -45,11 +47,11 @@ const multiAz = makeBoard(
 
 const cached = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280, 240],
-    ['web', 'ec2', 480, 240, { size: 'large', count: 2, az: 'spread' }],
-    ['cache', 'elasticache', 700, 140],
-    ['db', 'dynamodb', 700, 320, { provisioned: true, size: 'medium' }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'large', count: 2, az: 'spread' } },
+    { id: 'cache', type: ComponentType.ElastiCache, x: 700, y: 140 },
+    { id: 'db', type: ComponentType.DynamoDb, x: 700, y: 320, config: { provisioned: true, size: 'medium' } },
   ],
   [
     ['users', 'lb'],
@@ -61,11 +63,11 @@ const cached = makeBoard(
 
 const reserved = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280, 240],
-    ['web', 'ec2', 480, 240, { size: 'large', count: 2, az: 'spread', pricing: 'reserved' }],
-    ['cache', 'elasticache', 700, 140],
-    ['db', 'dynamodb', 700, 320, { provisioned: true, size: 'medium' }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'large', count: 2, az: 'spread', pricing: 'reserved' } },
+    { id: 'cache', type: ComponentType.ElastiCache, x: 700, y: 140 },
+    { id: 'db', type: ComponentType.DynamoDb, x: 700, y: 320, config: { provisioned: true, size: 'medium' } },
   ],
   [
     ['users', 'lb'],
@@ -77,24 +79,18 @@ const reserved = makeBoard(
 
 const burst = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280, 240],
-    [
-      'web',
-      'ec2',
-      480,
-      240,
-      {
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: {
         size: 'large',
         count: 2,
         az: 'spread',
         pricing: 'reserved',
         autoScaling: true,
         maxCount: 4,
-      },
-    ],
-    ['cache', 'elasticache', 700, 140],
-    ['db', 'dynamodb', 700, 320, { provisioned: true, size: 'medium' }],
+      } },
+    { id: 'cache', type: ComponentType.ElastiCache, x: 700, y: 140 },
+    { id: 'db', type: ComponentType.DynamoDb, x: 700, y: 320, config: { provisioned: true, size: 'medium' } },
   ],
   [
     ['users', 'lb'],
@@ -119,13 +115,13 @@ export const startupApi: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['serverless-workflows', 'cost-compute-serverless-containers'],
+      lessons: [LessonSlug.ServerlessWorkflows, LessonSlug.CostComputeServerlessContainers],
       solution: serverless,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['web', 'ec2', 320, 240],
-          ['db', 'rds', 560, 240],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 320, y: 240 },
+          { id: 'db', type: ComponentType.Rds, x: 560, y: 240 },
         ],
         [
           ['users', 'web'],
@@ -144,7 +140,7 @@ export const startupApi: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['cost-compute-serverless-containers', 'cost-database-storage-choices'],
+      lessons: [LessonSlug.CostComputeServerlessContainers, LessonSlug.CostDatabaseStorageChoices],
       solution: servers,
       naive: serverless,
     },
@@ -160,7 +156,7 @@ export const startupApi: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['high-availability-multi-az', 'elastic-load-balancing'],
+      lessons: [LessonSlug.HighAvailabilityMultiAz, LessonSlug.ElasticLoadBalancing],
       solution: multiAz,
       naive: servers,
     },
@@ -175,7 +171,7 @@ export const startupApi: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['nosql-caching'],
+      lessons: [LessonSlug.NoSqlCaching],
       solution: cached,
       naive: multiAz,
     },
@@ -191,7 +187,7 @@ export const startupApi: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['ec2-pricing-models', 'cost-management-tools'],
+      lessons: [LessonSlug.Ec2PricingModels, LessonSlug.CostManagementTools],
       solution: reserved,
       naive: cached,
     },
@@ -207,7 +203,7 @@ export const startupApi: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['auto-scaling', 'ec2-pricing-models'],
+      lessons: [LessonSlug.AutoScaling, LessonSlug.Ec2PricingModels],
       solution: burst,
       naive: reserved,
     },

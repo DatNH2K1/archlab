@@ -9,7 +9,8 @@ import { canAdd, canConnect, createNode, emptyBoard, newId } from '@/game/board'
 import { CATALOG, COMPONENT_TYPES_IN_PALETTE, LINKS, MAX_PER_BOARD, WRITE_DATABASE_TYPES } from '@/game/catalog';
 import type { Round } from '@/game/rounds';
 import { simulate, TICKS } from '@/game/simulate';
-import type { Board, ComponentType, NodeConfig, Scenario, SimResult } from '@/game/types';
+import { ComponentType } from '@/game/types';
+import type { Board, NodeConfig, Scenario, SimResult } from '@/game/types';
 import { useRouter } from '@/libs/I18nNavigation';
 import { loadBoard, saveBoard, updateProgress } from '@/libs/Progress';
 import type { Selection, View } from './BoardCanvas';
@@ -204,7 +205,7 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
     } else {
       const node = board.nodes.find((item) => item.id === selection.id);
 
-      if (!node || node.type === 'users') {
+      if (!node || node.type === ComponentType.Users) {
         return;
       }
 
@@ -372,7 +373,7 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
     selection?.kind === 'node' ? board.nodes.find((node) => node.id === selection.id) : undefined;
   const estimate = simulate(board, { ...scenario, twist: undefined });
   const shownCost = result?.cost ?? estimate.cost;
-  const users = board.nodes.find((node) => node.type === 'users');
+  const users = board.nodes.find((node) => node.type === ComponentType.Users);
   const usersConnected = users ? board.edges.some((edge) => edge.from === users.id) : false;
   const stars = round && result ? starsFor(result, round) : 0;
 
@@ -383,7 +384,7 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
       return t('users');
     }
 
-    return node.type === 'users' ? t('users') : CATALOG[node.type].label;
+    return node.type === ComponentType.Users ? t('users') : CATALOG[node.type].label;
   };
 
   const describeIssue = (index: number) => {

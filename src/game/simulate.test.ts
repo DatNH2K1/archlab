@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { makeBoard } from './board';
 import { simulate } from './simulate';
+import { ComponentType } from './types';
 import type { Scenario } from './types';
 
 const scenario: Scenario = { traffic: 100, mix: { read: 0.7, write: 0.3 }, audience: { 'us-east-1': 1 }, latencyTarget: 300, requirements: [] };
 
 describe('simulate', () => {
   it('reports users that reach nothing', () => {
-    const result = simulate(makeBoard([['users', 'users', 0, 0]], []), scenario);
+    const result = simulate(makeBoard([{ id: 'users', type: ComponentType.Users, x: 0, y: 0 }], []), scenario);
 
     expect(result.answered).toBe(0);
     expect(result.issues[0]?.code).toBe('users_unconnected');
@@ -16,8 +17,8 @@ describe('simulate', () => {
   it('reports reads with nowhere to go', () => {
     const board = makeBoard(
       [
-        ['users', 'users', 0, 0],
-        ['web', 'ec2', 0, 0],
+        { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+        { id: 'web', type: ComponentType.Ec2, x: 0, y: 0 },
       ],
       [['users', 'web']],
     );
@@ -28,9 +29,9 @@ describe('simulate', () => {
   it('drops requests on an overloaded server', () => {
     const board = makeBoard(
       [
-        ['users', 'users', 0, 0],
-        ['web', 'ec2', 0, 0],
-        ['db', 'dynamodb', 0, 0],
+        { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+        { id: 'web', type: ComponentType.Ec2, x: 0, y: 0 },
+        { id: 'db', type: ComponentType.DynamoDb, x: 0, y: 0 },
       ],
       [
         ['users', 'web'],
@@ -46,9 +47,9 @@ describe('simulate', () => {
   it('rejects writes sent only to a read replica', () => {
     const board = makeBoard(
       [
-        ['users', 'users', 0, 0],
-        ['web', 'ec2', 0, 0],
-        ['replica', 'readReplica', 0, 0],
+        { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+        { id: 'web', type: ComponentType.Ec2, x: 0, y: 0 },
+        { id: 'replica', type: ComponentType.ReadReplica, x: 0, y: 0 },
       ],
       [
         ['users', 'web'],
@@ -62,9 +63,9 @@ describe('simulate', () => {
   it('detects loops', () => {
     const board = makeBoard(
       [
-        ['users', 'users', 0, 0],
-        ['a', 'alb', 0, 0],
-        ['b', 'alb', 0, 0],
+        { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+        { id: 'a', type: ComponentType.Alb, x: 0, y: 0 },
+        { id: 'b', type: ComponentType.Alb, x: 0, y: 0 },
       ],
       [
         ['users', 'a'],
@@ -79,9 +80,9 @@ describe('simulate', () => {
   it('charges Lambda by request', () => {
     const board = makeBoard(
       [
-        ['users', 'users', 0, 0],
-        ['fn', 'lambda', 0, 0],
-        ['db', 'dynamodb', 0, 0],
+        { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+        { id: 'fn', type: ComponentType.Lambda, x: 0, y: 0 },
+        { id: 'db', type: ComponentType.DynamoDb, x: 0, y: 0 },
       ],
       [
         ['users', 'fn'],
@@ -97,9 +98,9 @@ describe('simulate', () => {
   it('spreads load over an EC2 group only behind an ALB', () => {
     const direct = makeBoard(
       [
-        ['users', 'users', 0, 0],
-        ['web', 'ec2', 0, 0, { count: 3 }],
-        ['db', 'dynamodb', 0, 0],
+        { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+        { id: 'web', type: ComponentType.Ec2, x: 0, y: 0, config: { count: 3 } },
+        { id: 'db', type: ComponentType.DynamoDb, x: 0, y: 0 },
       ],
       [
         ['users', 'web'],
@@ -108,10 +109,10 @@ describe('simulate', () => {
     );
     const balanced = makeBoard(
       [
-        ['users', 'users', 0, 0],
-        ['lb', 'alb', 0, 0],
-        ['web', 'ec2', 0, 0, { count: 3 }],
-        ['db', 'dynamodb', 0, 0],
+        { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+        { id: 'lb', type: ComponentType.Alb, x: 0, y: 0 },
+        { id: 'web', type: ComponentType.Ec2, x: 0, y: 0, config: { count: 3 } },
+        { id: 'db', type: ComponentType.DynamoDb, x: 0, y: 0 },
       ],
       [
         ['users', 'lb'],
@@ -128,10 +129,10 @@ describe('simulate', () => {
   it('leaves components users cannot reach out of the live state', () => {
     const board = makeBoard(
       [
-        ['users', 'users', 0, 0],
-        ['fn', 'lambda', 0, 0],
-        ['db', 'dynamodb', 0, 0],
-        ['spare', 'ec2', 0, 0],
+        { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+        { id: 'fn', type: ComponentType.Lambda, x: 0, y: 0 },
+        { id: 'db', type: ComponentType.DynamoDb, x: 0, y: 0 },
+        { id: 'spare', type: ComponentType.Ec2, x: 0, y: 0 },
       ],
       [
         ['users', 'fn'],
@@ -145,16 +146,16 @@ describe('simulate', () => {
   });
 
   describe('with a standby Region', () => {
-    const standby = (options: { db: 'rds' | 'aurora' | 'dynamodb'; globalDb: boolean }) =>
+    const standby = (options: { db: (typeof ComponentType)['Rds' | 'Aurora' | 'DynamoDb']; globalDb: boolean }) =>
       makeBoard(
         [
-          ['users', 'users', 0, 0],
-          ['dns', 'route53', 0, 0],
-          ['lb1', 'alb', 0, 0],
-          ['web1', 'ec2', 0, 0, { size: 'medium' }],
-          ['lb2', 'alb', 0, 0, { region: 'eu-west-1' }],
-          ['web2', 'ec2', 0, 0, { size: 'medium', region: 'eu-west-1' }],
-          ['db', options.db, 0, 0, { size: 'medium', globalDb: options.globalDb }],
+          { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+          { id: 'dns', type: ComponentType.Route53, x: 0, y: 0 },
+          { id: 'lb1', type: ComponentType.Alb, x: 0, y: 0 },
+          { id: 'web1', type: ComponentType.Ec2, x: 0, y: 0, config: { size: 'medium' } },
+          { id: 'lb2', type: ComponentType.Alb, x: 0, y: 0, config: { region: 'eu-west-1' } },
+          { id: 'web2', type: ComponentType.Ec2, x: 0, y: 0, config: { size: 'medium', region: 'eu-west-1' } },
+          { id: 'db', type: options.db, x: 0, y: 0, config: { size: 'medium', globalDb: options.globalDb } },
         ],
         [
           ['users', 'dns'],
@@ -169,29 +170,29 @@ describe('simulate', () => {
     const outage: Scenario = { ...scenario, twist: 'regionOutage', outageRegion: 'us-east-1' };
 
     it('fails when the only database lives in the Region that goes down', () => {
-      const result = simulate(standby({ db: 'rds', globalDb: false }), outage);
+      const result = simulate(standby({ db: ComponentType.Rds, globalDb: false }), outage);
 
       expect(result.passed).toBe(false);
       expect(result.issues.map((issue) => issue.code)).toContain('db_region_down');
     });
 
     it('moves Aurora Global Database writes to the other Region for good', () => {
-      const result = simulate(standby({ db: 'aurora', globalDb: true }), outage);
+      const result = simulate(standby({ db: ComponentType.Aurora, globalDb: true }), outage);
 
       expect(result.passed).toBe(true);
       expect(result.ticks.at(-1)?.nodes.db?.primaryRegion).toBe('eu-west-1');
     });
 
     it('keeps a DynamoDB global table writing in both Regions without failover', () => {
-      const result = simulate(standby({ db: 'dynamodb', globalDb: true }), outage);
+      const result = simulate(standby({ db: ComponentType.DynamoDb, globalDb: true }), outage);
 
       expect(result.passed).toBe(true);
       expect(result.ticks.at(-1)?.nodes.db?.primaryRegion).toBeUndefined();
     });
 
     it('bills a global database twice', () => {
-      const single = simulate(standby({ db: 'aurora', globalDb: false }), scenario).costByNode.db ?? 0;
-      const global = simulate(standby({ db: 'aurora', globalDb: true }), scenario).costByNode.db ?? 0;
+      const single = simulate(standby({ db: ComponentType.Aurora, globalDb: false }), scenario).costByNode.db ?? 0;
+      const global = simulate(standby({ db: ComponentType.Aurora, globalDb: true }), scenario).costByNode.db ?? 0;
 
       expect(global).toBe(single * 2);
     });
@@ -200,10 +201,10 @@ describe('simulate', () => {
   it('rejects writes to a cross-Region Read Replica', () => {
     const board = makeBoard(
       [
-        ['users', 'users', 0, 0],
-        ['web', 'ec2', 0, 0, { region: 'eu-west-1' }],
-        ['db', 'rds', 0, 0],
-        ['copy', 'readReplica', 0, 0, { region: 'eu-west-1' }],
+        { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+        { id: 'web', type: ComponentType.Ec2, x: 0, y: 0, config: { region: 'eu-west-1' } },
+        { id: 'db', type: ComponentType.Rds, x: 0, y: 0 },
+        { id: 'copy', type: ComponentType.ReadReplica, x: 0, y: 0, config: { region: 'eu-west-1' } },
       ],
       [
         ['users', 'web'],
@@ -222,8 +223,8 @@ describe('simulate', () => {
     it('reports a bucket users reach directly', () => {
       const board = makeBoard(
         [
-          ['users', 'users', 0, 0],
-          ['files', 's3', 0, 0],
+          { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+          { id: 'files', type: ComponentType.S3, x: 0, y: 0 },
         ],
         [['users', 'files']],
       );
@@ -236,9 +237,9 @@ describe('simulate', () => {
     it('accepts a bucket behind CloudFront', () => {
       const board = makeBoard(
         [
-          ['users', 'users', 0, 0],
-          ['cdn', 'cloudfront', 0, 0],
-          ['files', 's3', 0, 0],
+          { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+          { id: 'cdn', type: ComponentType.CloudFront, x: 0, y: 0 },
+          { id: 'files', type: ComponentType.S3, x: 0, y: 0 },
         ],
         [
           ['users', 'cdn'],
@@ -252,10 +253,10 @@ describe('simulate', () => {
     it('reports a server reached without WAF', () => {
       const board = makeBoard(
         [
-          ['users', 'users', 0, 0],
-          ['api', 'apiGateway', 0, 0],
-          ['fn', 'lambda', 0, 0],
-          ['db', 'dynamodb', 0, 0],
+          { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+          { id: 'api', type: ComponentType.ApiGateway, x: 0, y: 0 },
+          { id: 'fn', type: ComponentType.Lambda, x: 0, y: 0 },
+          { id: 'db', type: ComponentType.DynamoDb, x: 0, y: 0 },
         ],
         [
           ['users', 'api'],
@@ -272,11 +273,11 @@ describe('simulate', () => {
     it('accepts servers behind WAF', () => {
       const board = makeBoard(
         [
-          ['users', 'users', 0, 0],
-          ['shield', 'waf', 0, 0],
-          ['api', 'apiGateway', 0, 0],
-          ['fn', 'lambda', 0, 0],
-          ['db', 'dynamodb', 0, 0],
+          { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+          { id: 'shield', type: ComponentType.Waf, x: 0, y: 0 },
+          { id: 'api', type: ComponentType.ApiGateway, x: 0, y: 0 },
+          { id: 'fn', type: ComponentType.Lambda, x: 0, y: 0 },
+          { id: 'db', type: ComponentType.DynamoDb, x: 0, y: 0 },
         ],
         [
           ['users', 'shield'],

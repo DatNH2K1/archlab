@@ -1,18 +1,20 @@
+import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
+import type { NodeSpec } from '@/game/board';
 import type { Track } from '@/game/rounds';
+import { ComponentType } from '@/game/types';
 import type { NodeConfig } from '@/game/types';
 
 type Cfg = Partial<NodeConfig>;
-type NodeSpec = Parameters<typeof makeBoard>[0][number];
 type EdgeSpec = [string, string];
 
 const front = (cdn: Cfg = {}, app: Cfg = { size: 'medium' }, db: Cfg = {}): NodeSpec[] => [
-  ['users', 'users', 80, 260],
-  ['cdn', 'cloudfront', 260, 260, cdn],
-  ['photos', 's3', 460, 100],
-  ['lb', 'alb', 460, 260],
-  ['app', 'ec2', 660, 260, app],
-  ['db', 'rds', 880, 260, db],
+  { id: 'users', type: ComponentType.Users, x: 80, y: 260 },
+  { id: 'cdn', type: ComponentType.CloudFront, x: 260, y: 260, config: cdn },
+  { id: 'photos', type: ComponentType.S3, x: 460, y: 100 },
+  { id: 'lb', type: ComponentType.Alb, x: 460, y: 260 },
+  { id: 'app', type: ComponentType.Ec2, x: 660, y: 260, config: app },
+  { id: 'db', type: ComponentType.Rds, x: 880, y: 260, config: db },
 ];
 
 const frontEdges: EdgeSpec[] = [
@@ -26,7 +28,11 @@ const frontEdges: EdgeSpec[] = [
 const launch = makeBoard(front(), frontEdges);
 
 const queued = makeBoard(
-  [...front(), ['queue', 'sqs', 660, 440], ['thumbs', 'ec2', 880, 440, { size: 'medium' }]],
+  [
+    ...front(),
+    { id: 'queue', type: ComponentType.Sqs, x: 660, y: 440 },
+    { id: 'thumbs', type: ComponentType.Ec2, x: 880, y: 440, config: { size: 'medium' } },
+  ],
   [...frontEdges, ['app', 'queue'], ['queue', 'thumbs']],
 );
 
@@ -34,12 +40,14 @@ const fanOut = (worker: Cfg, options: { cdn?: Cfg; app?: Cfg; db?: Cfg; cache?: 
   makeBoard(
     [
       ...front(options.cdn, options.app, options.db ?? { size: 'medium' }),
-      ...(options.cache ? ([['cache', 'elasticache', 880, 120]] satisfies NodeSpec[]) : []),
-      ['topic', 'sns', 660, 440],
-      ['qThumbs', 'sqs', 880, 440],
-      ['qFeed', 'sqs', 880, 600],
-      ['thumbs', 'ec2', 1080, 440, worker],
-      ['feed', 'ec2', 1080, 600, worker],
+      ...(options.cache
+        ? ([{ id: 'cache', type: ComponentType.ElastiCache, x: 880, y: 120 }] satisfies NodeSpec[])
+        : []),
+      { id: 'topic', type: ComponentType.Sns, x: 660, y: 440 },
+      { id: 'qThumbs', type: ComponentType.Sqs, x: 880, y: 440 },
+      { id: 'qFeed', type: ComponentType.Sqs, x: 880, y: 600 },
+      { id: 'thumbs', type: ComponentType.Ec2, x: 1080, y: 440, config: worker },
+      { id: 'feed', type: ComponentType.Ec2, x: 1080, y: 600, config: worker },
     ],
     [
       ...frontEdges,
@@ -69,14 +77,14 @@ export const photoSharing: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['edge-networking', 's3-performance'],
+      lessons: [LessonSlug.EdgeNetworking, LessonSlug.S3Performance],
       solution: launch,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 260],
-          ['lb', 'alb', 280, 260],
-          ['app', 'ec2', 480, 260, { size: 'medium' }],
-          ['db', 'rds', 700, 260],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 260 },
+          { id: 'lb', type: ComponentType.Alb, x: 280, y: 260 },
+          { id: 'app', type: ComponentType.Ec2, x: 480, y: 260, config: { size: 'medium' } },
+          { id: 'db', type: ComponentType.Rds, x: 700, y: 260 },
         ],
         [
           ['users', 'lb'],
@@ -87,11 +95,21 @@ export const photoSharing: Track = {
     },
     {
       id: 'photo-2-thumbs',
-      scenario: { traffic: 800, mix: mixWithJobs, audience: { 'us-east-1': 0.8, 'eu-west-1': 0.2 }, latencyTarget: 75, budget: 125, requirements: ['drainQueue'] },
+      scenario: {
+        traffic: 800,
+        mix: mixWithJobs,
+        audience: { 'us-east-1': 0.8, 'eu-west-1': 0.2 },
+        latencyTarget: 75,
+        budget: 125,
+        requirements: ['drainQueue'],
+      },
       unlocks: [],
-      lessons: ['decoupling-messaging'],
+      lessons: [LessonSlug.DecouplingMessaging],
       solution: queued,
-      naive: makeBoard([...front(), ['thumbs', 'ec2', 880, 440, { size: 'medium' }]], [...frontEdges, ['app', 'thumbs']]),
+      naive: makeBoard(
+        [...front(), { id: 'thumbs', type: ComponentType.Ec2, x: 880, y: 440, config: { size: 'medium' } }],
+        [...frontEdges, ['app', 'thumbs']],
+      ),
     },
     {
       id: 'photo-3-fanout',
@@ -104,10 +122,14 @@ export const photoSharing: Track = {
         requirements: ['fanOut', 'drainQueue'],
       },
       unlocks: [],
-      lessons: ['decoupling-messaging', 'application-integration'],
+      lessons: [LessonSlug.DecouplingMessaging, LessonSlug.ApplicationIntegration],
       solution: fanOut({ size: 'medium' }),
       naive: makeBoard(
-        [...front(), ['queue', 'sqs', 660, 440], ['thumbs', 'ec2', 880, 440, { size: 'large' }]],
+        [
+          ...front(),
+          { id: 'queue', type: ComponentType.Sqs, x: 660, y: 440 },
+          { id: 'thumbs', type: ComponentType.Ec2, x: 880, y: 440, config: { size: 'large' } },
+        ],
         [...frontEdges, ['app', 'queue'], ['queue', 'thumbs']],
       ),
     },
@@ -122,7 +144,7 @@ export const photoSharing: Track = {
         requirements: ['fanOut', 'drainQueue'],
       },
       unlocks: [],
-      lessons: ['ec2-pricing-models'],
+      lessons: [LessonSlug.Ec2PricingModels],
       solution: fanOut({ size: 'medium', pricing: 'spot' }),
       naive: fanOut({ size: 'small' }),
     },
@@ -138,7 +160,7 @@ export const photoSharing: Track = {
         requirements: ['fanOut', 'drainQueue'],
       },
       unlocks: [],
-      lessons: ['ec2-pricing-models', 'decoupling-messaging'],
+      lessons: [LessonSlug.Ec2PricingModels, LessonSlug.DecouplingMessaging],
       solution: fanOut({ size: 'large', pricing: 'spot' }),
       naive: fanOut({ size: 'medium', pricing: 'spot' }),
     },
@@ -154,7 +176,7 @@ export const photoSharing: Track = {
         requirements: ['fanOut', 'drainQueue'],
       },
       unlocks: [],
-      lessons: ['auto-scaling', 'nosql-caching'],
+      lessons: [LessonSlug.AutoScaling, LessonSlug.NoSqlCaching],
       solution: fanOut(
         { size: 'large', pricing: 'spot', autoScaling: true },
         { cdn: { cacheApi: true }, app: { size: 'medium', autoScaling: true }, cache: true },

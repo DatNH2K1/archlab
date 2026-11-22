@@ -1,15 +1,17 @@
+import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
+import type { NodeSpec } from '@/game/board';
 import type { Track } from '@/game/rounds';
+import { ComponentType } from '@/game/types';
 
-type NodeSpecs = Parameters<typeof makeBoard>[0];
-type NodeConfig = NonNullable<NodeSpecs[number][4]>;
+type NodeConfig = NonNullable<NodeSpec['config']>;
 
 const firstFeed = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280, 240],
-    ['web', 'ec2', 480, 240, { size: 'medium', count: 2 }],
-    ['db', 'rds', 700, 240, { size: 'large' }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'medium', count: 2 } },
+    { id: 'db', type: ComponentType.Rds, x: 700, y: 240, config: { size: 'large' } },
   ],
   [
     ['users', 'lb'],
@@ -20,11 +22,11 @@ const firstFeed = makeBoard(
 
 const replicated = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280, 240],
-    ['web', 'ec2', 480, 240, { size: 'medium', count: 4, az: 'spread', autoScaling: true, maxCount: 4 }],
-    ['db', 'rds', 720, 160, { size: 'medium', multiAz: true }],
-    ['replica', 'readReplica', 720, 340, { size: 'medium', az: 'b' }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'medium', count: 4, az: 'spread', autoScaling: true, maxCount: 4 } },
+    { id: 'db', type: ComponentType.Rds, x: 720, y: 160, config: { size: 'medium', multiAz: true } },
+    { id: 'replica', type: ComponentType.ReadReplica, x: 720, y: 340, config: { size: 'medium', az: 'b' } },
   ],
   [
     ['users', 'lb'],
@@ -42,13 +44,13 @@ const cachedFeed = (options: {
   edge?: boolean;
 }) => {
   const x = options.edge ? 180 : 0;
-  const nodes: NodeSpecs = [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280 + x, 240],
-    ['web', 'ec2', 480 + x, 240, options.web],
-    ['cache', 'elasticache', 720 + x, 80, options.cache ?? {}],
-    ['db', 'rds', 720 + x, 240, options.db ?? { size: 'medium', multiAz: true }],
-    ['replica', 'readReplica', 720 + x, 400, { size: 'medium', az: 'b' }],
+  const nodes: NodeSpec[] = [
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280 + x, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 480 + x, y: 240, config: options.web },
+    { id: 'cache', type: ComponentType.ElastiCache, x: 720 + x, y: 80, config: options.cache ?? {} },
+    { id: 'db', type: ComponentType.Rds, x: 720 + x, y: 240, config: options.db ?? { size: 'medium', multiAz: true } },
+    { id: 'replica', type: ComponentType.ReadReplica, x: 720 + x, y: 400, config: { size: 'medium', az: 'b' } },
   ];
   const edges: [string, string][] = [
     ['lb', 'web'],
@@ -58,7 +60,7 @@ const cachedFeed = (options: {
   ];
 
   if (options.edge) {
-    nodes.push(['cdn', 'cloudfront', 280, 240, { cacheApi: true }]);
+    nodes.push({ id: 'cdn', type: ComponentType.CloudFront, x: 280, y: 240, config: { cacheApi: true } });
     edges.push(['users', 'cdn'], ['cdn', 'lb']);
   } else {
     edges.push(['users', 'lb']);
@@ -84,14 +86,14 @@ export const newsFeed: Track = {
       id: 'feed-1-launch',
       scenario: { traffic: 800, mix: { read: 0.9, write: 0.1 }, audience: { 'us-east-1': 1 }, latencyTarget: 250, budget: 150, requirements: [] },
       unlocks: [],
-      lessons: ['elastic-load-balancing', 'relational-databases'],
+      lessons: [LessonSlug.ElasticLoadBalancing, LessonSlug.RelationalDatabases],
       solution: firstFeed,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['lb', 'alb', 280, 240],
-          ['web', 'ec2', 480, 240, { size: 'medium', count: 2 }],
-          ['db', 'rds', 700, 240, { size: 'medium' }],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'medium', count: 2 } },
+          { id: 'db', type: ComponentType.Rds, x: 700, y: 240, config: { size: 'medium' } },
         ],
         [
           ['users', 'lb'],
@@ -112,14 +114,14 @@ export const newsFeed: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['relational-databases', 'high-availability-multi-az'],
+      lessons: [LessonSlug.RelationalDatabases, LessonSlug.HighAvailabilityMultiAz],
       solution: replicated,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['lb', 'alb', 280, 240],
-          ['web', 'ec2', 480, 240, { size: 'medium', count: 4, az: 'spread', autoScaling: true, maxCount: 4 }],
-          ['db', 'rds', 700, 240, { size: 'large', multiAz: true }],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'medium', count: 4, az: 'spread', autoScaling: true, maxCount: 4 } },
+          { id: 'db', type: ComponentType.Rds, x: 700, y: 240, config: { size: 'large', multiAz: true } },
         ],
         [
           ['users', 'lb'],
@@ -132,15 +134,15 @@ export const newsFeed: Track = {
       id: 'feed-3-cache',
       scenario: { traffic: 2500, mix: { read: 0.95, write: 0.05 }, audience: { 'us-east-1': 1 }, latencyTarget: 250, budget: 330, requirements: [] },
       unlocks: [],
-      lessons: ['nosql-caching'],
+      lessons: [LessonSlug.NoSqlCaching],
       solution: cached,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['lb', 'alb', 280, 240],
-          ['web', 'ec2', 480, 240, bigWeb],
-          ['db', 'rds', 720, 160, { size: 'large', multiAz: true }],
-          ['replica', 'readReplica', 720, 340, { size: 'large', az: 'b' }],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: bigWeb },
+          { id: 'db', type: ComponentType.Rds, x: 720, y: 160, config: { size: 'large', multiAz: true } },
+          { id: 'replica', type: ComponentType.ReadReplica, x: 720, y: 340, config: { size: 'large', az: 'b' } },
         ],
         [
           ['users', 'lb'],
@@ -162,7 +164,7 @@ export const newsFeed: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['nosql-caching', 'high-availability-multi-az'],
+      lessons: [LessonSlug.NoSqlCaching, LessonSlug.HighAvailabilityMultiAz],
       solution: crashProof,
       naive: cached,
     },
@@ -178,7 +180,7 @@ export const newsFeed: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['auto-scaling'],
+      lessons: [LessonSlug.AutoScaling],
       solution: viral,
       naive: crashProof,
     },
@@ -193,7 +195,7 @@ export const newsFeed: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['edge-networking', 'cost-network-transfer'],
+      lessons: [LessonSlug.EdgeNetworking, LessonSlug.CostNetworkTransfer],
       solution: edgeCached,
       naive: viral,
     },

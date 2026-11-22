@@ -1,24 +1,27 @@
-const COMPONENT_TYPES = [
-  'users',
-  'route53',
-  'globalAccelerator',
-  'waf',
-  'cloudfront',
-  'alb',
-  'apiGateway',
-  'ec2',
-  'lambda',
-  'elasticache',
-  'rds',
-  'aurora',
-  'readReplica',
-  'dynamodb',
-  's3',
-  'sqs',
-  'sns',
-] as const;
+/**
+ * Components a player can place on the board. Values are the ids used in saved boards and in the `Components` messages.
+ */
+export const ComponentType = {
+  Users: 'users',
+  Route53: 'route53',
+  GlobalAccelerator: 'globalAccelerator',
+  Waf: 'waf',
+  CloudFront: 'cloudfront',
+  Alb: 'alb',
+  ApiGateway: 'apiGateway',
+  Ec2: 'ec2',
+  Lambda: 'lambda',
+  ElastiCache: 'elasticache',
+  Rds: 'rds',
+  Aurora: 'aurora',
+  ReadReplica: 'readReplica',
+  DynamoDb: 'dynamodb',
+  S3: 's3',
+  Sqs: 'sqs',
+  Sns: 'sns',
+} as const;
 
-export type ComponentType = (typeof COMPONENT_TYPES)[number];
+export type ComponentType = (typeof ComponentType)[keyof typeof ComponentType];
 
 export type Size = 'small' | 'medium' | 'large' | 'xlarge';
 

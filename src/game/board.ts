@@ -1,5 +1,6 @@
 import { defaultConfig, LINKS, MAX_PER_BOARD, WRITE_DATABASE_TYPES } from './catalog';
-import type { Board, BoardNode, ComponentType, NodeConfig } from './types';
+import { ComponentType } from './types';
+import type { Board, BoardNode, NodeConfig } from './types';
 
 /**
  * Creates a unique id for a node or an edge.
@@ -27,21 +28,28 @@ export const createNode = (options: {
   config: { ...defaultConfig(options.type), ...options.config },
 });
 
-type NodeSpec = [id: string, type: ComponentType, x: number, y: number, config?: Partial<NodeConfig>];
+/** A node of a starter or reference design. */
+export type NodeSpec<Id extends string = string> = {
+  id: Id;
+  type: ComponentType;
+  x: number;
+  y: number;
+  config?: Partial<NodeConfig>;
+};
 
 /**
  * Builds a board from a compact description, used for starters and reference designs.
- * @param nodes Nodes as [id, type, x, y, config].
- * @param edges Edges as [from, to].
+ * @param nodes The nodes; their ids are the only ids edges may use.
+ * @param edges Edges as [from, to] node ids.
  * @returns The board.
  */
-export const makeBoard = (nodes: NodeSpec[], edges: [string, string][]): Board => ({
-  nodes: nodes.map(([id, type, x, y, config]) => createNode({ id, type, x, y, config })),
+export const makeBoard = <const Id extends string>(nodes: NodeSpec<Id>[], edges: (readonly [NoInfer<Id>, NoInfer<Id>])[]): Board => ({
+  nodes: nodes.map((node) => createNode(node)),
   edges: edges.map(([from, to]) => ({ id: `${from}->${to}`, from, to })),
 });
 
 /** The board every round starts from: only the users. */
-export const emptyBoard = (): Board => makeBoard([['users', 'users', 80, 240]], []);
+export const emptyBoard = (): Board => makeBoard([{ id: 'users', type: ComponentType.Users, x: 80, y: 240 }], []);
 
 /**
  * Checks whether an edge can be added between two nodes.

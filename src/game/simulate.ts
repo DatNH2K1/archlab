@@ -14,11 +14,10 @@ import {
   REQUEST_PRICE,
   SIZE_PRICE,
 } from './catalog';
-import { REGIONS } from './types';
+import { ComponentType, REGIONS } from './types';
 import type {
   Board,
   BoardNode,
-  ComponentType,
   Issue,
   IssueCode,
   NodeTick,
@@ -31,6 +30,16 @@ import type {
   TrafficClass,
   TwistId,
 } from './types';
+
+/** Parents that put a server straight on the internet. */
+const PUBLIC_SERVER_PARENTS = new Set<ComponentType>([
+  ComponentType.Users,
+  ComponentType.Route53,
+  ComponentType.GlobalAccelerator,
+]);
+
+/** Parents that let users read a bucket without CloudFront. */
+const PUBLIC_BUCKET_PARENTS = new Set<ComponentType>([ComponentType.Users, ComponentType.Route53]);
 
 export const TICKS = 60;
 
@@ -145,7 +154,7 @@ const inWindow = (twist: TwistId | undefined, id: TwistId, t: number) => {
 const initialInstances = (node: BoardNode) => {
   const count = Math.max(1, node.config.count);
 
-  if (node.type !== 'ec2') {
+  if (node.type !== ComponentType.Ec2) {
     return { a: 1, b: 0 };
   }
 
@@ -183,7 +192,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
   }
 
   // Only components users can reach take part in the run.
-  const users = board.nodes.find((node) => node.type === 'users');
+  const users = board.nodes.find((node) => node.type === ComponentType.Users);
   const reached = new Set<string>(users ? [users.id] : []);
 
   for (const id of reached) {
@@ -193,7 +202,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
   }
 
   /** Aurora Global Database or a DynamoDB global table: a managed copy in the other Region. */
-  const isGlobalDb = (node: BoardNode) => (node.type === 'aurora' || node.type === 'dynamodb') && node.config.globalDb;
+  const isGlobalDb = (node: BoardNode) => (node.type === ComponentType.Aurora || node.type === ComponentType.DynamoDb) && node.config.globalDb;
   /** Region each Aurora Global Database writes in; a managed failover moves it for good. */
   const writeRegion = new Map<string, Region>();
   /** Tick of each Aurora Global Database failover, when writes pause for about a minute. */
@@ -276,7 +285,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
     const azDown = inWindow(twist, 'azOutage', t);
 
-    if (node.type === 'ec2') {
+    if (node.type === ComponentType.Ec2) {
       if (node.config.pricing === 'spot' && inWindow(twist, 'spotInterruption', t)) {
         return 0;
       }
@@ -288,7 +297,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       return total === 0 ? 0 : up / total;
     }
 
-    if (node.type === 'elasticache') {
+    if (node.type === ComponentType.ElastiCache) {
       const crashed = inWindow(twist, 'cacheCrash', t) || (azDown && !node.config.multiAz);
 
       if (crashed && !node.config.multiAz) {
@@ -298,11 +307,11 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       return 1;
     }
 
-    if (node.type === 'rds') {
+    if (node.type === ComponentType.Rds) {
       return azDown && !node.config.multiAz ? 0 : 1;
     }
 
-    if (node.type === 'readReplica') {
+    if (node.type === ComponentType.ReadReplica) {
       return azDown && node.config.az !== 'b' ? 0 : 1;
     }
 
@@ -310,7 +319,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
   };
 
   const capacity = (node: BoardNode): number => {
-    if (node.type === 'ec2') {
+    if (node.type === ComponentType.Ec2) {
       const inst = state(node.id).instances;
       const per = CAPACITY.ec2?.[node.config.size] ?? 0;
       const up = (inst.a + inst.b) * aliveFraction(node);
@@ -318,7 +327,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       return per * (balanced(node) ? up : Math.min(up, 1));
     }
 
-    if (node.type === 'dynamodb' && !node.config.provisioned) {
+    if (node.type === ComponentType.DynamoDb && !node.config.provisioned) {
       return 40_000;
     }
 
@@ -339,11 +348,11 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       return cls === 'static' ? 0.5 : 1;
     }
 
-    if (cls === 'write' && (type === 'rds' || type === 'readReplica')) {
+    if (cls === 'write' && (type === ComponentType.Rds || type === ComponentType.ReadReplica)) {
       return 3;
     }
 
-    if (cls === 'write' && (type === 'aurora' || type === 'dynamodb')) {
+    if (cls === 'write' && (type === ComponentType.Aurora || type === ComponentType.DynamoDb)) {
       return 2;
     }
 
@@ -358,7 +367,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       return node.config.region;
     }
 
-    if (node.type === 'aurora' && flow.cls === 'write') {
+    if (node.type === ComponentType.Aurora && flow.cls === 'write') {
       return writeRegion.get(node.id) ?? node.config.region;
     }
 
@@ -423,13 +432,13 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
   const passThrough = (node: BoardNode, flow: Flow, path: string[]): Outcome => {
     let targets = accepting(node, flow.cls);
 
-    if (flow.cls === 'static' && targets.some((target) => target.type === 's3')) {
-      targets = targets.filter((target) => target.type === 's3');
+    if (flow.cls === 'static' && targets.some((target) => target.type === ComponentType.S3)) {
+      targets = targets.filter((target) => target.type === ComponentType.S3);
     } else {
-      targets = targets.filter((target) => target.type !== 's3');
+      targets = targets.filter((target) => target.type !== ComponentType.S3);
     }
 
-    if (node.type === 'alb') {
+    if (node.type === ComponentType.Alb) {
       const compute = targets.filter((target) => COMPUTE_TYPES.has(target.type));
 
       if (compute.length < targets.length) {
@@ -440,7 +449,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     }
 
     // Latency routing: send users to the closest Region that passes health checks.
-    if (node.type === 'route53') {
+    if (node.type === ComponentType.Route53) {
       const near = targets.filter(
         (target) => target.config.region === flow.origin && alive(target),
       );
@@ -456,7 +465,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
   /** Databases a server can use: healthy ones first, then those in its own Region. Read Replicas take no writes. */
   const databases = (node: BoardNode, cls: 'read' | 'write') => {
     const linked = (children.get(node.id) ?? []).filter(
-      (child) => DATABASE_TYPES.has(child.type) && (cls === 'read' || child.type !== 'readReplica'),
+      (child) => DATABASE_TYPES.has(child.type) && (cls === 'read' || child.type !== ComponentType.ReadReplica),
     );
     const up = linked.filter(alive);
     const local = up.filter((db) => isGlobalDb(db) || db.config.region === node.config.region);
@@ -466,7 +475,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
   const readFromData = (node: BoardNode, flow: Flow, path: string[]): Outcome => {
     const caches = (children.get(node.id) ?? []).filter(
-      (child) => child.type === 'elasticache' && alive(child),
+      (child) => child.type === ComponentType.ElastiCache && alive(child),
     );
     let result = EMPTY;
     let misses = flow.rate;
@@ -495,7 +504,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     const own = state(node.id);
     let extra = 0;
 
-    if (recording && node.type === 'lambda' && !node.config.provisioned && own.prevRate >= 0) {
+    if (recording && node.type === ComponentType.Lambda && !node.config.provisioned && own.prevRate >= 0) {
       const growth = own.lastLoad - own.prevRate;
 
       if (growth > own.prevRate * 0.25 + 5 && own.lastLoad > 0) {
@@ -517,7 +526,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
         return EMPTY;
       }
       case 'static': {
-        const buckets = kids.filter((child) => child.type === 's3');
+        const buckets = kids.filter((child) => child.type === ComponentType.S3);
 
         if (buckets.length > 0) {
           return withCold(spread(buckets, flow, path));
@@ -563,7 +572,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
   };
 
   const enqueue = (node: BoardNode, flow: Flow, path: string[]): Outcome => {
-    if (node.type === 'sns') {
+    if (node.type === ComponentType.Sns) {
       const targets = children.get(node.id) ?? [];
 
       if (targets.length === 0) {
@@ -594,20 +603,20 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
   const behave = (node: BoardNode, flow: Flow, path: string[]): Outcome => {
     switch (node.type) {
-      case 'users': {
+      case ComponentType.Users: {
         return EMPTY;
       }
-      case 'waf': {
+      case ComponentType.Waf: {
         return passThrough(
           node,
           flow.cls === 'attack' ? { ...flow, rate: flow.rate * (1 - WAF_BLOCK) } : flow,
           path,
         );
       }
-      case 'globalAccelerator': {
+      case ComponentType.GlobalAccelerator: {
         return passThrough(node, { ...flow, reach: flow.reach * 0.5 }, path);
       }
-      case 'cloudfront': {
+      case ComponentType.CloudFront: {
         const hit =
           flow.cls === 'static'
             ? EDGE_STATIC_HIT
@@ -623,16 +632,16 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
         return sum(atEdge, origin);
       }
-      case 'route53':
-      case 'alb':
-      case 'apiGateway': {
+      case ComponentType.Route53:
+      case ComponentType.Alb:
+      case ComponentType.ApiGateway: {
         return passThrough(node, flow, path);
       }
-      case 'ec2':
-      case 'lambda': {
+      case ComponentType.Ec2:
+      case ComponentType.Lambda: {
         return compute(node, flow, path);
       }
-      case 'elasticache': {
+      case ComponentType.ElastiCache: {
         const hits = served(node, flow, flow.rate * CACHE_HIT);
         const missRate = flow.rate * (1 - CACHE_HIT);
         const dbs = databases(node, 'read');
@@ -643,21 +652,21 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
         return { ...hits, miss: missRate };
       }
-      case 'readReplica': {
+      case ComponentType.ReadReplica: {
         if (flow.cls === 'write') {
           return failed('replica_write', node.id, flow.rate, flow.cls);
         }
 
         return served(node, flow, flow.rate);
       }
-      case 'rds':
-      case 'aurora':
-      case 'dynamodb':
-      case 's3': {
+      case ComponentType.Rds:
+      case ComponentType.Aurora:
+      case ComponentType.DynamoDb:
+      case ComponentType.S3: {
         return served(node, flow, flow.rate);
       }
-      case 'sqs':
-      case 'sns': {
+      case ComponentType.Sqs:
+      case ComponentType.Sns: {
         return enqueue(node, flow, path);
       }
     }
@@ -723,7 +732,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
   const scaleGroups = () => {
     for (const node of board.nodes) {
-      if (node.type !== 'ec2') {
+      if (node.type !== ComponentType.Ec2) {
         continue;
       }
 
@@ -786,7 +795,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
   const drainQueues = () => {
     for (const queue of board.nodes) {
-      if (queue.type !== 'sqs' || !alive(queue)) {
+      if (queue.type !== ComponentType.Sqs || !alive(queue)) {
         continue;
       }
 
@@ -845,7 +854,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     for (const db of board.nodes) {
       const region = writeRegion.get(db.id) ?? db.config.region;
 
-      if (db.type === 'aurora' && isGlobalDb(db) && region === scenario.outageRegion) {
+      if (db.type === ComponentType.Aurora && isGlobalDb(db) && region === scenario.outageRegion) {
         writeRegion.set(db.id, REGIONS.find((item) => item !== region) ?? region);
         failoverAt.set(db.id, t);
       }
@@ -943,11 +952,11 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       const instances = own.instances.a + own.instances.b;
 
       // Idle components are still billed, but they show no live state.
-      if (node.type === 'ec2') {
+      if (node.type === ComponentType.Ec2) {
         own.instanceTicks += instances + own.pending.length;
       }
 
-      if (node.type === 'lambda') {
+      if (node.type === ComponentType.Lambda) {
         own.prevRate = own.load;
       }
 
@@ -962,8 +971,8 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
         load: own.load,
         capacity: cap === Number.POSITIVE_INFINITY ? undefined : cap,
         alive: alive(node),
-        instances: node.type === 'ec2' ? Math.round(instances * aliveFraction(node)) : undefined,
-        backlog: node.type === 'sqs' ? own.backlog : undefined,
+        instances: node.type === ComponentType.Ec2 ? Math.round(instances * aliveFraction(node)) : undefined,
+        backlog: node.type === ComponentType.Sqs ? own.backlog : undefined,
         primaryRegion: writeRegion.get(node.id),
       };
     }
@@ -986,13 +995,13 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
   for (const node of board.nodes) {
     const group = node.config.count > 1 || node.config.autoScaling;
 
-    if (node.type === 'ec2' && group && state(node.id).handled > 0 && !balanced(node)) {
+    if (node.type === ComponentType.Ec2 && group && state(node.id).handled > 0 && !balanced(node)) {
       report('no_balancer', node.id, 1);
     }
   }
 
   // Leftover backlog: jobs nobody processed.
-  const queued = board.nodes.filter((node) => node.type === 'sqs');
+  const queued = board.nodes.filter((node) => node.type === ComponentType.Sqs);
 
   for (const queue of queued) {
     const own = state(queue.id);
@@ -1028,7 +1037,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
     const sized = SIZE_PRICE[node.type]?.[node.config.size] ?? 0;
 
-    if (node.type === 'ec2') {
+    if (node.type === ComponentType.Ec2) {
       const avgInstances = own.instanceTicks / TICKS;
       const base = Math.min(avgInstances, node.config.count);
       const extraInstances = Math.max(0, avgInstances - base);
@@ -1036,15 +1045,15 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       const burstFactor = node.config.pricing === 'reserved' ? 1 : factor;
 
       price += sized * (base * factor + extraInstances * burstFactor);
-    } else if (node.type === 'dynamodb') {
+    } else if (node.type === ComponentType.DynamoDb) {
       price = node.config.provisioned ? sized : price;
-    } else if (node.type === 'rds' || node.type === 'elasticache') {
+    } else if (node.type === ComponentType.Rds || node.type === ComponentType.ElastiCache) {
       price += sized * (node.config.multiAz ? 2 : 1);
     } else {
       price += sized;
     }
 
-    if (node.type === 'lambda' && node.config.provisioned) {
+    if (node.type === ComponentType.Lambda && node.config.provisioned) {
       price += PROVISIONED_CONCURRENCY_PRICE;
     }
 
@@ -1079,7 +1088,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       case 'privateData': {
         const exposed = board.nodes.filter(
           (node) =>
-            (DATABASE_TYPES.has(node.type) || node.type === 'elasticache') &&
+            (DATABASE_TYPES.has(node.type) || node.type === ComponentType.ElastiCache) &&
             (parents.get(node.id) ?? []).some(
               (parent) => !COMPUTE_TYPES.has(parent.type) && !DATA_STORE_TYPES.has(parent.type),
             ),
@@ -1094,9 +1103,9 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       case 'noPublicServers': {
         const exposed = board.nodes.filter(
           (node) =>
-            node.type === 'ec2' &&
+            node.type === ComponentType.Ec2 &&
             (parents.get(node.id) ?? []).some((parent) =>
-              ['users', 'route53', 'globalAccelerator'].includes(parent.type),
+              PUBLIC_SERVER_PARENTS.has(parent.type),
             ),
         );
 
@@ -1109,8 +1118,8 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       case 'privateBucket': {
         const exposed = board.nodes.filter(
           (node) =>
-            node.type === 's3' &&
-            (parents.get(node.id) ?? []).some((parent) => ['users', 'route53'].includes(parent.type)),
+            node.type === ComponentType.S3 &&
+            (parents.get(node.id) ?? []).some((parent) => PUBLIC_BUCKET_PARENTS.has(parent.type)),
         );
 
         for (const node of exposed) {
@@ -1122,11 +1131,11 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       case 'webFirewall': {
         // Walk from the users without crossing a WAF; the first servers reached this way are unprotected.
         const open = new Set<string>();
-        const stack = board.nodes.filter((node) => node.type === 'users');
+        const stack = board.nodes.filter((node) => node.type === ComponentType.Users);
 
         for (let node = stack.pop(); node; node = stack.pop()) {
           for (const child of children.get(node.id) ?? []) {
-            if (child.type !== 'waf' && !open.has(child.id)) {
+            if (child.type !== ComponentType.Waf && !open.has(child.id)) {
               open.add(child.id);
 
               if (!COMPUTE_TYPES.has(child.type)) {
@@ -1147,16 +1156,16 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       case 'fanOut': {
         const ok = board.nodes.some(
           (node) =>
-            node.type === 'sns' &&
+            node.type === ComponentType.Sns &&
             (children.get(node.id) ?? []).filter(
               (child) =>
-                child.type === 'sqs' &&
+                child.type === ComponentType.Sqs &&
                 (children.get(child.id) ?? []).some((consumer) => COMPUTE_TYPES.has(consumer.type)),
             ).length >= 2,
         );
 
         if (!ok) {
-          report('no_fan_out', board.nodes.find((node) => node.type === 'sns')?.id, 1);
+          report('no_fan_out', board.nodes.find((node) => node.type === ComponentType.Sns)?.id, 1);
         }
 
         return ok;

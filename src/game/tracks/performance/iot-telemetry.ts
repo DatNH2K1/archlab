@@ -1,15 +1,17 @@
+import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
+import { ComponentType } from '@/game/types';
 import type { NodeConfig } from '@/game/types';
 
 type Cfg = Partial<NodeConfig>;
 
 const serverless = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['api', 'apiGateway', 300, 240],
-    ['fn', 'lambda', 520, 240],
-    ['table', 'dynamodb', 740, 240],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'api', type: ComponentType.ApiGateway, x: 300, y: 240 },
+    { id: 'fn', type: ComponentType.Lambda, x: 520, y: 240 },
+    { id: 'table', type: ComponentType.DynamoDb, x: 740, y: 240 },
   ],
   [
     ['users', 'api'],
@@ -21,10 +23,10 @@ const serverless = makeBoard(
 const fleet = (web: Cfg, table: Cfg) =>
   makeBoard(
     [
-      ['users', 'users', 80, 240],
-      ['lb', 'alb', 300, 240],
-      ['web', 'ec2', 520, 240, web],
-      ['table', 'dynamodb', 740, 240, table],
+      { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+      { id: 'lb', type: ComponentType.Alb, x: 300, y: 240 },
+      { id: 'web', type: ComponentType.Ec2, x: 520, y: 240, config: web },
+      { id: 'table', type: ComponentType.DynamoDb, x: 740, y: 240, config: table },
     ],
     [
       ['users', 'lb'],
@@ -38,11 +40,11 @@ const steady = fleet({ size: 'large', count: 2 }, { provisioned: true, size: 'la
 const buffered = (worker: Cfg, table: Cfg) =>
   makeBoard(
     [
-      ['users', 'users', 80, 240],
-      ['api', 'apiGateway', 280, 240],
-      ['queue', 'sqs', 480, 240],
-      ['worker', 'ec2', 680, 240, worker],
-      ['table', 'dynamodb', 880, 240, table],
+      { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+      { id: 'api', type: ComponentType.ApiGateway, x: 280, y: 240 },
+      { id: 'queue', type: ComponentType.Sqs, x: 480, y: 240 },
+      { id: 'worker', type: ComponentType.Ec2, x: 680, y: 240, config: worker },
+      { id: 'table', type: ComponentType.DynamoDb, x: 880, y: 240, config: table },
     ],
     [
       ['users', 'api'],
@@ -58,15 +60,15 @@ const growth = buffered({ size: 'large', count: 2, autoScaling: true, maxCount: 
 const dashboards = (o: { cache?: Cfg; worker: Cfg; table: Cfg }) =>
   makeBoard(
     [
-      ['users', 'users', 80, 300],
-      ['api', 'apiGateway', 280, 300],
-      ['queue', 'sqs', 480, 160],
-      ['worker', 'ec2', 680, 160, o.worker],
-      ['table', 'dynamodb', 880, 300, o.table],
-      ['lb', 'alb', 480, 440],
-      ['dash', 'ec2', 680, 440, { size: 'large', count: 2 }],
-      ...(o.cache ? [['cache', 'elasticache', 880, 440, o.cache] as const] : []),
-    ] as Parameters<typeof makeBoard>[0],
+      { id: 'users', type: ComponentType.Users, x: 80, y: 300 },
+      { id: 'api', type: ComponentType.ApiGateway, x: 280, y: 300 },
+      { id: 'queue', type: ComponentType.Sqs, x: 480, y: 160 },
+      { id: 'worker', type: ComponentType.Ec2, x: 680, y: 160, config: o.worker },
+      { id: 'table', type: ComponentType.DynamoDb, x: 880, y: 300, config: o.table },
+      { id: 'lb', type: ComponentType.Alb, x: 480, y: 440 },
+      { id: 'dash', type: ComponentType.Ec2, x: 680, y: 440, config: { size: 'large', count: 2 } },
+      ...(o.cache ? [{ id: 'cache', type: ComponentType.ElastiCache, x: 880, y: 440, config: o.cache } as const] : []),
+    ],
     [
       ['users', 'api'],
       ['api', 'queue'],
@@ -76,11 +78,11 @@ const dashboards = (o: { cache?: Cfg; worker: Cfg; table: Cfg }) =>
       ['queue', 'worker'],
       ['worker', 'table'],
       ...(o.cache
-        ? ([
+        ? [
             ['dash', 'cache'],
             ['cache', 'table'],
-          ] as [string, string][])
-        : ([['dash', 'table']] as [string, string][])),
+          ] as const
+        : [['dash', 'table']] as const),
     ],
   );
 
@@ -97,13 +99,13 @@ export const iotTelemetry: Track = {
       id: 'iot-1-pilot',
       scenario: { traffic: 200, mix: { write: 1 }, audience: { 'us-east-1': 1 }, latencyTarget: 200, budget: 45, requirements: [] },
       unlocks: [],
-      lessons: ['serverless-workflows'],
+      lessons: [LessonSlug.ServerlessWorkflows],
       solution: serverless,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['web', 'ec2', 360, 240],
-          ['db', 'rds', 640, 240],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 360, y: 240 },
+          { id: 'db', type: ComponentType.Rds, x: 640, y: 240 },
         ],
         [
           ['users', 'web'],
@@ -115,7 +117,7 @@ export const iotTelemetry: Track = {
       id: 'iot-2-steady',
       scenario: { traffic: 1500, mix: { write: 1 }, audience: { 'us-east-1': 1 }, latencyTarget: 150, budget: 250, requirements: [] },
       unlocks: [],
-      lessons: ['cost-database-storage-choices', 'nosql-caching'],
+      lessons: [LessonSlug.CostDatabaseStorageChoices, LessonSlug.NoSqlCaching],
       solution: steady,
       naive: fleet({ size: 'large', count: 2 }, {}),
     },
@@ -123,7 +125,7 @@ export const iotTelemetry: Track = {
       id: 'iot-3-storm',
       scenario: { traffic: 1500, mix: { write: 1 }, audience: { 'us-east-1': 1 }, twist: 'flashSale', latencyTarget: 150, budget: 400, requirements: [] },
       unlocks: [],
-      lessons: ['decoupling-messaging'],
+      lessons: [LessonSlug.DecouplingMessaging],
       solution: storm,
       naive: fleet({ size: 'large', count: 2, autoScaling: true, maxCount: 5 }, { provisioned: true, size: 'large' }),
     },
@@ -131,7 +133,7 @@ export const iotTelemetry: Track = {
       id: 'iot-4-growth',
       scenario: { traffic: 1500, mix: { write: 1 }, audience: { 'us-east-1': 1 }, twist: 'viral', latencyTarget: 150, budget: 780, requirements: ['drainQueue'] },
       unlocks: [],
-      lessons: ['auto-scaling', 'decoupling-messaging'],
+      lessons: [LessonSlug.AutoScaling, LessonSlug.DecouplingMessaging],
       solution: growth,
       naive: storm,
     },
@@ -139,7 +141,7 @@ export const iotTelemetry: Track = {
       id: 'iot-5-dash',
       scenario: { traffic: 5000, mix: { write: 0.6, read: 0.4 }, audience: { 'us-east-1': 1 }, latencyTarget: 150, budget: 720, requirements: ['drainQueue'] },
       unlocks: [],
-      lessons: ['nosql-caching'],
+      lessons: [LessonSlug.NoSqlCaching],
       solution: dash,
       naive: dashboards({ worker, table: { provisioned: true, size: 'xlarge' } }),
     },
@@ -147,7 +149,7 @@ export const iotTelemetry: Track = {
       id: 'iot-6-cache-crash',
       scenario: { traffic: 5000, mix: { write: 0.6, read: 0.4 }, audience: { 'us-east-1': 1 }, twist: 'cacheCrash', latencyTarget: 150, budget: 720, requirements: ['drainQueue'] },
       unlocks: [],
-      lessons: ['nosql-caching', 'high-availability-multi-az'],
+      lessons: [LessonSlug.NoSqlCaching, LessonSlug.HighAvailabilityMultiAz],
       solution: resilient,
       naive: dash,
     },

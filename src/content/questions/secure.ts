@@ -1,10 +1,11 @@
+import { LessonSlug } from '@/content/types';
 import type { QuestionData } from '@/content/types';
 
 export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-001',
     domain: 'secure',
-    lesson: 'iam-fundamentals',
+    lesson: LessonSlug.IamFundamentals,
     stem: "An application running on Amazon EC2 instances needs to read objects from an Amazon S3 bucket. A developer has stored an IAM user's access key and secret key in a configuration file on each instance. A security review flags this as a risk. Which solution is the MOST secure?",
     options: [
       'Encrypt the configuration file with AWS KMS and decrypt it when the application starts.',
@@ -17,7 +18,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-002',
     domain: 'secure',
-    lesson: 'iam-fundamentals',
+    lesson: LessonSlug.IamFundamentals,
     stem: 'A company wants developers to create IAM roles for their AWS Lambda functions without a central team approving each role. The security team must ensure that developers can never grant a role more permissions than a predefined set, preventing privilege escalation. What should a solutions architect recommend?',
     options: [
       'Attach the AdministratorAccess policy to developers and review the roles weekly with IAM Access Analyzer.',
@@ -30,7 +31,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-003',
     domain: 'secure',
-    lesson: 'iam-fundamentals',
+    lesson: LessonSlug.IamFundamentals,
     stem: 'An IAM user belongs to a group whose policy allows s3:* on all resources. A second managed policy attached directly to the user explicitly denies s3:DeleteObject on the bucket prod-data. What happens when the user tries to delete an object in prod-data?',
     options: [
       'The request is denied because an explicit deny overrides any allow.',
@@ -43,7 +44,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-004',
     domain: 'secure',
-    lesson: 'iam-fundamentals',
+    lesson: LessonSlug.IamFundamentals,
     stem: 'A new AWS account was created for a startup. The founder has been using the root user with an access key for daily CLI work. Which set of actions follows AWS best practices for securing the root user?',
     options: [
       'Rotate the root access key every 30 days and store it in AWS Secrets Manager.',
@@ -56,7 +57,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-005',
     domain: 'secure',
-    lesson: 'iam-fundamentals',
+    lesson: LessonSlug.IamFundamentals,
     stem: 'A security team wants to identify which AWS services each IAM role in an account has actually used in the last 90 days so they can remove unused permissions. Which feature provides this information with the LEAST effort?',
     options: [
       'AWS Config resource timeline for each IAM role.',
@@ -69,7 +70,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-006',
     domain: 'secure',
-    lesson: 'iam-fundamentals',
+    lesson: LessonSlug.IamFundamentals,
     stem: 'A company requires that IAM users can stop or terminate production EC2 instances only when they have authenticated with multi-factor authentication. How should a solutions architect enforce this requirement?',
     options: [
       'Add a condition using aws:MultiFactorAuthPresent to the IAM policy that allows ec2:StopInstances and ec2:TerminateInstances.',
@@ -82,7 +83,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-007',
     domain: 'secure',
-    lesson: 'iam-fundamentals',
+    lesson: LessonSlug.IamFundamentals,
     stem: 'A company runs containers on Amazon ECS with the AWS Fargate launch type. The application inside one task must write items to an Amazon DynamoDB table. Which configuration grants the required permissions following least privilege?',
     options: [
       'Add DynamoDB write permissions to the task execution role.',
@@ -95,7 +96,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-008',
     domain: 'secure',
-    lesson: 'iam-fundamentals',
+    lesson: LessonSlug.IamFundamentals,
     stem: 'A company is auditing its AWS account. Which TWO actions improve security according to IAM best practices? (Choose TWO.)',
     options: [
       'Use IAM roles and temporary credentials for workloads instead of long-term access keys.',
@@ -109,7 +110,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-009',
     domain: 'secure',
-    lesson: 'iam-organizations-scp',
+    lesson: LessonSlug.IamOrganizationsScp,
     stem: 'A company uses AWS Organizations with dozens of member accounts. The compliance team requires that no user in any member account, including the root user, can disable AWS CloudTrail or delete trails. Which solution meets this requirement?',
     options: [
       'Attach an IAM policy that denies cloudtrail:StopLogging to every IAM user in each account.',
@@ -122,7 +123,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-010',
     domain: 'secure',
-    lesson: 'iam-organizations-scp',
+    lesson: LessonSlug.IamOrganizationsScp,
     stem: "A company has an Amazon S3 bucket that stores shared reports. The bucket must be accessible to IAM principals from every account in the company's organization in AWS Organizations, including accounts added in the future, and to no one else. Which solution requires the LEAST ongoing maintenance?",
     options: [
       'List every account ID in the bucket policy Principal element and update it when accounts are added.',
@@ -135,7 +136,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-011',
     domain: 'secure',
-    lesson: 'iam-organizations-scp',
+    lesson: LessonSlug.IamOrganizationsScp,
     stem: 'A company wants to quickly set up a new multi-account AWS environment that follows AWS best practices, with centralized logging, an audit account, single sign-on, and preventive and detective rules applied automatically to new accounts. Which service should the company use?',
     options: [
       'AWS Organizations with manually created SCPs.',
@@ -148,7 +149,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-012',
     domain: 'secure',
-    lesson: 'iam-organizations-scp',
+    lesson: LessonSlug.IamOrganizationsScp,
     stem: "A software vendor needs to access resources in a customer's AWS account to provide a monitoring service. The customer wants to avoid sharing long-term credentials and to protect against the confused deputy problem. What should the customer do?",
     options: [
       "Create an IAM role that trusts the vendor's AWS account and require a unique external ID in the trust policy condition.",
@@ -161,7 +162,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-013',
     domain: 'secure',
-    lesson: 'iam-organizations-scp',
+    lesson: LessonSlug.IamOrganizationsScp,
     stem: 'A company wants to restrict all member accounts in its organization so that resources can be created only in the eu-west-1 and eu-central-1 Regions. Global services such as IAM must continue to work. Which approach should a solutions architect use?',
     options: [
       'Disable all other Regions in the account settings of each member account.',
@@ -174,7 +175,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-014',
     domain: 'secure',
-    lesson: 'iam-organizations-scp',
+    lesson: LessonSlug.IamOrganizationsScp,
     stem: 'A company has 40 AWS accounts in AWS Organizations. Employees authenticate with the corporate Microsoft Entra ID identity provider. The company wants employees to sign in once and access the accounts they are assigned to with role-based permissions. Which solution requires the LEAST operational overhead?',
     options: [
       'Create IAM users in each account and synchronize passwords with a script.',
@@ -187,7 +188,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-015',
     domain: 'secure',
-    lesson: 'iam-organizations-scp',
+    lesson: LessonSlug.IamOrganizationsScp,
     stem: 'A company has a central networking account that owns a VPC. Application teams in other accounts in the same organization need to launch EC2 instances into subnets of this VPC, while the networking team keeps control of routing and network ACLs. Which solution meets these requirements?',
     options: [
       'Share the subnets with the application accounts by using AWS Resource Access Manager.',
@@ -200,7 +201,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-016',
     domain: 'secure',
-    lesson: 'identity-federation-cognito',
+    lesson: LessonSlug.IdentityFederationCognito,
     stem: 'A company is building a mobile application. Users must be able to sign up and sign in with an email address or with their Google accounts. After signing in, the app must upload photos directly to a user-specific prefix in an Amazon S3 bucket. Which TWO components should a solutions architect use? (Choose TWO.)',
     options: [
       'IAM users created for each application user.',
@@ -214,7 +215,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-017',
     domain: 'secure',
-    lesson: 'identity-federation-cognito',
+    lesson: LessonSlug.IdentityFederationCognito,
     stem: 'A company has an on-premises Active Directory. It wants employees to use their existing AD credentials to sign in to Amazon WorkSpaces. Company policy states that no directory data may be stored or cached in the cloud. Which solution meets these requirements?',
     options: [
       'Deploy AWS Managed Microsoft AD and create a two-way trust with the on-premises domain.',
@@ -227,7 +228,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-018',
     domain: 'secure',
-    lesson: 'identity-federation-cognito',
+    lesson: LessonSlug.IdentityFederationCognito,
     stem: 'A company is migrating Microsoft SharePoint and SQL Server workloads that require Active Directory to AWS. The company also needs users from its on-premises AD domain to access the migrated workloads by using a trust relationship. Which directory service should the company use?',
     options: ['Simple AD', 'AD Connector', 'AWS Managed Microsoft AD', 'Amazon Cognito user pool'],
     answer: [2],
@@ -235,7 +236,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-019',
     domain: 'secure',
-    lesson: 'identity-federation-cognito',
+    lesson: LessonSlug.IdentityFederationCognito,
     stem: 'A company runs an internal web application behind an Application Load Balancer. The company wants users to authenticate before any request reaches the application servers, without changing application code. Which solution meets this requirement?',
     options: [
       'Configure an ALB listener rule with an authenticate action that uses an Amazon Cognito user pool or an OIDC identity provider.',
@@ -248,7 +249,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-020',
     domain: 'secure',
-    lesson: 'identity-federation-cognito',
+    lesson: LessonSlug.IdentityFederationCognito,
     stem: 'A company uses an on-premises identity provider that supports SAML 2.0. The company has a single AWS account and wants employees to access the AWS Management Console with their corporate credentials without creating IAM users. What should a solutions architect configure?',
     options: [
       'An Amazon Cognito user pool with a SAML app client.',
@@ -261,7 +262,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-021',
     domain: 'secure',
-    lesson: 'identity-federation-cognito',
+    lesson: LessonSlug.IdentityFederationCognito,
     stem: 'A gaming company wants players to try a limited version of its mobile game without creating an account. Anonymous players must be able to read leaderboard data from an Amazon DynamoDB table but not write to it. Which solution meets these requirements?',
     options: [
       'Embed read-only IAM user credentials in the mobile application.',
@@ -274,7 +275,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-022',
     domain: 'secure',
-    lesson: 'identity-federation-cognito',
+    lesson: LessonSlug.IdentityFederationCognito,
     stem: "A company runs a REST API on Amazon API Gateway. Only users who have signed in to the company's web application through an Amazon Cognito user pool should be able to call the API. Which solution requires the LEAST development effort?",
     options: [
       'Write a Lambda authorizer that validates usernames and passwords against a DynamoDB table.',
@@ -287,7 +288,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-023',
     domain: 'secure',
-    lesson: 'vpc-networking-security',
+    lesson: LessonSlug.VpcNetworkingSecurity,
     stem: 'A web application runs on EC2 instances in a public subnet. The security team notices malicious traffic from a single IP address and needs to block it immediately at the subnet level. What should a solutions architect do?',
     options: [
       'Add an inbound deny rule for the IP address to the network ACL associated with the subnet.',
@@ -300,7 +301,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-024',
     domain: 'secure',
-    lesson: 'vpc-networking-security',
+    lesson: LessonSlug.VpcNetworkingSecurity,
     stem: 'A company has a three-tier application with web servers behind an Application Load Balancer, application servers, and an Amazon RDS for MySQL database. The security team requires that the database accepts connections only from the application tier, and that the application tier accepts traffic only from the load balancer. Which TWO configurations meet these requirements? (Choose TWO.)',
     options: [
       'Configure the database network ACL to allow port 3306 from 0.0.0.0/0.',
@@ -314,7 +315,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-025',
     domain: 'secure',
-    lesson: 'vpc-networking-security',
+    lesson: LessonSlug.VpcNetworkingSecurity,
     stem: 'EC2 instances in private subnets across three Availability Zones need to download software updates from the internet. The solution must be highly available and require minimal management. What should a solutions architect do?',
     options: [
       'Launch a NAT instance in one public subnet and update all private route tables to use it.',
@@ -327,7 +328,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-026',
     domain: 'secure',
-    lesson: 'vpc-networking-security',
+    lesson: LessonSlug.VpcNetworkingSecurity,
     stem: "A company's administrators currently connect to Linux EC2 instances in private subnets through a bastion host that allows SSH from the corporate network. The company wants to remove the bastion host, close all inbound ports, and keep an audit log of all session activity. Which solution meets these requirements with the LEAST operational overhead?",
     options: [
       'Replace the bastion host with an AWS Client VPN endpoint and use SSH keys.',
@@ -340,7 +341,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-027',
     domain: 'secure',
-    lesson: 'vpc-networking-security',
+    lesson: LessonSlug.VpcNetworkingSecurity,
     stem: 'A company created a custom network ACL for a public subnet that hosts web servers. The NACL allows inbound TCP 443 from 0.0.0.0/0 and outbound TCP 443 to 0.0.0.0/0. Users report that HTTPS connections to the web servers time out. The security groups are configured correctly. What is the MOST likely cause?',
     options: [
       'Security groups must also explicitly allow outbound responses on port 443.',
@@ -353,7 +354,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-028',
     domain: 'secure',
-    lesson: 'vpc-networking-security',
+    lesson: LessonSlug.VpcNetworkingSecurity,
     stem: 'A company needs to inspect all outbound traffic from its VPCs and block connections to domain names that are not on an approved list. The company also needs intrusion prevention capabilities with Suricata-compatible rules. Which AWS service should be used?',
     options: ['AWS Network Firewall', 'AWS WAF', 'Security groups with outbound rules', 'Amazon GuardDuty'],
     answer: [0],
@@ -361,7 +362,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-029',
     domain: 'secure',
-    lesson: 'vpc-networking-security',
+    lesson: LessonSlug.VpcNetworkingSecurity,
     stem: 'A solutions architect needs to troubleshoot why connections from an on-premises network to an EC2 instance are being rejected. The architect wants to see whether traffic is accepted or rejected at the network interface, without capturing packet contents. What should the architect enable?',
     options: [
       'AWS CloudTrail data events for Amazon EC2.',
@@ -374,7 +375,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-030',
     domain: 'secure',
-    lesson: 'vpc-networking-security',
+    lesson: LessonSlug.VpcNetworkingSecurity,
     stem: 'A company deploys a NAT instance to save costs. Instances in the private subnet still cannot reach the internet, even though the private route table points 0.0.0.0/0 to the NAT instance and its security group allows the traffic. What should the solutions architect do?',
     options: [
       'Attach an Elastic IP address to each private instance.',
@@ -387,7 +388,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-031',
     domain: 'secure',
-    lesson: 'vpc-connectivity',
+    lesson: LessonSlug.VpcConnectivity,
     stem: 'EC2 instances in private subnets upload several terabytes of data to Amazon S3 each day through a NAT gateway. The company wants to reduce data transfer costs and keep traffic off the internet. What should a solutions architect do?',
     options: [
       'Create an interface VPC endpoint for Amazon S3 in each subnet.',
@@ -400,7 +401,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-032',
     domain: 'secure',
-    lesson: 'vpc-connectivity',
+    lesson: LessonSlug.VpcConnectivity,
     stem: 'A company has a 10 Gbps AWS Direct Connect connection to a single AWS Region. Security policy requires that all data in transit between the data center and the VPCs is encrypted. The company also wants a cost-effective backup path if the Direct Connect connection fails. Which TWO actions should a solutions architect take? (Choose TWO.)',
     options: [
       'Establish an IPsec Site-to-Site VPN connection over the Direct Connect connection.',
@@ -414,7 +415,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-033',
     domain: 'secure',
-    lesson: 'vpc-connectivity',
+    lesson: LessonSlug.VpcConnectivity,
     stem: 'A company has 150 VPCs across multiple accounts and an on-premises data center connected by VPN. All VPCs must communicate with each other and with the data center. The current full mesh of VPC peering connections is difficult to manage. Which solution simplifies the network with the LEAST operational overhead?',
     options: [
       'Create an AWS Transit Gateway, attach all VPCs and the VPN, and share the transit gateway across accounts with AWS RAM.',
@@ -427,7 +428,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-034',
     domain: 'secure',
-    lesson: 'vpc-connectivity',
+    lesson: LessonSlug.VpcConnectivity,
     stem: "A SaaS provider wants to offer its application, running behind a Network Load Balancer in its VPC, to hundreds of customers. Customers must connect privately from their own VPCs. Many customer VPCs use CIDR ranges that overlap with the provider's VPC. Which solution should the provider use?",
     options: [
       'VPC peering with each customer VPC.',
@@ -440,7 +441,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-035',
     domain: 'secure',
-    lesson: 'vpc-connectivity',
+    lesson: LessonSlug.VpcConnectivity,
     stem: 'A company needs to connect its data center to AWS within the next week. The connection must be encrypted. Long-term, the company may need more bandwidth. Which solution should the company implement NOW?',
     options: [
       'AWS Direct Connect dedicated connection.',
@@ -453,7 +454,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-036',
     domain: 'secure',
-    lesson: 'vpc-connectivity',
+    lesson: LessonSlug.VpcConnectivity,
     stem: 'A company uses AWS Direct Connect from its data center in Frankfurt. It now needs private connectivity from the same Direct Connect connection to VPCs in eu-central-1, us-east-1, and ap-southeast-1. Which solution meets this requirement with the LEAST cost?',
     options: [
       'Order new Direct Connect connections in each Region.',
@@ -466,7 +467,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-037',
     domain: 'secure',
-    lesson: 'vpc-connectivity',
+    lesson: LessonSlug.VpcConnectivity,
     stem: 'A company stores sensitive data in an Amazon S3 bucket. The company wants to ensure that the bucket can be accessed only from EC2 instances in a specific VPC through a VPC endpoint. Which solution meets this requirement?',
     options: [
       'Add a bucket policy that denies all access unless the request comes from the specific VPC endpoint by using the aws:SourceVpce condition.',
@@ -479,7 +480,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-038',
     domain: 'secure',
-    lesson: 'vpc-connectivity',
+    lesson: LessonSlug.VpcConnectivity,
     stem: 'An on-premises application connects to AWS over AWS Direct Connect with a private virtual interface. The application must call the Amazon SQS API privately without traversing the public internet. Which solution meets this requirement?',
     options: [
       'Create a gateway VPC endpoint for Amazon SQS.',
@@ -492,7 +493,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-039',
     domain: 'secure',
-    lesson: 'data-encryption-kms',
+    lesson: LessonSlug.DataEncryptionKms,
     stem: 'A company has an unencrypted Amazon RDS for PostgreSQL DB instance in production. A new compliance requirement states that the database must be encrypted at rest. What should a solutions architect do?',
     options: [
       'Modify the DB instance and enable encryption with an AWS KMS key.',
@@ -505,7 +506,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-040',
     domain: 'secure',
-    lesson: 'data-encryption-kms',
+    lesson: LessonSlug.DataEncryptionKms,
     stem: 'A company stores financial records in Amazon S3. Regulations require that records cannot be overwritten or deleted by any user, including the root user, for 7 years. The company also needs an audit trail of every use of the encryption key. Which TWO actions meet these requirements? (Choose TWO.)',
     options: [
       'Enable S3 Object Lock in governance mode with a 7-year retention period.',
@@ -519,7 +520,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-041',
     domain: 'secure',
-    lesson: 'data-encryption-kms',
+    lesson: LessonSlug.DataEncryptionKms,
     stem: 'A company must store encryption keys in single-tenant hardware security modules that it controls exclusively. AWS must not have access to the key material. The company wants to use the keys with Oracle Transparent Data Encryption on EC2. Which service should the company use?',
     options: [
       'AWS KMS with AWS managed keys.',
@@ -532,7 +533,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-042',
     domain: 'secure',
-    lesson: 'data-encryption-kms',
+    lesson: LessonSlug.DataEncryptionKms,
     stem: "A company needs to share an encrypted Amazon EBS snapshot with a partner's AWS account. The snapshot is currently encrypted with the AWS managed key aws/ebs. What must the company do?",
     options: [
       'Copy the snapshot and re-encrypt it with a customer managed KMS key, share that key with the partner account through the key policy, and then share the snapshot.',
@@ -545,7 +546,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-043',
     domain: 'secure',
-    lesson: 'data-encryption-kms',
+    lesson: LessonSlug.DataEncryptionKms,
     stem: 'A company uses SSE-KMS for an Amazon S3 bucket that receives millions of small objects every hour. The application has started receiving KMS throttling errors and KMS costs have increased significantly. Which solution resolves these issues with the LEAST effort?',
     options: [
       'Switch to client-side encryption with the AWS Encryption SDK.',
@@ -558,7 +559,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-044',
     domain: 'secure',
-    lesson: 'data-encryption-kms',
+    lesson: LessonSlug.DataEncryptionKms,
     stem: 'A company wants to guarantee that every object uploaded to an S3 bucket is encrypted with a specific AWS KMS key, and that all requests to the bucket use TLS. What should a solutions architect configure?',
     options: [
       'Enable default encryption with SSE-S3 and enable S3 Block Public Access.',
@@ -571,7 +572,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-045',
     domain: 'secure',
-    lesson: 'data-encryption-kms',
+    lesson: LessonSlug.DataEncryptionKms,
     stem: 'A company runs a DynamoDB global table in two Regions and encrypts sensitive attributes on the client side before writing them. The application in either Region must be able to decrypt data written in the other Region, even if KMS in the other Region is unreachable. Which solution meets these requirements?',
     options: [
       'Use AWS KMS multi-Region keys with a replica key in each Region.',
@@ -584,7 +585,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-046',
     domain: 'secure',
-    lesson: 'data-encryption-kms',
+    lesson: LessonSlug.DataEncryptionKms,
     stem: 'A company has a private S3 bucket. A mobile application needs to let a specific user download one object for the next 15 minutes without making the object public and without giving the user AWS credentials. What is the simplest solution?',
     options: [
       'Enable S3 static website hosting on the bucket.',
@@ -597,7 +598,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-047',
     domain: 'secure',
-    lesson: 'data-encryption-kms',
+    lesson: LessonSlug.DataEncryptionKms,
     stem: 'A company runs EC2 instances with unencrypted EBS data volumes. The security team now requires all EBS volumes to be encrypted, including any new volumes created in the future. Which combination of actions meets these requirements?',
     options: [
       'Enable encryption on each existing volume from the EC2 console, and use a tag policy for new volumes.',
@@ -610,7 +611,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-048',
     domain: 'secure',
-    lesson: 'secrets-certificates',
+    lesson: LessonSlug.SecretsCertificates,
     stem: "A company's Lambda functions connect to an Amazon Aurora MySQL database using a password that is hard-coded in the function code. The security team requires that the password is removed from code and rotated automatically every 30 days. Which TWO steps should a solutions architect take? (Choose TWO.)",
     options: [
       'Store the password in an SSM Parameter Store String parameter.',
@@ -624,7 +625,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-049',
     domain: 'secure',
-    lesson: 'secrets-certificates',
+    lesson: LessonSlug.SecretsCertificates,
     stem: 'A company serves static content from an Amazon S3 bucket through Amazon CloudFront. Users have discovered that they can access the objects directly through the S3 URL, bypassing CloudFront. The bucket uses SSE-KMS encryption. Which solution prevents direct access to the bucket?',
     options: [
       'Configure an origin access control (OAC) on the distribution, update the bucket policy to allow only the CloudFront service principal for that distribution, and keep the bucket private.',
@@ -637,7 +638,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-050',
     domain: 'secure',
-    lesson: 'secrets-certificates',
+    lesson: LessonSlug.SecretsCertificates,
     stem: 'A company is deploying a website on Amazon CloudFront with a custom domain name. The company wants a free public TLS certificate that renews automatically. The rest of the infrastructure runs in eu-west-1. Where should the certificate be requested?',
     options: [
       'In AWS Certificate Manager in eu-west-1.',
@@ -650,7 +651,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-051',
     domain: 'secure',
-    lesson: 'secrets-certificates',
+    lesson: LessonSlug.SecretsCertificates,
     stem: 'A video streaming company distributes premium content through Amazon CloudFront. Subscribers must be able to access hundreds of video segment files for a movie without changing the URLs used by the existing player. Which solution meets these requirements?',
     options: [
       'CloudFront signed URLs for each segment file.',
@@ -663,7 +664,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-052',
     domain: 'secure',
-    lesson: 'secrets-certificates',
+    lesson: LessonSlug.SecretsCertificates,
     stem: 'An application stores dozens of configuration values, such as feature flags and endpoint URLs, plus a few API keys that do not need rotation. The company wants a low-cost, hierarchical store with encryption for the sensitive values. Which solution is MOST cost-effective?',
     options: [
       'Store all values in AWS Secrets Manager.',
@@ -676,7 +677,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-053',
     domain: 'secure',
-    lesson: 'secrets-certificates',
+    lesson: LessonSlug.SecretsCertificates,
     stem: 'A company has a web application behind an Application Load Balancer. It wants to offload TLS processing from the EC2 instances while using certificates that renew automatically. Which solution requires the LEAST operational overhead?',
     options: [
       'Request a public certificate in AWS Certificate Manager and attach it to an HTTPS listener on the ALB.',
@@ -689,7 +690,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-054',
     domain: 'secure',
-    lesson: 'threat-detection-waf-shield',
+    lesson: LessonSlug.ThreatDetectionWafShield,
     stem: "A company's e-commerce website runs behind an Application Load Balancer. The website is experiencing SQL injection attempts and an HTTP flood from a small set of IP addresses. Which solution addresses both issues?",
     options: [
       'Enable AWS Shield Standard on the ALB.',
@@ -702,7 +703,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-055',
     domain: 'secure',
-    lesson: 'threat-detection-waf-shield',
+    lesson: LessonSlug.ThreatDetectionWafShield,
     stem: 'A financial services company is concerned about large, sophisticated DDoS attacks against its applications on CloudFront, Route 53, and Elastic Load Balancing. The company wants access to a 24/7 DDoS response team and protection against scaling charges caused by attacks. Which service should the company use?',
     options: ['AWS Shield Standard', 'AWS WAF with rate-based rules', 'Amazon GuardDuty', 'AWS Shield Advanced'],
     answer: [3],
@@ -710,7 +711,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-056',
     domain: 'secure',
-    lesson: 'threat-detection-waf-shield',
+    lesson: LessonSlug.ThreatDetectionWafShield,
     stem: 'A security team wants to automatically detect cryptocurrency mining activity on EC2 instances and immediately isolate any affected instance by replacing its security group. Which TWO services should be combined to achieve this with the LEAST custom infrastructure? (Choose TWO.)',
     options: [
       'Amazon GuardDuty to detect the threat.',
@@ -724,7 +725,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-057',
     domain: 'secure',
-    lesson: 'threat-detection-waf-shield',
+    lesson: LessonSlug.ThreatDetectionWafShield,
     stem: 'A company stores millions of documents in Amazon S3 across many buckets. The compliance team needs to discover which objects contain personally identifiable information (PII) such as passport numbers and credit card numbers. Which service should be used?',
     options: ['Amazon GuardDuty S3 Protection', 'Amazon Macie', 'AWS Config', 'Amazon Detective'],
     answer: [1],
@@ -732,7 +733,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-058',
     domain: 'secure',
-    lesson: 'threat-detection-waf-shield',
+    lesson: LessonSlug.ThreatDetectionWafShield,
     stem: 'A company with 60 accounts in AWS Organizations must ensure that every Application Load Balancer and CloudFront distribution, including resources created in the future, is protected by a standard set of AWS WAF rules. Which solution requires the LEAST operational overhead?',
     options: [
       'Create a CloudFormation StackSet that deploys a web ACL to each account and ask teams to associate it.',
@@ -745,7 +746,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-059',
     domain: 'secure',
-    lesson: 'threat-detection-waf-shield',
+    lesson: LessonSlug.ThreatDetectionWafShield,
     stem: 'An auditor asks a company to show who deleted a security group in production last month and from which IP address the request was made. Which service provides this information?',
     options: ['AWS Config configuration history.', 'VPC Flow Logs.', 'Amazon CloudWatch metrics.', 'AWS CloudTrail.'],
     answer: [3],
@@ -753,7 +754,7 @@ export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-060',
     domain: 'secure',
-    lesson: 'threat-detection-waf-shield',
+    lesson: LessonSlug.ThreatDetectionWafShield,
     stem: 'A company must continuously verify that all Amazon S3 buckets have server access logging enabled and that no security group allows unrestricted SSH access. Noncompliant resources should be remediated automatically. Which solution meets these requirements?',
     options: [
       'Use AWS Config managed rules with automatic remediation through AWS Systems Manager Automation documents.',

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { makeBoard } from './board';
 import { ROUNDS } from './rounds';
 import { simulate } from './simulate';
+import { ComponentType } from './types';
 import type { Board, NodeConfig } from './types';
 
 const round = (id: string) => {
@@ -37,7 +38,7 @@ describe('Rounds', () => {
 
   it('starts every round with users on the board', () => {
     for (const item of ROUNDS) {
-      expect((item.starter ?? item.solution).nodes.some((node) => node.type === 'users')).toBe(true);
+      expect((item.starter ?? item.solution).nodes.some((node) => node.type === ComponentType.Users)).toBe(true);
     }
   });
 
@@ -48,9 +49,9 @@ describe('Rounds', () => {
         () =>
           makeBoard(
             [
-              ['users', 'users', 0, 0],
-              ['web', 'ec2', 0, 0, { size: 'xlarge' }],
-              ['db', 'rds', 0, 0, { size: 'large' }],
+              { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+              { id: 'web', type: ComponentType.Ec2, x: 0, y: 0, config: { size: 'xlarge' } },
+              { id: 'db', type: ComponentType.Rds, x: 0, y: 0, config: { size: 'large' } },
             ],
             [
               ['users', 'web'],
@@ -74,9 +75,9 @@ describe('Rounds', () => {
         () =>
           makeBoard(
             [
-              ['users', 'users', 0, 0],
-              ['web', 'ec2', 0, 0],
-              ['db', 'rds', 0, 0],
+              { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+              { id: 'web', type: ComponentType.Ec2, x: 0, y: 0 },
+              { id: 'db', type: ComponentType.Rds, x: 0, y: 0 },
             ],
             [
               ['users', 'web'],

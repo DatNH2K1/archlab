@@ -1,5 +1,7 @@
+import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
+import { ComponentType } from '@/game/types';
 import type { RequirementId } from '@/game/types';
 
 /** Patient-data rules that hold in every round. */
@@ -7,10 +9,10 @@ const RULES: RequirementId[] = ['encryptData', 'privateData', 'noPublicServers']
 
 const locked = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280, 240],
-    ['web', 'ec2', 480, 240, { size: 'medium' }],
-    ['db', 'rds', 680, 240, { size: 'medium', encrypted: true }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'medium' } },
+    { id: 'db', type: ComponentType.Rds, x: 680, y: 240, config: { size: 'medium', encrypted: true } },
   ],
   [
     ['users', 'lb'],
@@ -21,12 +23,12 @@ const locked = makeBoard(
 
 const scans = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['cdn', 'cloudfront', 260, 240],
-    ['files', 's3', 460, 80],
-    ['lb', 'alb', 460, 240],
-    ['web', 'ec2', 660, 240, { size: 'medium' }],
-    ['db', 'rds', 860, 240, { size: 'medium', encrypted: true }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 260, y: 240 },
+    { id: 'files', type: ComponentType.S3, x: 460, y: 80 },
+    { id: 'lb', type: ComponentType.Alb, x: 460, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 660, y: 240, config: { size: 'medium' } },
+    { id: 'db', type: ComponentType.Rds, x: 860, y: 240, config: { size: 'medium', encrypted: true } },
   ],
   [
     ['users', 'cdn'],
@@ -39,13 +41,13 @@ const scans = makeBoard(
 
 const cached = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['cdn', 'cloudfront', 260, 240],
-    ['files', 's3', 460, 80],
-    ['lb', 'alb', 460, 240],
-    ['web', 'ec2', 660, 240, { size: 'medium', count: 2, az: 'spread' }],
-    ['cache', 'elasticache', 880, 140, { encrypted: true }],
-    ['db', 'rds', 880, 320, { size: 'medium', encrypted: true }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 260, y: 240 },
+    { id: 'files', type: ComponentType.S3, x: 460, y: 80 },
+    { id: 'lb', type: ComponentType.Alb, x: 460, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 660, y: 240, config: { size: 'medium', count: 2, az: 'spread' } },
+    { id: 'cache', type: ComponentType.ElastiCache, x: 880, y: 140, config: { encrypted: true } },
+    { id: 'db', type: ComponentType.Rds, x: 880, y: 320, config: { size: 'medium', encrypted: true } },
   ],
   [
     ['users', 'cdn'],
@@ -59,14 +61,14 @@ const cached = makeBoard(
 
 const shielded = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['shield', 'waf', 220, 240],
-    ['cdn', 'cloudfront', 380, 240],
-    ['files', 's3', 560, 80],
-    ['lb', 'alb', 560, 240],
-    ['web', 'ec2', 760, 240, { size: 'medium', count: 2, az: 'spread' }],
-    ['cache', 'elasticache', 980, 140, { encrypted: true }],
-    ['db', 'rds', 980, 320, { size: 'medium', encrypted: true }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'shield', type: ComponentType.Waf, x: 220, y: 240 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 380, y: 240 },
+    { id: 'files', type: ComponentType.S3, x: 560, y: 80 },
+    { id: 'lb', type: ComponentType.Alb, x: 560, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 760, y: 240, config: { size: 'medium', count: 2, az: 'spread' } },
+    { id: 'cache', type: ComponentType.ElastiCache, x: 980, y: 140, config: { encrypted: true } },
+    { id: 'db', type: ComponentType.Rds, x: 980, y: 320, config: { size: 'medium', encrypted: true } },
   ],
   [
     ['users', 'shield'],
@@ -82,16 +84,16 @@ const shielded = makeBoard(
 const audited = (queue: { encrypted: boolean }) =>
   makeBoard(
     [
-      ['users', 'users', 80, 240],
-      ['shield', 'waf', 220, 240],
-      ['cdn', 'cloudfront', 380, 240],
-      ['files', 's3', 560, 80],
-      ['lb', 'alb', 560, 240],
-      ['web', 'ec2', 760, 240, { size: 'medium', count: 2, az: 'spread' }],
-      ['cache', 'elasticache', 980, 140, { encrypted: true }],
-      ['db', 'rds', 980, 320, { size: 'medium', encrypted: true }],
-      ['queue', 'sqs', 760, 440, queue],
-      ['worker', 'ec2', 980, 480, { size: 'medium' }],
+      { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+      { id: 'shield', type: ComponentType.Waf, x: 220, y: 240 },
+      { id: 'cdn', type: ComponentType.CloudFront, x: 380, y: 240 },
+      { id: 'files', type: ComponentType.S3, x: 560, y: 80 },
+      { id: 'lb', type: ComponentType.Alb, x: 560, y: 240 },
+      { id: 'web', type: ComponentType.Ec2, x: 760, y: 240, config: { size: 'medium', count: 2, az: 'spread' } },
+      { id: 'cache', type: ComponentType.ElastiCache, x: 980, y: 140, config: { encrypted: true } },
+      { id: 'db', type: ComponentType.Rds, x: 980, y: 320, config: { size: 'medium', encrypted: true } },
+      { id: 'queue', type: ComponentType.Sqs, x: 760, y: 440, config: queue },
+      { id: 'worker', type: ComponentType.Ec2, x: 980, y: 480, config: { size: 'medium' } },
     ],
     [
       ['users', 'shield'],
@@ -121,13 +123,13 @@ export const healthRecords: Track = {
         requirements: RULES,
       },
       unlocks: [],
-      lessons: ['vpc-networking-security', 'data-encryption-kms'],
+      lessons: [LessonSlug.VpcNetworkingSecurity, LessonSlug.DataEncryptionKms],
       solution: locked,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['web', 'ec2', 320, 240, { size: 'medium' }],
-          ['db', 'rds', 560, 240, { size: 'medium' }],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 320, y: 240, config: { size: 'medium' } },
+          { id: 'db', type: ComponentType.Rds, x: 560, y: 240, config: { size: 'medium' } },
         ],
         [
           ['users', 'web'],
@@ -146,15 +148,15 @@ export const healthRecords: Track = {
         requirements: [...RULES, 'privateBucket'],
       },
       unlocks: [],
-      lessons: ['edge-networking', 'secrets-certificates'],
+      lessons: [LessonSlug.EdgeNetworking, LessonSlug.SecretsCertificates],
       solution: scans,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['files', 's3', 280, 80],
-          ['lb', 'alb', 280, 240],
-          ['web', 'ec2', 480, 240, { size: 'medium' }],
-          ['db', 'rds', 680, 240, { size: 'medium', encrypted: true }],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'files', type: ComponentType.S3, x: 280, y: 80 },
+          { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'medium' } },
+          { id: 'db', type: ComponentType.Rds, x: 680, y: 240, config: { size: 'medium', encrypted: true } },
         ],
         [
           ['users', 'files'],
@@ -175,17 +177,17 @@ export const healthRecords: Track = {
         requirements: [...RULES, 'privateBucket'],
       },
       unlocks: [],
-      lessons: ['nosql-caching', 'data-encryption-kms'],
+      lessons: [LessonSlug.NoSqlCaching, LessonSlug.DataEncryptionKms],
       solution: cached,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['cdn', 'cloudfront', 260, 240],
-          ['files', 's3', 460, 80],
-          ['lb', 'alb', 460, 240],
-          ['web', 'ec2', 660, 240, { size: 'medium', count: 2, az: 'spread' }],
-          ['cache', 'elasticache', 880, 140],
-          ['db', 'rds', 880, 320, { size: 'medium', encrypted: true }],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'cdn', type: ComponentType.CloudFront, x: 260, y: 240 },
+          { id: 'files', type: ComponentType.S3, x: 460, y: 80 },
+          { id: 'lb', type: ComponentType.Alb, x: 460, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 660, y: 240, config: { size: 'medium', count: 2, az: 'spread' } },
+          { id: 'cache', type: ComponentType.ElastiCache, x: 880, y: 140 },
+          { id: 'db', type: ComponentType.Rds, x: 880, y: 320, config: { size: 'medium', encrypted: true } },
         ],
         [
           ['users', 'cdn'],
@@ -209,7 +211,7 @@ export const healthRecords: Track = {
         requirements: [...RULES, 'privateBucket', 'webFirewall'],
       },
       unlocks: [],
-      lessons: ['threat-detection-waf-shield'],
+      lessons: [LessonSlug.ThreatDetectionWafShield],
       solution: shielded,
       naive: cached,
     },
@@ -225,7 +227,7 @@ export const healthRecords: Track = {
         requirements: [...RULES, 'privateBucket', 'webFirewall', 'drainQueue'],
       },
       unlocks: [],
-      lessons: ['decoupling-messaging', 'threat-detection-waf-shield'],
+      lessons: [LessonSlug.DecouplingMessaging, LessonSlug.ThreatDetectionWafShield],
       solution: audited({ encrypted: true }),
       naive: audited({ encrypted: false }),
     },

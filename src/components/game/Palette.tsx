@@ -2,13 +2,13 @@
 
 import { useTranslations } from 'next-intl';
 import { CATALOG, FLAT_PRICE, REQUEST_PRICE, SIZE_PRICE } from '@/game/catalog';
-import type { ComponentType } from '@/game/types';
 import { ComponentIcon } from './ComponentIcon';
+import { ComponentType } from '@/game/types';
 
 const priceTag = (type: ComponentType, units: { month: string; per100: string }) => {
   const sized = SIZE_PRICE[type]?.small;
 
-  if (type === 'dynamodb' || type === 'lambda' || type === 'apiGateway') {
+  if (type === ComponentType.DynamoDb || type === ComponentType.Lambda || type === ComponentType.ApiGateway) {
     return `$${REQUEST_PRICE[type]}${units.per100}`;
   }
 

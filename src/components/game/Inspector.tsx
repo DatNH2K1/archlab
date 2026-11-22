@@ -3,8 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { Checkbox } from '@/components/Checkbox';
 import { CAPACITY, CATALOG, SIZES } from '@/game/catalog';
-import type { BoardNode, ComponentType, NodeConfig } from '@/game/types';
-import { REGIONS } from '@/game/types';
+import type { BoardNode, NodeConfig } from '@/game/types';
+import { ComponentType, REGIONS } from '@/game/types';
 import { Link } from '@/libs/I18nNavigation';
 import { ComponentIcon } from './ComponentIcon';
 
@@ -146,7 +146,7 @@ export const Inspector = (props: {
       <header className="mb-2 flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <ComponentIcon type={node.type} className="size-6" />
-          <h2 className="text-lg font-bold">{node.type === 'users' ? tg('users') : spec.label}</h2>
+          <h2 className="text-lg font-bold">{node.type === ComponentType.Users ? tg('users') : spec.label}</h2>
         </div>
         <button
           type="button"
@@ -170,7 +170,7 @@ export const Inspector = (props: {
       </details>
 
       <div className="mt-4 space-y-3 border-t border-line pt-3">
-        {has('size') && (node.type !== 'dynamodb' || c.provisioned) && (
+        {has('size') && (node.type !== ComponentType.DynamoDb || c.provisioned) && (
           <Segmented
             label={capacity ? t('size_with_capacity', { capacity: capacity[c.size] }) : t('size')}
             value={c.size}
@@ -219,12 +219,12 @@ export const Inspector = (props: {
         {has('az') && (
           <Segmented
             label={t('az')}
-            value={node.type === 'readReplica' && c.az === 'spread' ? 'a' : c.az}
+            value={node.type === ComponentType.ReadReplica && c.az === 'spread' ? 'a' : c.az}
             disabled={props.locked}
             options={[
               { value: 'a', label: 'AZ a' },
               { value: 'b', label: 'AZ b' },
-              ...(node.type === 'ec2' ? [{ value: 'spread' as const, label: t('az_spread') }] : []),
+              ...(node.type === ComponentType.Ec2 ? [{ value: 'spread' as const, label: t('az_spread') }] : []),
             ]}
             onChange={(az) => {
               props.onChange({ az });
@@ -248,8 +248,8 @@ export const Inspector = (props: {
         )}
         {has('multiAz') && (
           <Toggle
-            label={node.type === 'rds' ? t('multi_az_rds') : t('multi_az_cache')}
-            hint={node.type === 'rds' ? t('multi_az_rds_hint') : t('multi_az_cache_hint')}
+            label={node.type === ComponentType.Rds ? t('multi_az_rds') : t('multi_az_cache')}
+            hint={node.type === ComponentType.Rds ? t('multi_az_rds_hint') : t('multi_az_cache_hint')}
             value={c.multiAz}
             disabled={props.locked}
             onChange={(multiAz) => {
@@ -259,9 +259,9 @@ export const Inspector = (props: {
         )}
         {has('provisioned') && (
           <Toggle
-            label={node.type === 'lambda' ? t('provisioned_lambda') : t('provisioned_dynamodb')}
+            label={node.type === ComponentType.Lambda ? t('provisioned_lambda') : t('provisioned_dynamodb')}
             hint={
-              node.type === 'lambda' ? t('provisioned_lambda_hint') : t('provisioned_dynamodb_hint')
+              node.type === ComponentType.Lambda ? t('provisioned_lambda_hint') : t('provisioned_dynamodb_hint')
             }
             value={c.provisioned}
             disabled={props.locked}
@@ -272,8 +272,8 @@ export const Inspector = (props: {
         )}
         {has('globalDb') && (
           <Toggle
-            label={node.type === 'aurora' ? t('global_aurora') : t('global_dynamodb')}
-            hint={node.type === 'aurora' ? t('global_aurora_hint') : t('global_dynamodb_hint')}
+            label={node.type === ComponentType.Aurora ? t('global_aurora') : t('global_dynamodb')}
+            hint={node.type === ComponentType.Aurora ? t('global_aurora_hint') : t('global_dynamodb_hint')}
             value={c.globalDb}
             disabled={props.locked}
             onChange={(globalDb) => props.onChange({ globalDb })}
@@ -314,7 +314,7 @@ export const Inspector = (props: {
         )}
       </div>
 
-      {node.type !== 'users' && (
+      {node.type !== ComponentType.Users && (
         <footer className="mt-4 flex items-center justify-between border-t border-line pt-3">
           <span className="font-mono text-sm text-muted">
             {tg('cost_per_month', { cost: props.cost.toFixed(1) })}

@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { CATALOG, defaultConfig } from '@/game/catalog';
+import { ComponentType } from '@/game/types';
 import type { BoardNode, NodeTick, Region } from '@/game/types';
 import { ComponentIcon } from './ComponentIcon';
 
@@ -18,7 +19,7 @@ export type Side = 'top' | 'right' | 'bottom' | 'left';
  * @returns Its size in board pixels.
  */
 export const nodeSize = (node: BoardNode) =>
-  node.type === 'users' ? { w: USERS_W, h: USERS_H } : { w: NODE_W, h: NODE_H };
+  node.type === ComponentType.Users ? { w: USERS_W, h: USERS_H } : { w: NODE_W, h: NODE_H };
 
 /**
  * Computes the position of one of the four connection dots of a node.
@@ -76,11 +77,11 @@ const useSubtitle = (node: BoardNode) => {
   const parts: string[] = [];
   const c = node.config;
 
-  if (spec.fields.includes('size') && (node.type !== 'dynamodb' || c.provisioned)) {
+  if (spec.fields.includes('size') && (node.type !== ComponentType.DynamoDb || c.provisioned)) {
     parts.push(t(`size_${c.size}`));
   }
 
-  if (node.type === 'dynamodb') {
+  if (node.type === ComponentType.DynamoDb) {
     parts.push(c.provisioned ? t('provisioned_dynamodb_short') : t('on_demand_short'));
   }
 
@@ -99,14 +100,14 @@ const useBadges = (node: BoardNode, showRegion: boolean) => {
   const c = node.config;
   const badges: { label: string; tone: string }[] = [];
 
-  if (spec.fields.includes('az') && node.type === 'ec2') {
+  if (spec.fields.includes('az') && node.type === ComponentType.Ec2) {
     badges.push({
       label: c.az === 'spread' ? 'AZ a+b' : `AZ ${c.az}`,
       tone: c.az === 'spread' ? 'text-good' : 'text-muted',
     });
   }
 
-  if (node.type === 'readReplica') {
+  if (node.type === ComponentType.ReadReplica) {
     badges.push({ label: `AZ ${c.az === 'b' ? 'b' : 'a'}`, tone: 'text-muted' });
   }
 
@@ -126,11 +127,11 @@ const useBadges = (node: BoardNode, showRegion: boolean) => {
     badges.push({ label: 'KMS', tone: 'text-accent' });
   }
 
-  if (node.type === 'lambda' && c.provisioned) {
+  if (node.type === ComponentType.Lambda && c.provisioned) {
     badges.push({ label: 'PC', tone: 'text-info' });
   }
 
-  if (node.type === 'cloudfront' && c.cacheApi) {
+  if (node.type === ComponentType.CloudFront && c.cacheApi) {
     badges.push({ label: tg('badge_api_cache'), tone: 'text-info' });
   }
 
@@ -169,7 +170,7 @@ export const NodeBox = (props: {
   const { w, h } = nodeSize(props.node);
   const { live } = props;
   const down = live && !live.alive;
-  const isUsers = props.node.type === 'users';
+  const isUsers = props.node.type === ComponentType.Users;
 
   return (
     <div

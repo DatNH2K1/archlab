@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { canAdd, canConnect, makeBoard } from './board';
+import { ComponentType } from './types';
 
 const board = makeBoard(
   [
-    ['users', 'users', 0, 0],
-    ['lb', 'alb', 0, 0],
-    ['web', 'ec2', 0, 0],
-    ['db', 'rds', 0, 0],
-    ['dns', 'route53', 0, 0],
+    { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+    { id: 'lb', type: ComponentType.Alb, x: 0, y: 0 },
+    { id: 'web', type: ComponentType.Ec2, x: 0, y: 0 },
+    { id: 'db', type: ComponentType.Rds, x: 0, y: 0 },
+    { id: 'dns', type: ComponentType.Route53, x: 0, y: 0 },
   ],
   [['users', 'lb']],
 );
@@ -33,20 +34,20 @@ describe('canConnect', () => {
 
 describe('canAdd', () => {
   it('limits global entry points to one', () => {
-    expect(canAdd(board, 'route53')).toBe(false);
+    expect(canAdd(board, ComponentType.Route53)).toBe(false);
   });
 
   it('allows any number of servers', () => {
-    expect(canAdd(board, 'ec2')).toBe(true);
+    expect(canAdd(board, ComponentType.Ec2)).toBe(true);
   });
 
   it('refuses a second database that takes writes', () => {
-    expect(canAdd(board, 'rds')).toBe(false);
-    expect(canAdd(board, 'aurora')).toBe(false);
-    expect(canAdd(board, 'dynamodb')).toBe(false);
+    expect(canAdd(board, ComponentType.Rds)).toBe(false);
+    expect(canAdd(board, ComponentType.Aurora)).toBe(false);
+    expect(canAdd(board, ComponentType.DynamoDb)).toBe(false);
   });
 
   it('allows Read Replicas next to the write database', () => {
-    expect(canAdd(board, 'readReplica')).toBe(true);
+    expect(canAdd(board, ComponentType.ReadReplica)).toBe(true);
   });
 });

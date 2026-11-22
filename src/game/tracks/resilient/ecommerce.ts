@@ -1,11 +1,13 @@
+import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
+import { ComponentType } from '@/game/types';
 
 const single = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['web', 'ec2', 340, 240, { size: 'medium' }],
-    ['db', 'rds', 600, 240, { size: 'medium' }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 340, y: 240, config: { size: 'medium' } },
+    { id: 'db', type: ComponentType.Rds, x: 600, y: 240, config: { size: 'medium' } },
   ],
   [
     ['users', 'web'],
@@ -15,10 +17,10 @@ const single = makeBoard(
 
 const balanced = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280, 240],
-    ['web', 'ec2', 480, 240, { size: 'medium', count: 3 }],
-    ['db', 'rds', 700, 240, { size: 'large' }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'medium', count: 3 } },
+    { id: 'db', type: ComponentType.Rds, x: 700, y: 240, config: { size: 'large' } },
   ],
   [
     ['users', 'lb'],
@@ -29,10 +31,10 @@ const balanced = makeBoard(
 
 const multiAz = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280, 240],
-    ['web', 'ec2', 480, 240, { size: 'medium', count: 4, az: 'spread', autoScaling: true, maxCount: 4 }],
-    ['db', 'rds', 700, 240, { size: 'large', multiAz: true }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'medium', count: 4, az: 'spread', autoScaling: true, maxCount: 4 } },
+    { id: 'db', type: ComponentType.Rds, x: 700, y: 240, config: { size: 'large', multiAz: true } },
   ],
   [
     ['users', 'lb'],
@@ -43,11 +45,11 @@ const multiAz = makeBoard(
 
 const cached = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280, 240],
-    ['web', 'ec2', 480, 240, { size: 'large', count: 2, az: 'spread' }],
-    ['cache', 'elasticache', 700, 120],
-    ['db', 'rds', 700, 340, { size: 'medium', multiAz: true }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'large', count: 2, az: 'spread' } },
+    { id: 'cache', type: ComponentType.ElastiCache, x: 700, y: 120 },
+    { id: 'db', type: ComponentType.Rds, x: 700, y: 340, config: { size: 'medium', multiAz: true } },
   ],
   [
     ['users', 'lb'],
@@ -59,11 +61,11 @@ const cached = makeBoard(
 
 const scaling = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280, 240],
-    ['web', 'ec2', 480, 240, { size: 'xlarge', count: 1, az: 'spread', autoScaling: true, maxCount: 3 }],
-    ['cache', 'elasticache', 700, 120, { size: 'medium' }],
-    ['db', 'rds', 700, 340, { size: 'large', multiAz: true }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'xlarge', count: 1, az: 'spread', autoScaling: true, maxCount: 3 } },
+    { id: 'cache', type: ComponentType.ElastiCache, x: 700, y: 120, config: { size: 'medium' } },
+    { id: 'db', type: ComponentType.Rds, x: 700, y: 340, config: { size: 'large', multiAz: true } },
   ],
   [
     ['users', 'lb'],
@@ -75,13 +77,13 @@ const scaling = makeBoard(
 
 const launch = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280, 240],
-    ['web', 'ec2', 480, 240, { size: 'xlarge', count: 1, az: 'spread', autoScaling: true, maxCount: 3 }],
-    ['cache', 'elasticache', 700, 100, { size: 'medium' }],
-    ['db', 'rds', 700, 260, { size: 'large', multiAz: true }],
-    ['orders', 'sqs', 480, 420],
-    ['worker', 'ec2', 700, 420, { size: 'xlarge' }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'xlarge', count: 1, az: 'spread', autoScaling: true, maxCount: 3 } },
+    { id: 'cache', type: ComponentType.ElastiCache, x: 700, y: 100, config: { size: 'medium' } },
+    { id: 'db', type: ComponentType.Rds, x: 700, y: 260, config: { size: 'large', multiAz: true } },
+    { id: 'orders', type: ComponentType.Sqs, x: 480, y: 420 },
+    { id: 'worker', type: ComponentType.Ec2, x: 700, y: 420, config: { size: 'xlarge' } },
   ],
   [
     ['users', 'lb'],
@@ -101,13 +103,13 @@ export const ecommerce: Track = {
       id: 'shop-1-mvp',
       scenario: { traffic: 250, mix: { read: 0.8, write: 0.2 }, audience: { 'us-east-1': 1 }, latencyTarget: 300, budget: 70, requirements: [] },
       unlocks: [],
-      lessons: ['ec2-compute', 'relational-databases'],
+      lessons: [LessonSlug.Ec2Compute, LessonSlug.RelationalDatabases],
       solution: single,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['web', 'ec2', 340, 240],
-          ['db', 'rds', 600, 240],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 340, y: 240 },
+          { id: 'db', type: ComponentType.Rds, x: 600, y: 240 },
         ],
         [
           ['users', 'web'],
@@ -119,13 +121,13 @@ export const ecommerce: Track = {
       id: 'shop-2-scale-out',
       scenario: { traffic: 1200, mix: { read: 0.85, write: 0.15 }, audience: { 'us-east-1': 1 }, latencyTarget: 250, budget: 178, requirements: [] },
       unlocks: [],
-      lessons: ['elastic-load-balancing', 'ec2-compute'],
+      lessons: [LessonSlug.ElasticLoadBalancing, LessonSlug.Ec2Compute],
       solution: balanced,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['web', 'ec2', 340, 240, { size: 'large' }],
-          ['db', 'rds', 600, 240, { size: 'large' }],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 340, y: 240, config: { size: 'large' } },
+          { id: 'db', type: ComponentType.Rds, x: 600, y: 240, config: { size: 'large' } },
         ],
         [
           ['users', 'web'],
@@ -145,14 +147,14 @@ export const ecommerce: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['high-availability-multi-az', 'auto-scaling'],
+      lessons: [LessonSlug.HighAvailabilityMultiAz, LessonSlug.AutoScaling],
       solution: multiAz,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['lb', 'alb', 280, 240],
-          ['web', 'ec2', 480, 240, { size: 'medium', count: 4, az: 'spread' }],
-          ['db', 'rds', 700, 240, { size: 'large' }],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'medium', count: 4, az: 'spread' } },
+          { id: 'db', type: ComponentType.Rds, x: 700, y: 240, config: { size: 'large' } },
         ],
         [
           ['users', 'lb'],
@@ -165,14 +167,14 @@ export const ecommerce: Track = {
       id: 'shop-4-catalog-cache',
       scenario: { traffic: 2000, mix: { read: 0.95, write: 0.05 }, audience: { 'us-east-1': 1 }, latencyTarget: 250, budget: 230, requirements: [] },
       unlocks: [],
-      lessons: ['nosql-caching'],
+      lessons: [LessonSlug.NoSqlCaching],
       solution: cached,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['lb', 'alb', 280, 240],
-          ['web', 'ec2', 480, 240, { size: 'large', count: 2, az: 'spread' }],
-          ['db', 'rds', 700, 240, { size: 'xlarge', multiAz: true }],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'large', count: 2, az: 'spread' } },
+          { id: 'db', type: ComponentType.Rds, x: 700, y: 240, config: { size: 'xlarge', multiAz: true } },
         ],
         [
           ['users', 'lb'],
@@ -193,15 +195,15 @@ export const ecommerce: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['auto-scaling'],
+      lessons: [LessonSlug.AutoScaling],
       solution: scaling,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['lb', 'alb', 280, 240],
-          ['web', 'ec2', 480, 240, { size: 'large', count: 6, az: 'spread' }],
-          ['cache', 'elasticache', 700, 120, { size: 'medium' }],
-          ['db', 'rds', 700, 340, { size: 'large', multiAz: true }],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'large', count: 6, az: 'spread' } },
+          { id: 'cache', type: ComponentType.ElastiCache, x: 700, y: 120, config: { size: 'medium' } },
+          { id: 'db', type: ComponentType.Rds, x: 700, y: 340, config: { size: 'large', multiAz: true } },
         ],
         [
           ['users', 'lb'],
@@ -223,7 +225,7 @@ export const ecommerce: Track = {
         requirements: ['drainQueue'],
       },
       unlocks: [],
-      lessons: ['decoupling-messaging', 'auto-scaling'],
+      lessons: [LessonSlug.DecouplingMessaging, LessonSlug.AutoScaling],
       solution: launch,
       naive: scaling,
     },

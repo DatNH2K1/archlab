@@ -1,5 +1,7 @@
+import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
+import { ComponentType } from '@/game/types';
 import type { NodeConfig } from '@/game/types';
 
 type Cfg = Partial<NodeConfig>;
@@ -7,10 +9,10 @@ type Cfg = Partial<NodeConfig>;
 const single = (web: Cfg, db: Cfg) =>
   makeBoard(
     [
-      ['users', 'users', 80, 240],
-      ['lb', 'alb', 300, 240],
-      ['web', 'ec2', 520, 240, web],
-      ['db', 'rds', 760, 240, db],
+      { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+      { id: 'lb', type: ComponentType.Alb, x: 300, y: 240 },
+      { id: 'web', type: ComponentType.Ec2, x: 520, y: 240, config: web },
+      { id: 'db', type: ComponentType.Rds, x: 760, y: 240, config: db },
     ],
     [
       ['users', 'lb'],
@@ -27,36 +29,41 @@ const standby = (o: { web: Cfg; db: Cfg; web2: Cfg; cache?: Cfg; dns?: boolean }
 
   return makeBoard(
     [
-      ['users', 'users', 80, 300],
-      ...(o.dns === false ? [] : [['dns', 'route53', 260, 300] as const]),
-      ['lb', 'alb', 440, 160],
-      ['web', 'ec2', 640, 160, o.web],
+      { id: 'users', type: ComponentType.Users, x: 80, y: 300 },
+      ...(o.dns === false ? [] : [{ id: 'dns', type: ComponentType.Route53, x: 260, y: 300 } as const]),
+      { id: 'lb', type: ComponentType.Alb, x: 440, y: 160 },
+      { id: 'web', type: ComponentType.Ec2, x: 640, y: 160, config: o.web },
       // Aurora Global Database: one cluster with a managed copy in eu-west-1.
-      ['db', 'aurora', 860, 300, { ...o.db, globalDb: true }],
-      ...(cached ? [['cache', 'elasticache', 860, 20, o.cache] as const, ['cache2', 'elasticache', 860, 590, { ...o.cache, region: 'eu-west-1' }] as const] : []),
-      ['lb2', 'alb', 440, 440, { region: 'eu-west-1' }],
-      ['web2', 'ec2', 640, 440, { ...o.web2, region: 'eu-west-1' }],
-    ] as Parameters<typeof makeBoard>[0],
+      { id: 'db', type: ComponentType.Aurora, x: 860, y: 300, config: { ...o.db, globalDb: true } },
+      ...(cached
+        ? [
+            { id: 'cache', type: ComponentType.ElastiCache, x: 860, y: 20, config: o.cache } as const,
+            { id: 'cache2', type: ComponentType.ElastiCache, x: 860, y: 590, config: { ...o.cache, region: 'eu-west-1' } } as const,
+          ]
+        : []),
+      { id: 'lb2', type: ComponentType.Alb, x: 440, y: 440, config: { region: 'eu-west-1' } },
+      { id: 'web2', type: ComponentType.Ec2, x: 640, y: 440, config: { ...o.web2, region: 'eu-west-1' } },
+    ],
     [
       ...(o.dns === false
-        ? ([
+        ? [
             ['users', 'lb'],
             ['users', 'lb2'],
-          ] as [string, string][])
-        : ([
+          ] as const
+        : [
             ['users', 'dns'],
             ['dns', 'lb'],
             ['dns', 'lb2'],
-          ] as [string, string][])),
+          ] as const),
       ['lb', 'web'],
       ['web', 'db'],
       ['lb2', 'web2'],
       ['web2', 'db'],
       ...(cached
-        ? ([
+        ? [
             ['web', 'cache'],
             ['web2', 'cache2'],
-          ] as [string, string][])
+          ] as const
         : []),
     ],
   );
@@ -100,13 +107,13 @@ export const saasDr: Track = {
       id: 'dr-1-launch',
       scenario: { traffic: 300, mix: { read: 0.8, write: 0.2 }, audience: { 'us-east-1': 1 }, latencyTarget: 200, budget: 90, requirements: [] },
       unlocks: [],
-      lessons: ['elastic-load-balancing', 'relational-databases'],
+      lessons: [LessonSlug.ElasticLoadBalancing, LessonSlug.RelationalDatabases],
       solution: launch,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['web', 'ec2', 360, 240, { size: 'medium' }],
-          ['db', 'rds', 640, 240, { size: 'small' }],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 360, y: 240, config: { size: 'medium' } },
+          { id: 'db', type: ComponentType.Rds, x: 640, y: 240, config: { size: 'small' } },
         ],
         [
           ['users', 'web'],
@@ -118,7 +125,7 @@ export const saasDr: Track = {
       id: 'dr-2-az',
       scenario: { traffic: 350, mix: { read: 0.8, write: 0.2 }, audience: { 'us-east-1': 1 }, twist: 'azOutage', latencyTarget: 200, budget: 155, requirements: [] },
       unlocks: [],
-      lessons: ['high-availability-multi-az'],
+      lessons: [LessonSlug.HighAvailabilityMultiAz],
       solution: multiAz,
       naive: single({ size: 'medium', count: 2, az: 'spread' }, { size: 'medium' }),
     },
@@ -126,7 +133,7 @@ export const saasDr: Track = {
       id: 'dr-3-region',
       scenario: { traffic: 350, mix: { read: 0.8, write: 0.2 }, audience: { 'us-east-1': 1 }, twist: 'regionOutage', outageRegion: 'us-east-1', latencyTarget: 150, budget: 250, requirements: [] },
       unlocks: [],
-      lessons: ['disaster-recovery', 'route53-routing'],
+      lessons: [LessonSlug.DisasterRecovery, LessonSlug.Route53Routing],
       solution: warm,
       naive: standby({ ...warmCfg, dns: false }),
     },
@@ -134,7 +141,7 @@ export const saasDr: Track = {
       id: 'dr-4-comply',
       scenario: { traffic: 350, mix: { read: 0.8, write: 0.2 }, audience: { 'us-east-1': 1 }, twist: 'regionOutage', outageRegion: 'us-east-1', latencyTarget: 150, budget: 250, requirements: [...compliance] },
       unlocks: [],
-      lessons: ['data-encryption-kms', 'vpc-networking-security'],
+      lessons: [LessonSlug.DataEncryptionKms, LessonSlug.VpcNetworkingSecurity],
       solution: locked,
       naive: warm,
     },
@@ -142,7 +149,7 @@ export const saasDr: Track = {
       id: 'dr-5-active',
       scenario: { traffic: 1000, mix: { read: 0.85, write: 0.15 }, audience: { 'us-east-1': 0.6, 'eu-west-1': 0.4 }, twist: 'regionOutage', outageRegion: 'us-east-1', latencyTarget: 120, budget: 330, requirements: [...compliance] },
       unlocks: [],
-      lessons: ['route53-routing', 'nosql-caching'],
+      lessons: [LessonSlug.Route53Routing, LessonSlug.NoSqlCaching],
       solution: active,
       naive: locked,
     },
@@ -150,7 +157,7 @@ export const saasDr: Track = {
       id: 'dr-6-reserved',
       scenario: { traffic: 1000, mix: { read: 0.85, write: 0.15 }, audience: { 'us-east-1': 0.6, 'eu-west-1': 0.4 }, twist: 'regionOutage', outageRegion: 'us-east-1', latencyTarget: 120, budget: 280, requirements: [...compliance] },
       unlocks: [],
-      lessons: ['ec2-pricing-models', 'cost-management-tools'],
+      lessons: [LessonSlug.Ec2PricingModels, LessonSlug.CostManagementTools],
       solution: reserved,
       naive: active,
     },

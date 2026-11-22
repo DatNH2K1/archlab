@@ -1,12 +1,14 @@
+import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
+import { ComponentType } from '@/game/types';
 
 const serverless = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['api', 'apiGateway', 300, 240],
-    ['fn', 'lambda', 520, 240],
-    ['links', 'dynamodb', 740, 240],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'api', type: ComponentType.ApiGateway, x: 300, y: 240 },
+    { id: 'fn', type: ComponentType.Lambda, x: 520, y: 240 },
+    { id: 'links', type: ComponentType.DynamoDb, x: 740, y: 240 },
   ],
   [
     ['users', 'api'],
@@ -17,11 +19,11 @@ const serverless = makeBoard(
 
 const edge = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['cdn', 'cloudfront', 260, 240, { cacheApi: true }],
-    ['api', 'apiGateway', 460, 240],
-    ['fn', 'lambda', 660, 240],
-    ['links', 'dynamodb', 860, 240],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 260, y: 240, config: { cacheApi: true } },
+    { id: 'api', type: ComponentType.ApiGateway, x: 460, y: 240 },
+    { id: 'fn', type: ComponentType.Lambda, x: 660, y: 240 },
+    { id: 'links', type: ComponentType.DynamoDb, x: 860, y: 240 },
   ],
   [
     ['users', 'cdn'],
@@ -33,12 +35,12 @@ const edge = makeBoard(
 
 const accelerated = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['cdn', 'cloudfront', 260, 240, { cacheApi: true }],
-    ['ga', 'globalAccelerator', 440, 240],
-    ['api', 'apiGateway', 620, 240],
-    ['fn', 'lambda', 800, 240],
-    ['links', 'dynamodb', 980, 240],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 260, y: 240, config: { cacheApi: true } },
+    { id: 'ga', type: ComponentType.GlobalAccelerator, x: 440, y: 240 },
+    { id: 'api', type: ComponentType.ApiGateway, x: 620, y: 240 },
+    { id: 'fn', type: ComponentType.Lambda, x: 800, y: 240 },
+    { id: 'links', type: ComponentType.DynamoDb, x: 980, y: 240 },
   ],
   [
     ['users', 'cdn'],
@@ -51,13 +53,13 @@ const accelerated = makeBoard(
 
 const shielded = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['shield', 'waf', 240, 240],
-    ['cdn', 'cloudfront', 400, 240, { cacheApi: true }],
-    ['ga', 'globalAccelerator', 560, 240],
-    ['api', 'apiGateway', 720, 240],
-    ['fn', 'lambda', 880, 240],
-    ['links', 'dynamodb', 1060, 240],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'shield', type: ComponentType.Waf, x: 240, y: 240 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 400, y: 240, config: { cacheApi: true } },
+    { id: 'ga', type: ComponentType.GlobalAccelerator, x: 560, y: 240 },
+    { id: 'api', type: ComponentType.ApiGateway, x: 720, y: 240 },
+    { id: 'fn', type: ComponentType.Lambda, x: 880, y: 240 },
+    { id: 'links', type: ComponentType.DynamoDb, x: 1060, y: 240 },
   ],
   [
     ['users', 'shield'],
@@ -77,13 +79,13 @@ export const urlShortener: Track = {
       id: 'short-mvp',
       scenario: { traffic: 30, mix: { read: 0.9, write: 0.1 }, audience: { 'us-east-1': 1 }, latencyTarget: 300, budget: 15, requirements: [] },
       unlocks: [],
-      lessons: ['serverless-workflows', 'nosql-caching'],
+      lessons: [LessonSlug.ServerlessWorkflows, LessonSlug.NoSqlCaching],
       solution: serverless,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['web', 'ec2', 360, 240],
-          ['db', 'rds', 640, 240],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 360, y: 240 },
+          { id: 'db', type: ComponentType.Rds, x: 640, y: 240 },
         ],
         [
           ['users', 'web'],
@@ -95,7 +97,7 @@ export const urlShortener: Track = {
       id: 'short-viral',
       scenario: { traffic: 1200, mix: { read: 0.97, write: 0.03 }, audience: { 'us-east-1': 1 }, latencyTarget: 200, budget: 110, requirements: [] },
       unlocks: [],
-      lessons: ['edge-networking', 'cost-compute-serverless-containers'],
+      lessons: [LessonSlug.EdgeNetworking, LessonSlug.CostComputeServerlessContainers],
       solution: edge,
       naive: serverless,
     },
@@ -103,7 +105,7 @@ export const urlShortener: Track = {
       id: 'short-global',
       scenario: { traffic: 1500, mix: { read: 0.97, write: 0.03 }, audience: { 'us-east-1': 0.4, 'eu-west-1': 0.6 }, latencyTarget: 100, budget: 160, requirements: [] },
       unlocks: [],
-      lessons: ['edge-networking', 'route53-routing'],
+      lessons: [LessonSlug.EdgeNetworking, LessonSlug.Route53Routing],
       solution: accelerated,
       naive: edge,
     },
@@ -119,7 +121,7 @@ export const urlShortener: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['threat-detection-waf-shield'],
+      lessons: [LessonSlug.ThreatDetectionWafShield],
       solution: shielded,
       naive: accelerated,
     },

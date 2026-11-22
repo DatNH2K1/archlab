@@ -1,13 +1,15 @@
+import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
+import { ComponentType } from '@/game/types';
 
 const cached = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280, 240],
-    ['game', 'ec2', 480, 240, { size: 'large', count: 3, az: 'spread' }],
-    ['board', 'elasticache', 700, 140],
-    ['scores', 'dynamodb', 700, 320, { provisioned: true, size: 'medium' }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+    { id: 'game', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'large', count: 3, az: 'spread' } },
+    { id: 'board', type: ComponentType.ElastiCache, x: 700, y: 140 },
+    { id: 'scores', type: ComponentType.DynamoDb, x: 700, y: 320, config: { provisioned: true, size: 'medium' } },
   ],
   [
     ['users', 'lb'],
@@ -19,13 +21,13 @@ const cached = makeBoard(
 
 const global = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['cdn', 'cloudfront', 260, 240, { cacheApi: true }],
-    ['ga', 'globalAccelerator', 440, 240],
-    ['lb', 'alb', 620, 240],
-    ['game', 'ec2', 800, 240, { size: 'large', count: 2, az: 'spread' }],
-    ['board', 'elasticache', 1020, 140],
-    ['scores', 'dynamodb', 1020, 320, { provisioned: true, size: 'medium' }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 260, y: 240, config: { cacheApi: true } },
+    { id: 'ga', type: ComponentType.GlobalAccelerator, x: 440, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 620, y: 240 },
+    { id: 'game', type: ComponentType.Ec2, x: 800, y: 240, config: { size: 'large', count: 2, az: 'spread' } },
+    { id: 'board', type: ComponentType.ElastiCache, x: 1020, y: 140 },
+    { id: 'scores', type: ComponentType.DynamoDb, x: 1020, y: 320, config: { provisioned: true, size: 'medium' } },
   ],
   [
     ['users', 'cdn'],
@@ -39,14 +41,14 @@ const global = makeBoard(
 
 const shielded = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['shield', 'waf', 240, 240],
-    ['cdn', 'cloudfront', 400, 240, { cacheApi: true }],
-    ['ga', 'globalAccelerator', 560, 240],
-    ['lb', 'alb', 720, 240],
-    ['game', 'ec2', 900, 240, { size: 'large', count: 2, az: 'spread' }],
-    ['board', 'elasticache', 1120, 140],
-    ['scores', 'dynamodb', 1120, 320, { provisioned: true, size: 'medium' }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'shield', type: ComponentType.Waf, x: 240, y: 240 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 400, y: 240, config: { cacheApi: true } },
+    { id: 'ga', type: ComponentType.GlobalAccelerator, x: 560, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 720, y: 240 },
+    { id: 'game', type: ComponentType.Ec2, x: 900, y: 240, config: { size: 'large', count: 2, az: 'spread' } },
+    { id: 'board', type: ComponentType.ElastiCache, x: 1120, y: 140 },
+    { id: 'scores', type: ComponentType.DynamoDb, x: 1120, y: 320, config: { provisioned: true, size: 'medium' } },
   ],
   [
     ['users', 'shield'],
@@ -61,14 +63,14 @@ const shielded = makeBoard(
 
 const replicated = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['shield', 'waf', 240, 240],
-    ['cdn', 'cloudfront', 400, 240, { cacheApi: true }],
-    ['ga', 'globalAccelerator', 560, 240],
-    ['lb', 'alb', 720, 240],
-    ['game', 'ec2', 900, 240, { size: 'large', count: 3, az: 'spread' }],
-    ['board', 'elasticache', 1120, 140, { multiAz: true }],
-    ['scores', 'dynamodb', 1120, 320, { provisioned: true, size: 'medium' }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'shield', type: ComponentType.Waf, x: 240, y: 240 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 400, y: 240, config: { cacheApi: true } },
+    { id: 'ga', type: ComponentType.GlobalAccelerator, x: 560, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 720, y: 240 },
+    { id: 'game', type: ComponentType.Ec2, x: 900, y: 240, config: { size: 'large', count: 3, az: 'spread' } },
+    { id: 'board', type: ComponentType.ElastiCache, x: 1120, y: 140, config: { multiAz: true } },
+    { id: 'scores', type: ComponentType.DynamoDb, x: 1120, y: 320, config: { provisioned: true, size: 'medium' } },
   ],
   [
     ['users', 'shield'],
@@ -83,19 +85,19 @@ const replicated = makeBoard(
 
 const twoRegions = makeBoard(
   [
-    ['users', 'users', 80, 300],
-    ['shield', 'waf', 220, 300],
-    ['cdn', 'cloudfront', 360, 300, { cacheApi: true }],
-    ['ga', 'globalAccelerator', 500, 300],
-    ['dns', 'route53', 640, 300],
-    ['lb1', 'alb', 800, 140],
-    ['game1', 'ec2', 980, 140, { size: 'large', count: 2, az: 'spread' }],
-    ['board1', 'elasticache', 1180, 60, { multiAz: true }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 300 },
+    { id: 'shield', type: ComponentType.Waf, x: 220, y: 300 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 360, y: 300, config: { cacheApi: true } },
+    { id: 'ga', type: ComponentType.GlobalAccelerator, x: 500, y: 300 },
+    { id: 'dns', type: ComponentType.Route53, x: 640, y: 300 },
+    { id: 'lb1', type: ComponentType.Alb, x: 800, y: 140 },
+    { id: 'game1', type: ComponentType.Ec2, x: 980, y: 140, config: { size: 'large', count: 2, az: 'spread' } },
+    { id: 'board1', type: ComponentType.ElastiCache, x: 1180, y: 60, config: { multiAz: true } },
     // DynamoDB global table: one table with a copy in each Region, both taking writes.
-    ['scores', 'dynamodb', 1180, 300, { provisioned: true, size: 'medium', globalDb: true }],
-    ['lb2', 'alb', 800, 460, { region: 'eu-west-1' }],
-    ['game2', 'ec2', 980, 460, { size: 'large', count: 2, az: 'spread', region: 'eu-west-1' }],
-    ['board2', 'elasticache', 1180, 380, { multiAz: true, region: 'eu-west-1' }],
+    { id: 'scores', type: ComponentType.DynamoDb, x: 1180, y: 300, config: { provisioned: true, size: 'medium', globalDb: true } },
+    { id: 'lb2', type: ComponentType.Alb, x: 800, y: 460, config: { region: 'eu-west-1' } },
+    { id: 'game2', type: ComponentType.Ec2, x: 980, y: 460, config: { size: 'large', count: 2, az: 'spread', region: 'eu-west-1' } },
+    { id: 'board2', type: ComponentType.ElastiCache, x: 1180, y: 380, config: { multiAz: true, region: 'eu-west-1' } },
   ],
   [
     ['users', 'shield'],
@@ -115,32 +117,26 @@ const twoRegions = makeBoard(
 
 const finals = makeBoard(
   [
-    ['users', 'users', 80, 300],
-    ['shield', 'waf', 220, 300],
-    ['cdn', 'cloudfront', 360, 300, { cacheApi: true }],
-    ['ga', 'globalAccelerator', 500, 300],
-    ['dns', 'route53', 640, 300],
-    ['lb1', 'alb', 800, 140],
-    ['game1', 'ec2', 980, 140, { size: 'large', count: 2, az: 'spread', autoScaling: true, maxCount: 5 }],
-    ['board1', 'elasticache', 1180, 60, { multiAz: true }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 300 },
+    { id: 'shield', type: ComponentType.Waf, x: 220, y: 300 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 360, y: 300, config: { cacheApi: true } },
+    { id: 'ga', type: ComponentType.GlobalAccelerator, x: 500, y: 300 },
+    { id: 'dns', type: ComponentType.Route53, x: 640, y: 300 },
+    { id: 'lb1', type: ComponentType.Alb, x: 800, y: 140 },
+    { id: 'game1', type: ComponentType.Ec2, x: 980, y: 140, config: { size: 'large', count: 2, az: 'spread', autoScaling: true, maxCount: 5 } },
+    { id: 'board1', type: ComponentType.ElastiCache, x: 1180, y: 60, config: { multiAz: true } },
     // DynamoDB global table: one table with a copy in each Region, both taking writes.
-    ['scores', 'dynamodb', 1180, 300, { provisioned: true, size: 'medium', globalDb: true }],
-    ['lb2', 'alb', 800, 460, { region: 'eu-west-1' }],
-    [
-      'game2',
-      'ec2',
-      980,
-      460,
-      {
+    { id: 'scores', type: ComponentType.DynamoDb, x: 1180, y: 300, config: { provisioned: true, size: 'medium', globalDb: true } },
+    { id: 'lb2', type: ComponentType.Alb, x: 800, y: 460, config: { region: 'eu-west-1' } },
+    { id: 'game2', type: ComponentType.Ec2, x: 980, y: 460, config: {
         size: 'large',
         count: 2,
         az: 'spread',
         region: 'eu-west-1',
         autoScaling: true,
         maxCount: 6,
-      },
-    ],
-    ['board2', 'elasticache', 1180, 380, { multiAz: true, region: 'eu-west-1' }],
+      } },
+    { id: 'board2', type: ComponentType.ElastiCache, x: 1180, y: 380, config: { multiAz: true, region: 'eu-west-1' } },
   ],
   [
     ['users', 'shield'],
@@ -173,14 +169,14 @@ export const gameLeaderboard: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['nosql-caching', 'cost-database-storage-choices'],
+      lessons: [LessonSlug.NoSqlCaching, LessonSlug.CostDatabaseStorageChoices],
       solution: cached,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['lb', 'alb', 280, 240],
-          ['game', 'ec2', 480, 240, { size: 'large', count: 3, az: 'spread' }],
-          ['scores', 'dynamodb', 700, 240],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+          { id: 'game', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'large', count: 3, az: 'spread' } },
+          { id: 'scores', type: ComponentType.DynamoDb, x: 700, y: 240 },
         ],
         [
           ['users', 'lb'],
@@ -200,7 +196,7 @@ export const gameLeaderboard: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['edge-networking'],
+      lessons: [LessonSlug.EdgeNetworking],
       solution: global,
       naive: cached,
     },
@@ -216,7 +212,7 @@ export const gameLeaderboard: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['threat-detection-waf-shield'],
+      lessons: [LessonSlug.ThreatDetectionWafShield],
       solution: shielded,
       naive: global,
     },
@@ -232,7 +228,7 @@ export const gameLeaderboard: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['nosql-caching', 'high-availability-multi-az'],
+      lessons: [LessonSlug.NoSqlCaching, LessonSlug.HighAvailabilityMultiAz],
       solution: replicated,
       naive: shielded,
     },
@@ -249,7 +245,7 @@ export const gameLeaderboard: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['disaster-recovery', 'route53-routing', 'backup-replication'],
+      lessons: [LessonSlug.DisasterRecovery, LessonSlug.Route53Routing, LessonSlug.BackupReplication],
       solution: twoRegions,
       naive: replicated,
     },
@@ -265,7 +261,7 @@ export const gameLeaderboard: Track = {
         requirements: [],
       },
       unlocks: [],
-      lessons: ['auto-scaling'],
+      lessons: [LessonSlug.AutoScaling],
       solution: finals,
       naive: twoRegions,
     },

@@ -1,5 +1,7 @@
+import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
+import { ComponentType } from '@/game/types';
 import type { NodeConfig, RequirementId } from '@/game/types';
 
 /** Card-data rules that hold in every round. */
@@ -10,19 +12,19 @@ const DB = { encrypted: true } satisfies Partial<NodeConfig>;
 const core = (o: { waf: boolean; db: Partial<NodeConfig> }) =>
   makeBoard(
     [
-      ['users', 'users', 80, 240],
-      ...(o.waf ? [['shield', 'waf', 240, 240] as const] : []),
-      ['api', 'apiGateway', 400, 240],
-      ['fn', 'lambda', 600, 240],
-      ['db', 'dynamodb', 800, 240, o.db],
-    ] as Parameters<typeof makeBoard>[0],
+      { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+      ...(o.waf ? [{ id: 'shield', type: ComponentType.Waf, x: 240, y: 240 } as const] : []),
+      { id: 'api', type: ComponentType.ApiGateway, x: 400, y: 240 },
+      { id: 'fn', type: ComponentType.Lambda, x: 600, y: 240 },
+      { id: 'db', type: ComponentType.DynamoDb, x: 800, y: 240, config: o.db },
+    ],
     [
       ...(o.waf
-        ? ([
+        ? [
             ['users', 'shield'],
             ['shield', 'api'],
-          ] as [string, string][])
-        : ([['users', 'api']] as [string, string][])),
+          ] as const
+        : [['users', 'api']] as const),
       ['api', 'fn'],
       ['fn', 'db'],
     ],
@@ -31,13 +33,13 @@ const core = (o: { waf: boolean; db: Partial<NodeConfig> }) =>
 const fraud = (queue: Partial<NodeConfig>) =>
   makeBoard(
     [
-      ['users', 'users', 80, 240],
-      ['shield', 'waf', 240, 240],
-      ['api', 'apiGateway', 400, 240],
-      ['fn', 'lambda', 600, 240],
-      ['db', 'dynamodb', 800, 240, DB],
-      ['queue', 'sqs', 600, 420, queue],
-      ['scorer', 'lambda', 800, 420],
+      { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+      { id: 'shield', type: ComponentType.Waf, x: 240, y: 240 },
+      { id: 'api', type: ComponentType.ApiGateway, x: 400, y: 240 },
+      { id: 'fn', type: ComponentType.Lambda, x: 600, y: 240 },
+      { id: 'db', type: ComponentType.DynamoDb, x: 800, y: 240, config: DB },
+      { id: 'queue', type: ComponentType.Sqs, x: 600, y: 420, config: queue },
+      { id: 'scorer', type: ComponentType.Lambda, x: 800, y: 420 },
     ],
     [
       ['users', 'shield'],
@@ -52,16 +54,16 @@ const fraud = (queue: Partial<NodeConfig>) =>
 const fanOut = (mailQueue: Partial<NodeConfig>) =>
   makeBoard(
     [
-      ['users', 'users', 80, 240],
-      ['shield', 'waf', 240, 240],
-      ['api', 'apiGateway', 400, 240],
-      ['fn', 'lambda', 600, 240],
-      ['db', 'dynamodb', 800, 240, DB],
-      ['topic', 'sns', 600, 420],
-      ['queue', 'sqs', 800, 380, { encrypted: true }],
-      ['scorer', 'lambda', 1000, 380],
-      ['queue2', 'sqs', 800, 520, mailQueue],
-      ['mailer', 'lambda', 1000, 520],
+      { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+      { id: 'shield', type: ComponentType.Waf, x: 240, y: 240 },
+      { id: 'api', type: ComponentType.ApiGateway, x: 400, y: 240 },
+      { id: 'fn', type: ComponentType.Lambda, x: 600, y: 240 },
+      { id: 'db', type: ComponentType.DynamoDb, x: 800, y: 240, config: DB },
+      { id: 'topic', type: ComponentType.Sns, x: 600, y: 420 },
+      { id: 'queue', type: ComponentType.Sqs, x: 800, y: 380, config: { encrypted: true } },
+      { id: 'scorer', type: ComponentType.Lambda, x: 1000, y: 380 },
+      { id: 'queue2', type: ComponentType.Sqs, x: 800, y: 520, config: mailQueue },
+      { id: 'mailer', type: ComponentType.Lambda, x: 1000, y: 520 },
     ],
     [
       ['users', 'shield'],
@@ -91,7 +93,7 @@ export const paymentApi: Track = {
         requirements: RULES,
       },
       unlocks: [],
-      lessons: ['iam-fundamentals', 'data-encryption-kms'],
+      lessons: [LessonSlug.IamFundamentals, LessonSlug.DataEncryptionKms],
       solution: core({ waf: false, db: DB }),
       naive: core({ waf: false, db: {} }),
     },
@@ -107,7 +109,7 @@ export const paymentApi: Track = {
         requirements: [...RULES, 'webFirewall'],
       },
       unlocks: [],
-      lessons: ['threat-detection-waf-shield', 'serverless-workflows'],
+      lessons: [LessonSlug.ThreatDetectionWafShield, LessonSlug.ServerlessWorkflows],
       solution: core({ waf: true, db: DB }),
       naive: core({ waf: false, db: DB }),
     },
@@ -123,7 +125,7 @@ export const paymentApi: Track = {
         requirements: [...RULES, 'webFirewall', 'drainQueue'],
       },
       unlocks: [],
-      lessons: ['decoupling-messaging', 'data-encryption-kms'],
+      lessons: [LessonSlug.DecouplingMessaging, LessonSlug.DataEncryptionKms],
       solution: fraud({ encrypted: true }),
       naive: fraud({}),
     },
@@ -139,7 +141,7 @@ export const paymentApi: Track = {
         requirements: [...RULES, 'webFirewall', 'drainQueue', 'fanOut'],
       },
       unlocks: [],
-      lessons: ['application-integration', 'decoupling-messaging'],
+      lessons: [LessonSlug.ApplicationIntegration, LessonSlug.DecouplingMessaging],
       solution: fanOut({ encrypted: true }),
       naive: fanOut({}),
     },

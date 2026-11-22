@@ -1,9 +1,10 @@
+import { LessonSlug } from '@/content/types';
 import type { LessonData } from '@/content/types';
 
 /** Lessons ordered by domain; texts live in the locale files. */
 export const LESSONS: LessonData[] = [
   {
-    slug: 'security-layers-overview',
+    slug: LessonSlug.SecurityLayersOverview,
     domain: 'secure',
     services: [
       'AWS WAF',
@@ -19,13 +20,13 @@ export const LESSONS: LessonData[] = [
     minutes: 8,
   },
   {
-    slug: 'iam-fundamentals',
+    slug: LessonSlug.IamFundamentals,
     domain: 'secure',
     services: ['AWS IAM', 'AWS STS', 'Amazon EC2'],
     minutes: 10,
   },
   {
-    slug: 'iam-organizations-scp',
+    slug: LessonSlug.IamOrganizationsScp,
     domain: 'secure',
     services: [
       'AWS Organizations',
@@ -37,13 +38,13 @@ export const LESSONS: LessonData[] = [
     minutes: 10,
   },
   {
-    slug: 'identity-federation-cognito',
+    slug: LessonSlug.IdentityFederationCognito,
     domain: 'secure',
     services: ['Amazon Cognito', 'AWS STS', 'AWS Directory Service', 'AWS IAM Identity Center'],
     minutes: 9,
   },
   {
-    slug: 'vpc-networking-security',
+    slug: LessonSlug.VpcNetworkingSecurity,
     domain: 'secure',
     services: [
       'Amazon VPC',
@@ -55,7 +56,7 @@ export const LESSONS: LessonData[] = [
     minutes: 12,
   },
   {
-    slug: 'vpc-connectivity',
+    slug: LessonSlug.VpcConnectivity,
     domain: 'secure',
     services: [
       'VPC Peering',
@@ -69,13 +70,13 @@ export const LESSONS: LessonData[] = [
     minutes: 12,
   },
   {
-    slug: 'data-encryption-kms',
+    slug: LessonSlug.DataEncryptionKms,
     domain: 'secure',
     services: ['AWS KMS', 'AWS CloudHSM', 'Amazon S3', 'Amazon EBS', 'Amazon RDS', 'Amazon S3 Glacier'],
     minutes: 12,
   },
   {
-    slug: 'secrets-certificates',
+    slug: LessonSlug.SecretsCertificates,
     domain: 'secure',
     services: [
       'AWS Secrets Manager',
@@ -87,7 +88,7 @@ export const LESSONS: LessonData[] = [
     minutes: 9,
   },
   {
-    slug: 'threat-detection-waf-shield',
+    slug: LessonSlug.ThreatDetectionWafShield,
     domain: 'secure',
     services: [
       'AWS WAF',
@@ -106,7 +107,7 @@ export const LESSONS: LessonData[] = [
     minutes: 12,
   },
   {
-    slug: 'high-availability-multi-az',
+    slug: LessonSlug.HighAvailabilityMultiAz,
     domain: 'resilient',
     services: [
       'Amazon EC2',
@@ -122,7 +123,7 @@ export const LESSONS: LessonData[] = [
     minutes: 10,
   },
   {
-    slug: 'elastic-load-balancing',
+    slug: LessonSlug.ElasticLoadBalancing,
     domain: 'resilient',
     services: [
       'Elastic Load Balancing',
@@ -135,31 +136,31 @@ export const LESSONS: LessonData[] = [
     minutes: 11,
   },
   {
-    slug: 'auto-scaling',
+    slug: LessonSlug.AutoScaling,
     domain: 'resilient',
     services: ['Amazon EC2 Auto Scaling', 'Amazon CloudWatch', 'Amazon SQS', 'Elastic Load Balancing'],
     minutes: 11,
   },
   {
-    slug: 'decoupling-messaging',
+    slug: LessonSlug.DecouplingMessaging,
     domain: 'resilient',
     services: ['Amazon SQS', 'Amazon SNS', 'Amazon EventBridge', 'Amazon Kinesis Data Streams', 'Amazon MQ'],
     minutes: 12,
   },
   {
-    slug: 'serverless-workflows',
+    slug: LessonSlug.ServerlessWorkflows,
     domain: 'resilient',
     services: ['AWS Lambda', 'Amazon API Gateway', 'AWS Step Functions', 'AWS AppSync', 'Amazon CloudFront'],
     minutes: 11,
   },
   {
-    slug: 'route53-routing',
+    slug: LessonSlug.Route53Routing,
     domain: 'resilient',
     services: ['Amazon Route 53', 'Route 53 Resolver', 'AWS Global Accelerator', 'Amazon CloudWatch'],
     minutes: 11,
   },
   {
-    slug: 'disaster-recovery',
+    slug: LessonSlug.DisasterRecovery,
     domain: 'resilient',
     services: [
       'AWS Elastic Disaster Recovery',
@@ -172,7 +173,7 @@ export const LESSONS: LessonData[] = [
     minutes: 13,
   },
   {
-    slug: 'backup-replication',
+    slug: LessonSlug.BackupReplication,
     domain: 'resilient',
     services: [
       'AWS Backup',
@@ -187,7 +188,7 @@ export const LESSONS: LessonData[] = [
     minutes: 12,
   },
   {
-    slug: 'management-iac',
+    slug: LessonSlug.ManagementIac,
     domain: 'resilient',
     services: [
       'AWS CloudFormation',
@@ -203,7 +204,7 @@ export const LESSONS: LessonData[] = [
     minutes: 12,
   },
   {
-    slug: 'application-integration',
+    slug: LessonSlug.ApplicationIntegration,
     domain: 'resilient',
     services: [
       'Amazon EventBridge',
@@ -217,13 +218,13 @@ export const LESSONS: LessonData[] = [
     minutes: 12,
   },
   {
-    slug: 'ec2-compute',
+    slug: LessonSlug.Ec2Compute,
     domain: 'performance',
     services: ['Amazon EC2', 'AWS Graviton', 'Amazon EBS', 'EC2 Image Builder', 'Elastic Fabric Adapter'],
     minutes: 10,
   },
   {
-    slug: 'containers-compute',
+    slug: LessonSlug.ContainersCompute,
     domain: 'performance',
     services: [
       'Amazon ECS',
@@ -238,7 +239,7 @@ export const LESSONS: LessonData[] = [
     minutes: 9,
   },
   {
-    slug: 'block-file-storage',
+    slug: LessonSlug.BlockFileStorage,
     domain: 'performance',
     services: [
       'Amazon EBS',
@@ -251,19 +252,19 @@ export const LESSONS: LessonData[] = [
     minutes: 12,
   },
   {
-    slug: 's3-performance',
+    slug: LessonSlug.S3Performance,
     domain: 'performance',
     services: ['Amazon S3', 'S3 Transfer Acceleration', 'S3 Express One Zone', 'S3 Object Lambda', 'Amazon CloudFront'],
     minutes: 9,
   },
   {
-    slug: 'relational-databases',
+    slug: LessonSlug.RelationalDatabases,
     domain: 'performance',
     services: ['Amazon RDS', 'Amazon Aurora', 'Amazon RDS Proxy', 'Aurora Serverless v2', 'Amazon Redshift'],
     minutes: 11,
   },
   {
-    slug: 'nosql-caching',
+    slug: LessonSlug.NoSqlCaching,
     domain: 'performance',
     services: [
       'Amazon DynamoDB',
@@ -279,7 +280,7 @@ export const LESSONS: LessonData[] = [
     minutes: 12,
   },
   {
-    slug: 'edge-networking',
+    slug: LessonSlug.EdgeNetworking,
     domain: 'performance',
     services: [
       'Amazon CloudFront',
@@ -292,7 +293,7 @@ export const LESSONS: LessonData[] = [
     minutes: 10,
   },
   {
-    slug: 'data-analytics',
+    slug: LessonSlug.DataAnalytics,
     domain: 'performance',
     services: [
       'Amazon Kinesis Data Streams',
@@ -310,7 +311,7 @@ export const LESSONS: LessonData[] = [
     minutes: 12,
   },
   {
-    slug: 'data-migration',
+    slug: LessonSlug.DataMigration,
     domain: 'performance',
     services: [
       'AWS DataSync',
@@ -324,7 +325,7 @@ export const LESSONS: LessonData[] = [
     minutes: 10,
   },
   {
-    slug: 'ai-ml-services',
+    slug: LessonSlug.AiMlServices,
     domain: 'performance',
     services: [
       'Amazon SageMaker AI',
@@ -343,7 +344,7 @@ export const LESSONS: LessonData[] = [
     minutes: 10,
   },
   {
-    slug: 'ec2-pricing-models',
+    slug: LessonSlug.Ec2PricingModels,
     domain: 'cost',
     services: [
       'Amazon EC2',
@@ -357,7 +358,7 @@ export const LESSONS: LessonData[] = [
     minutes: 12,
   },
   {
-    slug: 's3-storage-classes',
+    slug: LessonSlug.S3StorageClasses,
     domain: 'cost',
     services: [
       'Amazon S3',
@@ -371,7 +372,7 @@ export const LESSONS: LessonData[] = [
     minutes: 12,
   },
   {
-    slug: 'cost-management-tools',
+    slug: LessonSlug.CostManagementTools,
     domain: 'cost',
     services: [
       'AWS Cost Explorer',
@@ -388,7 +389,7 @@ export const LESSONS: LessonData[] = [
     minutes: 10,
   },
   {
-    slug: 'cost-optimized-architectures',
+    slug: LessonSlug.CostOptimizedArchitectures,
     domain: 'cost',
     services: [
       'Amazon VPC',
@@ -408,7 +409,7 @@ export const LESSONS: LessonData[] = [
     minutes: 12,
   },
   {
-    slug: 'cost-database-storage-choices',
+    slug: LessonSlug.CostDatabaseStorageChoices,
     domain: 'cost',
     services: [
       'Amazon EBS',
@@ -425,7 +426,7 @@ export const LESSONS: LessonData[] = [
     minutes: 11,
   },
   {
-    slug: 'cost-compute-serverless-containers',
+    slug: LessonSlug.CostComputeServerlessContainers,
     domain: 'cost',
     services: [
       'Amazon EC2',
@@ -442,7 +443,7 @@ export const LESSONS: LessonData[] = [
     minutes: 11,
   },
   {
-    slug: 'cost-network-transfer',
+    slug: LessonSlug.CostNetworkTransfer,
     domain: 'cost',
     services: [
       'Amazon VPC',

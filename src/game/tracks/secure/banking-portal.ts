@@ -1,5 +1,7 @@
+import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
+import { ComponentType } from '@/game/types';
 import type { RequirementId } from '@/game/types';
 
 /** Compliance rules that hold in every round. */
@@ -7,10 +9,10 @@ const RULES: RequirementId[] = ['encryptData', 'privateData', 'noPublicServers']
 
 const locked = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280, 240],
-    ['web', 'ec2', 480, 240, { size: 'medium' }],
-    ['db', 'rds', 680, 240, { size: 'medium', encrypted: true }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'medium' } },
+    { id: 'db', type: ComponentType.Rds, x: 680, y: 240, config: { size: 'medium', encrypted: true } },
   ],
   [
     ['users', 'lb'],
@@ -21,10 +23,10 @@ const locked = makeBoard(
 
 const multiAz = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['lb', 'alb', 280, 240],
-    ['web', 'ec2', 480, 240, { size: 'medium', count: 2, az: 'spread' }],
-    ['db', 'rds', 680, 240, { size: 'medium', encrypted: true, multiAz: true }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 280, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 480, y: 240, config: { size: 'medium', count: 2, az: 'spread' } },
+    { id: 'db', type: ComponentType.Rds, x: 680, y: 240, config: { size: 'medium', encrypted: true, multiAz: true } },
   ],
   [
     ['users', 'lb'],
@@ -35,11 +37,11 @@ const multiAz = makeBoard(
 
 const shielded = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['shield', 'waf', 260, 240],
-    ['lb', 'alb', 440, 240],
-    ['web', 'ec2', 640, 240, { size: 'medium', count: 2, az: 'spread' }],
-    ['db', 'rds', 860, 240, { size: 'medium', encrypted: true, multiAz: true }],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'shield', type: ComponentType.Waf, x: 260, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 440, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 640, y: 240, config: { size: 'medium', count: 2, az: 'spread' } },
+    { id: 'db', type: ComponentType.Rds, x: 860, y: 240, config: { size: 'medium', encrypted: true, multiAz: true } },
   ],
   [
     ['users', 'shield'],
@@ -51,13 +53,13 @@ const shielded = makeBoard(
 
 const statements = makeBoard(
   [
-    ['users', 'users', 80, 240],
-    ['shield', 'waf', 260, 240],
-    ['lb', 'alb', 440, 240],
-    ['web', 'ec2', 640, 240, { size: 'medium', count: 2, az: 'spread' }],
-    ['db', 'rds', 860, 240, { size: 'medium', encrypted: true, multiAz: true }],
-    ['queue', 'sqs', 640, 420, { encrypted: true }],
-    ['worker', 'ec2', 860, 420],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+    { id: 'shield', type: ComponentType.Waf, x: 260, y: 240 },
+    { id: 'lb', type: ComponentType.Alb, x: 440, y: 240 },
+    { id: 'web', type: ComponentType.Ec2, x: 640, y: 240, config: { size: 'medium', count: 2, az: 'spread' } },
+    { id: 'db', type: ComponentType.Rds, x: 860, y: 240, config: { size: 'medium', encrypted: true, multiAz: true } },
+    { id: 'queue', type: ComponentType.Sqs, x: 640, y: 420, config: { encrypted: true } },
+    { id: 'worker', type: ComponentType.Ec2, x: 860, y: 420 },
   ],
   [
     ['users', 'shield'],
@@ -71,16 +73,16 @@ const statements = makeBoard(
 
 const global = makeBoard(
   [
-    ['users', 'users', 80, 280],
-    ['shield', 'waf', 240, 280],
-    ['cdn', 'cloudfront', 400, 280],
-    ['files', 's3', 580, 100],
-    ['ga', 'globalAccelerator', 580, 280],
-    ['lb', 'alb', 760, 280],
-    ['web', 'ec2', 940, 280, { size: 'medium', count: 2, az: 'spread' }],
-    ['db', 'rds', 1140, 280, { size: 'medium', encrypted: true, multiAz: true }],
-    ['queue', 'sqs', 940, 460, { encrypted: true }],
-    ['worker', 'ec2', 1140, 460],
+    { id: 'users', type: ComponentType.Users, x: 80, y: 280 },
+    { id: 'shield', type: ComponentType.Waf, x: 240, y: 280 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 400, y: 280 },
+    { id: 'files', type: ComponentType.S3, x: 580, y: 100 },
+    { id: 'ga', type: ComponentType.GlobalAccelerator, x: 580, y: 280 },
+    { id: 'lb', type: ComponentType.Alb, x: 760, y: 280 },
+    { id: 'web', type: ComponentType.Ec2, x: 940, y: 280, config: { size: 'medium', count: 2, az: 'spread' } },
+    { id: 'db', type: ComponentType.Rds, x: 1140, y: 280, config: { size: 'medium', encrypted: true, multiAz: true } },
+    { id: 'queue', type: ComponentType.Sqs, x: 940, y: 460, config: { encrypted: true } },
+    { id: 'worker', type: ComponentType.Ec2, x: 1140, y: 460 },
   ],
   [
     ['users', 'shield'],
@@ -97,28 +99,22 @@ const global = makeBoard(
 
 const payday = makeBoard(
   [
-    ['users', 'users', 80, 280],
-    ['shield', 'waf', 240, 280],
-    ['cdn', 'cloudfront', 400, 280],
-    ['files', 's3', 580, 100],
-    ['ga', 'globalAccelerator', 580, 280],
-    ['lb', 'alb', 760, 280],
-    [
-      'web',
-      'ec2',
-      940,
-      280,
-      {
+    { id: 'users', type: ComponentType.Users, x: 80, y: 280 },
+    { id: 'shield', type: ComponentType.Waf, x: 240, y: 280 },
+    { id: 'cdn', type: ComponentType.CloudFront, x: 400, y: 280 },
+    { id: 'files', type: ComponentType.S3, x: 580, y: 100 },
+    { id: 'ga', type: ComponentType.GlobalAccelerator, x: 580, y: 280 },
+    { id: 'lb', type: ComponentType.Alb, x: 760, y: 280 },
+    { id: 'web', type: ComponentType.Ec2, x: 940, y: 280, config: {
         size: 'medium',
         count: 2,
         az: 'spread',
         autoScaling: true,
         maxCount: 6,
-      },
-    ],
-    ['db', 'rds', 1140, 280, { size: 'large', encrypted: true, multiAz: true }],
-    ['queue', 'sqs', 940, 460, { encrypted: true }],
-    ['worker', 'ec2', 1140, 460, { size: 'medium' }],
+      } },
+    { id: 'db', type: ComponentType.Rds, x: 1140, y: 280, config: { size: 'large', encrypted: true, multiAz: true } },
+    { id: 'queue', type: ComponentType.Sqs, x: 940, y: 460, config: { encrypted: true } },
+    { id: 'worker', type: ComponentType.Ec2, x: 1140, y: 460, config: { size: 'medium' } },
   ],
   [
     ['users', 'shield'],
@@ -148,13 +144,13 @@ export const bankingPortal: Track = {
         requirements: RULES,
       },
       unlocks: [],
-      lessons: ['vpc-networking-security', 'data-encryption-kms'],
+      lessons: [LessonSlug.VpcNetworkingSecurity, LessonSlug.DataEncryptionKms],
       solution: locked,
       naive: makeBoard(
         [
-          ['users', 'users', 80, 240],
-          ['web', 'ec2', 320, 240, { size: 'medium' }],
-          ['db', 'rds', 560, 240, { size: 'medium' }],
+          { id: 'users', type: ComponentType.Users, x: 80, y: 240 },
+          { id: 'web', type: ComponentType.Ec2, x: 320, y: 240, config: { size: 'medium' } },
+          { id: 'db', type: ComponentType.Rds, x: 560, y: 240, config: { size: 'medium' } },
         ],
         [
           ['users', 'web'],
@@ -174,7 +170,7 @@ export const bankingPortal: Track = {
         requirements: RULES,
       },
       unlocks: [],
-      lessons: ['high-availability-multi-az', 'relational-databases'],
+      lessons: [LessonSlug.HighAvailabilityMultiAz, LessonSlug.RelationalDatabases],
       solution: multiAz,
       naive: locked,
     },
@@ -190,7 +186,7 @@ export const bankingPortal: Track = {
         requirements: RULES,
       },
       unlocks: [],
-      lessons: ['threat-detection-waf-shield'],
+      lessons: [LessonSlug.ThreatDetectionWafShield],
       solution: shielded,
       naive: multiAz,
     },
@@ -205,7 +201,7 @@ export const bankingPortal: Track = {
         requirements: [...RULES, 'drainQueue'],
       },
       unlocks: [],
-      lessons: ['decoupling-messaging'],
+      lessons: [LessonSlug.DecouplingMessaging],
       solution: statements,
       naive: shielded,
     },
@@ -220,7 +216,7 @@ export const bankingPortal: Track = {
         requirements: [...RULES, 'drainQueue'],
       },
       unlocks: [],
-      lessons: ['edge-networking', 's3-performance'],
+      lessons: [LessonSlug.EdgeNetworking, LessonSlug.S3Performance],
       solution: global,
       naive: statements,
     },
@@ -236,7 +232,7 @@ export const bankingPortal: Track = {
         requirements: [...RULES, 'drainQueue'],
       },
       unlocks: [],
-      lessons: ['auto-scaling', 'relational-databases'],
+      lessons: [LessonSlug.AutoScaling, LessonSlug.RelationalDatabases],
       solution: payday,
       naive: global,
     },

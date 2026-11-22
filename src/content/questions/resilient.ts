@@ -1,10 +1,11 @@
+import { LessonSlug } from '@/content/types';
 import type { QuestionData } from '@/content/types';
 
 export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-001',
     domain: 'resilient',
-    lesson: 'high-availability-multi-az',
+    lesson: LessonSlug.HighAvailabilityMultiAz,
     stem: 'A company runs a web application on a single Amazon EC2 instance in one Availability Zone. The application stores user sessions in memory on the instance. The company wants to make the application highly available and able to scale horizontally without users losing their sessions. Which solution meets these requirements?',
     options: [
       'Move the instance to a larger instance type and enable EC2 auto recovery.',
@@ -17,7 +18,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-002',
     domain: 'resilient',
-    lesson: 'high-availability-multi-az',
+    lesson: LessonSlug.HighAvailabilityMultiAz,
     stem: 'A company runs a MySQL database on Amazon RDS. The database must automatically fail over to another Availability Zone if the primary AZ fails. The company also wants to offload read traffic from the primary and achieve failover in less than one minute. Which solution meets these requirements?',
     options: [
       'Deploy an RDS Multi-AZ DB cluster with one writer and two readable standby instances.',
@@ -30,7 +31,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-003',
     domain: 'resilient',
-    lesson: 'high-availability-multi-az',
+    lesson: LessonSlug.HighAvailabilityMultiAz,
     stem: 'A company has a VPC with private subnets in three Availability Zones. All instances reach the internet through a single NAT gateway deployed in the first Availability Zone. During an AZ outage, instances in the other two AZs lost internet access. What should a solutions architect do to make outbound internet access highly available?',
     options: [
       'Replace the NAT gateway with a NAT instance in an Auto Scaling group of one instance.',
@@ -43,7 +44,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-004',
     domain: 'resilient',
-    lesson: 'high-availability-multi-az',
+    lesson: LessonSlug.HighAvailabilityMultiAz,
     stem: 'A media company runs a content management system on Amazon EC2 instances in an Auto Scaling group across two Availability Zones. The instances must read and write the same set of uploaded files concurrently using a POSIX-compliant file system. The solution must remain available if one AZ fails. Which storage option should be used?',
     options: [
       'An Amazon EBS Provisioned IOPS volume with Multi-Attach enabled',
@@ -56,7 +57,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-005',
     domain: 'resilient',
-    lesson: 'high-availability-multi-az',
+    lesson: LessonSlug.HighAvailabilityMultiAz,
     stem: 'A gaming company needs to run latency-sensitive game servers with single-digit millisecond latency for players in a specific large metropolitan area that is far from the nearest AWS Region. The company wants to use familiar AWS services and APIs. Which solution meets these requirements?',
     options: [
       'Deploy the game servers to an AWS Local Zone near the metropolitan area.',
@@ -69,7 +70,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-006',
     domain: 'resilient',
-    lesson: 'high-availability-multi-az',
+    lesson: LessonSlug.HighAvailabilityMultiAz,
     stem: 'A company runs an Amazon RDS for PostgreSQL Multi-AZ DB instance. The reporting team runs heavy analytical queries that slow down the production workload. The company wants to isolate the reporting queries with the LEAST operational overhead. What should a solutions architect do?',
     options: [
       'Point the reporting queries to the Multi-AZ standby instance endpoint.',
@@ -82,7 +83,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-007',
     domain: 'resilient',
-    lesson: 'high-availability-multi-az',
+    lesson: LessonSlug.HighAvailabilityMultiAz,
     stem: 'A company is migrating a three-tier application to AWS. The application tier must survive the failure of an Availability Zone, and the database tier must fail over automatically with no data loss for committed transactions. Which combination of actions will meet these requirements? (Choose TWO.)',
     options: [
       'Deploy the application tier in an Auto Scaling group that spans at least two Availability Zones behind an Application Load Balancer.',
@@ -96,7 +97,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-008',
     domain: 'resilient',
-    lesson: 'elastic-load-balancing',
+    lesson: LessonSlug.ElasticLoadBalancing,
     stem: 'A company hosts several microservices on Amazon ECS. Requests to example.com/orders must go to the orders service, and requests to example.com/users must go to the users service. The company wants to use a single load balancer. Which solution meets these requirements?',
     options: [
       'Use a Network Load Balancer with one listener per microservice port.',
@@ -109,7 +110,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-009',
     domain: 'resilient',
-    lesson: 'elastic-load-balancing',
+    lesson: LessonSlug.ElasticLoadBalancing,
     stem: 'A financial services company exposes an HTTPS API through an Application Load Balancer. A partner requires that the company provide a fixed set of IP addresses so that the partner can allow-list them in its firewall. The company wants to keep the layer 7 routing features of the ALB. Which solution meets these requirements with the LEAST operational overhead?',
     options: [
       'Assign an Elastic IP address to the Application Load Balancer.',
@@ -122,7 +123,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-010',
     domain: 'resilient',
-    lesson: 'elastic-load-balancing',
+    lesson: LessonSlug.ElasticLoadBalancing,
     stem: 'A company hosts 20 websites with different domain names on the same fleet of EC2 instances behind one Application Load Balancer. Each website must use its own TLS certificate. What is the MOST operationally efficient way to configure HTTPS?',
     options: [
       'Create 20 Application Load Balancers, each with one certificate.',
@@ -135,7 +136,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-011',
     domain: 'resilient',
-    lesson: 'elastic-load-balancing',
+    lesson: LessonSlug.ElasticLoadBalancing,
     stem: 'A company is deploying a fleet of third-party virtual firewall appliances. All traffic entering the VPC from the internet must be inspected by these appliances transparently, and the appliance fleet must scale and be highly available. Which AWS service should the company use?',
     options: ['Application Load Balancer', 'Network Load Balancer', 'AWS Global Accelerator', 'Gateway Load Balancer'],
     answer: [3],
@@ -143,7 +144,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-012',
     domain: 'resilient',
-    lesson: 'elastic-load-balancing',
+    lesson: LessonSlug.ElasticLoadBalancing,
     stem: 'An application behind an Application Load Balancer processes long-running file uploads that can take up to 10 minutes. During scale-in events, users report that uploads fail when instances are removed. What should a solutions architect do to resolve this issue?',
     options: [
       'Increase the deregistration delay on the target group to more than 10 minutes.',
@@ -156,7 +157,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-013',
     domain: 'resilient',
-    lesson: 'elastic-load-balancing',
+    lesson: LessonSlug.ElasticLoadBalancing,
     stem: 'A company runs an online multiplayer game that uses a custom UDP protocol. The game requires extremely low latency and must handle millions of packets per second. Which load balancer should the company use?',
     options: ['Application Load Balancer', 'Classic Load Balancer', 'Network Load Balancer', 'Gateway Load Balancer'],
     answer: [2],
@@ -164,7 +165,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-014',
     domain: 'resilient',
-    lesson: 'elastic-load-balancing',
+    lesson: LessonSlug.ElasticLoadBalancing,
     stem: 'A company is building a web application behind an Application Load Balancer. The company must block common attacks such as SQL injection and cross-site scripting, and must ensure that the EC2 instances accept traffic only from the load balancer. Which combination of steps will meet these requirements? (Choose TWO.)',
     options: [
       'Enable AWS Shield Advanced on the EC2 instances only.',
@@ -178,7 +179,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-015',
     domain: 'resilient',
-    lesson: 'auto-scaling',
+    lesson: LessonSlug.AutoScaling,
     stem: 'A company runs a web application on EC2 instances in an Auto Scaling group behind an Application Load Balancer. Sometimes the application stops responding, but the instances remain in the running state and are not replaced. The ALB marks these instances as unhealthy. What should a solutions architect do so that the unresponsive instances are replaced automatically?',
     options: [
       'Configure the Auto Scaling group to use Elastic Load Balancing health checks.',
@@ -191,7 +192,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-016',
     domain: 'resilient',
-    lesson: 'auto-scaling',
+    lesson: LessonSlug.AutoScaling,
     stem: "A company's application experiences a predictable traffic spike every weekday at 9:00 AM. Instances take several minutes to become ready, and users experience slow responses for the first 15 minutes of the spike. The rest of the day, traffic fluctuates unpredictably. Which scaling approach should the company use?",
     options: [
       'Use only a simple scaling policy based on CPU utilization with a 300-second cooldown.',
@@ -204,7 +205,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-017',
     domain: 'resilient',
-    lesson: 'auto-scaling',
+    lesson: LessonSlug.AutoScaling,
     stem: 'A company runs worker instances in an Auto Scaling group that process messages from an Amazon SQS queue. The time to process each message is consistent. The company wants the number of instances to scale with the workload so that the queue latency stays within an acceptable limit. Which scaling strategy is recommended?',
     options: [
       'Use target tracking on the average CPU utilization of the Auto Scaling group.',
@@ -217,7 +218,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-018',
     domain: 'resilient',
-    lesson: 'auto-scaling',
+    lesson: LessonSlug.AutoScaling,
     stem: 'A company must collect application log files from EC2 instances in an Auto Scaling group before the instances are terminated during scale-in. Which solution meets this requirement?',
     options: [
       'Enable termination protection on all instances.',
@@ -230,7 +231,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-019',
     domain: 'resilient',
-    lesson: 'auto-scaling',
+    lesson: LessonSlug.AutoScaling,
     stem: 'An application running in an Auto Scaling group takes 10 minutes to initialize because it loads a large dataset into memory at startup. During sudden traffic spikes, new instances are not ready quickly enough. The company wants to reduce scale-out latency while keeping costs low. What should a solutions architect recommend?',
     options: [
       'Configure a warm pool for the Auto Scaling group with instances kept in the Stopped state.',
@@ -243,7 +244,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-020',
     domain: 'resilient',
-    lesson: 'auto-scaling',
+    lesson: LessonSlug.AutoScaling,
     stem: 'A company wants an Auto Scaling group to maintain the average CPU utilization of its instances at around 50% with the LEAST operational effort. Which scaling policy should be used?',
     options: [
       'Simple scaling policy with two CloudWatch alarms',
@@ -256,7 +257,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-021',
     domain: 'resilient',
-    lesson: 'auto-scaling',
+    lesson: LessonSlug.AutoScaling,
     stem: 'A company has updated the AMI used by its Auto Scaling group and created a new launch template version. The company wants to replace all existing instances with instances that use the new AMI gradually, while keeping a minimum percentage of capacity healthy during the update. Which solution requires the LEAST operational effort?',
     options: [
       'Manually terminate instances one at a time and let the Auto Scaling group replace them.',
@@ -269,7 +270,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-022',
     domain: 'resilient',
-    lesson: 'decoupling-messaging',
+    lesson: LessonSlug.DecouplingMessaging,
     stem: 'An e-commerce company processes orders with a web tier that calls a backend order-processing service directly. During flash sales, the backend becomes overloaded and orders are lost. The company wants to ensure that no orders are lost and that the backend can process orders at its own pace. Which solution meets these requirements?',
     options: [
       'Increase the instance size of the backend service.',
@@ -282,7 +283,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-023',
     domain: 'resilient',
-    lesson: 'decoupling-messaging',
+    lesson: LessonSlug.DecouplingMessaging,
     stem: 'A company processes financial transactions submitted through an API. Transactions for the same account must be processed in the exact order in which they were received, and each transaction must be processed exactly once. Which solution meets these requirements?',
     options: [
       'Use an Amazon SQS standard queue with long polling.',
@@ -295,7 +296,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-024',
     domain: 'resilient',
-    lesson: 'decoupling-messaging',
+    lesson: LessonSlug.DecouplingMessaging,
     stem: 'When a new order is placed, a company needs to notify three independent systems: inventory, billing, and analytics. Each system must receive every order, process it at its own pace, and retry independently if it fails. Which architecture meets these requirements?',
     options: [
       'Publish each order to an Amazon SNS topic that has three Amazon SQS queues subscribed, one for each system.',
@@ -308,7 +309,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-025',
     domain: 'resilient',
-    lesson: 'decoupling-messaging',
+    lesson: LessonSlug.DecouplingMessaging,
     stem: 'A company is migrating an on-premises application to AWS. The application uses Apache ActiveMQ with the JMS API and the AMQP protocol. The company wants to minimize code changes and use a managed service. Which service should the company use?',
     options: ['Amazon SQS', 'Amazon Kinesis Data Streams', 'Amazon MQ', 'Amazon EventBridge'],
     answer: [2],
@@ -316,7 +317,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-026',
     domain: 'resilient',
-    lesson: 'decoupling-messaging',
+    lesson: LessonSlug.DecouplingMessaging,
     stem: 'A company uses an Amazon SQS standard queue. Some messages take up to 3 minutes to process, and the team notices that these messages are processed more than once by different consumers. The default queue settings are in use. What should the company do to fix this issue?',
     options: [
       'Enable long polling on the queue.',
@@ -329,7 +330,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-027',
     domain: 'resilient',
-    lesson: 'decoupling-messaging',
+    lesson: LessonSlug.DecouplingMessaging,
     stem: 'A company collects clickstream data from its website and needs to process it in real time. Multiple applications must consume the same data independently, and the company must be able to reprocess data from the previous 7 days if a bug is found. Which service meets these requirements?',
     options: [
       'Amazon SQS standard queue',
@@ -342,7 +343,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-028',
     domain: 'resilient',
-    lesson: 'decoupling-messaging',
+    lesson: LessonSlug.DecouplingMessaging,
     stem: 'A company uses an Amazon SQS queue to decouple an order service from a fulfillment service. Some malformed messages cause the consumer to fail repeatedly, which blocks resources and generates errors. The company wants to isolate these messages for later analysis and reduce empty receive calls to lower costs. Which actions should a solutions architect take? (Choose TWO.)',
     options: [
       'Configure a dead-letter queue with a redrive policy and an appropriate maxReceiveCount.',
@@ -356,7 +357,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-029',
     domain: 'resilient',
-    lesson: 'serverless-workflows',
+    lesson: LessonSlug.ServerlessWorkflows,
     stem: 'A company wants to run a nightly batch job that transforms files and takes approximately 45 minutes to complete. The company wants a serverless solution with no servers to manage. Which solution meets these requirements?',
     options: [
       'Run the job as an AWS Lambda function with the maximum timeout.',
@@ -369,7 +370,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-030',
     domain: 'resilient',
-    lesson: 'serverless-workflows',
+    lesson: LessonSlug.ServerlessWorkflows,
     stem: 'A company exposes a Lambda-backed API through Amazon API Gateway. The Lambda function writes to an Amazon RDS for MySQL database. During traffic spikes, the database runs out of connections. Which combination of actions will resolve this issue with the LEAST changes to the application? (Choose TWO.)',
     options: [
       'Increase the Lambda function timeout to 15 minutes.',
@@ -383,7 +384,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-031',
     domain: 'resilient',
-    lesson: 'serverless-workflows',
+    lesson: LessonSlug.ServerlessWorkflows,
     stem: 'A company offers a public API through Amazon API Gateway REST API. The company wants to sell three subscription tiers, each with a different request rate limit and monthly quota per customer. Which feature should the company use?',
     options: [
       'Usage plans with API keys',
@@ -396,7 +397,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-032',
     domain: 'resilient',
-    lesson: 'serverless-workflows',
+    lesson: LessonSlug.ServerlessWorkflows,
     stem: 'A company is building an order-fulfillment workflow that includes payment, inventory reservation, and shipping steps. Some orders require manual approval by a manager, which can take up to 3 days. The company needs a full execution history for auditing. Which solution meets these requirements?',
     options: [
       'AWS Step Functions Express workflow',
@@ -409,7 +410,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-033',
     domain: 'resilient',
-    lesson: 'serverless-workflows',
+    lesson: LessonSlug.ServerlessWorkflows,
     stem: 'A company uses Amazon CloudFront to serve a global website. The company needs to rewrite request URLs and add security headers to responses for every request. The logic is simple, must run at very high scale with sub-millisecond latency, and should be the MOST cost-effective option. Which solution should be used?',
     options: [
       'Lambda@Edge functions on origin request and origin response',
@@ -422,7 +423,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-034',
     domain: 'resilient',
-    lesson: 'serverless-workflows',
+    lesson: LessonSlug.ServerlessWorkflows,
     stem: 'A company has a Lambda function that is attached to private subnets in a VPC to access an Amazon RDS database. The function now also needs to call a third-party payment API on the internet. The function currently times out when it calls the API. What should a solutions architect do?',
     options: [
       'Attach an Elastic IP address to the Lambda function.',
@@ -435,7 +436,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-035',
     domain: 'resilient',
-    lesson: 'route53-routing',
+    lesson: LessonSlug.Route53Routing,
     stem: 'A company hosts its website on an Application Load Balancer. The company wants users to access the website at the zone apex example.com, using Amazon Route 53. Which record should the company create?',
     options: [
       'A CNAME record for example.com that points to the ALB DNS name',
@@ -448,7 +449,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-036',
     domain: 'resilient',
-    lesson: 'route53-routing',
+    lesson: LessonSlug.Route53Routing,
     stem: 'A company runs identical copies of its application in us-east-1 and eu-west-1. The company wants users to be routed to the Region that provides the lowest network latency, and to the other Region if one Region becomes unhealthy. Which Route 53 configuration meets these requirements?',
     options: [
       'Latency-based routing records with health checks associated with each record',
@@ -461,7 +462,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-037',
     domain: 'resilient',
-    lesson: 'route53-routing',
+    lesson: LessonSlug.Route53Routing,
     stem: 'A streaming company must serve content to users in Germany only from servers located in the eu-central-1 Region because of licensing restrictions. Users from all other countries should be served from us-east-1. Which routing policy should be used?',
     options: [
       'Latency-based routing',
@@ -474,7 +475,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-038',
     domain: 'resilient',
-    lesson: 'route53-routing',
+    lesson: LessonSlug.Route53Routing,
     stem: 'A company is deploying a new version of its application. It wants to send 5% of production traffic to the new version and gradually increase the percentage, using DNS. Which Route 53 routing policy should the company use?',
     options: ['Failover routing', 'Weighted routing', 'Multivalue answer routing', 'IP-based routing'],
     answer: [1],
@@ -482,7 +483,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-039',
     domain: 'resilient',
-    lesson: 'route53-routing',
+    lesson: LessonSlug.Route53Routing,
     stem: "A company has a hybrid network with AWS Direct Connect. EC2 instances in a VPC must resolve hostnames in the company's on-premises domain corp.example.internal, which is hosted on on-premises DNS servers. Which solution meets this requirement?",
     options: [
       'Create a Route 53 Resolver outbound endpoint and a forwarding rule for corp.example.internal that targets the on-premises DNS servers.',
@@ -495,7 +496,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-040',
     domain: 'resilient',
-    lesson: 'route53-routing',
+    lesson: LessonSlug.Route53Routing,
     stem: 'A company runs a multiplayer game that uses UDP, with endpoints in three AWS Regions. Players frequently experience long failover times when a Region fails because their devices cache DNS records. The company wants static IP addresses and failover in under a minute. Which solution meets these requirements?',
     options: [
       'Route 53 failover routing with a TTL of 60 seconds',
@@ -508,7 +509,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-041',
     domain: 'resilient',
-    lesson: 'disaster-recovery',
+    lesson: LessonSlug.DisasterRecovery,
     stem: 'A company has an application with an RPO of 24 hours and an RTO of 12 hours. The company wants to implement disaster recovery in another AWS Region at the LOWEST cost. Which DR strategy should the company use?',
     options: [
       'Multi-site active/active',
@@ -521,7 +522,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-042',
     domain: 'resilient',
-    lesson: 'disaster-recovery',
+    lesson: LessonSlug.DisasterRecovery,
     stem: 'A company requires an RPO of a few seconds and an RTO of 10 minutes for its web application in another Region. The company wants to keep costs as low as possible while ensuring that the application can start serving traffic quickly. A scaled-down version of the full application stack is acceptable to run continuously in the DR Region. Which DR strategy fits these requirements?',
     options: [
       'Warm standby',
@@ -534,7 +535,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-043',
     domain: 'resilient',
-    lesson: 'disaster-recovery',
+    lesson: LessonSlug.DisasterRecovery,
     stem: 'A company runs 200 physical and virtual servers in its on-premises data center. It wants to use AWS as a disaster recovery site with an RPO of seconds and an RTO of minutes, while minimizing the cost of idle resources in AWS. Which solution meets these requirements?',
     options: [
       'Use AWS Application Migration Service to migrate the servers once a week.',
@@ -547,7 +548,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-044',
     domain: 'resilient',
-    lesson: 'disaster-recovery',
+    lesson: LessonSlug.DisasterRecovery,
     stem: 'A company runs its application on EC2 instances with Amazon RDS for MySQL in us-east-1. For DR, the company wants the database continuously replicated to us-west-2, while application servers in us-west-2 are launched only when a disaster occurs. Which combination of actions implements this strategy? (Choose TWO.)',
     options: [
       'Create an RDS cross-Region read replica in us-west-2 and promote it during a disaster.',
@@ -561,7 +562,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-045',
     domain: 'resilient',
-    lesson: 'disaster-recovery',
+    lesson: LessonSlug.DisasterRecovery,
     stem: 'A global company requires its customer-facing application to continue operating with near-zero downtime and no noticeable data loss even if an entire AWS Region fails. Users in multiple continents should be served from the closest Region at all times. Cost is a secondary concern. Which approach meets these requirements?',
     options: [
       'Pilot light with an Aurora cross-Region replica',
@@ -574,7 +575,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-046',
     domain: 'resilient',
-    lesson: 'disaster-recovery',
+    lesson: LessonSlug.DisasterRecovery,
     stem: 'A company stores encrypted Amazon EBS snapshots of its critical EC2 workloads in eu-west-1. For DR, the snapshots must be available in eu-central-1 automatically every day with the LEAST operational overhead. Which solution meets these requirements?',
     options: [
       'Write a cron job on an EC2 instance that calls the CopySnapshot API daily.',
@@ -587,7 +588,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-047',
     domain: 'resilient',
-    lesson: 'backup-replication',
+    lesson: LessonSlug.BackupReplication,
     stem: 'A company has hundreds of AWS accounts in AWS Organizations. The security team wants to centrally enforce backup policies for Amazon EC2, Amazon RDS, Amazon DynamoDB, and Amazon EFS, copy backups to a separate account, and ensure that no one, including the root user, can delete the backups before the retention period ends. Which solution meets these requirements?',
     options: [
       'Use AWS Backup with backup policies in AWS Organizations, cross-account copy to a dedicated backup account, and AWS Backup Vault Lock in compliance mode.',
@@ -600,7 +601,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-048',
     domain: 'resilient',
-    lesson: 'backup-replication',
+    lesson: LessonSlug.BackupReplication,
     stem: 'A company runs a global e-commerce application with an Amazon Aurora MySQL database in us-east-1. The company needs low-latency reads for users in Europe and Asia, and a DR solution with an RPO of about 1 second and an RTO of less than 1 minute if us-east-1 fails. Which solution meets these requirements?',
     options: [
       'Create Aurora Replicas in additional Availability Zones in us-east-1.',
@@ -613,7 +614,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-049',
     domain: 'resilient',
-    lesson: 'backup-replication',
+    lesson: LessonSlug.BackupReplication,
     stem: 'A developer accidentally ran a DELETE statement without a WHERE clause on a production Amazon RDS for PostgreSQL database at 14:32. Automated backups are enabled with a 7-day retention period. What is the fastest way to recover the data as it existed just before the mistake?',
     options: [
       'Restore the most recent manual snapshot over the existing DB instance.',
@@ -626,7 +627,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-050',
     domain: 'resilient',
-    lesson: 'backup-replication',
+    lesson: LessonSlug.BackupReplication,
     stem: 'A company must replicate new objects in an Amazon S3 bucket in us-east-1 to a bucket in us-west-2 for compliance. The compliance team requires that replication of most objects completes within 15 minutes, backed by an SLA, and that the company is alerted when replication is delayed. Which solution meets these requirements?',
     options: [
       'Configure S3 Same-Region Replication with S3 event notifications.',
@@ -639,7 +640,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-051',
     domain: 'resilient',
-    lesson: 'backup-replication',
+    lesson: LessonSlug.BackupReplication,
     stem: 'A company restores Amazon EBS volumes from snapshots to launch database instances during DR tests. The restored volumes perform poorly for the first hour while data is loaded from the snapshot. The company needs restored volumes to deliver full performance immediately. What should the company do?',
     options: [
       'Enable Amazon EBS Fast Snapshot Restore on the snapshots in the target Availability Zones.',
@@ -652,7 +653,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-052',
     domain: 'resilient',
-    lesson: 'backup-replication',
+    lesson: LessonSlug.BackupReplication,
     stem: 'A company stores critical documents in an Amazon S3 bucket. The company must protect the documents against accidental overwrites and deletions, and must also keep a copy in another Region for disaster recovery, including objects that existed before replication was configured. Which combination of actions meets these requirements? (Choose TWO.)',
     options: [
       'Enable S3 Transfer Acceleration on the bucket.',
@@ -666,7 +667,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-053',
     domain: 'resilient',
-    lesson: 'management-iac',
+    lesson: LessonSlug.ManagementIac,
     stem: 'A company manages its production infrastructure with AWS CloudFormation. Before an update is applied, the operations team must review exactly which resources will be modified or replaced, and must be able to cancel the update if a database would be replaced. Which solution meets these requirements?',
     options: [
       'Update the stack directly and rely on automatic rollback if the database is replaced.',
@@ -679,7 +680,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-054',
     domain: 'resilient',
-    lesson: 'management-iac',
+    lesson: LessonSlug.ManagementIac,
     stem: 'A company uses AWS Organizations with more than 200 accounts. A security team must deploy the same IAM roles and AWS Config rules to every account in every enabled Region. New accounts that are added to the organization must receive the same resources automatically. Which solution requires the LEAST operational overhead?',
     options: [
       'Use AWS CloudFormation StackSets with service-managed permissions, target the organization OUs, and enable automatic deployment.',
@@ -692,7 +693,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-055',
     domain: 'resilient',
-    lesson: 'management-iac',
+    lesson: LessonSlug.ManagementIac,
     stem: 'A company deploys an Amazon RDS for PostgreSQL DB instance as part of an AWS CloudFormation stack. Compliance rules require that a final backup of the database is kept whenever the stack is deleted, without any manual steps. What should a solutions architect do?',
     options: [
       'Enable termination protection on the CloudFormation stack.',
@@ -705,7 +706,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-056',
     domain: 'resilient',
-    lesson: 'management-iac',
+    lesson: LessonSlug.ManagementIac,
     stem: 'A company runs a web application on AWS Elastic Beanstalk. Deployments must keep full capacity at all times. If the new version fails health checks, the existing instances must not be affected and rollback must be as fast as possible. Which deployment policy should the company use?',
     options: ['All at once', 'Immutable', 'Rolling', 'Rolling with additional batch'],
     answer: [1],
@@ -713,7 +714,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-057',
     domain: 'resilient',
-    lesson: 'management-iac',
+    lesson: LessonSlug.ManagementIac,
     stem: 'A company has 400 Amazon EC2 instances and 150 on-premises Linux servers. The company must apply operating system security patches to all servers during a weekly maintenance window and report patch compliance, with the LEAST operational overhead. Which solution meets these requirements?',
     options: [
       'Create an AWS Lambda function that connects to each server over SSH and runs the package manager.',
@@ -726,7 +727,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-058',
     domain: 'resilient',
-    lesson: 'management-iac',
+    lesson: LessonSlug.ManagementIac,
     stem: 'A company runs an application on Amazon EC2 instances. The application occasionally fails because the instances run out of memory. The operations team wants to be notified when memory utilization exceeds 85% on any instance. Which combination of steps meets this requirement? (Choose TWO.)',
     options: [
       'Install and configure the Amazon CloudWatch agent on the instances to publish memory utilization metrics.',
@@ -740,7 +741,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-059',
     domain: 'resilient',
-    lesson: 'management-iac',
+    lesson: LessonSlug.ManagementIac,
     stem: 'A company runs a microservices application that uses Amazon API Gateway, several AWS Lambda functions, and Amazon DynamoDB. Users report that some requests are slow, but the team cannot determine which service causes the latency. Which solution will help the team identify the bottleneck?',
     options: [
       'Enable AWS CloudTrail data events for the Lambda functions.',
@@ -753,7 +754,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-060',
     domain: 'resilient',
-    lesson: 'management-iac',
+    lesson: LessonSlug.ManagementIac,
     stem: 'A company wants developers to provision approved environments, such as a standard three-tier web stack, by themselves. Developers must not receive broad IAM permissions to create the underlying resources directly, and only templates approved by the cloud team can be used. Which solution meets these requirements?',
     options: [
       'Give developers the AdministratorAccess policy and use AWS Config rules to detect noncompliant resources.',
@@ -766,7 +767,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-061',
     domain: 'resilient',
-    lesson: 'application-integration',
+    lesson: LessonSlug.ApplicationIntegration,
     stem: 'A company uses a SaaS help desk application that is an Amazon EventBridge partner. The company wants to invoke an AWS Lambda function whenever a high-priority ticket is created in the SaaS application, with the LEAST development effort. Which solution meets these requirements?',
     options: [
       'Create an Amazon API Gateway endpoint and configure a webhook in the SaaS application.',
@@ -779,7 +780,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-062',
     domain: 'resilient',
-    lesson: 'application-integration',
+    lesson: LessonSlug.ApplicationIntegration,
     stem: 'A company has 30 AWS accounts. A central operations account must receive all Amazon EC2 instance state-change events from every account so that a single AWS Lambda function can process them. Which solution meets these requirements?',
     options: [
       'Create an Amazon SNS topic in each account and subscribe the Lambda function to every topic.',
@@ -792,7 +793,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-063',
     domain: 'resilient',
-    lesson: 'application-integration',
+    lesson: LessonSlug.ApplicationIntegration,
     stem: 'An application publishes order events to a custom Amazon EventBridge event bus. A bug in a consumer caused events from the last 3 days to be processed incorrectly. After the bug is fixed, the company must reprocess those events. The company wants to be able to do this for future incidents as well. What should a solutions architect do?',
     options: [
       'Configure a dead-letter queue on the rule target and redrive the messages.',
@@ -805,7 +806,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-064',
     domain: 'resilient',
-    lesson: 'application-integration',
+    lesson: LessonSlug.ApplicationIntegration,
     stem: "A company receives messages in an Amazon SQS queue. Only messages with a status of NEW must be processed. Each message must be enriched with customer data from a partner's public HTTP API before it starts an AWS Step Functions workflow. The company wants to minimize custom integration code. Which solution meets these requirements?",
     options: [
       'Create an Amazon EventBridge Pipe with the SQS queue as the source, a filter on status NEW, an enrichment step that calls the partner API, and the Step Functions state machine as the target.',
@@ -818,7 +819,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-065',
     domain: 'resilient',
-    lesson: 'application-integration',
+    lesson: LessonSlug.ApplicationIntegration,
     stem: 'A company stores 5 million image files in an Amazon S3 bucket. Each image must be processed by an AWS Lambda function, and the company wants the processing to run with high parallelism, with built-in tracking of failed items and the ability to retry them. Which solution meets these requirements with the LEAST operational overhead?',
     options: [
       'Use a Step Functions inline Map state that receives the list of all object keys in the execution input.',
@@ -831,7 +832,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-066',
     domain: 'resilient',
-    lesson: 'application-integration',
+    lesson: LessonSlug.ApplicationIntegration,
     stem: 'A sales team uses Salesforce. The analytics team needs Salesforce opportunity records copied into an Amazon S3 data lake every day, with sensitive fields masked. The company does not want to write or maintain integration code. Which AWS service should the company use?',
     options: ['AWS DataSync', 'Amazon Data Firehose', 'Amazon AppFlow', 'AWS Transfer Family'],
     answer: [2],
@@ -839,7 +840,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-067',
     domain: 'resilient',
-    lesson: 'application-integration',
+    lesson: LessonSlug.ApplicationIntegration,
     stem: 'A manufacturing company has 20,000 sensors that publish temperature readings over MQTT. Each reading above a threshold must be stored in Amazon DynamoDB, and all readings must be delivered to Amazon S3 for analytics. The company wants a fully managed solution without servers. Which solution meets these requirements?',
     options: [
       'Connect the sensors to AWS IoT Core and create IoT rules that write high readings to DynamoDB and send all readings to Amazon Data Firehose for delivery to S3.',
@@ -852,7 +853,7 @@ export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-068',
     domain: 'resilient',
-    lesson: 'application-integration',
+    lesson: LessonSlug.ApplicationIntegration,
     stem: 'A company implements an order workflow in AWS Step Functions with steps to reserve inventory, charge the customer, and arrange shipping, each in a separate service. Transient errors from the payment service must be retried automatically with increasing delays. If payment ultimately fails, the inventory reservation must be released. Which combination of actions meets these requirements? (Choose TWO.)',
     options: [
       'Convert the workflow to an Express workflow to make retries faster.',

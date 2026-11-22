@@ -10,8 +10,47 @@ export const DOMAINS = {
 
 export type DomainId = keyof typeof DOMAINS;
 
-/** Lesson slugs, taken from the locale files. */
-export type LessonSlug = keyof Messages['Lessons'];
+/** Lesson slugs; each one must have its texts in the `Lessons` messages. */
+export const LessonSlug = {
+  SecurityLayersOverview: 'security-layers-overview',
+  IamFundamentals: 'iam-fundamentals',
+  IamOrganizationsScp: 'iam-organizations-scp',
+  IdentityFederationCognito: 'identity-federation-cognito',
+  VpcNetworkingSecurity: 'vpc-networking-security',
+  VpcConnectivity: 'vpc-connectivity',
+  DataEncryptionKms: 'data-encryption-kms',
+  SecretsCertificates: 'secrets-certificates',
+  ThreatDetectionWafShield: 'threat-detection-waf-shield',
+  HighAvailabilityMultiAz: 'high-availability-multi-az',
+  ElasticLoadBalancing: 'elastic-load-balancing',
+  AutoScaling: 'auto-scaling',
+  DecouplingMessaging: 'decoupling-messaging',
+  ServerlessWorkflows: 'serverless-workflows',
+  Route53Routing: 'route53-routing',
+  DisasterRecovery: 'disaster-recovery',
+  BackupReplication: 'backup-replication',
+  ManagementIac: 'management-iac',
+  ApplicationIntegration: 'application-integration',
+  Ec2Compute: 'ec2-compute',
+  ContainersCompute: 'containers-compute',
+  BlockFileStorage: 'block-file-storage',
+  S3Performance: 's3-performance',
+  RelationalDatabases: 'relational-databases',
+  NoSqlCaching: 'nosql-caching',
+  EdgeNetworking: 'edge-networking',
+  DataAnalytics: 'data-analytics',
+  DataMigration: 'data-migration',
+  AiMlServices: 'ai-ml-services',
+  Ec2PricingModels: 'ec2-pricing-models',
+  S3StorageClasses: 's3-storage-classes',
+  CostManagementTools: 'cost-management-tools',
+  CostOptimizedArchitectures: 'cost-optimized-architectures',
+  CostDatabaseStorageChoices: 'cost-database-storage-choices',
+  CostComputeServerlessContainers: 'cost-compute-serverless-containers',
+  CostNetworkTransfer: 'cost-network-transfer',
+} as const satisfies Record<string, keyof Messages['Lessons']>;
+
+export type LessonSlug = (typeof LessonSlug)[keyof typeof LessonSlug];
 
 /** The language-neutral part of a lesson; texts live in the `Lessons` namespace. */
 export type LessonData = {

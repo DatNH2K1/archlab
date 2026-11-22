@@ -1,4 +1,5 @@
-import type { ComponentType, NodeConfig, RequestClass, Size } from './types';
+import { ComponentType } from './types';
+import type { NodeConfig, RequestClass, Size } from './types';
 
 type ComponentCategory = 'entry' | 'edge' | 'network' | 'compute' | 'data' | 'messaging';
 
@@ -34,7 +35,7 @@ type ComponentSpec = {
 const ALL: RequestClass[] = ['read', 'write', 'static', 'job', 'attack'];
 
 export const CATALOG: Record<ComponentType, ComponentSpec> = {
-  users: {
+  [ComponentType.Users]: {
     category: 'entry',
     label: 'Users',
     accepts: [],
@@ -43,7 +44,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: true,
     latency: 0,
   },
-  route53: {
+  [ComponentType.Route53]: {
     category: 'network',
     label: 'Route 53',
     accepts: ALL,
@@ -52,7 +53,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: true,
     latency: 0,
   },
-  globalAccelerator: {
+  [ComponentType.GlobalAccelerator]: {
     category: 'network',
     label: 'Global Accelerator',
     accepts: ALL,
@@ -61,7 +62,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: true,
     latency: 2,
   },
-  waf: {
+  [ComponentType.Waf]: {
     category: 'edge',
     label: 'WAF',
     accepts: ALL,
@@ -70,7 +71,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: true,
     latency: 1,
   },
-  cloudfront: {
+  [ComponentType.CloudFront]: {
     category: 'edge',
     label: 'CloudFront',
     accepts: ALL,
@@ -79,7 +80,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: true,
     latency: 8,
   },
-  alb: {
+  [ComponentType.Alb]: {
     category: 'network',
     label: 'ALB',
     accepts: ALL,
@@ -88,7 +89,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: false,
     latency: 4,
   },
-  apiGateway: {
+  [ComponentType.ApiGateway]: {
     category: 'network',
     label: 'API Gateway',
     accepts: ALL,
@@ -97,7 +98,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: false,
     latency: 12,
   },
-  ec2: {
+  [ComponentType.Ec2]: {
     category: 'compute',
     label: 'EC2',
     accepts: ALL,
@@ -106,7 +107,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: false,
     latency: 30,
   },
-  lambda: {
+  [ComponentType.Lambda]: {
     category: 'compute',
     label: 'Lambda',
     accepts: ALL,
@@ -115,7 +116,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: false,
     latency: 35,
   },
-  elasticache: {
+  [ComponentType.ElastiCache]: {
     category: 'data',
     label: 'ElastiCache',
     accepts: ['read'],
@@ -124,7 +125,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: false,
     latency: 2,
   },
-  rds: {
+  [ComponentType.Rds]: {
     category: 'data',
     label: 'RDS',
     accepts: ['read', 'write'],
@@ -133,7 +134,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: false,
     latency: 12,
   },
-  aurora: {
+  [ComponentType.Aurora]: {
     category: 'data',
     label: 'Aurora',
     accepts: ['read', 'write'],
@@ -142,7 +143,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: false,
     latency: 8,
   },
-  readReplica: {
+  [ComponentType.ReadReplica]: {
     category: 'data',
     label: 'Read Replica',
     accepts: ['read', 'write'],
@@ -151,7 +152,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: false,
     latency: 12,
   },
-  dynamodb: {
+  [ComponentType.DynamoDb]: {
     category: 'data',
     label: 'DynamoDB',
     accepts: ['read', 'write'],
@@ -160,7 +161,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: false,
     latency: 6,
   },
-  s3: {
+  [ComponentType.S3]: {
     category: 'data',
     label: 'S3',
     accepts: ['static'],
@@ -169,7 +170,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: false,
     latency: 20,
   },
-  sqs: {
+  [ComponentType.Sqs]: {
     category: 'messaging',
     label: 'SQS',
     accepts: ['write', 'job'],
@@ -178,7 +179,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: false,
     latency: 8,
   },
-  sns: {
+  [ComponentType.Sns]: {
     category: 'messaging',
     label: 'SNS',
     accepts: ['write', 'job'],
@@ -189,110 +190,171 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
   },
 };
 
-export const COMPUTE_TYPES = new Set<ComponentType>(['ec2', 'lambda']);
-export const DATABASE_TYPES = new Set<ComponentType>(['rds', 'aurora', 'readReplica', 'dynamodb']);
+export const COMPUTE_TYPES = new Set<ComponentType>([ComponentType.Ec2, ComponentType.Lambda]);
+export const DATABASE_TYPES = new Set<ComponentType>([
+  ComponentType.Rds,
+  ComponentType.Aurora,
+  ComponentType.ReadReplica,
+  ComponentType.DynamoDb,
+]);
 /** Databases that take writes; a design holds one, as in gonnacrash. Read Replicas are copies of it. */
-export const WRITE_DATABASE_TYPES = new Set<ComponentType>(['rds', 'aurora', 'dynamodb']);
-export const DATA_STORE_TYPES = new Set<ComponentType>([...DATABASE_TYPES, 'elasticache', 's3']);
-export const QUEUE_TYPES = new Set<ComponentType>(['sqs', 'sns']);
+export const WRITE_DATABASE_TYPES = new Set<ComponentType>([
+  ComponentType.Rds,
+  ComponentType.Aurora,
+  ComponentType.DynamoDb,
+]);
+export const DATA_STORE_TYPES = new Set<ComponentType>([
+  ...DATABASE_TYPES,
+  ComponentType.ElastiCache,
+  ComponentType.S3,
+]);
+export const QUEUE_TYPES = new Set<ComponentType>([ComponentType.Sqs, ComponentType.Sns]);
 /** Components that only send traffic to healthy targets. */
 export const HEALTH_AWARE_TYPES = new Set<ComponentType>([
-  'alb',
-  'route53',
-  'cloudfront',
-  'globalAccelerator',
+  ComponentType.Alb,
+  ComponentType.Route53,
+  ComponentType.CloudFront,
+  ComponentType.GlobalAccelerator,
 ]);
 /** Parents that share work across every instance of an EC2 group: a load balancer, or workers polling a queue. */
-export const BALANCER_TYPES = new Set<ComponentType>(['alb', 'sqs']);
+export const BALANCER_TYPES = new Set<ComponentType>([ComponentType.Alb, ComponentType.Sqs]);
 
 const DATA_TARGETS: ComponentType[] = [
-  'elasticache',
-  'rds',
-  'aurora',
-  'readReplica',
-  'dynamodb',
-  's3',
+  ComponentType.ElastiCache,
+  ComponentType.Rds,
+  ComponentType.Aurora,
+  ComponentType.ReadReplica,
+  ComponentType.DynamoDb,
+  ComponentType.S3,
 ];
-const SERVER_TARGETS: ComponentType[] = ['ec2', 'lambda', 'alb', ...DATA_TARGETS, 'sqs', 'sns'];
+const SERVER_TARGETS: ComponentType[] = [
+  ComponentType.Ec2,
+  ComponentType.Lambda,
+  ComponentType.Alb,
+  ...DATA_TARGETS,
+  ComponentType.Sqs,
+  ComponentType.Sns,
+];
 
 /** Components each component may send requests to, as in AWS. */
 export const LINKS: Record<ComponentType, ComponentType[]> = {
-  users: ['route53', 'globalAccelerator', 'waf', 'cloudfront', 'alb', 'apiGateway', 'ec2', 's3'],
-  route53: ['globalAccelerator', 'waf', 'cloudfront', 'alb', 'apiGateway', 'ec2', 's3'],
-  globalAccelerator: ['route53', 'waf', 'alb', 'apiGateway', 'ec2'],
-  waf: ['cloudfront', 'alb', 'apiGateway'],
-  cloudfront: ['route53', 'globalAccelerator', 'alb', 'apiGateway', 'ec2', 's3'],
-  alb: ['ec2', 'lambda'],
-  apiGateway: ['alb', 'ec2', 'lambda', 'sqs', 'sns'],
-  ec2: SERVER_TARGETS,
-  lambda: SERVER_TARGETS,
-  elasticache: ['rds', 'aurora', 'readReplica', 'dynamodb'],
+  [ComponentType.Users]: [
+    ComponentType.Route53,
+    ComponentType.GlobalAccelerator,
+    ComponentType.Waf,
+    ComponentType.CloudFront,
+    ComponentType.Alb,
+    ComponentType.ApiGateway,
+    ComponentType.Ec2,
+    ComponentType.S3,
+  ],
+  [ComponentType.Route53]: [
+    ComponentType.GlobalAccelerator,
+    ComponentType.Waf,
+    ComponentType.CloudFront,
+    ComponentType.Alb,
+    ComponentType.ApiGateway,
+    ComponentType.Ec2,
+    ComponentType.S3,
+  ],
+  [ComponentType.GlobalAccelerator]: [
+    ComponentType.Route53,
+    ComponentType.Waf,
+    ComponentType.Alb,
+    ComponentType.ApiGateway,
+    ComponentType.Ec2,
+  ],
+  [ComponentType.Waf]: [ComponentType.CloudFront, ComponentType.Alb, ComponentType.ApiGateway],
+  [ComponentType.CloudFront]: [
+    ComponentType.Route53,
+    ComponentType.GlobalAccelerator,
+    ComponentType.Alb,
+    ComponentType.ApiGateway,
+    ComponentType.Ec2,
+    ComponentType.S3,
+  ],
+  [ComponentType.Alb]: [ComponentType.Ec2, ComponentType.Lambda],
+  [ComponentType.ApiGateway]: [
+    ComponentType.Alb,
+    ComponentType.Ec2,
+    ComponentType.Lambda,
+    ComponentType.Sqs,
+    ComponentType.Sns,
+  ],
+  [ComponentType.Ec2]: SERVER_TARGETS,
+  [ComponentType.Lambda]: SERVER_TARGETS,
+  [ComponentType.ElastiCache]: [
+    ComponentType.Rds,
+    ComponentType.Aurora,
+    ComponentType.ReadReplica,
+    ComponentType.DynamoDb,
+  ],
   // A link to a Read Replica is asynchronous replication to a read-only copy.
-  rds: ['readReplica'],
-  aurora: ['readReplica'],
-  readReplica: [],
-  dynamodb: [],
-  s3: [],
-  sqs: ['ec2', 'lambda'],
-  sns: ['sqs', 'lambda'],
+  [ComponentType.Rds]: [ComponentType.ReadReplica],
+  [ComponentType.Aurora]: [ComponentType.ReadReplica],
+  [ComponentType.ReadReplica]: [],
+  [ComponentType.DynamoDb]: [],
+  [ComponentType.S3]: [],
+  [ComponentType.Sqs]: [ComponentType.Ec2, ComponentType.Lambda],
+  [ComponentType.Sns]: [ComponentType.Sqs, ComponentType.Lambda],
 };
 
 /** Most copies of a component one design needs; global entry points are shared by the whole app. */
 export const MAX_PER_BOARD: Partial<Record<ComponentType, number>> = {
-  users: 1,
-  route53: 1,
-  globalAccelerator: 1,
-  waf: 1,
-  cloudfront: 1,
+  [ComponentType.Users]: 1,
+  [ComponentType.Route53]: 1,
+  [ComponentType.GlobalAccelerator]: 1,
+  [ComponentType.Waf]: 1,
+  [ComponentType.CloudFront]: 1,
 };
 
 /** Capacity in work units per second, by size. */
 export const CAPACITY: Partial<Record<ComponentType, Record<Size, number>>> = {
-  ec2: { small: 200, medium: 500, large: 1200, xlarge: 3000 },
-  rds: { small: 300, medium: 800, large: 2000, xlarge: 5000 },
-  readReplica: { small: 300, medium: 800, large: 2000, xlarge: 5000 },
-  aurora: { small: 800, medium: 2000, large: 5000, xlarge: 12_000 },
-  elasticache: { small: 3000, medium: 8000, large: 20_000, xlarge: 50_000 },
-  dynamodb: { small: 500, medium: 2000, large: 8000, xlarge: 30_000 },
+  [ComponentType.Ec2]: { small: 200, medium: 500, large: 1200, xlarge: 3000 },
+  [ComponentType.Rds]: { small: 300, medium: 800, large: 2000, xlarge: 5000 },
+  [ComponentType.ReadReplica]: { small: 300, medium: 800, large: 2000, xlarge: 5000 },
+  [ComponentType.Aurora]: { small: 800, medium: 2000, large: 5000, xlarge: 12_000 },
+  [ComponentType.ElastiCache]: { small: 3000, medium: 8000, large: 20_000, xlarge: 50_000 },
+  [ComponentType.DynamoDb]: { small: 500, medium: 2000, large: 8000, xlarge: 30_000 },
 };
 
 export const FIXED_CAPACITY: Partial<Record<ComponentType, number>> = {
-  lambda: 1000,
-  apiGateway: 10_000,
-  alb: 50_000,
+  [ComponentType.Lambda]: 1000,
+  [ComponentType.ApiGateway]: 10_000,
+  [ComponentType.Alb]: 50_000,
 };
 
 /** Monthly price in $ by size. */
 export const SIZE_PRICE: Partial<Record<ComponentType, Record<Size, number>>> = {
-  ec2: { small: 15, medium: 30, large: 60, xlarge: 120 },
-  rds: { small: 15, medium: 30, large: 60, xlarge: 120 },
-  readReplica: { small: 15, medium: 30, large: 60, xlarge: 120 },
-  aurora: { small: 35, medium: 70, large: 140, xlarge: 280 },
-  elasticache: { small: 15, medium: 30, large: 60, xlarge: 120 },
-  dynamodb: { small: 10, medium: 30, large: 90, xlarge: 270 },
+  [ComponentType.Ec2]: { small: 15, medium: 30, large: 60, xlarge: 120 },
+  [ComponentType.Rds]: { small: 15, medium: 30, large: 60, xlarge: 120 },
+  [ComponentType.ReadReplica]: { small: 15, medium: 30, large: 60, xlarge: 120 },
+  [ComponentType.Aurora]: { small: 35, medium: 70, large: 140, xlarge: 280 },
+  [ComponentType.ElastiCache]: { small: 15, medium: 30, large: 60, xlarge: 120 },
+  [ComponentType.DynamoDb]: { small: 10, medium: 30, large: 90, xlarge: 270 },
 };
 
 /** Flat monthly price in $. */
 export const FLAT_PRICE: Partial<Record<ComponentType, number>> = {
-  route53: 1,
-  globalAccelerator: 18,
-  waf: 6,
-  cloudfront: 2,
-  alb: 16,
-  s3: 1,
-  sqs: 1,
-  sns: 1,
+  [ComponentType.Route53]: 1,
+  [ComponentType.GlobalAccelerator]: 18,
+  [ComponentType.Waf]: 6,
+  [ComponentType.CloudFront]: 2,
+  [ComponentType.Alb]: 16,
+  [ComponentType.S3]: 1,
+  [ComponentType.Sqs]: 1,
+  [ComponentType.Sns]: 1,
 };
 
 /** Monthly price in $ for every 100 requests per second handled. */
 export const REQUEST_PRICE: Partial<Record<ComponentType, number>> = {
-  lambda: 5,
-  apiGateway: 3.5,
-  cloudfront: 1,
-  s3: 0.5,
-  sqs: 0.4,
-  sns: 0.3,
-  dynamodb: 5,
+  [ComponentType.Lambda]: 5,
+  [ComponentType.ApiGateway]: 3.5,
+  [ComponentType.CloudFront]: 1,
+  [ComponentType.S3]: 0.5,
+  [ComponentType.Sqs]: 0.4,
+  [ComponentType.Sns]: 0.3,
+  [ComponentType.DynamoDb]: 5,
 };
 
 export const PRICING_FACTOR = { onDemand: 1, reserved: 0.6, spot: 0.3 } as const;
@@ -315,7 +377,7 @@ export const defaultConfig = (type: ComponentType): NodeConfig => ({
   autoScaling: false,
   maxCount: 4,
   multiAz: false,
-  encrypted: type === 's3',
+  encrypted: type === ComponentType.S3,
   provisioned: false,
   cacheApi: false,
   globalDb: false,
@@ -323,20 +385,20 @@ export const defaultConfig = (type: ComponentType): NodeConfig => ({
 
 /** Every component the player can place, in palette order. */
 export const COMPONENT_TYPES_IN_PALETTE: ComponentType[] = [
-  'ec2',
-  'rds',
-  'alb',
-  'route53',
-  'aurora',
-  'elasticache',
-  'readReplica',
-  's3',
-  'cloudfront',
-  'globalAccelerator',
-  'sqs',
-  'sns',
-  'waf',
-  'apiGateway',
-  'lambda',
-  'dynamodb',
+  ComponentType.Ec2,
+  ComponentType.Rds,
+  ComponentType.Alb,
+  ComponentType.Route53,
+  ComponentType.Aurora,
+  ComponentType.ElastiCache,
+  ComponentType.ReadReplica,
+  ComponentType.S3,
+  ComponentType.CloudFront,
+  ComponentType.GlobalAccelerator,
+  ComponentType.Sqs,
+  ComponentType.Sns,
+  ComponentType.Waf,
+  ComponentType.ApiGateway,
+  ComponentType.Lambda,
+  ComponentType.DynamoDb,
 ];
