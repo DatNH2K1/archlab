@@ -104,6 +104,17 @@ describe('Rounds', () => {
       ['spot-workers', () => tweak(round('spot-workers').solution, 'worker', { pricing: 'onDemand' })],
       ['steady-table', () => tweak(round('steady-table').solution, 'table', { provisioned: false })],
       ['reserved', () => tweak(round('reserved').solution, 'web', { pricing: 'onDemand' })],
+      ...[
+        'udp-match',
+        'packet-inspection',
+        'long-renders',
+        'replay-stream',
+        'sign-in',
+        'db-connections',
+        'private-path',
+        'ransomware',
+        'eu-only',
+      ].map((id): [string, () => Board] => [id, () => round(id).starter as Board]),
     ];
 
     it.each(fails)('fails %s', (id, build) => {

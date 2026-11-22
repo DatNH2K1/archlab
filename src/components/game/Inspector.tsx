@@ -28,6 +28,14 @@ const COMPONENT_LESSON: Record<ComponentType, string> = {
   s3: 's3-performance',
   sqs: 'decoupling-messaging',
   sns: 'decoupling-messaging',
+  nlb: 'elastic-load-balancing',
+  gwlb: 'elastic-load-balancing',
+  fargate: 'containers-compute',
+  kinesis: 'data-analytics',
+  cognito: 'identity-federation-cognito',
+  secretsManager: 'secrets-certificates',
+  vpcEndpoint: 'vpc-connectivity',
+  rdsProxy: 'relational-databases',
 };
 
 const Segmented = <T extends string>(props: {
@@ -172,6 +180,8 @@ export const Inspector = (props: {
         <p className="mt-1 text-chalk/80">{tc(`${node.type}.tip`)}</p>
         <Link
           href={`/lessons/${COMPONENT_LESSON[node.type]}`}
+          target="_blank"
+          rel="noopener"
           className="mt-1 inline-block text-accent underline"
         >
           {tg('read_lesson')}
@@ -247,9 +257,10 @@ export const Inspector = (props: {
               value={c.pricing}
               disabled={props.locked}
               options={[
-                { value: 'onDemand', label: t('pricing_onDemand') },
-                { value: 'reserved', label: t('pricing_reserved') },
-                { value: 'spot', label: t('pricing_spot') },
+                { value: 'onDemand' as const, label: t('pricing_onDemand') },
+                // Fargate has Savings Plans, not Reserved Instances.
+                ...(node.type === ComponentType.Fargate ? [] : [{ value: 'reserved' as const, label: t('pricing_reserved') }]),
+                { value: 'spot' as const, label: t('pricing_spot') },
               ]}
               onChange={(pricing) => {
                 props.onChange({ pricing });
@@ -308,6 +319,17 @@ export const Inspector = (props: {
               disabled={props.locked}
               onChange={(encrypted) => {
                 props.onChange({ encrypted });
+              }}
+            />
+          )}
+          {has('backup') && (
+            <Toggle
+              label={t('backup')}
+              hint={t('backup_hint')}
+              value={c.backup}
+              disabled={props.locked}
+              onChange={(backup) => {
+                props.onChange({ backup });
               }}
             />
           )}

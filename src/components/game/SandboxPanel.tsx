@@ -7,7 +7,7 @@ import { Select } from '@/components/Select';
 import type { RequirementId, Scenario, TrafficClass } from '@/game/types';
 import { REGIONS, REQUIREMENTS, Twist } from '@/game/types';
 
-const CLASSES: TrafficClass[] = ['read', 'write', 'static', 'job'];
+const CLASSES: TrafficClass[] = ['read', 'write', 'static', 'job', 'tcp', 'batch'];
 
 /**
  * Sets one share and rescales the others so they still sum to 1.

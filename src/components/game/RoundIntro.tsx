@@ -71,7 +71,7 @@ export const RoundIntro = (props: { round: Round; number: number; heading: strin
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {round.lessons.map((slug) => (
-            <Link key={slug} href={`/lessons/${slug}`} className="rounded-full border border-line px-3 py-1 text-xs hover:border-accent">
+            <Link key={slug} href={`/lessons/${slug}`} target="_blank" rel="noopener" className="rounded-full border border-line px-3 py-1 text-xs hover:border-accent">
               📖 {tl(`${slug}.title`)}
             </Link>
           ))}

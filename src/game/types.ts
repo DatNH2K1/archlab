@@ -19,6 +19,14 @@ export const ComponentType = {
   S3: 's3',
   Sqs: 'sqs',
   Sns: 'sns',
+  Nlb: 'nlb',
+  Gwlb: 'gwlb',
+  Fargate: 'fargate',
+  Kinesis: 'kinesis',
+  Cognito: 'cognito',
+  SecretsManager: 'secretsManager',
+  VpcEndpoint: 'vpcEndpoint',
+  RdsProxy: 'rdsProxy',
 } as const;
 
 export type ComponentType = (typeof ComponentType)[keyof typeof ComponentType];
@@ -51,6 +59,8 @@ export type NodeConfig = {
   cacheApi: boolean;
   /** Aurora Global Database or a DynamoDB global table: a managed copy in the other Region. */
   globalDb: boolean;
+  /** Point-in-time backups (AWS Backup, PITR, S3 versioning) kept apart from the data. */
+  backup: boolean;
 };
 
 export type BoardNode = {
@@ -65,7 +75,8 @@ type BoardEdge = { id: string; from: string; to: string };
 
 export type Board = { nodes: BoardNode[]; edges: BoardEdge[] };
 
-export type TrafficClass = 'read' | 'write' | 'static' | 'job';
+/** `tcp` is raw TCP/UDP traffic that only layer 4 components take; `batch` is a job that runs longer than 15 minutes. */
+export type TrafficClass = 'read' | 'write' | 'static' | 'job' | 'tcp' | 'batch';
 
 export type RequestClass = TrafficClass | 'attack';
 
@@ -80,6 +91,8 @@ export const Twist = {
   Ddos: 'ddos',
   CacheCrash: 'cacheCrash',
   Viral: 'viral',
+  DataLoss: 'dataLoss',
+  DailyCycle: 'dailyCycle',
 } as const;
 
 export type Twist = (typeof Twist)[keyof typeof Twist];
@@ -92,6 +105,14 @@ export const REQUIREMENTS = [
   'webFirewall',
   'fanOut',
   'drainQueue',
+  'dataResidency',
+  'staticIp',
+  'inspectTraffic',
+  'userAuth',
+  'rotateSecrets',
+  'privateEgress',
+  'replayStream',
+  'noServers',
 ] as const;
 
 export type RequirementId = (typeof REQUIREMENTS)[number];
@@ -118,6 +139,11 @@ const ISSUE_CODES = [
   'nowhere_write',
   'nowhere_static',
   'nowhere_job',
+  'nowhere_tcp',
+  'nowhere_batch',
+  'lambda_timeout',
+  'connection_storm',
+  'data_lost',
   'alb_target',
   'no_balancer',
   'replica_write',
@@ -132,6 +158,14 @@ const ISSUE_CODES = [
   'public_bucket',
   'no_firewall',
   'no_fan_out',
+  'data_outside_region',
+  'no_static_ip',
+  'no_inspection',
+  'no_auth',
+  'no_secret',
+  'direct_egress',
+  'no_replay',
+  'server_managed',
   'backlog',
   'slow',
   'cold_start',

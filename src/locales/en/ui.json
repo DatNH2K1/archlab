@@ -120,7 +120,9 @@
     "encrypted_hint": "Turn it on at creation. For an existing RDS: snapshot → encrypted copy → restore.",
     "region": "Region",
     "region_us-east-1": "us-east-1 (N. Virginia)",
-    "region_eu-west-1": "eu-west-1 (Ireland)"
+    "region_eu-west-1": "eu-west-1 (Ireland)",
+    "backup": "Backup",
+    "backup_hint": "AWS Backup, PITR or S3 versioning: a separate copy to restore after a deletion or ransomware. Global copies and read replicas are not backups, since they replicate the delete too. +20% price."
   },
   "Components": {
     "users": {
@@ -190,6 +192,38 @@
     "sns": {
       "desc": "Pub/sub: one message is pushed to many subscribers at once (fan-out).",
       "tip": "SNS → many SQS queues is the classic fan-out pattern. Use message filtering so each queue gets only the events it needs."
+    },
+    "nlb": {
+      "desc": "Network Load Balancer: layer 4 (TCP/UDP/TLS) balancing with a static IP per AZ, ultra low latency and millions of connections per second.",
+      "tip": "Pick NLB for TCP/UDP, static or Elastic IPs, ultra low latency, PrivateLink, or an API Gateway private integration (VPC Link). NLB takes no WAF; for path routing use an ALB (an NLB in front of an ALB gives it static IPs)."
+    },
+    "gwlb": {
+      "desc": "Gateway Load Balancer: sends all traffic through a fleet of third-party security appliances (firewall, IDS/IPS) before it reaches the app.",
+      "tip": "Keywords: \"third-party virtual appliances\", \"deep packet inspection\", \"IDS/IPS\", GENEVE port 6081. WAF only filters layer 7 HTTP; GWLB does not stop application-layer bots."
+    },
+    "fargate": {
+      "desc": "Runs containers (ECS/EKS) with no servers to manage: you only set CPU and memory per task. Spreads tasks across AZs by itself.",
+      "tip": "\"Least operational overhead\" + containers → Fargate. Jobs longer than 15 minutes cannot run on Lambda; use Fargate or AWS Batch. Fargate Spot is ~70% cheaper for interruptible work."
+    },
+    "kinesis": {
+      "desc": "Kinesis Data Streams: a real-time stream that keeps records in order per shard for 1 to 365 days, so several consumers can read and replay them.",
+      "tip": "Real-time, ordered, many apps reading one stream, replay → Kinesis. Just loading into S3/Redshift with no code → Data Firehose. One message for one worker → SQS."
+    },
+    "cognito": {
+      "desc": "User pools for sign-up, sign-in, MFA and Google/Facebook/SAML sign-in. API Gateway or an ALB checks the JWT before letting a request through.",
+      "tip": "User pool = authenticate app users (JWT). Identity pool = trade a token for temporary AWS credentials to call S3/DynamoDB directly. Employees use IAM Identity Center."
+    },
+    "secretsManager": {
+      "desc": "Stores database passwords and API keys, encrypted with KMS, and rotates them on a schedule with Lambda.",
+      "tip": "\"Rotate RDS credentials automatically\" → Secrets Manager. Parameter Store is cheaper but has no built-in rotation. DynamoDB uses IAM roles, so it needs no secret."
+    },
+    "vpcEndpoint": {
+      "desc": "Gateway endpoint for S3 and DynamoDB: servers in private subnets reach them without the internet or a NAT gateway. Free.",
+      "tip": "Gateway endpoints (S3, DynamoDB): free, added to route tables. Interface endpoints (PrivateLink) for other services: billed per hour. Swapping a NAT gateway for a gateway endpoint is a classic way to cut data processing charges."
+    },
+    "rdsProxy": {
+      "desc": "Pools and reuses connections to RDS/Aurora so thousands of Lambdas share a few. Up to 66% faster failover; reads passwords from Secrets Manager.",
+      "tip": "\"Lambda exhausts database connections\", \"too many connections\" → RDS Proxy. The proxy requires Secrets Manager and can enforce IAM authentication."
     }
   },
   "Twists": {
@@ -227,6 +261,16 @@
       "name": "Going viral",
       "heads_up": "Your post is spreading: traffic keeps climbing up to 4×.",
       "page": "Traffic grows every minute."
+    },
+    "dataLoss": {
+      "name": "Ransomware",
+      "heads_up": "An access key leaked. An attacker may delete or encrypt your data.",
+      "page": "Data was wiped. Any database or bucket without backups must be rebuilt from scratch."
+    },
+    "dailyCycle": {
+      "name": "Day and night",
+      "heads_up": "Traffic drops to 30% at night and peaks during business hours.",
+      "page": "Morning: traffic climbs to its daily peak."
     }
   },
   "Requirements": {
@@ -240,7 +284,7 @@
     },
     "noPublicServers": {
       "title": "No public servers",
-      "desc": "EC2 must sit behind an ALB, CloudFront or API Gateway."
+      "desc": "EC2 and Fargate must sit behind an ALB, NLB, CloudFront or API Gateway."
     },
     "privateBucket": {
       "title": "Private bucket",
@@ -257,6 +301,38 @@
     "drainQueue": {
       "title": "Drain the queue",
       "desc": "At the end of the round, no more than 5% of the work is still queued."
+    },
+    "dataResidency": {
+      "title": "Keep data in the EU",
+      "desc": "Under GDPR, every database, bucket, cache and queue stays in eu-west-1 with no global copy in another Region."
+    },
+    "staticIp": {
+      "title": "Static IPs",
+      "desc": "Partners allow-list IP addresses: users must enter through Global Accelerator or an NLB."
+    },
+    "inspectTraffic": {
+      "title": "Packet inspection",
+      "desc": "All traffic to servers goes through third-party firewall/IDS appliances behind a GWLB."
+    },
+    "userAuth": {
+      "title": "User sign-in",
+      "desc": "Every API Gateway and ALB checks users with Cognito."
+    },
+    "rotateSecrets": {
+      "title": "Rotate credentials",
+      "desc": "Whatever connects to RDS/Aurora reads its password from Secrets Manager, never from code."
+    },
+    "privateEgress": {
+      "title": "No internet path",
+      "desc": "EC2 and Fargate reach S3 and DynamoDB only through a VPC endpoint, never over the internet."
+    },
+    "replayStream": {
+      "title": "Replayable stream",
+      "desc": "At least 2 apps read the same Kinesis stream in order and can replay it."
+    },
+    "noServers": {
+      "title": "No servers to manage",
+      "desc": "There is no ops team: no EC2, only serverless services such as Lambda and Fargate."
     }
   },
   "Issues": {
@@ -267,7 +343,7 @@
     "nowhere_static": "{name} receives file downloads but has no file store: link it to S3 or a server.",
     "nowhere_job": "{name} receives background jobs but nothing can run them.",
     "alb_target": "{name} only sends requests to servers (EC2/Lambda), not straight to databases.",
-    "no_balancer": "{name} has several instances but no ALB in front, so every request lands on one of them: put an ALB before the EC2 group.",
+    "no_balancer": "{name} has several instances but no load balancer in front, so every request lands on one of them: put an ALB or NLB before the group.",
     "replica_write": "{name}: a read replica is read-only; writes must go to the primary database.",
     "data_split": "Writes are split across databases that do not sync (like {name}): keep a single database for writes.",
     "db_region_down": "{name} lives in one Region, so it went down with it. A cross-Region RDS replica must be promoted by hand; use Aurora Global Database or DynamoDB Global Tables instead (turn on Global).",
@@ -276,14 +352,27 @@
     "overloaded": "{name} is past its capacity and rejects requests: scale it up, scale it out or offload it.",
     "unencrypted": "{name} is not encrypted (KMS).",
     "public_data": "{name} is exposed: only servers may talk to databases.",
-    "public_server": "{name} takes traffic straight from the internet: put an ALB, CloudFront or API Gateway in front.",
+    "public_server": "{name} takes traffic straight from the internet: put an ALB, NLB, CloudFront or API Gateway in front.",
     "public_bucket": "{name} is open to the internet: serve it through CloudFront with Origin Access Control.",
     "no_firewall": "Requests reach {name} without passing through WAF: put WAF in front of every entry point.",
     "no_fan_out": "You need SNS sending to at least 2 SQS queues, each with a worker.",
     "backlog": "Queue {name} still has a backlog: add workers or bigger ones.",
     "slow": "Average response time is over target; {name} adds the most delay.",
     "cold_start": "{name} hits cold starts when traffic jumps: turn on provisioned concurrency.",
-    "over_budget": "Over budget: {name} costs the most. Find a cheaper option."
+    "over_budget": "Over budget: {name} costs the most. Find a cheaper option.",
+    "nowhere_tcp": "{name} gets TCP/UDP connections but nothing can take them: only NLB, Global Accelerator, GWLB, EC2 and Fargate take TCP/UDP (ALB, API Gateway, CloudFront and WAF are HTTP only).",
+    "nowhere_batch": "{name} gets long-running jobs but nothing can run them: use SQS with EC2 or Fargate.",
+    "lambda_timeout": "{name} cannot run jobs longer than 15 minutes (the Lambda limit): use Fargate or EC2.",
+    "connection_storm": "Every Lambda opens its own connection to {name} and exhausts it: put RDS Proxy in between.",
+    "data_lost": "{name} lost its data and had no backup: turn on Backup (AWS Backup, PITR, S3 versioning).",
+    "data_outside_region": "{name} keeps data outside eu-west-1 or has a global copy in another Region.",
+    "no_static_ip": "Users enter through {name}, which has no static IP: use Global Accelerator or an NLB as the entry point.",
+    "no_inspection": "Traffic reaches {name} without passing through the GWLB and its appliances.",
+    "no_auth": "{name} lets every request through without checking sign-in: link it to Cognito.",
+    "no_secret": "{name} connects to the database with a hard-coded password: link it to Secrets Manager.",
+    "direct_egress": "{name} reaches S3/DynamoDB over the internet: put a VPC Endpoint in between.",
+    "no_replay": "You need a Kinesis stream with at least 2 consumers.",
+    "server_managed": "{name} is a server you must patch and manage: replace it with Lambda or Fargate."
   },
   "Result": {
     "passed": "Requirements met!",
@@ -322,7 +411,8 @@
     "decoupling": "Decouple",
     "security": "Lock it down",
     "cost": "Spend less",
-    "final": "Final boss"
+    "final": "Final boss",
+    "advanced": "Advanced services"
   },
   "Sandbox": {
     "settings": "Traffic settings",
@@ -334,7 +424,9 @@
     "users_near": "Users near {region}",
     "twist": "Twist",
     "no_twist": "None",
-    "rules": "Rules"
+    "rules": "Rules",
+    "mix_tcp": "TCP/UDP",
+    "mix_batch": "Long-running jobs"
   },
   "Domains": {
     "secure": "Design secure architectures",

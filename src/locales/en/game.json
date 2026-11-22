@@ -168,6 +168,105 @@
         "KMS",
         "SNS + SQS"
       ]
+    },
+    "clickstream": {
+      "title": "Real-time clickstream",
+      "pitch": "Capture every click for a dashboard and a fraud detection model: Kinesis with several consumers, data kept in the EU, encryption, backups and a traffic peak.",
+      "tags": [
+        "Kinesis",
+        "Lambda",
+        "DynamoDB",
+        "GDPR",
+        "Backup"
+      ]
+    },
+    "edge-firewall": {
+      "title": "Brokerage with packet inspection",
+      "pitch": "Build a trading platform where regulators require third-party packet inspection, partners need static IPs and institutions trade over raw TCP.",
+      "tags": [
+        "Security",
+        "GWLB",
+        "NLB",
+        "Global Accelerator",
+        "Backup"
+      ]
+    },
+    "fintech-eu": {
+      "title": "European e-wallet",
+      "pitch": "Build an e-wallet on an Aurora ledger: data stays in the EU, Lambda connects through RDS Proxy and Secrets Manager, bots are blocked and US customers are served too.",
+      "tags": [
+        "Security",
+        "GDPR",
+        "RDS Proxy",
+        "Secrets Manager",
+        "Cognito"
+      ]
+    },
+    "hr-portal": {
+      "title": "Internal HR portal",
+      "pitch": "Build a serverless HR portal: staff sign in with Cognito, read payslips from a private bucket, survive ransomware and keep data in the EU.",
+      "tags": [
+        "Security",
+        "Cognito",
+        "Private S3",
+        "Backup",
+        "GDPR"
+      ]
+    },
+    "legacy-crm": {
+      "title": "Legacy CRM migration",
+      "pitch": "Move an old CRM to AWS as it is, then modernise it step by step to cut the bill: serverless, pooled database connections, rotated passwords and backups.",
+      "tags": [
+        "Lift-and-shift",
+        "Lambda",
+        "RDS Proxy",
+        "Secrets Manager",
+        "Backup"
+      ]
+    },
+    "partner-api": {
+      "title": "B2B partner API",
+      "pitch": "Build an API for business partners: static IPs they can allow-list, rotating credentials, report files that never cross the internet, and survival against ransomware.",
+      "tags": [
+        "Security",
+        "NLB",
+        "Secrets Manager",
+        "VPC Endpoint",
+        "Backup"
+      ]
+    },
+    "realtime-game": {
+      "title": "Real-time game",
+      "pitch": "Multiplayer game servers over UDP: layer 4 load balancing, anycast IPs for players worldwide, a telemetry stream for anti-cheat and a Region outage mid-tournament.",
+      "tags": [
+        "NLB",
+        "Global Accelerator",
+        "Kinesis",
+        "Auto Scaling",
+        "Multi-Region"
+      ]
+    },
+    "render-farm": {
+      "title": "Video render service",
+      "pitch": "Run a container render service with no ops team: Fargate, jobs that take tens of minutes through SQS, a VPC endpoint and Spot to cut costs.",
+      "tags": [
+        "Fargate",
+        "Containers",
+        "SQS",
+        "VPC Endpoint",
+        "Spot"
+      ]
+    },
+    "saas-billing": {
+      "title": "Billing SaaS",
+      "pitch": "Run a B2B invoicing SaaS on Aurora and keep it cheap: Auto Scaling for office hours, a VPC endpoint instead of NAT, read replicas for reports, and backups.",
+      "tags": [
+        "Aurora",
+        "Auto Scaling",
+        "VPC Endpoint",
+        "Read Replica",
+        "Backup"
+      ]
     }
   },
   "Rounds": {
@@ -818,6 +917,330 @@
       "story": "Besides fraud scoring, every payment must send the customer a receipt and post to the reconciliation system. The two jobs are independent: one being slow must not slow the other.",
       "concept": "Lambda publishes to SNS, which fans out to two SQS queues, each with its own Lambda. Encrypt both queues; the SNS topic also supports SSE with KMS, and each queue access policy only lets that one topic send to it.",
       "nudge": "Replace SQS with SNS → 2 SQS (encrypted), each with its own Lambda."
+    },
+    "click-ingest": {
+      "title": "One stream, two readers",
+      "story": "Every click on the marketplace must reach both the live dashboard and the fraud detection model, in order, and stay replayable when the model is retrained.",
+      "concept": "Real-time, ordered, many apps reading one stream, replay → Kinesis Data Streams. SQS hands each message to one consumer and deletes it; SNS keeps nothing to replay. To just load into S3/Redshift with no code, use Data Firehose.",
+      "nudge": "API Gateway → Kinesis → 2 Lambdas (dashboard, fraud) → DynamoDB."
+    },
+    "click-eu": {
+      "title": "European customers",
+      "story": "The marketplace expands to Europe and 80% of users are now in the EU. Legal reminds you that under GDPR their click data must not leave the EU.",
+      "concept": "Data residency: pick an EU Region for every data store (stream, table, bucket). Use an SCP in AWS Organizations with the aws:RequestedRegion condition to block resources in other Regions. Trap: a global table copies the data out of the EU.",
+      "nudge": "Move API Gateway, Kinesis, both Lambdas and DynamoDB to eu-west-1."
+    },
+    "click-encrypt": {
+      "title": "Encryption audit",
+      "story": "The GDPR auditor asks for every click to be encrypted at rest, both in the stream and in the table.",
+      "concept": "Kinesis Data Streams supports server-side encryption with KMS (SSE-KMS) per stream; DynamoDB is always encrypted and can use a customer managed key. Producers and consumers need kms:GenerateDataKey/Decrypt on that key.",
+      "nudge": "Turn on encryption for Kinesis and DynamoDB."
+    },
+    "click-ransom": {
+      "title": "Ransomware",
+      "story": "A developer's access key leaked. If the attacker deletes the table, the whole fraud history is gone.",
+      "concept": "Turn on point-in-time recovery (PITR) or AWS Backup for DynamoDB to restore to any second in the last 35 days. Trap: a global table or replica is not a backup, since it copies the delete too. Use AWS Backup Vault Lock so the attacker cannot delete the backups.",
+      "nudge": "Turn on Backup for DynamoDB."
+    },
+    "click-peak": {
+      "title": "Black Friday",
+      "story": "Black Friday: clicks triple for a few hours. The stream will reject records (ProvisionedThroughputExceeded) without enough shards.",
+      "concept": "Each Kinesis shard takes 1 MB/s or 1,000 records/s. Add shards before the peak (UpdateShardCount) or use on-demand mode. Lambda consumers read per shard, so more shards also means more parallel processing.",
+      "nudge": "Scale Kinesis up to medium (more shards)."
+    },
+    "fw-inspect": {
+      "title": "Inspect every packet",
+      "story": "The securities regulator requires all traffic into the platform to pass through the third-party firewall/IDS appliances the company licensed: 500 requests/s, account data encrypted, no server exposed to the internet.",
+      "concept": "Gateway Load Balancer sends traffic through a fleet of third-party security appliances (GENEVE, port 6081) before it reaches the app. WAF only filters layer 7 HTTP with rules; it does not replace IDS/IPS packet inspection.",
+      "nudge": "Users → GWLB → ALB → EC2 (2 instances, both a and b) → RDS (encryption on)."
+    },
+    "fw-partners": {
+      "title": "Partners need static IPs",
+      "story": "Partner brokers only open their firewalls to a fixed list of IP addresses. The load balancer DNS name keeps changing IPs, so they cannot connect.",
+      "concept": "Global Accelerator gives two static anycast IPs and brings traffic onto the AWS backbone. ALB and GWLB have no fixed IPs; for static IPs put Global Accelerator in front or use an NLB.",
+      "nudge": "Add Global Accelerator between the users and the GWLB."
+    },
+    "fw-fix": {
+      "title": "FIX orders over TCP",
+      "story": "Institutional clients place orders with the FIX protocol over raw TCP, 30% of traffic. The ALB only speaks HTTP, so every FIX session is refused.",
+      "concept": "NLB balances layer 4 (TCP/UDP/TLS) with ultra low latency. ALB, API Gateway, CloudFront and WAF are HTTP only. An NLB takes no WAF: protect it from DDoS with Shield Advanced.",
+      "nudge": "Link the GWLB to a new NLB, and the NLB to a new EC2 group (2 instances, both a and b) for FIX."
+    },
+    "fw-az": {
+      "title": "An AZ fails mid-session",
+      "story": "In the middle of the trading day, one us-east-1 AZ loses power. The platform cannot stop matching orders, not even for a few minutes.",
+      "concept": "RDS Multi-AZ keeps a synchronous standby in another AZ and fails over in 1–2 minutes. EC2 groups spread over 2 AZs keep serving from the healthy one.",
+      "nudge": "Turn on Multi-AZ for RDS and check that every EC2 group runs in both a and b."
+    },
+    "fw-ransom": {
+      "title": "Ransomware",
+      "story": "An employee's access key leaked. The attacker could wipe the orders and accounts database.",
+      "concept": "Multi-AZ and read replicas copy the delete too, so they are not backups. AWS Backup (with vault lock) or automated snapshots/PITR keep a separate copy to restore from.",
+      "nudge": "Turn on Backup for RDS."
+    },
+    "wallet-ledger": {
+      "title": "A ledger in the EU",
+      "story": "An e-wallet startup got its license in Ireland: 400 requests/s, 40% transactions written to a relational ledger. All data must stay in the EU, database passwords must rotate, and the old Lambda code once exhausted Aurora connections.",
+      "concept": "Each Lambda environment opens its own connection, so under load a relational database runs out of connections. RDS Proxy pools them, fails over faster and reads the password from Secrets Manager, which rotates it. Aurora KMS encryption must be on when the cluster is created.",
+      "nudge": "Everything in eu-west-1: API Gateway → Lambda → RDS Proxy → Aurora (encrypted); link RDS Proxy to Secrets Manager."
+    },
+    "wallet-login": {
+      "title": "Customer sign-in",
+      "story": "The mobile app is about to launch. Customers need to sign up, sign in with Apple or Google and turn on MFA before sending money.",
+      "concept": "A Cognito user pool issues JWTs; API Gateway checks them with a Cognito authorizer. App customers use Cognito; employees use IAM Identity Center. Data must still stay in eu-west-1.",
+      "nudge": "Link API Gateway to Cognito and keep every component in eu-west-1."
+    },
+    "wallet-bots": {
+      "title": "Account-probing bots",
+      "story": "A botnet is trying sign-ins and transfer calls in bulk: strange traffic jumps 6× and drags Lambda and Aurora with it.",
+      "concept": "WAF with rate-based rules and managed rule groups blocks bots at API Gateway or CloudFront. Shield Standard covers layer 3/4 attacks for free; buy Shield Advanced for DRT support and cost protection.",
+      "nudge": "Put WAF between the users and API Gateway."
+    },
+    "wallet-ransom": {
+      "title": "An attacker in the account",
+      "story": "An IAM user was taken over and the attacker is trying to delete the ledger cluster. Losing the ledger means losing the license.",
+      "concept": "Aurora has automated backups and PITR; AWS Backup adds central schedules, vault lock and cross-account copies. A read replica or Global Database will not help, since it replicates the delete. Turn on deletion protection for the cluster.",
+      "nudge": "Turn on Backup on Aurora."
+    },
+    "wallet-us": {
+      "title": "Customers in the US",
+      "story": "The wallet expands to the US: 40% of users are now near us-east-1 and say the app is slow. The law still keeps data in the EU, so the database cannot be copied to the US.",
+      "concept": "When data cannot move closer to users, bring users onto the AWS network early: CloudFront reaches the origin over the backbone and caches read responses. Trap: Aurora Global Database or a DynamoDB global table would break data residency.",
+      "nudge": "Add CloudFront (cache API on) between WAF and API Gateway; keep the database in eu-west-1."
+    },
+    "hr-signin": {
+      "title": "Who is signing in?",
+      "story": "The company wants to drop its payroll spreadsheets for a web portal: 200 requests/s, 70% viewing profiles. The old prototype left the API open to anyone who knew the URL.",
+      "concept": "A Cognito user pool handles sign-up, sign-in, MFA and federation with Google or the company SAML IdP. API Gateway uses a Cognito authorizer to check the JWT before calling Lambda, so the code never does auth itself. Use an identity pool only when the browser needs temporary AWS credentials.",
+      "nudge": "Users → API Gateway → Lambda → DynamoDB (encrypted); link API Gateway to Cognito."
+    },
+    "hr-payslips": {
+      "title": "PDF payslips",
+      "story": "Every month staff download their payslip PDF: 800 requests/s, 60% file downloads. Lambda reads and returns each file itself, which is slow and billed per request. Payslips must never be exposed to the internet.",
+      "concept": "Keep static files in S3 and serve them through CloudFront with Origin Access Control and S3 Block Public Access on. Lambda only issues short-lived signed URLs. Common traps: a public bucket for convenience, or streaming large files through Lambda.",
+      "nudge": "Users → CloudFront; CloudFront → S3 for files and CloudFront → API Gateway for the API. Never link users straight to S3."
+    },
+    "hr-ransom": {
+      "title": "A leaked access key",
+      "story": "A developer pushed an access key to a public GitHub repo. Security warns that an attacker could wipe the staff table and the payslip bucket at any moment.",
+      "concept": "Replication and global tables are not backups: they copy the delete too. Restore with AWS Backup (vault lock, cross-account copies), DynamoDB PITR and S3 versioning with Object Lock. Revoke the key and move to IAM roles.",
+      "nudge": "Turn on Backup on DynamoDB and S3."
+    },
+    "hr-eu": {
+      "title": "The European branch",
+      "story": "The company bought a firm in Ireland and 90% of staff are now in the EU. Legal reminds you that under GDPR, HR data must stay in the EU.",
+      "concept": "Put the bucket, table and functions in eu-west-1 with no global copy in another Region. Across an organization, an SCP in AWS Organizations with an aws:RequestedRegion condition stops every account from creating resources outside allowed Regions.",
+      "nudge": "Move S3, DynamoDB, API Gateway and Lambda to eu-west-1 and keep Backup on."
+    },
+    "hr-bots": {
+      "title": "Credential stuffing",
+      "story": "Passwords leaked from another site are being tried in bulk on the sign-in page: strange traffic jumps 6×, Lambda runs nonstop and the bill soars.",
+      "concept": "AWS WAF with rate-based rules, Bot Control and the ATP (Account Takeover Prevention) rule group stops bots before they reach the API. Cognito advanced security adds adaptive MFA. A GWLB or security groups cannot filter the application layer.",
+      "nudge": "Put WAF between the users and CloudFront."
+    },
+    "crm-lift": {
+      "title": "Lift and shift",
+      "story": "The data center closes at the end of the month. The old CRM (one web app and one MySQL database) must run on AWS now, with no time to change code. 400 requests/s, budget $125.",
+      "concept": "Lift-and-shift (rehost): move servers as they are with AWS Application Migration Service and the database with DMS. Fastest and least risky; optimise costs in later steps.",
+      "nudge": "ALB → EC2 (medium, 2 instances, AZ a and b) → RDS (medium)."
+    },
+    "crm-nights": {
+      "title": "The ops team quits",
+      "story": "The only server admin just quit, and at night almost nobody uses the CRM while the EC2 fleet keeps billing. Management wants no servers and a bill under $100.",
+      "concept": "Lambda bills per request, which suits load that rises and falls with the day. But each Lambda environment opens its own connection to RDS, so the database runs out of connections at peak. RDS Proxy pools and reuses connections, far cheaper than a bigger RDS.",
+      "nudge": "Replace EC2 with Lambda behind the ALB and put RDS Proxy between Lambda and RDS (keep RDS medium)."
+    },
+    "crm-rotate": {
+      "title": "Passwords in code",
+      "story": "An audit found the database password sitting in an environment variable, unchanged for 3 years. From now on it must rotate automatically.",
+      "concept": "Secrets Manager stores the password, encrypts it with KMS and rotates it on a schedule. RDS Proxy reads it from Secrets Manager, so the app never sees it. Parameter Store has no built-in rotation.",
+      "nudge": "Add Secrets Manager and link RDS Proxy to it."
+    },
+    "crm-reports": {
+      "title": "Quarter-end reports",
+      "story": "At quarter end, sales keeps dashboards open all day: traffic rises to 850 requests/s, nearly all reads. RDS is overloaded and the budget allows only $18 more.",
+      "concept": "When most traffic is repeated reads, a cache in front of the database (ElastiCache) is cheaper than a bigger RDS. Lambda checks the cache first and only asks the database on a miss (cache-aside).",
+      "nudge": "Add ElastiCache and link Lambda to it; keep RDS medium."
+    },
+    "crm-ransom": {
+      "title": "Ransomware",
+      "story": "An employee's access key leaked on GitHub. If an attacker deletes the database, the CRM must recover without losing customer data.",
+      "concept": "Separate backups (AWS Backup, automated snapshots, point-in-time restore) are the only way back from a deletion. Multi-AZ and read replicas copy the delete too, so they are not backups. AWS Backup Vault Lock stops attackers from deleting the backups.",
+      "nudge": "Turn on Backup for RDS."
+    },
+    "partner-allowlist": {
+      "title": "IP allow-list",
+      "story": "Partner banks only let their servers call a fixed list of IP addresses: 400 requests/s. Data must be encrypted and no server exposed to the internet.",
+      "concept": "An NLB has one static IP (or Elastic IP) per AZ, so partners can allow-list it. An ALB DNS name resolves to IPs that change over time.",
+      "nudge": "Users → NLB → EC2 (2 instances, both a and b) → RDS (encryption on)."
+    },
+    "partner-secrets": {
+      "title": "No hard-coded passwords",
+      "story": "Auditors found the database password in a config file on EC2, unchanged since launch. New policy: credentials rotate every 30 days.",
+      "concept": "Secrets Manager stores credentials encrypted with KMS and rotates them with a built-in Lambda for RDS. Parameter Store is cheaper but has no built-in rotation. The app reads the secret through the EC2 IAM role.",
+      "nudge": "Link EC2 to Secrets Manager."
+    },
+    "partner-files": {
+      "title": "Report files for partners",
+      "story": "Partners download daily reconciliation files: traffic grows to 800 requests/s, half of them downloads. Reading files from EBS overloads EC2. Security says servers must not reach the internet.",
+      "concept": "Move files to S3 to offload the servers. A gateway VPC endpoint for S3/DynamoDB is free and keeps traffic on the AWS network; a NAT gateway goes over the internet and charges per GB processed.",
+      "nudge": "EC2 → VPC Endpoint → S3 for static files."
+    },
+    "partner-ransom": {
+      "title": "Ransomware wipes data",
+      "story": "An access key leaked on GitHub. The attacker could delete both the database and the reconciliation bucket.",
+      "concept": "Turn on S3 Versioning (plus Object Lock to block deletes) and backups/PITR for RDS with AWS Backup. Cross-Region replication is not a backup, since it replicates the delete too.",
+      "nudge": "Turn on Backup for both RDS and S3."
+    },
+    "partner-az": {
+      "title": "An AZ goes down",
+      "story": "One us-east-1 AZ fails right when partners run their end-of-day reconciliation.",
+      "concept": "RDS Multi-AZ fails over to the standby in another AZ. Auto Scaling replaces the EC2 instances lost in the healthy AZ; the NLB only sends to healthy targets.",
+      "nudge": "Turn on Multi-AZ for RDS and Auto Scaling (max 4) for EC2."
+    },
+    "rt-udp": {
+      "title": "Matches over UDP",
+      "story": "A new shooter just launched: 85% of traffic is UDP packets carrying match state, the rest is player profile reads. Every millisecond of lag makes players quit.",
+      "concept": "An ALB only speaks HTTP/HTTPS (layer 7). For non-HTTP TCP/UDP, ultra low latency or static IPs, use an NLB (layer 4). A GWLB only inserts security appliances; it does not serve games.",
+      "nudge": "Users → NLB → EC2 (large, 2 instances, AZ a and b) → DynamoDB."
+    },
+    "rt-global": {
+      "title": "European players",
+      "story": "The tournament opens to Europe: half the players are near eu-west-1 and complain about ping. The target is under 120 ms on average.",
+      "concept": "Global Accelerator gives 2 static anycast IPs and puts packets on the AWS backbone at the edge closest to players, for TCP and UDP alike. CloudFront only caches HTTP content, so it does nothing for UDP match traffic.",
+      "nudge": "Put Global Accelerator between Users and the NLB."
+    },
+    "rt-events": {
+      "title": "Anti-cheat",
+      "story": "Every match now sends telemetry (10% of traffic). The anti-cheat team and the analytics team both need every event in order, and want to replay them when they retrain models.",
+      "concept": "Kinesis Data Streams keeps records in order per shard and lets several consumers read and replay them within the retention period. SQS deletes a message once one worker handles it, so two apps cannot both read it or replay it.",
+      "nudge": "EC2 → Kinesis → 2 Lambdas (anti-cheat, stats)."
+    },
+    "rt-tournament": {
+      "title": "The finals",
+      "story": "The finals are streamed live: players triple for one time slot. The budget cannot keep a fleet of big instances running all day.",
+      "concept": "Target tracking Auto Scaling adds instances as load climbs and removes them after the event. Pick an instance size where one covers normal play, then let the group grow at the peak; it costs less than keeping many big instances around.",
+      "nudge": "EC2 xlarge, minimum 1, Auto Scaling on, maximum 3."
+    },
+    "rt-region": {
+      "title": "Region down mid-tournament",
+      "story": "us-east-1 fails in the middle of the tournament. Players must not drop out of matches, and match results must survive on both continents.",
+      "concept": "Run a copy of the game in each Region behind one Global Accelerator: health checks move players to the surviving Region within seconds. DynamoDB Global Tables take writes in both Regions, so losing one keeps the data.",
+      "nudge": "Global Accelerator → Route 53 → NLB + EC2 + Kinesis in each Region (eu-west-1 for the second); turn on Global for DynamoDB."
+    },
+    "render-web": {
+      "title": "No ops team",
+      "story": "A video render startup has two developers and nobody to patch operating systems or manage servers. The API already ships as a container.",
+      "concept": "\"Least operational overhead\" + containers → ECS on Fargate: set CPU and memory per task, and AWS runs the servers and spreads tasks across AZs. The EC2 launch type is a bit cheaper but you manage the instances.",
+      "nudge": "ALB → Fargate (×2) → DynamoDB. No EC2."
+    },
+    "render-jobs": {
+      "title": "30-minute renders",
+      "story": "Customers start sending videos to render: 15% of requests are jobs that run 20–40 minutes. Doing them in the API makes users wait, and every job must finish.",
+      "concept": "Jobs over 15 minutes break the Lambda timeout. Put them in SQS and let a separate Fargate service work through them (or AWS Batch). Set the visibility timeout longer than the job so the message is not handed out again halfway.",
+      "nudge": "Add SQS linked from the web Fargate, and a worker Fargate (×2) reading from SQS. Don't use Lambda as the worker."
+    },
+    "render-egress": {
+      "title": "No internet path",
+      "story": "Security finds that tasks in private subnets reach DynamoDB through a NAT gateway: data goes over the internet and the NAT bill grows with every GB.",
+      "concept": "Gateway endpoints for S3 and DynamoDB are free, add a route to the route table and keep traffic on the AWS network. Other services (SQS, Secrets Manager…) use interface endpoints (PrivateLink), billed per hour. Classic trap: keeping the NAT gateway and buying more bandwidth.",
+      "nudge": "Put a VPC Endpoint between the web Fargate and DynamoDB: Fargate → VPC Endpoint → DynamoDB."
+    },
+    "render-spot": {
+      "title": "Cheap renders",
+      "story": "Management wants render costs down. A render can be rerun if it is cut off, but the queue must be empty by the end of the day.",
+      "concept": "Fargate Spot is about 70% cheaper and can be reclaimed with a 2-minute notice: a fit for interruptible jobs when the work waits safely in SQS. Leave spare capacity to catch up on the backlog after an interruption.",
+      "nudge": "Switch the worker Fargate to Spot and use one large task so the queue drains after the interruption."
+    },
+    "render-cycle": {
+      "title": "Quiet nights",
+      "story": "Customers mostly work office hours: daytime traffic doubles, and at night it drops to 30%. Keeping enough tasks for the peak all night breaks the budget.",
+      "concept": "ECS Service Auto Scaling with target tracking (CPU or requests per target) adds tasks by day and removes them at night. For a fixed daily pattern, add scheduled scaling to scale out before the peak. Watch it in CloudWatch.",
+      "nudge": "Web Fargate: turn on Auto Scaling, minimum 1, maximum 4."
+    },
+    "bill-api": {
+      "title": "Invoice API",
+      "story": "Business customers call the API to create and look up invoices: 900 requests/s, mostly reads. Budget $200.",
+      "concept": "Aurora is MySQL/PostgreSQL compatible, keeps 6 copies across 3 AZs and handles more load than RDS of the same size. Spread EC2 over 2 AZs behind an ALB so one AZ is not a single point of failure.",
+      "nudge": "ALB → EC2 (medium, 3 instances, AZ a and b) → Aurora (medium)."
+    },
+    "bill-office": {
+      "title": "Office hours only",
+      "story": "Customers only work during office hours; at night traffic drops to 30% while 3 EC2 instances keep running. The budget drops to $168.",
+      "concept": "A fixed fleet sized for the peak pays for idle servers at night. Auto Scaling with a low minimum adds instances in the morning and removes them in the evening. For load with a known schedule, add scheduled scaling.",
+      "nudge": "Turn on Auto Scaling for EC2: minimum 1, maximum 4 medium instances."
+    },
+    "bill-exports": {
+      "title": "PDF invoices",
+      "story": "Half the requests now download PDF invoices, and servers reading files from their own disks are struggling. Files must live in S3, and servers in private subnets may not reach the internet. Budget $165.",
+      "concept": "Move files to S3 to offload EC2. EC2 in a private subnet reaching S3 through a NAT gateway uses the internet path and pays data processing per GB; a gateway VPC endpoint for S3 and DynamoDB is free and keeps traffic on the AWS network.",
+      "nudge": "Add S3 and a VPC Endpoint: EC2 → VPC Endpoint → S3."
+    },
+    "bill-reports": {
+      "title": "Month-end reports",
+      "story": "On the last day of the month customers run reports nonstop: traffic climbs to 2,300 requests/s, almost all reads. Aurora is overloaded.",
+      "concept": "A read replica takes read queries for less than a bigger Aurora. It copies asynchronously, so it can lag slightly: use it for reports and keep writes on the primary. Aurora's reader endpoint spreads reads across replicas.",
+      "nudge": "Add a Read Replica (medium), link Aurora → Read Replica and EC2 → Read Replica. Set EC2 Auto Scaling to minimum 2, maximum 8."
+    },
+    "bill-ransom": {
+      "title": "Ransomware",
+      "story": "An access key leaked. An attacker could delete both the database and the PDF invoice bucket. Accounting law requires keeping invoices for 10 years.",
+      "concept": "A read replica copies the delete too, so it is not a backup. Turn on Aurora backups (point-in-time restore) and S3 versioning with Object Lock so files cannot be deleted or overwritten. AWS Backup manages backups centrally.",
+      "nudge": "Turn on Backup for Aurora and S3."
+    },
+    "udp-match": {
+      "title": "Matches over UDP",
+      "story": "The shooter runs its matches over UDP. The ALB only speaks HTTP, so every in-game packet gets dropped.",
+      "concept": "An ALB works at layer 7 (HTTP/HTTPS, path and host routing). An NLB works at layer 4 (TCP/UDP/TLS): a static IP per AZ, ultra low latency, millions of connections. UDP, static IPs or ultra low latency in a question point to NLB.",
+      "nudge": "Swap the ALB for an NLB: Users → NLB → EC2 → DynamoDB."
+    },
+    "packet-inspection": {
+      "title": "Inspect every packet",
+      "story": "Compliance wants all traffic to pass through a third-party firewall/IDS fleet before it reaches the servers. The WAF does not count.",
+      "concept": "A Gateway Load Balancer sends traffic through a fleet of third-party security appliances (GENEVE) and then on to the app. WAF only filters layer 7 HTTP and is not an IDS/IPS. Keywords: \"third-party virtual appliance\", \"deep packet inspection\".",
+      "nudge": "Swap the WAF for a GWLB: Users → GWLB → ALB → EC2 → RDS."
+    },
+    "long-renders": {
+      "title": "Thirty-minute jobs",
+      "story": "Each video takes about 30 minutes to render. The Lambda worker is stopped at minute 15, so the queue never empties.",
+      "concept": "Lambda runs for 15 minutes at most. Longer jobs belong in containers on Fargate: no servers to manage, just CPU and memory per task. \"Least operational overhead\" with containers → Fargate; large batch fleets → AWS Batch.",
+      "nudge": "Replace the Lambda worker behind SQS with Fargate (medium)."
+    },
+    "replay-stream": {
+      "title": "Two teams, one stream",
+      "story": "Analytics and fraud both need every click in order, and must replay old data when they fix a model. SQS hands each message to one consumer and deletes it.",
+      "concept": "Kinesis Data Streams keeps records in order per shard for 1 to 365 days; many consumers read independently and can replay. SQS fits when each task needs one worker. Loading S3/Redshift with no code → Data Firehose.",
+      "nudge": "API Gateway → Kinesis → two Lambdas (stats, fraud) → DynamoDB."
+    },
+    "sign-in": {
+      "title": "Sign-in required",
+      "story": "The API is open to anyone. From next week, only registered customers may call it.",
+      "concept": "A Cognito user pool handles sign-up, sign-in, MFA and social sign-in; API Gateway checks the JWT with a Cognito authorizer. An identity pool trades the token for temporary AWS credentials. Employees use IAM Identity Center.",
+      "nudge": "Link API Gateway to Cognito."
+    },
+    "db-connections": {
+      "title": "Out of connections",
+      "story": "Every traffic jump makes hundreds of Lambdas open connections to RDS, and the database answers \"too many connections\". Its password is hard-coded too.",
+      "concept": "RDS Proxy pools and reuses connections, speeds up failover and reads its password from Secrets Manager. Secrets Manager rotates RDS passwords on its own; Parameter Store does not. DynamoDB uses IAM roles, so it needs no secret.",
+      "nudge": "Lambda → RDS Proxy → RDS, and link RDS Proxy to Secrets Manager."
+    },
+    "private-path": {
+      "title": "Stay off the internet",
+      "story": "EC2 sits in private subnets and reaches DynamoDB through a NAT gateway: out over the internet and billed per GB processed.",
+      "concept": "Gateway endpoints for S3 and DynamoDB are free and added to route tables; traffic stays on the AWS network. Other services use interface endpoints (PrivateLink), billed per hour. Swapping NAT for a gateway endpoint is a classic cost question.",
+      "nudge": "Put a VPC Endpoint between EC2 and DynamoDB."
+    },
+    "ransomware": {
+      "title": "Ransomware",
+      "story": "An access key leaked, and the attacker is about to delete the database.",
+      "concept": "Replication is not backup: Multi-AZ, read replicas and global copies replicate the delete too. Use AWS Backup (with Vault Lock), PITR or S3 versioning with Object Lock to restore to a point before the attack.",
+      "nudge": "Select RDS and turn on Backup."
+    },
+    "eu-only": {
+      "title": "Keep data in the EU",
+      "story": "Most customers are in Europe, and legal reminds you that under GDPR their data must not leave the EU.",
+      "concept": "Keep every data store in an EU Region with no global copy elsewhere. At the organization level, an SCP in AWS Organizations can deny resources in other Regions (aws:RequestedRegion).",
+      "nudge": "Move API Gateway, Lambda and DynamoDB to eu-west-1."
     }
   }
 }

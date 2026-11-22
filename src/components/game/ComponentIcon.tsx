@@ -104,6 +104,51 @@ const PATHS: Record<ComponentType, React.ReactNode> = {
       <path d="M8 12h4M12 12l6-6M12 12l6 6M12 12h7" />
     </>
   ),
+  nlb: (
+    <>
+      <path d="M8 6h8l3 6-3 6H8l-3-6z" />
+      <path d="M9 10h6M9 14h6" />
+    </>
+  ),
+  gwlb: (
+    <>
+      <path d="M8 6h8l3 6-3 6H8l-3-6z" />
+      <path d="M12 9l3 1.2v1.8c0 2-1.3 3-3 3.8-1.7-.8-3-1.8-3-3.8v-1.8z" />
+    </>
+  ),
+  fargate: (
+    <>
+      <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" />
+      <path d="M4 7.5l8 4.5 8-4.5M12 12v9" />
+    </>
+  ),
+  kinesis: <path d="M3 8c3-3 6 3 9 0s6 3 9 0M3 12c3-3 6 3 9 0s6 3 9 0M3 16c3-3 6 3 9 0s6 3 9 0" />,
+  cognito: (
+    <>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20a7 7 0 0 1 14 0" />
+      <path d="M15.5 14.5l1.5 1.5 3-3" />
+    </>
+  ),
+  secretsManager: (
+    <>
+      <circle cx="8" cy="12" r="4" />
+      <path d="M12 12h9M18 12v3M21 12v2" />
+    </>
+  ),
+  vpcEndpoint: (
+    <>
+      <rect x="3" y="5" width="12" height="14" rx="2" strokeDasharray="2 2" />
+      <path d="M9 12h12M18 9l3 3-3 3" />
+    </>
+  ),
+  rdsProxy: (
+    <>
+      <ellipse cx="15" cy="6" rx="6" ry="2.5" />
+      <path d="M9 6v11c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V6" />
+      <path d="M2 9h5M2 13h5M2 17h5" />
+    </>
+  ),
 };
 
 /**

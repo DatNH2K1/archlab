@@ -1,7 +1,7 @@
 import { ComponentType } from './types';
 import type { NodeConfig, RequestClass, Size } from './types';
 
-type ComponentCategory = 'entry' | 'edge' | 'network' | 'compute' | 'data' | 'messaging';
+type ComponentCategory = 'entry' | 'edge' | 'network' | 'compute' | 'data' | 'messaging' | 'security';
 
 /** Inspector settings a component exposes. */
 export type ConfigField =
@@ -15,7 +15,8 @@ export type ConfigField =
   | 'encrypted'
   | 'provisioned'
   | 'cacheApi'
-  | 'globalDb';
+  | 'globalDb'
+  | 'backup';
 
 type ComponentSpec = {
   category: ComponentCategory;
@@ -32,7 +33,9 @@ type ComponentSpec = {
   latency: number;
 };
 
-const ALL: RequestClass[] = ['read', 'write', 'static', 'job', 'attack'];
+/** Requests layer 7 components take: everything but raw TCP/UDP. */
+const HTTP: RequestClass[] = ['read', 'write', 'static', 'job', 'batch', 'attack'];
+const ALL: RequestClass[] = [...HTTP, 'tcp'];
 
 export const CATALOG: Record<ComponentType, ComponentSpec> = {
   [ComponentType.Users]: {
@@ -65,7 +68,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
   [ComponentType.Waf]: {
     category: 'edge',
     label: 'WAF',
-    accepts: ALL,
+    accepts: HTTP,
     fields: [],
     regional: true,
     global: true,
@@ -74,7 +77,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
   [ComponentType.CloudFront]: {
     category: 'edge',
     label: 'CloudFront',
-    accepts: ALL,
+    accepts: HTTP,
     fields: ['cacheApi'],
     regional: true,
     global: true,
@@ -83,7 +86,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
   [ComponentType.Alb]: {
     category: 'network',
     label: 'ALB',
-    accepts: ALL,
+    accepts: HTTP,
     fields: ['region'],
     regional: true,
     global: false,
@@ -92,7 +95,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
   [ComponentType.ApiGateway]: {
     category: 'network',
     label: 'API Gateway',
-    accepts: ALL,
+    accepts: HTTP,
     fields: ['region'],
     regional: true,
     global: false,
@@ -110,7 +113,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
   [ComponentType.Lambda]: {
     category: 'compute',
     label: 'Lambda',
-    accepts: ALL,
+    accepts: HTTP,
     fields: ['provisioned', 'region'],
     regional: true,
     global: false,
@@ -129,7 +132,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     category: 'data',
     label: 'RDS',
     accepts: ['read', 'write'],
-    fields: ['size', 'multiAz', 'encrypted', 'region'],
+    fields: ['size', 'multiAz', 'encrypted', 'backup', 'region'],
     regional: false,
     global: false,
     latency: 12,
@@ -138,7 +141,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     category: 'data',
     label: 'Aurora',
     accepts: ['read', 'write'],
-    fields: ['size', 'encrypted', 'region', 'globalDb'],
+    fields: ['size', 'encrypted', 'backup', 'region', 'globalDb'],
     regional: true,
     global: false,
     latency: 8,
@@ -156,7 +159,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     category: 'data',
     label: 'DynamoDB',
     accepts: ['read', 'write'],
-    fields: ['provisioned', 'size', 'encrypted', 'region', 'globalDb'],
+    fields: ['provisioned', 'size', 'encrypted', 'backup', 'region', 'globalDb'],
     regional: true,
     global: false,
     latency: 6,
@@ -165,7 +168,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     category: 'data',
     label: 'S3',
     accepts: ['static'],
-    fields: ['encrypted', 'region'],
+    fields: ['encrypted', 'backup', 'region'],
     regional: true,
     global: false,
     latency: 20,
@@ -173,7 +176,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
   [ComponentType.Sqs]: {
     category: 'messaging',
     label: 'SQS',
-    accepts: ['write', 'job'],
+    accepts: ['write', 'job', 'batch'],
     fields: ['encrypted', 'region'],
     regional: true,
     global: false,
@@ -188,9 +191,85 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     global: false,
     latency: 8,
   },
+  [ComponentType.Nlb]: {
+    category: 'network',
+    label: 'NLB',
+    accepts: ALL,
+    fields: ['region'],
+    regional: true,
+    global: false,
+    latency: 1,
+  },
+  [ComponentType.Gwlb]: {
+    category: 'network',
+    label: 'GWLB',
+    accepts: ALL,
+    fields: ['region'],
+    regional: true,
+    global: false,
+    latency: 3,
+  },
+  [ComponentType.Fargate]: {
+    category: 'compute',
+    label: 'Fargate',
+    accepts: ALL,
+    fields: ['size', 'count', 'pricing', 'autoScaling', 'region'],
+    regional: true,
+    global: false,
+    latency: 30,
+  },
+  [ComponentType.Kinesis]: {
+    category: 'messaging',
+    label: 'Kinesis',
+    accepts: ['write', 'job'],
+    fields: ['size', 'encrypted', 'region'],
+    regional: true,
+    global: false,
+    latency: 10,
+  },
+  [ComponentType.Cognito]: {
+    category: 'security',
+    label: 'Cognito',
+    accepts: [],
+    fields: [],
+    regional: true,
+    global: false,
+    latency: 0,
+  },
+  [ComponentType.SecretsManager]: {
+    category: 'security',
+    label: 'Secrets Manager',
+    accepts: [],
+    fields: [],
+    regional: true,
+    global: false,
+    latency: 0,
+  },
+  [ComponentType.VpcEndpoint]: {
+    category: 'network',
+    label: 'VPC Endpoint',
+    accepts: ['read', 'write', 'static'],
+    fields: [],
+    regional: true,
+    global: false,
+    latency: 0,
+  },
+  [ComponentType.RdsProxy]: {
+    category: 'data',
+    label: 'RDS Proxy',
+    accepts: ['read', 'write'],
+    fields: ['region'],
+    regional: true,
+    global: false,
+    latency: 2,
+  },
 };
 
-export const COMPUTE_TYPES = new Set<ComponentType>([ComponentType.Ec2, ComponentType.Lambda]);
+export const COMPUTE_TYPES = new Set<ComponentType>([ComponentType.Ec2, ComponentType.Lambda, ComponentType.Fargate]);
+/** Compute that runs as a group of instances or tasks, with a count, AZs and Auto Scaling. */
+export const SERVER_TYPES = new Set<ComponentType>([ComponentType.Ec2, ComponentType.Fargate]);
+/** Relational databases: each connection costs memory, so a burst of Lambda connections overloads them. */
+export const RELATIONAL_TYPES = new Set<ComponentType>([ComponentType.Rds, ComponentType.Aurora, ComponentType.ReadReplica]);
 export const DATABASE_TYPES = new Set<ComponentType>([
   ComponentType.Rds,
   ComponentType.Aurora,
@@ -208,16 +287,26 @@ export const DATA_STORE_TYPES = new Set<ComponentType>([
   ComponentType.ElastiCache,
   ComponentType.S3,
 ]);
-export const QUEUE_TYPES = new Set<ComponentType>([ComponentType.Sqs, ComponentType.Sns]);
+export const QUEUE_TYPES = new Set<ComponentType>([ComponentType.Sqs, ComponentType.Sns, ComponentType.Kinesis]);
+/** Queues and streams that hold work until consumers poll it. */
+export const POLLED_TYPES = new Set<ComponentType>([ComponentType.Sqs, ComponentType.Kinesis]);
 /** Components that only send traffic to healthy targets. */
 export const HEALTH_AWARE_TYPES = new Set<ComponentType>([
   ComponentType.Alb,
   ComponentType.Route53,
   ComponentType.CloudFront,
   ComponentType.GlobalAccelerator,
+  ComponentType.Nlb,
+  ComponentType.Gwlb,
 ]);
-/** Parents that share work across every instance of an EC2 group: a load balancer, or workers polling a queue. */
-export const BALANCER_TYPES = new Set<ComponentType>([ComponentType.Alb, ComponentType.Sqs]);
+/** Parents that share work across every instance of a server group: a load balancer, or workers polling a queue. */
+export const BALANCER_TYPES = new Set<ComponentType>([
+  ComponentType.Alb,
+  ComponentType.Nlb,
+  ComponentType.Gwlb,
+  ComponentType.Sqs,
+  ComponentType.Kinesis,
+]);
 
 const DATA_TARGETS: ComponentType[] = [
   ComponentType.ElastiCache,
@@ -230,11 +319,18 @@ const DATA_TARGETS: ComponentType[] = [
 const SERVER_TARGETS: ComponentType[] = [
   ComponentType.Ec2,
   ComponentType.Lambda,
+  ComponentType.Fargate,
   ComponentType.Alb,
+  ComponentType.Nlb,
   ...DATA_TARGETS,
+  ComponentType.RdsProxy,
+  ComponentType.VpcEndpoint,
+  ComponentType.SecretsManager,
   ComponentType.Sqs,
   ComponentType.Sns,
+  ComponentType.Kinesis,
 ];
+const BALANCED_TARGETS: ComponentType[] = [ComponentType.Ec2, ComponentType.Fargate];
 
 /** Components each component may send requests to, as in AWS. */
 export const LINKS: Record<ComponentType, ComponentType[]> = {
@@ -244,6 +340,8 @@ export const LINKS: Record<ComponentType, ComponentType[]> = {
     ComponentType.Waf,
     ComponentType.CloudFront,
     ComponentType.Alb,
+    ComponentType.Nlb,
+    ComponentType.Gwlb,
     ComponentType.ApiGateway,
     ComponentType.Ec2,
     ComponentType.S3,
@@ -253,6 +351,8 @@ export const LINKS: Record<ComponentType, ComponentType[]> = {
     ComponentType.Waf,
     ComponentType.CloudFront,
     ComponentType.Alb,
+    ComponentType.Nlb,
+    ComponentType.Gwlb,
     ComponentType.ApiGateway,
     ComponentType.Ec2,
     ComponentType.S3,
@@ -261,6 +361,8 @@ export const LINKS: Record<ComponentType, ComponentType[]> = {
     ComponentType.Route53,
     ComponentType.Waf,
     ComponentType.Alb,
+    ComponentType.Nlb,
+    ComponentType.Gwlb,
     ComponentType.ApiGateway,
     ComponentType.Ec2,
   ],
@@ -273,13 +375,16 @@ export const LINKS: Record<ComponentType, ComponentType[]> = {
     ComponentType.Ec2,
     ComponentType.S3,
   ],
-  [ComponentType.Alb]: [ComponentType.Ec2, ComponentType.Lambda],
+  [ComponentType.Alb]: [ComponentType.Ec2, ComponentType.Lambda, ComponentType.Fargate, ComponentType.Cognito],
   [ComponentType.ApiGateway]: [
     ComponentType.Alb,
+    ComponentType.Nlb,
     ComponentType.Ec2,
     ComponentType.Lambda,
     ComponentType.Sqs,
     ComponentType.Sns,
+    ComponentType.Kinesis,
+    ComponentType.Cognito,
   ],
   [ComponentType.Ec2]: SERVER_TARGETS,
   [ComponentType.Lambda]: SERVER_TARGETS,
@@ -295,8 +400,19 @@ export const LINKS: Record<ComponentType, ComponentType[]> = {
   [ComponentType.ReadReplica]: [],
   [ComponentType.DynamoDb]: [],
   [ComponentType.S3]: [],
-  [ComponentType.Sqs]: [ComponentType.Ec2, ComponentType.Lambda],
+  [ComponentType.Sqs]: [ComponentType.Ec2, ComponentType.Lambda, ComponentType.Fargate],
   [ComponentType.Sns]: [ComponentType.Sqs, ComponentType.Lambda],
+  // An NLB in front of an ALB gives the ALB static IPs.
+  [ComponentType.Nlb]: [...BALANCED_TARGETS, ComponentType.Alb],
+  // Traffic goes through the appliances behind the GWLB, then on to the app.
+  [ComponentType.Gwlb]: [...BALANCED_TARGETS, ComponentType.Alb, ComponentType.Nlb, ComponentType.Waf],
+  [ComponentType.Fargate]: SERVER_TARGETS,
+  [ComponentType.Kinesis]: [ComponentType.Ec2, ComponentType.Lambda, ComponentType.Fargate],
+  [ComponentType.Cognito]: [],
+  [ComponentType.SecretsManager]: [],
+  // A gateway endpoint reaches S3 and DynamoDB without leaving the AWS network.
+  [ComponentType.VpcEndpoint]: [ComponentType.S3, ComponentType.DynamoDb],
+  [ComponentType.RdsProxy]: [ComponentType.Rds, ComponentType.Aurora, ComponentType.ReadReplica, ComponentType.SecretsManager],
 };
 
 /** Most copies of a component one design needs; global entry points are shared by the whole app. */
@@ -306,11 +422,14 @@ export const MAX_PER_BOARD: Partial<Record<ComponentType, number>> = {
   [ComponentType.GlobalAccelerator]: 1,
   [ComponentType.Waf]: 1,
   [ComponentType.CloudFront]: 1,
+  [ComponentType.Cognito]: 1,
 };
 
 /** Capacity in work units per second, by size. */
 export const CAPACITY: Partial<Record<ComponentType, Record<Size, number>>> = {
   [ComponentType.Ec2]: { small: 200, medium: 500, large: 1200, xlarge: 3000 },
+  [ComponentType.Fargate]: { small: 200, medium: 500, large: 1200, xlarge: 3000 },
+  [ComponentType.Kinesis]: { small: 1000, medium: 3000, large: 8000, xlarge: 20_000 },
   [ComponentType.Rds]: { small: 300, medium: 800, large: 2000, xlarge: 5000 },
   [ComponentType.ReadReplica]: { small: 300, medium: 800, large: 2000, xlarge: 5000 },
   [ComponentType.Aurora]: { small: 800, medium: 2000, large: 5000, xlarge: 12_000 },
@@ -327,6 +446,8 @@ export const FIXED_CAPACITY: Partial<Record<ComponentType, number>> = {
 /** Monthly price in $ by size. */
 export const SIZE_PRICE: Partial<Record<ComponentType, Record<Size, number>>> = {
   [ComponentType.Ec2]: { small: 15, medium: 30, large: 60, xlarge: 120 },
+  [ComponentType.Fargate]: { small: 20, medium: 40, large: 80, xlarge: 160 },
+  [ComponentType.Kinesis]: { small: 11, medium: 30, large: 75, xlarge: 180 },
   [ComponentType.Rds]: { small: 15, medium: 30, large: 60, xlarge: 120 },
   [ComponentType.ReadReplica]: { small: 15, medium: 30, large: 60, xlarge: 120 },
   [ComponentType.Aurora]: { small: 35, medium: 70, large: 140, xlarge: 280 },
@@ -344,6 +465,12 @@ export const FLAT_PRICE: Partial<Record<ComponentType, number>> = {
   [ComponentType.S3]: 1,
   [ComponentType.Sqs]: 1,
   [ComponentType.Sns]: 1,
+  [ComponentType.Nlb]: 16,
+  [ComponentType.Gwlb]: 25,
+  [ComponentType.Cognito]: 5,
+  [ComponentType.SecretsManager]: 2,
+  [ComponentType.VpcEndpoint]: 0,
+  [ComponentType.RdsProxy]: 20,
 };
 
 /** Monthly price in $ for every 100 requests per second handled. */
@@ -355,11 +482,15 @@ export const REQUEST_PRICE: Partial<Record<ComponentType, number>> = {
   [ComponentType.Sqs]: 0.4,
   [ComponentType.Sns]: 0.3,
   [ComponentType.DynamoDb]: 5,
+  [ComponentType.Kinesis]: 1.4,
 };
 
 export const PRICING_FACTOR = { onDemand: 1, reserved: 0.6, spot: 0.3 } as const;
 
 export const PROVISIONED_CONCURRENCY_PRICE = 15;
+
+/** Share of a data store's price added by its backups. */
+export const BACKUP_FACTOR = 0.2;
 
 export const SIZES: Size[] = ['small', 'medium', 'large', 'xlarge'];
 
@@ -381,6 +512,7 @@ export const defaultConfig = (type: ComponentType): NodeConfig => ({
   provisioned: false,
   cacheApi: false,
   globalDb: false,
+  backup: false,
 });
 
 /** Every component the player can place, in palette order. */
@@ -401,4 +533,12 @@ export const COMPONENT_TYPES_IN_PALETTE: ComponentType[] = [
   ComponentType.ApiGateway,
   ComponentType.Lambda,
   ComponentType.DynamoDb,
+  ComponentType.Nlb,
+  ComponentType.Gwlb,
+  ComponentType.Fargate,
+  ComponentType.Kinesis,
+  ComponentType.RdsProxy,
+  ComponentType.VpcEndpoint,
+  ComponentType.Cognito,
+  ComponentType.SecretsManager,
 ];

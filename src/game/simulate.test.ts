@@ -298,4 +298,205 @@ describe('simulate', () => {
       expect(simulate(board, api).checks.requirements).toEqual([{ id: 'webFirewall', ok: true }]);
     });
   });
+
+  describe('with layer 4 traffic', () => {
+    const game: Scenario = { ...scenario, mix: { tcp: 1 } };
+    const entry = (type: ComponentType) =>
+      makeBoard(
+        [
+          { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+          { id: 'lb', type, x: 0, y: 0 },
+          { id: 'web', type: ComponentType.Ec2, x: 0, y: 0 },
+        ],
+        [
+          ['users', 'lb'],
+          ['lb', 'web'],
+        ],
+      );
+
+    it('rejects TCP sent to an ALB', () => {
+      expect(simulate(entry(ComponentType.Alb), game).issues[0]?.code).toBe('nowhere_tcp');
+    });
+
+    it('serves TCP through an NLB', () => {
+      expect(simulate(entry(ComponentType.Nlb), game).passed).toBe(true);
+    });
+
+    it('asks for static IPs at the entry point', () => {
+      const rules: Scenario = { ...scenario, mix: { read: 1 }, requirements: ['staticIp'] };
+      const board = makeBoard(
+        [
+          { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+          { id: 'lb', type: ComponentType.Alb, x: 0, y: 0 },
+          { id: 'web', type: ComponentType.Ec2, x: 0, y: 0 },
+          { id: 'db', type: ComponentType.DynamoDb, x: 0, y: 0 },
+        ],
+        [
+          ['users', 'lb'],
+          ['lb', 'web'],
+          ['web', 'db'],
+        ],
+      );
+
+      expect(simulate(board, rules).issues.map((issue) => issue.code)).toContain('no_static_ip');
+    });
+  });
+
+  describe('with long-running jobs', () => {
+    const jobs: Scenario = { ...scenario, mix: { batch: 1 }, requirements: ['drainQueue'] };
+    const worker = (type: ComponentType) =>
+      makeBoard(
+        [
+          { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+          { id: 'api', type: ComponentType.ApiGateway, x: 0, y: 0 },
+          { id: 'queue', type: ComponentType.Sqs, x: 0, y: 0 },
+          { id: 'worker', type, x: 0, y: 0, config: { size: 'xlarge', count: 2 } },
+        ],
+        [
+          ['users', 'api'],
+          ['api', 'queue'],
+          ['queue', 'worker'],
+        ],
+      );
+
+    it('times out jobs on Lambda', () => {
+      expect(simulate(worker(ComponentType.Lambda), jobs).issues.map((issue) => issue.code)).toContain('lambda_timeout');
+    });
+
+    it('runs jobs on Fargate', () => {
+      expect(simulate(worker(ComponentType.Fargate), jobs).passed).toBe(true);
+    });
+  });
+
+  describe('with a relational database behind Lambda', () => {
+    const busy: Scenario = { ...scenario, traffic: 300 };
+    const board = (proxy: boolean) =>
+      makeBoard(
+        [
+          { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+          { id: 'api', type: ComponentType.ApiGateway, x: 0, y: 0 },
+          { id: 'fn', type: ComponentType.Lambda, x: 0, y: 0 },
+          { id: 'proxy', type: ComponentType.RdsProxy, x: 0, y: 0 },
+          { id: 'db', type: ComponentType.Rds, x: 0, y: 0, config: { size: 'medium' } },
+        ],
+        proxy
+          ? [
+              ['users', 'api'],
+              ['api', 'fn'],
+              ['fn', 'proxy'],
+              ['proxy', 'db'],
+            ]
+          : [
+              ['users', 'api'],
+              ['api', 'fn'],
+              ['fn', 'db'],
+            ],
+      );
+
+    it('reports a connection storm without RDS Proxy', () => {
+      expect(simulate(board(false), busy).issues.map((issue) => issue.code)).toContain('connection_storm');
+    });
+
+    it('pools connections through RDS Proxy', () => {
+      expect(simulate(board(true), busy).passed).toBe(true);
+    });
+  });
+
+  describe('with a ransomware attack', () => {
+    const attack: Scenario = { ...scenario, twist: Twist.DataLoss };
+    const board = (backup: boolean) =>
+      makeBoard(
+        [
+          { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+          { id: 'web', type: ComponentType.Ec2, x: 0, y: 0 },
+          { id: 'db', type: ComponentType.DynamoDb, x: 0, y: 0, config: { backup } },
+        ],
+        [
+          ['users', 'web'],
+          ['web', 'db'],
+        ],
+      );
+
+    it('loses a database without backups', () => {
+      expect(simulate(board(false), attack).issues[0]).toMatchObject({ code: 'data_lost', nodeId: 'db' });
+    });
+
+    it('keeps serving from a backed-up database', () => {
+      expect(simulate(board(true), attack).passed).toBe(true);
+    });
+  });
+
+  describe('with a Kinesis stream', () => {
+    it('hands every record to each consumer', () => {
+      const board = makeBoard(
+        [
+          { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+          { id: 'api', type: ComponentType.ApiGateway, x: 0, y: 0 },
+          { id: 'stream', type: ComponentType.Kinesis, x: 0, y: 0 },
+          { id: 'a', type: ComponentType.Lambda, x: 0, y: 0 },
+          { id: 'b', type: ComponentType.Lambda, x: 0, y: 0 },
+          { id: 'db', type: ComponentType.DynamoDb, x: 0, y: 0 },
+        ],
+        [
+          ['users', 'api'],
+          ['api', 'stream'],
+          ['stream', 'a'],
+          ['stream', 'b'],
+          ['a', 'db'],
+          ['b', 'db'],
+        ],
+      );
+      const result = simulate(board, { ...scenario, mix: { write: 1 }, requirements: ['replayStream', 'drainQueue'] });
+      const last = result.ticks.at(-1);
+
+      expect(result.passed).toBe(true);
+      expect(last?.nodes.a?.load).toBeCloseTo(last?.nodes.b?.load ?? 0);
+    });
+  });
+
+  describe('with private network rules', () => {
+    const rules: Scenario = { ...scenario, requirements: ['privateEgress', 'rotateSecrets', 'dataResidency'] };
+
+    it('reports a server reaching DynamoDB over the internet', () => {
+      const board = makeBoard(
+        [
+          { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+          { id: 'web', type: ComponentType.Ec2, x: 0, y: 0, config: { region: 'eu-west-1' } },
+          { id: 'db', type: ComponentType.DynamoDb, x: 0, y: 0, config: { region: 'eu-west-1' } },
+        ],
+        [
+          ['users', 'web'],
+          ['web', 'db'],
+        ],
+      );
+
+      expect(simulate(board, rules).checks.requirements).toEqual([
+        { id: 'privateEgress', ok: false },
+        { id: 'rotateSecrets', ok: true },
+        { id: 'dataResidency', ok: true },
+      ]);
+    });
+
+    it('accepts a VPC endpoint, Secrets Manager and data kept in the EU', () => {
+      const board = makeBoard(
+        [
+          { id: 'users', type: ComponentType.Users, x: 0, y: 0 },
+          { id: 'web', type: ComponentType.Ec2, x: 0, y: 0, config: { region: 'eu-west-1' } },
+          { id: 'vpce', type: ComponentType.VpcEndpoint, x: 0, y: 0 },
+          { id: 'files', type: ComponentType.S3, x: 0, y: 0, config: { region: 'eu-west-1' } },
+          { id: 'secret', type: ComponentType.SecretsManager, x: 0, y: 0 },
+          { id: 'db', type: ComponentType.Rds, x: 0, y: 0, config: { region: 'eu-west-1' } },
+        ],
+        [
+          ['users', 'web'],
+          ['web', 'vpce'],
+          ['vpce', 'files'],
+          ['web', 'secret'],
+          ['web', 'db'],
+        ],
+      );
+
+      expect(simulate(board, { ...rules, mix: { read: 0.5, write: 0.2, static: 0.3 } }).passed).toBe(true);
+    });
+  });
 });

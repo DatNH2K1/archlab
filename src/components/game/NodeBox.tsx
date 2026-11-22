@@ -127,6 +127,10 @@ const useBadges = (node: BoardNode, showRegion: boolean) => {
     badges.push({ label: 'KMS', tone: 'text-accent' });
   }
 
+  if (spec.fields.includes('backup') && c.backup) {
+    badges.push({ label: 'Backup', tone: 'text-good' });
+  }
+
   if (node.type === ComponentType.Lambda && c.provisioned) {
     badges.push({ label: 'PC', tone: 'text-info' });
   }

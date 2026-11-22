@@ -120,7 +120,9 @@
     "encrypted_hint": "Nên bật ngay khi tạo. RDS đã có sẵn thì phải: chụp snapshot → sao chép có mã hoá → khôi phục.",
     "region": "Region",
     "region_us-east-1": "us-east-1 (N. Virginia)",
-    "region_eu-west-1": "eu-west-1 (Ireland)"
+    "region_eu-west-1": "eu-west-1 (Ireland)",
+    "backup": "Sao lưu (Backup)",
+    "backup_hint": "AWS Backup, PITR hoặc S3 versioning: lưu bản sao tách biệt để khôi phục khi bị xoá hay ransomware. Bản sao global hay Read Replica không thay được backup vì sao chép cả lệnh xoá. Thêm 20% giá."
   },
   "Components": {
     "users": {
@@ -190,6 +192,38 @@
     "sns": {
       "desc": "Pub/sub: một message được đẩy tới nhiều nơi nhận cùng lúc (fan-out).",
       "tip": "SNS → nhiều SQS là mẫu fan-out kinh điển. Dùng message filtering để mỗi hàng đợi chỉ nhận loại sự kiện nó cần."
+    },
+    "nlb": {
+      "desc": "Network Load Balancer: cân bằng tải tầng 4 (TCP/UDP/TLS), mỗi AZ một IP cố định, độ trễ cực thấp, chịu hàng triệu kết nối mỗi giây.",
+      "tip": "Chọn NLB khi đề nói TCP/UDP, IP tĩnh/Elastic IP, độ trễ siêu thấp, PrivateLink hoặc API Gateway private integration (VPC Link). NLB không gắn được WAF; cần định tuyến theo path thì dùng ALB (có thể đặt NLB trước ALB để có IP tĩnh)."
+    },
+    "gwlb": {
+      "desc": "Gateway Load Balancer: đưa toàn bộ lưu lượng qua một dàn thiết bị bảo mật bên thứ ba (firewall, IDS/IPS) rồi mới tới ứng dụng.",
+      "tip": "Từ khoá: \"thiết bị bảo mật bên thứ ba\", \"kiểm tra gói tin\", \"IDS/IPS\", GENEVE port 6081. WAF chỉ lọc HTTP tầng 7; GWLB không chặn được bot tầng ứng dụng."
+    },
+    "fargate": {
+      "desc": "Chạy container (ECS/EKS) mà không phải quản lý máy chủ: chỉ khai báo CPU/RAM cho mỗi task. Tự rải task qua nhiều AZ.",
+      "tip": "\"Ít công vận hành nhất\" + container → Fargate. Job chạy quá 15 phút thì Lambda không làm được, dùng Fargate hoặc AWS Batch. Fargate Spot rẻ ~70% cho việc chịu được gián đoạn."
+    },
+    "kinesis": {
+      "desc": "Kinesis Data Streams: luồng dữ liệu thời gian thực, giữ bản ghi theo thứ tự trong mỗi shard từ 1 đến 365 ngày để nhiều consumer cùng đọc và đọc lại.",
+      "tip": "Real-time, đúng thứ tự, nhiều ứng dụng cùng đọc một luồng, cần replay → Kinesis. Chỉ cần đẩy vào S3/Redshift mà không viết code → Data Firehose. Một message cho một worker → SQS."
+    },
+    "cognito": {
+      "desc": "User pool để đăng ký, đăng nhập, MFA và đăng nhập qua Google/Facebook/SAML. API Gateway hoặc ALB kiểm tra JWT trước khi cho yêu cầu qua.",
+      "tip": "User pool = xác thực người dùng ứng dụng (JWT). Identity pool = đổi token lấy thông tin xác thực AWS tạm thời để gọi thẳng S3/DynamoDB. Nhân viên nội bộ dùng IAM Identity Center."
+    },
+    "secretsManager": {
+      "desc": "Lưu mật khẩu database và API key, mã hoá bằng KMS, tự xoay vòng theo lịch bằng Lambda.",
+      "tip": "\"Tự động xoay vòng mật khẩu RDS\" → Secrets Manager. Parameter Store rẻ hơn nhưng không tự xoay vòng. DynamoDB dùng IAM role nên không cần secret."
+    },
+    "vpcEndpoint": {
+      "desc": "Gateway endpoint cho S3 và DynamoDB: máy chủ trong subnet private gọi tới mà không đi qua Internet hay NAT Gateway. Miễn phí.",
+      "tip": "Gateway endpoint (S3, DynamoDB): miễn phí, thêm vào route table. Interface endpoint (PrivateLink) cho các dịch vụ khác: tính tiền theo giờ. Thay NAT Gateway bằng gateway endpoint là cách giảm phí xử lý dữ liệu hay gặp trong đề."
+    },
+    "rdsProxy": {
+      "desc": "Gom và tái sử dụng kết nối tới RDS/Aurora, để hàng nghìn Lambda dùng chung một ít kết nối. Failover nhanh hơn tới 66%, lấy mật khẩu từ Secrets Manager.",
+      "tip": "\"Lambda làm cạn kết nối database\", \"too many connections\" → RDS Proxy. Proxy bắt buộc dùng Secrets Manager và có thể bắt IAM authentication."
     }
   },
   "Twists": {
@@ -227,6 +261,16 @@
       "name": "Lan truyền",
       "heads_up": "Bài đăng của bạn đang lan nhanh: lưu lượng tăng liên tục, tới gấp 4.",
       "page": "Lưu lượng tăng đều mỗi phút."
+    },
+    "dataLoss": {
+      "name": "Ransomware",
+      "heads_up": "Một tài khoản bị lộ khoá truy cập. Kẻ tấn công có thể xoá hoặc mã hoá dữ liệu của bạn.",
+      "page": "Dữ liệu bị xoá sạch. Database hoặc bucket nào không có bản sao lưu sẽ phải dựng lại từ đầu."
+    },
+    "dailyCycle": {
+      "name": "Chu kỳ ngày đêm",
+      "heads_up": "Ban đêm lưu lượng chỉ còn 30%; giờ hành chính mới đạt mức cao nhất.",
+      "page": "Sáng rồi: lưu lượng tăng dần lên mức cao điểm."
     }
   },
   "Requirements": {
@@ -240,7 +284,7 @@
     },
     "noPublicServers": {
       "title": "Không để lộ máy chủ",
-      "desc": "EC2 phải đứng sau ALB, CloudFront hoặc API Gateway."
+      "desc": "EC2 và Fargate phải đứng sau ALB, NLB, CloudFront hoặc API Gateway."
     },
     "privateBucket": {
       "title": "Bucket riêng tư",
@@ -257,6 +301,38 @@
     "drainQueue": {
       "title": "Xử lý hết hàng đợi",
       "desc": "Khi hết màn, hàng đợi không được tồn quá 5% số việc."
+    },
+    "dataResidency": {
+      "title": "Dữ liệu ở lại EU",
+      "desc": "Theo GDPR, mọi database, bucket, cache và hàng đợi phải ở eu-west-1 và không có bản sao global sang Region khác."
+    },
+    "staticIp": {
+      "title": "IP cố định",
+      "desc": "Đối tác chỉ cho phép một danh sách IP: người dùng phải vào qua Global Accelerator hoặc NLB."
+    },
+    "inspectTraffic": {
+      "title": "Kiểm tra gói tin",
+      "desc": "Mọi lưu lượng tới máy chủ phải đi qua dàn firewall/IDS bên thứ ba sau một GWLB."
+    },
+    "userAuth": {
+      "title": "Đăng nhập người dùng",
+      "desc": "Mọi API Gateway và ALB phải kiểm tra người dùng qua Cognito."
+    },
+    "rotateSecrets": {
+      "title": "Xoay vòng mật khẩu",
+      "desc": "Thành phần nào kết nối tới RDS/Aurora phải lấy mật khẩu từ Secrets Manager, không ghi cứng trong code."
+    },
+    "privateEgress": {
+      "title": "Không ra Internet",
+      "desc": "EC2 và Fargate chỉ được gọi S3 và DynamoDB qua VPC endpoint, không đi đường Internet."
+    },
+    "replayStream": {
+      "title": "Đọc lại luồng dữ liệu",
+      "desc": "Ít nhất 2 ứng dụng phải cùng đọc một luồng Kinesis theo thứ tự và đọc lại được khi cần."
+    },
+    "noServers": {
+      "title": "Không quản lý máy chủ",
+      "desc": "Đội vận hành không có người: không dùng EC2, chỉ dùng dịch vụ serverless như Lambda và Fargate."
     }
   },
   "Issues": {
@@ -267,7 +343,7 @@
     "nowhere_static": "{name} nhận yêu cầu tải file nhưng không có nơi chứa file: nối tới S3 hoặc máy chủ.",
     "nowhere_job": "{name} nhận tác vụ nền nhưng không có nơi xử lý.",
     "alb_target": "{name} chỉ chia yêu cầu cho máy chủ (EC2/Lambda), không gửi thẳng vào database.",
-    "no_balancer": "{name} có nhiều máy nhưng không có ALB phía trước, nên mọi yêu cầu dồn vào một máy: đặt ALB trước nhóm EC2.",
+    "no_balancer": "{name} có nhiều máy nhưng không có load balancer phía trước, nên mọi yêu cầu dồn vào một máy: đặt ALB hoặc NLB trước nhóm máy.",
     "replica_write": "{name}: Read Replica chỉ cho đọc, yêu cầu ghi phải tới database chính.",
     "data_split": "Dữ liệu ghi bị chia ra nhiều database không đồng bộ (như {name}): chỉ giữ một database ghi.",
     "db_region_down": "{name} chỉ nằm trong một Region nên sập theo Region. Bản sao RDS ở Region khác phải promote bằng tay; hãy dùng Aurora Global Database hoặc DynamoDB Global Tables (bật Global).",
@@ -276,14 +352,27 @@
     "overloaded": "{name} quá tải nên bắt đầu từ chối yêu cầu: tăng kích cỡ, thêm máy hoặc san bớt tải.",
     "unencrypted": "{name} chưa bật mã hoá (KMS).",
     "public_data": "{name} đang bị lộ ra ngoài: chỉ máy chủ mới được kết nối tới database.",
-    "public_server": "{name} nhận lưu lượng thẳng từ Internet: đặt ALB, CloudFront hoặc API Gateway phía trước.",
+    "public_server": "{name} nhận lưu lượng thẳng từ Internet: đặt ALB, NLB, CloudFront hoặc API Gateway phía trước.",
     "public_bucket": "{name} đang mở ra Internet: phục vụ qua CloudFront với Origin Access Control.",
     "no_firewall": "Yêu cầu tới {name} mà không đi qua WAF: đặt WAF trước mọi điểm vào.",
     "no_fan_out": "Cần SNS gửi tới ít nhất 2 hàng đợi SQS, mỗi hàng đợi có worker riêng.",
     "backlog": "Hàng đợi {name} còn tồn việc: thêm worker hoặc dùng worker mạnh hơn.",
     "slow": "Phản hồi quá chậm, chậm nhất ở {name}.",
     "cold_start": "{name} bị cold start khi lưu lượng tăng đột ngột: bật Provisioned concurrency.",
-    "over_budget": "Vượt ngân sách: {name} tốn nhiều nhất. Tìm phương án rẻ hơn."
+    "over_budget": "Vượt ngân sách: {name} tốn nhiều nhất. Tìm phương án rẻ hơn.",
+    "nowhere_tcp": "{name} nhận kết nối TCP/UDP nhưng không có gì nhận được: chỉ NLB, Global Accelerator, GWLB, EC2 và Fargate nhận được TCP/UDP (ALB, API Gateway, CloudFront và WAF chỉ nhận HTTP).",
+    "nowhere_batch": "{name} nhận job chạy lâu nhưng không có nơi xử lý: dùng SQS và EC2 hoặc Fargate.",
+    "lambda_timeout": "{name} không chạy được job quá 15 phút (giới hạn của Lambda): dùng Fargate hoặc EC2.",
+    "connection_storm": "Mỗi Lambda mở một kết nối riêng tới {name}, làm database cạn kết nối: đặt RDS Proxy ở giữa.",
+    "data_lost": "{name} mất dữ liệu và không có bản sao lưu: bật Backup (AWS Backup, PITR, S3 versioning).",
+    "data_outside_region": "{name} lưu dữ liệu ngoài eu-west-1 hoặc có bản sao global sang Region khác.",
+    "no_static_ip": "Người dùng vào qua {name}, không có IP cố định: dùng Global Accelerator hoặc NLB làm điểm vào.",
+    "no_inspection": "Lưu lượng tới {name} không đi qua GWLB và dàn thiết bị kiểm tra.",
+    "no_auth": "{name} cho mọi yêu cầu đi qua mà không kiểm tra đăng nhập: nối nó tới Cognito.",
+    "no_secret": "{name} kết nối tới database bằng mật khẩu ghi cứng: nối nó tới Secrets Manager.",
+    "direct_egress": "{name} gọi S3/DynamoDB qua đường Internet: đặt VPC Endpoint ở giữa.",
+    "no_replay": "Cần một luồng Kinesis có ít nhất 2 consumer.",
+    "server_managed": "{name} là máy chủ phải tự vá và quản lý: thay bằng Lambda hoặc Fargate."
   },
   "Result": {
     "passed": "Đạt yêu cầu!",
@@ -322,7 +411,8 @@
     "decoupling": "Xử lý bất đồng bộ",
     "security": "Bảo mật",
     "cost": "Tiết kiệm chi phí",
-    "final": "Trùm cuối"
+    "final": "Trùm cuối",
+    "advanced": "Dịch vụ nâng cao"
   },
   "Sandbox": {
     "settings": "Thiết lập lưu lượng",
@@ -334,7 +424,9 @@
     "users_near": "Người dùng gần {region}",
     "twist": "Sự cố",
     "no_twist": "Không có",
-    "rules": "Quy định"
+    "rules": "Quy định",
+    "mix_tcp": "TCP/UDP",
+    "mix_batch": "Job chạy lâu"
   },
   "Domains": {
     "secure": "Thiết kế kiến trúc bảo mật",

@@ -168,6 +168,105 @@
         "KMS",
         "SNS + SQS"
       ]
+    },
+    "clickstream": {
+      "title": "Luồng clickstream thời gian thực",
+      "pitch": "Thu thập từng cú click cho dashboard và mô hình phát hiện gian lận: Kinesis nhiều consumer, dữ liệu ở lại EU, mã hoá, sao lưu và đợt cao điểm.",
+      "tags": [
+        "Kinesis",
+        "Lambda",
+        "DynamoDB",
+        "GDPR",
+        "Backup"
+      ]
+    },
+    "edge-firewall": {
+      "title": "Sàn chứng khoán kiểm tra gói tin",
+      "pitch": "Xây sàn giao dịch mà quy định bắt mọi gói tin phải qua firewall bên thứ ba, đối tác cần IP cố định, khách tổ chức đặt lệnh qua TCP thô.",
+      "tags": [
+        "Bảo mật",
+        "GWLB",
+        "NLB",
+        "Global Accelerator",
+        "Backup"
+      ]
+    },
+    "fintech-eu": {
+      "title": "Ví điện tử châu Âu",
+      "pitch": "Xây ví điện tử trên sổ cái Aurora: dữ liệu ở lại EU, Lambda kết nối qua RDS Proxy và Secrets Manager, chặn bot và phục vụ cả khách Mỹ.",
+      "tags": [
+        "Bảo mật",
+        "GDPR",
+        "RDS Proxy",
+        "Secrets Manager",
+        "Cognito"
+      ]
+    },
+    "hr-portal": {
+      "title": "Cổng nhân sự nội bộ",
+      "pitch": "Xây cổng nhân sự serverless: nhân viên đăng nhập qua Cognito, xem phiếu lương trong bucket private, sống sót sau ransomware và giữ dữ liệu ở EU.",
+      "tags": [
+        "Bảo mật",
+        "Cognito",
+        "Private S3",
+        "Backup",
+        "GDPR"
+      ]
+    },
+    "legacy-crm": {
+      "title": "CRM chuyển lên cloud",
+      "pitch": "Bê nguyên hệ thống CRM cũ lên AWS, rồi hiện đại hoá từng bước để giảm hoá đơn: serverless, gom kết nối database, xoay vòng mật khẩu và sao lưu.",
+      "tags": [
+        "Lift-and-shift",
+        "Lambda",
+        "RDS Proxy",
+        "Secrets Manager",
+        "Backup"
+      ]
+    },
+    "partner-api": {
+      "title": "API cho đối tác B2B",
+      "pitch": "Xây API cho đối tác doanh nghiệp: IP cố định để họ allow-list, mật khẩu tự xoay vòng, file báo cáo không đi qua Internet và chịu được ransomware.",
+      "tags": [
+        "Bảo mật",
+        "NLB",
+        "Secrets Manager",
+        "VPC Endpoint",
+        "Backup"
+      ]
+    },
+    "realtime-game": {
+      "title": "Game thời gian thực",
+      "pitch": "Máy chủ game nhiều người chơi chạy UDP: cân bằng tải tầng 4, IP anycast cho người chơi khắp thế giới, luồng telemetry cho chống gian lận và một Region sập giữa giải đấu.",
+      "tags": [
+        "NLB",
+        "Global Accelerator",
+        "Kinesis",
+        "Auto Scaling",
+        "Multi-Region"
+      ]
+    },
+    "render-farm": {
+      "title": "Dịch vụ render video",
+      "pitch": "Chạy dịch vụ render trên container mà không có đội vận hành: Fargate, job chạy hàng chục phút qua SQS, VPC endpoint và Spot để giảm chi phí.",
+      "tags": [
+        "Fargate",
+        "Container",
+        "SQS",
+        "VPC Endpoint",
+        "Spot"
+      ]
+    },
+    "saas-billing": {
+      "title": "SaaS tính tiền",
+      "pitch": "Vận hành một SaaS xuất hoá đơn cho doanh nghiệp trên Aurora và giữ chi phí thấp: Auto Scaling theo giờ hành chính, VPC endpoint thay NAT, Read Replica cho báo cáo và sao lưu.",
+      "tags": [
+        "Aurora",
+        "Auto Scaling",
+        "VPC Endpoint",
+        "Read Replica",
+        "Backup"
+      ]
     }
   },
   "Rounds": {
@@ -818,6 +917,330 @@
       "story": "Ngoài chấm điểm gian lận, mỗi giao dịch còn phải gửi biên lai cho khách và ghi vào hệ thống đối soát. Hai việc này độc lập, cái này chậm không được làm cái kia chậm theo.",
       "concept": "Lambda gửi sự kiện tới SNS, SNS chia ra hai hàng đợi SQS, mỗi hàng đợi có Lambda riêng. Bật mã hoá cho cả hai SQS; topic SNS cũng có SSE với KMS, và access policy của hàng đợi chỉ cho đúng topic đó gửi vào.",
       "nudge": "Thay SQS bằng SNS → 2 SQS (bật mã hoá), mỗi SQS một Lambda."
+    },
+    "click-ingest": {
+      "title": "Một luồng, hai người đọc",
+      "story": "Mỗi cú click trên sàn thương mại phải tới cả dashboard thời gian thực lẫn mô hình phát hiện gian lận, đúng thứ tự, và đọc lại được khi mô hình được huấn luyện lại.",
+      "concept": "Real-time, đúng thứ tự, nhiều ứng dụng cùng đọc một luồng, đọc lại (replay) → Kinesis Data Streams. SQS giao mỗi message cho một consumer rồi xoá; SNS không lưu lại để đọc lại. Chỉ cần đổ vào S3/Redshift mà không viết code thì dùng Data Firehose.",
+      "nudge": "API Gateway → Kinesis → 2 Lambda (dashboard, gian lận) → DynamoDB."
+    },
+    "click-eu": {
+      "title": "Khách hàng châu Âu",
+      "story": "Sàn mở rộng sang châu Âu và 80% người dùng giờ ở EU. Bộ phận pháp chế nhắc: theo GDPR, dữ liệu click của họ không được rời EU.",
+      "concept": "Data residency: chọn Region trong EU cho mọi nơi lưu dữ liệu (stream, bảng, bucket). Dùng SCP trong AWS Organizations với điều kiện aws:RequestedRegion để chặn tạo tài nguyên ở Region khác. Bẫy: bật Global Table sẽ chép dữ liệu ra ngoài EU.",
+      "nudge": "Chuyển API Gateway, Kinesis, cả 2 Lambda và DynamoDB sang eu-west-1."
+    },
+    "click-encrypt": {
+      "title": "Kiểm toán mã hoá",
+      "story": "Kiểm toán viên GDPR yêu cầu mọi dữ liệu click phải được mã hoá khi lưu, cả lúc nằm trong stream lẫn trong bảng.",
+      "concept": "Kinesis Data Streams hỗ trợ mã hoá phía server bằng KMS (SSE-KMS) cho từng stream; DynamoDB luôn mã hoá, có thể chọn khoá do khách hàng quản lý. Producer và consumer phải có quyền kms:GenerateDataKey/Decrypt trên khoá đó.",
+      "nudge": "Bật mã hoá trên Kinesis và DynamoDB."
+    },
+    "click-ransom": {
+      "title": "Ransomware",
+      "story": "Một khoá truy cập của lập trình viên bị lộ. Nếu kẻ tấn công xoá bảng, toàn bộ lịch sử gian lận sẽ mất.",
+      "concept": "Bật Point-in-time recovery (PITR) hoặc AWS Backup cho DynamoDB để khôi phục về bất kỳ giây nào trong 35 ngày. Bẫy: Global Table hay bản sao không phải là backup vì chép luôn cả lệnh xoá. Dùng AWS Backup Vault Lock để kẻ tấn công không xoá được bản sao lưu.",
+      "nudge": "Bật Backup trên DynamoDB."
+    },
+    "click-peak": {
+      "title": "Black Friday",
+      "story": "Black Friday: lượng click tăng gấp 3 trong vài giờ. Stream hiện tại sẽ từ chối bản ghi (ProvisionedThroughputExceeded) nếu không đủ shard.",
+      "concept": "Mỗi shard Kinesis nhận 1 MB/s hoặc 1.000 bản ghi/s. Tăng shard trước đợt cao điểm (UpdateShardCount) hoặc dùng chế độ on-demand. Consumer Lambda đọc theo từng shard: thêm shard cũng tăng song song khi xử lý.",
+      "nudge": "Tăng Kinesis lên cỡ medium (thêm shard)."
+    },
+    "fw-inspect": {
+      "title": "Kiểm tra mọi gói tin",
+      "story": "Uỷ ban chứng khoán yêu cầu mọi lưu lượng vào sàn phải đi qua dàn firewall/IDS của bên thứ ba mà công ty đã mua bản quyền: 500 yêu cầu/s, dữ liệu tài khoản phải mã hoá và máy chủ không lộ ra Internet.",
+      "concept": "Gateway Load Balancer đưa lưu lượng qua dàn thiết bị bảo mật bên thứ ba (GENEVE, cổng 6081) rồi mới tới ứng dụng. WAF chỉ lọc HTTP tầng 7 theo luật, không thay được IDS/IPS kiểm tra gói tin.",
+      "nudge": "Người dùng → GWLB → ALB → EC2 (2 máy, cả a và b) → RDS (bật mã hoá)."
+    },
+    "fw-partners": {
+      "title": "Đối tác cần IP cố định",
+      "story": "Các công ty môi giới đối tác chỉ mở firewall của họ cho một danh sách IP cố định. Tên miền trỏ vào load balancer đổi IP liên tục nên họ không thể kết nối.",
+      "concept": "Global Accelerator cấp 2 IP anycast tĩnh và đưa lưu lượng vào backbone AWS. ALB và GWLB không có IP cố định; muốn có IP tĩnh thì đặt Global Accelerator phía trước hoặc dùng NLB.",
+      "nudge": "Thêm Global Accelerator giữa người dùng và GWLB."
+    },
+    "fw-fix": {
+      "title": "Lệnh FIX qua TCP",
+      "story": "Khách hàng tổ chức đặt lệnh bằng giao thức FIX qua TCP thô, chiếm 30% lưu lượng. ALB chỉ hiểu HTTP nên mọi phiên FIX đều bị từ chối.",
+      "concept": "NLB cân bằng tải tầng 4 (TCP/UDP/TLS) với độ trễ cực thấp. ALB, API Gateway, CloudFront và WAF chỉ nhận HTTP. NLB không gắn được WAF: bảo vệ DDoS cho nó bằng Shield Advanced.",
+      "nudge": "Từ GWLB nối thêm một NLB, NLB → một nhóm EC2 mới (2 máy, cả a và b) xử lý FIX."
+    },
+    "fw-az": {
+      "title": "Sập một AZ giữa phiên",
+      "story": "Giữa phiên giao dịch, một AZ của us-east-1 mất điện. Sàn không được ngừng khớp lệnh dù chỉ vài phút.",
+      "concept": "RDS Multi-AZ giữ bản standby đồng bộ ở AZ khác và tự failover trong 1–2 phút. Nhóm EC2 rải trên 2 AZ vẫn phục vụ từ AZ còn sống.",
+      "nudge": "Bật Multi-AZ cho RDS, kiểm tra mọi nhóm EC2 đều đặt ở cả a và b."
+    },
+    "fw-ransom": {
+      "title": "Ransomware tấn công",
+      "story": "Khoá truy cập của một nhân viên bị lộ. Kẻ tấn công có thể xoá sạch database lệnh và tài khoản.",
+      "concept": "Multi-AZ và Read Replica sao chép cả lệnh xoá nên không phải là backup. AWS Backup (vault lock) hoặc snapshot tự động/PITR giữ bản sao tách biệt để khôi phục.",
+      "nudge": "Bật Backup cho RDS."
+    },
+    "wallet-ledger": {
+      "title": "Sổ cái ở EU",
+      "story": "Startup ví điện tử được cấp phép ở Ireland: 400 yêu cầu/giây, 40% là giao dịch ghi vào sổ cái quan hệ. Mọi dữ liệu phải ở trong EU, mật khẩu database phải xoay vòng, và Lambda cũ từng làm Aurora cạn kết nối.",
+      "concept": "Mỗi môi trường Lambda mở một kết nối riêng; khi tải tăng, database quan hệ cạn kết nối. RDS Proxy gom kết nối, failover nhanh hơn và lấy mật khẩu từ Secrets Manager (tự xoay vòng). Mã hoá Aurora bằng KMS phải bật lúc tạo cluster.",
+      "nudge": "Mọi thứ ở eu-west-1: API Gateway → Lambda → RDS Proxy → Aurora (mã hoá); nối RDS Proxy tới Secrets Manager."
+    },
+    "wallet-login": {
+      "title": "Đăng nhập khách hàng",
+      "story": "Ứng dụng di động sắp ra mắt. Khách hàng cần đăng ký, đăng nhập bằng Apple hoặc Google và bật MFA trước khi chuyển tiền.",
+      "concept": "Cognito user pool cấp JWT; API Gateway kiểm tra bằng Cognito authorizer. Khách hàng của ứng dụng dùng Cognito, còn nhân viên nội bộ dùng IAM Identity Center. Dữ liệu vẫn phải ở eu-west-1.",
+      "nudge": "Nối API Gateway tới Cognito, giữ nguyên các thành phần ở eu-west-1."
+    },
+    "wallet-bots": {
+      "title": "Bot dò tài khoản",
+      "story": "Một botnet thử đăng nhập và gọi API chuyển tiền hàng loạt: lưu lượng lạ tăng gấp 6, Lambda và Aurora bị kéo theo.",
+      "concept": "WAF với rate-based rule và nhóm luật quản lý chặn bot ở API Gateway hoặc CloudFront. Shield Standard có sẵn cho tấn công tầng 3/4; cần đội DRT hỗ trợ và bảo vệ chi phí thì mua Shield Advanced.",
+      "nudge": "Đặt WAF giữa người dùng và API Gateway."
+    },
+    "wallet-ransom": {
+      "title": "Kẻ tấn công trong tài khoản",
+      "story": "Một tài khoản IAM bị chiếm và kẻ tấn công đang tìm cách xoá cluster sổ cái. Mất sổ cái nghĩa là mất giấy phép.",
+      "concept": "Aurora có backup tự động và PITR; AWS Backup gom lịch sao lưu, khoá vault và sao chép sang tài khoản khác. Read Replica hay Global Database không cứu được vì sao chép cả lệnh xoá. Bật deletion protection cho cluster.",
+      "nudge": "Bật Backup trên Aurora."
+    },
+    "wallet-us": {
+      "title": "Khách hàng ở Mỹ",
+      "story": "Ví mở rộng sang Mỹ: 40% người dùng giờ ở us-east-1 và kêu ứng dụng chậm. Luật vẫn bắt dữ liệu nằm ở EU, nên không thể chép database sang Mỹ.",
+      "concept": "Khi không được đặt dữ liệu gần người dùng, đưa họ vào mạng AWS sớm nhất: CloudFront kết nối tới origin qua backbone và cache được phản hồi đọc. Bẫy: bật Aurora Global Database hay DynamoDB global table sẽ vi phạm data residency.",
+      "nudge": "Thêm CloudFront (bật cache API) giữa WAF và API Gateway; database vẫn ở eu-west-1."
+    },
+    "hr-signin": {
+      "title": "Ai đang đăng nhập?",
+      "story": "Công ty muốn bỏ file Excel lương thưởng và chuyển sang cổng web: 200 yêu cầu/giây, 70% xem hồ sơ. Bản thử nghiệm cũ để API mở cho bất kỳ ai biết URL.",
+      "concept": "Cognito user pool lo đăng ký, đăng nhập, MFA và liên kết với Google hay SAML của công ty. API Gateway dùng Cognito authorizer kiểm tra JWT trước khi gọi Lambda, nên code không phải tự xác thực. Cần cấp quyền AWS tạm thời cho trình duyệt thì mới dùng identity pool.",
+      "nudge": "Người dùng → API Gateway → Lambda → DynamoDB (bật mã hoá); nối API Gateway tới Cognito."
+    },
+    "hr-payslips": {
+      "title": "Phiếu lương PDF",
+      "story": "Mỗi tháng nhân viên tải phiếu lương PDF: 800 yêu cầu/giây, 60% là tải file. Lambda đang tự đọc file và trả về, vừa chậm vừa tốn tiền theo từng yêu cầu. Phiếu lương tuyệt đối không được lộ ra Internet.",
+      "concept": "File tĩnh để ở S3, phục vụ qua CloudFront với Origin Access Control và bật S3 Block Public Access. Lambda chỉ cấp signed URL ngắn hạn. Bẫy hay gặp: mở bucket public cho nhanh, hoặc bắt Lambda truyền file lớn.",
+      "nudge": "Người dùng → CloudFront; CloudFront → S3 cho file, CloudFront → API Gateway cho API. Không nối thẳng người dùng tới S3."
+    },
+    "hr-ransom": {
+      "title": "Khoá truy cập bị lộ",
+      "story": "Một developer lỡ đẩy access key lên GitHub công khai. Đội bảo mật cảnh báo kẻ tấn công có thể xoá sạch bảng nhân sự và bucket phiếu lương bất cứ lúc nào.",
+      "concept": "Replication hay global table không phải là backup: lệnh xoá cũng được sao chép sang. Dùng AWS Backup (có vault lock, sao chép sang tài khoản khác), DynamoDB PITR và S3 versioning kèm Object Lock để khôi phục. Thu hồi key và chuyển sang IAM role.",
+      "nudge": "Bật Backup trên DynamoDB và S3."
+    },
+    "hr-eu": {
+      "title": "Chi nhánh châu Âu",
+      "story": "Công ty mua lại một hãng ở Ireland, 90% nhân viên giờ ở EU. Luật sư nhắc: theo GDPR, dữ liệu nhân sự phải lưu trong EU.",
+      "concept": "Đặt bucket, bảng và hàm ở eu-west-1, không bật bản sao global sang Region khác. Ở quy mô tổ chức, dùng SCP trong AWS Organizations với điều kiện aws:RequestedRegion để chặn mọi tài khoản tạo tài nguyên ngoài Region được phép.",
+      "nudge": "Chuyển S3, DynamoDB, API Gateway và Lambda sang eu-west-1, giữ Backup."
+    },
+    "hr-bots": {
+      "title": "Credential stuffing",
+      "story": "Danh sách mật khẩu rò rỉ từ một trang khác đang được bot thử hàng loạt vào trang đăng nhập: lưu lượng lạ tăng gấp 6, Lambda chạy liên tục và hoá đơn tăng vọt.",
+      "concept": "AWS WAF với rate-based rule, Bot Control và nhóm luật ATP (Account Takeover Prevention) chặn bot trước khi tới API. Cognito advanced security bổ sung MFA thích ứng. GWLB hay Security Group không lọc được tầng ứng dụng.",
+      "nudge": "Đặt WAF giữa người dùng và CloudFront."
+    },
+    "crm-lift": {
+      "title": "Bê nguyên lên cloud",
+      "story": "Công ty đóng cửa trung tâm dữ liệu cuối tháng này. CRM cũ (một ứng dụng web và một database MySQL) phải chạy trên AWS ngay, chưa kịp sửa code. 400 yêu cầu/giây, ngân sách $125.",
+      "concept": "Lift-and-shift (rehost): chuyển máy chủ nguyên trạng bằng AWS Application Migration Service, database bằng DMS. Đi nhanh nhất, ít rủi ro nhất, tối ưu chi phí để các bước sau.",
+      "nudge": "ALB → EC2 (medium, 2 máy, cả AZ a và b) → RDS (medium)."
+    },
+    "crm-nights": {
+      "title": "Đội vận hành nghỉ việc",
+      "story": "Người quản trị máy chủ duy nhất vừa nghỉ việc, và ban đêm CRM gần như không ai dùng mà vẫn tốn tiền cho cả dàn EC2. Ban giám đốc muốn bỏ máy chủ và hạ hoá đơn xuống dưới $100.",
+      "concept": "Lambda chỉ tính tiền theo yêu cầu, hợp với tải lên xuống theo ngày đêm. Nhưng mỗi môi trường Lambda mở một kết nối riêng tới RDS, lúc cao điểm database cạn kết nối. RDS Proxy gom và dùng lại kết nối, rẻ hơn nhiều so với nâng cấp RDS.",
+      "nudge": "Thay EC2 bằng Lambda sau ALB, đặt RDS Proxy giữa Lambda và RDS (giữ RDS medium)."
+    },
+    "crm-rotate": {
+      "title": "Mật khẩu trong code",
+      "story": "Kiểm toán phát hiện mật khẩu database nằm thẳng trong biến môi trường và chưa đổi suốt 3 năm. Từ nay mật khẩu phải tự xoay vòng định kỳ.",
+      "concept": "Secrets Manager lưu mật khẩu, mã hoá bằng KMS và tự xoay vòng theo lịch. RDS Proxy đọc mật khẩu từ Secrets Manager nên ứng dụng không cần biết mật khẩu. Parameter Store không tự xoay vòng.",
+      "nudge": "Thêm Secrets Manager và nối RDS Proxy tới nó."
+    },
+    "crm-reports": {
+      "title": "Báo cáo cuối quý",
+      "story": "Cuối quý, phòng kinh doanh mở dashboard liên tục: lưu lượng lên 850 yêu cầu/giây, gần như toàn bộ là đọc. RDS quá tải, mà ngân sách chỉ thêm được $18.",
+      "concept": "Khi phần lớn là đọc lặp lại, cache trước database (ElastiCache) rẻ hơn nâng RDS lên cỡ lớn hơn. Lambda đọc cache trước, chỉ hỏi database khi cache chưa có (cache-aside).",
+      "nudge": "Thêm ElastiCache và nối Lambda tới nó; giữ RDS medium."
+    },
+    "crm-ransom": {
+      "title": "Ransomware",
+      "story": "Một khoá truy cập của nhân viên bị lộ trên GitHub. Nếu kẻ tấn công xoá database, CRM phải khôi phục được mà không mất dữ liệu khách hàng.",
+      "concept": "Bản sao lưu tách biệt (AWS Backup, snapshot tự động, khôi phục về một thời điểm) là cách duy nhất cứu dữ liệu bị xoá. Multi-AZ hay Read Replica sao chép cả lệnh xoá nên không thay được backup. Dùng AWS Backup Vault Lock để kẻ tấn công không xoá được bản sao lưu.",
+      "nudge": "Bật Backup cho RDS."
+    },
+    "partner-allowlist": {
+      "title": "Allow-list theo IP",
+      "story": "Các ngân hàng đối tác chỉ cho máy chủ của họ gọi ra một danh sách IP cố định: 400 yêu cầu/s. Dữ liệu phải mã hoá và máy chủ không lộ ra Internet.",
+      "concept": "NLB có một IP tĩnh (hoặc Elastic IP) cho mỗi AZ, nên đối tác allow-list được. Tên miền của ALB trỏ tới IP thay đổi theo thời gian.",
+      "nudge": "Người dùng → NLB → EC2 (2 máy, cả a và b) → RDS (bật mã hoá)."
+    },
+    "partner-secrets": {
+      "title": "Không ghi cứng mật khẩu",
+      "story": "Kiểm toán phát hiện mật khẩu database nằm trong file cấu hình trên EC2 và chưa đổi từ ngày ra mắt. Chính sách mới: mật khẩu phải tự xoay vòng 30 ngày một lần.",
+      "concept": "Secrets Manager lưu mật khẩu mã hoá bằng KMS và tự xoay vòng bằng Lambda có sẵn cho RDS. Parameter Store rẻ hơn nhưng không tự xoay vòng. Ứng dụng lấy secret qua IAM role của EC2.",
+      "nudge": "Nối EC2 tới Secrets Manager."
+    },
+    "partner-files": {
+      "title": "File báo cáo cho đối tác",
+      "story": "Đối tác tải file đối soát hằng ngày: lưu lượng lên 800 yêu cầu/s, một nửa là tải file. Đọc file từ ổ EBS làm EC2 quá tải. Bảo mật yêu cầu máy chủ không được ra Internet.",
+      "concept": "Đưa file sang S3 để máy chủ nhẹ tải. Gateway VPC endpoint cho S3/DynamoDB miễn phí và giữ lưu lượng trong mạng AWS; NAT Gateway vừa ra Internet vừa tính phí xử lý theo GB.",
+      "nudge": "EC2 → VPC Endpoint → S3 cho file tĩnh."
+    },
+    "partner-ransom": {
+      "title": "Ransomware xoá dữ liệu",
+      "story": "Một khoá truy cập bị lộ trên GitHub. Kẻ tấn công có thể xoá cả database lẫn bucket file đối soát.",
+      "concept": "Bật S3 Versioning (kèm Object Lock nếu cần chống xoá) và backup/PITR cho RDS qua AWS Backup. Sao chép sang Region khác không phải là backup vì sao chép cả lệnh xoá.",
+      "nudge": "Bật Backup cho cả RDS và S3."
+    },
+    "partner-az": {
+      "title": "Sập một AZ",
+      "story": "Một AZ của us-east-1 gặp sự cố đúng giờ đối tác chạy đối soát cuối ngày.",
+      "concept": "RDS Multi-AZ tự failover sang standby ở AZ khác. Auto Scaling bù lại máy EC2 đã mất ở AZ còn sống; NLB chỉ gửi tới máy khoẻ.",
+      "nudge": "Bật Multi-AZ cho RDS và Auto Scaling (tối đa 4) cho EC2."
+    },
+    "rt-udp": {
+      "title": "Trận đấu qua UDP",
+      "story": "Game bắn súng mới ra mắt: 85% lưu lượng là gói UDP giữ trạng thái trận đấu, phần còn lại là đọc hồ sơ người chơi. Mỗi mili giây trễ đều làm người chơi bỏ game.",
+      "concept": "ALB chỉ hiểu HTTP/HTTPS (tầng 7). Lưu lượng TCP/UDP không phải HTTP, cần độ trễ cực thấp hoặc IP tĩnh thì dùng NLB (tầng 4). GWLB chỉ dùng để chèn thiết bị bảo mật, không phải để phục vụ game.",
+      "nudge": "Người dùng → NLB → EC2 (large, 2 máy, cả AZ a và b) → DynamoDB."
+    },
+    "rt-global": {
+      "title": "Người chơi châu Âu",
+      "story": "Giải đấu mở cho châu Âu: một nửa người chơi ở gần eu-west-1 và phàn nàn ping cao. Mục tiêu trung bình dưới 120 ms.",
+      "concept": "Global Accelerator cấp 2 IP anycast cố định và đưa gói tin vào backbone AWS ngay ở edge gần người chơi, hỗ trợ cả TCP và UDP. CloudFront chỉ cache nội dung HTTP nên không giúp gì cho gói UDP của trận đấu.",
+      "nudge": "Đặt Global Accelerator giữa Người dùng và NLB."
+    },
+    "rt-events": {
+      "title": "Chống gian lận",
+      "story": "Mỗi trận giờ gửi telemetry (10% lưu lượng). Đội chống gian lận và đội phân tích đều cần đọc toàn bộ sự kiện theo đúng thứ tự, và muốn đọc lại khi cập nhật mô hình.",
+      "concept": "Kinesis Data Streams giữ bản ghi theo thứ tự trong mỗi shard và cho nhiều consumer cùng đọc, đọc lại trong thời gian lưu giữ. SQS xoá message khi một worker đã xử lý xong, nên không cho hai ứng dụng cùng đọc hay đọc lại được.",
+      "nudge": "EC2 → Kinesis → 2 Lambda (chống gian lận, thống kê)."
+    },
+    "rt-tournament": {
+      "title": "Chung kết",
+      "story": "Chung kết được phát trực tiếp: số người chơi tăng gấp 3 trong một khung giờ. Ngân sách không đủ để chạy dàn máy cỡ lớn cả ngày.",
+      "concept": "Auto Scaling theo target tracking thêm máy khi tải tăng và trả lại khi hết giải. Chọn cỡ máy sao cho một máy gánh được lúc bình thường, rồi để nhóm tự mở rộng lúc cao điểm, rẻ hơn giữ sẵn nhiều máy lớn.",
+      "nudge": "EC2 xlarge, tối thiểu 1, bật Auto Scaling, tối đa 3."
+    },
+    "rt-region": {
+      "title": "Region sập giữa giải",
+      "story": "us-east-1 gặp sự cố ngay giữa giải đấu. Người chơi không được rớt trận, và kết quả trận đấu phải còn nguyên ở cả hai châu lục.",
+      "concept": "Chạy một bản game ở mỗi Region sau cùng một Global Accelerator: health check sẽ chuyển người chơi sang Region còn sống trong vài giây. DynamoDB Global Tables ghi được ở cả hai Region nên mất một Region vẫn còn dữ liệu.",
+      "nudge": "Global Accelerator → Route 53 → NLB + EC2 + Kinesis ở mỗi Region (eu-west-1 cho bản thứ hai); DynamoDB bật Global."
+    },
+    "render-web": {
+      "title": "Không có đội vận hành",
+      "story": "Startup render video chỉ có hai lập trình viên, không ai vá hệ điều hành hay quản lý máy chủ. API đã đóng gói sẵn trong container.",
+      "concept": "\"Ít công vận hành nhất\" + container → ECS trên Fargate: chỉ khai báo CPU/RAM cho mỗi task, AWS lo máy chủ và rải task qua nhiều AZ. EC2 launch type rẻ hơn một chút nhưng phải tự quản lý instance.",
+      "nudge": "ALB → Fargate (×2) → DynamoDB. Không dùng EC2."
+    },
+    "render-jobs": {
+      "title": "Job render 30 phút",
+      "story": "Khách hàng bắt đầu gửi video để render: 15% yêu cầu là job chạy 20–40 phút. Làm ngay trong API thì người dùng phải chờ, và job nào cũng phải xong.",
+      "concept": "Job quá 15 phút vượt giới hạn timeout của Lambda. Đẩy job vào SQS rồi để một service Fargate riêng lấy ra xử lý (hoặc AWS Batch). Đặt visibility timeout dài hơn thời gian chạy job để message không bị giao lại giữa chừng.",
+      "nudge": "Thêm SQS nối từ Fargate web, và một Fargate worker (×2) đọc từ SQS. Đừng dùng Lambda làm worker."
+    },
+    "render-egress": {
+      "title": "Không đi ra Internet",
+      "story": "Đội bảo mật phát hiện task trong subnet private gọi DynamoDB qua NAT Gateway: dữ liệu đi qua đường Internet và hoá đơn NAT tăng theo từng GB.",
+      "concept": "Gateway endpoint cho S3 và DynamoDB: miễn phí, chỉ thêm route vào route table, lưu lượng không rời mạng AWS. Dịch vụ khác (SQS, Secrets Manager…) dùng interface endpoint (PrivateLink), tính tiền theo giờ. Bẫy hay gặp: giữ NAT Gateway rồi mua thêm băng thông.",
+      "nudge": "Đặt VPC Endpoint giữa Fargate web và DynamoDB: Fargate → VPC Endpoint → DynamoDB."
+    },
+    "render-spot": {
+      "title": "Render giá rẻ",
+      "story": "Ban giám đốc yêu cầu cắt chi phí render. Job render có thể chạy lại nếu bị ngắt, nhưng cuối ngày hàng đợi phải hết.",
+      "concept": "Fargate Spot rẻ khoảng 70% và có thể bị thu hồi với 2 phút báo trước: hợp với job chịu được gián đoạn khi việc nằm an toàn trong SQS. Cần dư công suất để xử lý bù phần tồn đọng sau khi bị thu hồi.",
+      "nudge": "Đổi Fargate worker sang Spot và dùng 1 task cỡ large để kịp xả hàng đợi sau sự cố."
+    },
+    "render-cycle": {
+      "title": "Ban đêm vắng khách",
+      "story": "Khách hàng chủ yếu làm việc giờ hành chính: ban ngày lưu lượng gấp đôi trước, ban đêm chỉ còn 30%. Giữ đủ task cho giờ cao điểm cả đêm thì vượt ngân sách.",
+      "concept": "Service Auto Scaling cho ECS theo target tracking (CPU hoặc số request mỗi target) để tăng task ban ngày, giảm ban đêm. Lưu lượng có lịch cố định thì thêm scheduled scaling để tăng trước giờ cao điểm. Theo dõi bằng CloudWatch.",
+      "nudge": "Fargate web: bật Auto Scaling, tối thiểu 1, tối đa 4."
+    },
+    "bill-api": {
+      "title": "API hoá đơn",
+      "story": "Khách hàng doanh nghiệp gọi API để tạo và tra cứu hoá đơn: 900 yêu cầu/giây, phần lớn là đọc. Ngân sách $200.",
+      "concept": "Aurora tương thích MySQL/PostgreSQL, tự sao chép 6 bản qua 3 AZ và chịu tải cao hơn RDS cùng cỡ. Rải EC2 qua 2 AZ sau ALB để không phụ thuộc một AZ.",
+      "nudge": "ALB → EC2 (medium, 3 máy, cả AZ a và b) → Aurora (medium)."
+    },
+    "bill-office": {
+      "title": "Chỉ đông giờ hành chính",
+      "story": "Khách hàng chỉ dùng trong giờ làm việc; ban đêm lưu lượng còn 30% mà 3 máy EC2 vẫn chạy. Ngân sách giảm còn $168.",
+      "concept": "Đội EC2 cố định cho giờ cao điểm thì ban đêm trả tiền cho máy ngồi không. Auto Scaling với số máy tối thiểu thấp tự thêm máy buổi sáng và bớt máy buổi tối. Tải biết trước giờ giấc thì dùng thêm scheduled scaling.",
+      "nudge": "Bật Auto Scaling cho EC2: tối thiểu 1, tối đa 4 máy medium."
+    },
+    "bill-exports": {
+      "title": "Xuất hoá đơn PDF",
+      "story": "Một nửa yêu cầu giờ là tải hoá đơn PDF. Máy chủ đọc file từ ổ đĩa của mình nên rất nặng. File phải nằm trong S3, và máy chủ trong subnet private không được ra Internet. Ngân sách $165.",
+      "concept": "Đưa file vào S3 để EC2 nhẹ tải. EC2 trong subnet private gọi S3 qua NAT Gateway thì đi đường Internet và trả phí xử lý dữ liệu theo GB; gateway VPC endpoint cho S3 và DynamoDB thì miễn phí và giữ lưu lượng trong mạng AWS.",
+      "nudge": "Thêm S3 và một VPC Endpoint: EC2 → VPC Endpoint → S3."
+    },
+    "bill-reports": {
+      "title": "Báo cáo cuối tháng",
+      "story": "Ngày cuối tháng, khách hàng chạy báo cáo liên tục: lưu lượng lên 2.300 yêu cầu/giây, gần như toàn bộ là đọc. Aurora quá tải.",
+      "concept": "Read Replica nhận các truy vấn đọc, rẻ hơn nâng Aurora lên cỡ lớn hơn. Bản sao bất đồng bộ nên có thể trễ một chút: dùng cho báo cáo, còn ghi vẫn vào database chính. Aurora có reader endpoint để chia đọc cho các replica.",
+      "nudge": "Thêm Read Replica (medium), nối Aurora → Read Replica và EC2 → Read Replica. Cho Auto Scaling EC2 tối thiểu 2, tối đa 8."
+    },
+    "bill-ransom": {
+      "title": "Ransomware",
+      "story": "Một khoá truy cập bị lộ. Kẻ tấn công có thể xoá cả database lẫn bucket hoá đơn PDF. Luật kế toán bắt giữ hoá đơn 10 năm.",
+      "concept": "Read Replica sao chép cả lệnh xoá nên không phải backup. Bật sao lưu cho Aurora (backtrack/khôi phục về một thời điểm) và S3 versioning kèm Object Lock để file không bị xoá hay ghi đè. AWS Backup quản lý sao lưu tập trung.",
+      "nudge": "Bật Backup cho Aurora và S3."
+    },
+    "udp-match": {
+      "title": "Trận đấu qua UDP",
+      "story": "Game bắn súng chạy trận đấu qua UDP. ALB hiện tại chỉ hiểu HTTP nên mọi gói tin trong trận đều rơi mất.",
+      "concept": "ALB làm việc ở tầng 7 (HTTP/HTTPS, định tuyến theo path/host). NLB làm việc ở tầng 4 (TCP/UDP/TLS): mỗi AZ một IP tĩnh, độ trễ cực thấp, chịu hàng triệu kết nối. Đề nói UDP, IP tĩnh hay độ trễ siêu thấp thì chọn NLB.",
+      "nudge": "Thay ALB bằng NLB: Người dùng → NLB → EC2 → DynamoDB."
+    },
+    "packet-inspection": {
+      "title": "Kiểm tra từng gói tin",
+      "story": "Bộ phận compliance yêu cầu mọi lưu lượng phải qua dàn firewall/IDS của hãng thứ ba trước khi tới máy chủ. WAF hiện tại không đáp ứng được.",
+      "concept": "Gateway Load Balancer đưa lưu lượng qua một dàn thiết bị bảo mật bên thứ ba (giao thức GENEVE) rồi mới chuyển tiếp. WAF chỉ lọc HTTP ở tầng 7 và không phải IDS/IPS. Từ khoá trong đề: \"third-party virtual appliance\", \"deep packet inspection\".",
+      "nudge": "Thay WAF bằng GWLB: Người dùng → GWLB → ALB → EC2 → RDS."
+    },
+    "long-renders": {
+      "title": "Job chạy 30 phút",
+      "story": "Mỗi video mất khoảng 30 phút để render. Lambda worker cứ chạy đến phút thứ 15 là bị dừng, nên hàng đợi không bao giờ hết.",
+      "concept": "Lambda chạy tối đa 15 phút. Job dài hơn thì dùng container trên Fargate: không phải quản lý máy chủ, chỉ khai báo CPU/RAM. \"Ít công vận hành nhất\" kèm container thì chọn Fargate; nhiều job batch lớn thì chọn AWS Batch.",
+      "nudge": "Thay Lambda worker sau SQS bằng Fargate (cỡ vừa)."
+    },
+    "replay-stream": {
+      "title": "Hai đội cùng đọc một luồng",
+      "story": "Đội phân tích và đội chống gian lận đều cần mọi click theo đúng thứ tự, và phải đọc lại được dữ liệu cũ khi sửa mô hình. SQS giao mỗi message cho một người nhận rồi xoá.",
+      "concept": "Kinesis Data Streams giữ bản ghi theo thứ tự trong mỗi shard từ 1 đến 365 ngày; nhiều consumer đọc độc lập và replay được. SQS phù hợp khi mỗi việc chỉ cần một worker. Chỉ cần đổ dữ liệu vào S3/Redshift mà không viết code thì dùng Data Firehose.",
+      "nudge": "API Gateway → Kinesis → hai Lambda (thống kê, chống gian lận) → DynamoDB."
+    },
+    "sign-in": {
+      "title": "Phải đăng nhập",
+      "story": "API đang mở cho bất kỳ ai. Từ tuần sau, chỉ khách hàng đã đăng ký mới được gọi.",
+      "concept": "Cognito user pool lo đăng ký, đăng nhập, MFA và đăng nhập qua mạng xã hội; API Gateway dùng Cognito authorizer để kiểm tra JWT. Identity pool đổi token lấy thông tin xác thực AWS tạm thời. Nhân viên nội bộ thì dùng IAM Identity Center.",
+      "nudge": "Nối API Gateway tới Cognito."
+    },
+    "db-connections": {
+      "title": "Cạn kết nối database",
+      "story": "Mỗi lần lưu lượng tăng, hàng trăm Lambda cùng mở kết nối tới RDS và database báo \"too many connections\". Mật khẩu database thì đang ghi cứng trong code.",
+      "concept": "RDS Proxy gom và tái sử dụng kết nối, giúp failover nhanh hơn và lấy mật khẩu từ Secrets Manager. Secrets Manager tự xoay vòng mật khẩu RDS; Parameter Store không tự xoay vòng. DynamoDB dùng IAM role nên không cần secret.",
+      "nudge": "Lambda → RDS Proxy → RDS, và nối RDS Proxy tới Secrets Manager."
+    },
+    "private-path": {
+      "title": "Không đi qua Internet",
+      "story": "EC2 nằm trong subnet private và đang gọi DynamoDB qua NAT Gateway: vừa ra Internet, vừa tốn phí xử lý từng GB.",
+      "concept": "Gateway endpoint cho S3 và DynamoDB là miễn phí, chỉ cần thêm vào route table; lưu lượng ở lại trong mạng AWS. Các dịch vụ khác dùng interface endpoint (PrivateLink), tính phí theo giờ. Thay NAT bằng gateway endpoint là cách giảm chi phí hay gặp trong đề.",
+      "nudge": "Đặt VPC Endpoint giữa EC2 và DynamoDB."
+    },
+    "ransomware": {
+      "title": "Ransomware",
+      "story": "Một access key bị lộ, và kẻ tấn công đang chuẩn bị xoá database.",
+      "concept": "Sao chép không phải sao lưu: Multi-AZ, Read Replica hay bản sao global đều sao chép luôn cả lệnh xoá. Dùng AWS Backup (có Vault Lock), PITR hoặc S3 versioning kèm Object Lock để khôi phục về thời điểm trước khi bị tấn công.",
+      "nudge": "Chọn RDS và bật Backup."
+    },
+    "eu-only": {
+      "title": "Dữ liệu ở lại EU",
+      "story": "Phần lớn khách hàng ở châu Âu, và luật sư nhắc rằng theo GDPR dữ liệu của họ không được rời EU.",
+      "concept": "Đặt mọi nơi lưu dữ liệu ở Region EU và không dùng bản sao global sang Region khác. Ở cấp tổ chức, dùng SCP trong AWS Organizations để chặn tạo tài nguyên ở Region khác (điều kiện aws:RequestedRegion).",
+      "nudge": "Chuyển API Gateway, Lambda và DynamoDB sang eu-west-1."
     }
   }
 }
