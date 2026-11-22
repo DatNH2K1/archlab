@@ -1,10 +1,9 @@
 'use client';
 
-import { useLocale, useTranslations } from 'next-intl';
+import { useMessages, useTranslations } from 'next-intl';
 import type { Track } from '@/game/rounds';
 import { TRACKS } from '@/game/tracks';
 import { Link } from '@/libs/I18nNavigation';
-import { inLocale } from '@/libs/Localize';
 import { useProgress } from '@/libs/Progress';
 
 const LEVELS: Track['difficulty'][] = ['easy', 'medium', 'hard'];
@@ -12,7 +11,7 @@ const LEVELS: Track['difficulty'][] = ['easy', 'medium', 'hard'];
 /** Lists the design problems by difficulty, with how many rounds were passed. */
 export const TracksClient = () => {
   const t = useTranslations('ScenariosPage');
-  const locale = useLocale();
+  const messages = useMessages();
   const progress = useProgress();
 
   return (
@@ -32,7 +31,7 @@ export const TracksClient = () => {
             </h2>
             <ul className="mt-4 space-y-3">
               {tracks.map((track) => {
-                const text = inLocale(track.text, locale);
+                const text = messages.Tracks[track.id];
                 const done = track.rounds.filter((round) => progress.stars[round.id]).length;
 
                 return (

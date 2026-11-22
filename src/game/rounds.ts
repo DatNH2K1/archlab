@@ -1,6 +1,6 @@
-import type messages from '@/locales/vi.json';
+import type { Messages } from 'next-intl';
+import type { LessonSlug } from '@/content/types';
 import { makeBoard } from './board';
-import { LEARN_TEXT } from './learnText';
 import type { Board, ComponentType, Scenario } from './types';
 
 export const CHAPTERS = [
@@ -15,23 +15,12 @@ export const CHAPTERS = [
 
 type ChapterId = (typeof CHAPTERS)[number];
 
-type LessonSlug = keyof typeof messages.LessonTitles;
-
-/** What the player reads about a round, in one language. */
-export type RoundText = {
-  title: string;
-  /** What happens to the app this round. */
-  story: string;
-  /** The design idea the round teaches. */
-  concept: string;
-  /** First hint, before showing the reference design. */
-  nudge: string;
-};
+/** Round ids, taken from the locale files. */
+type RoundId = keyof Messages['Rounds'];
 
 export type Round = {
-  /** Unique across Learn and every design problem; also the key of saved progress. */
-  id: string;
-  text: { vi: RoundText; en: RoundText };
+  /** Unique across Learn and every design problem; also the key of saved progress and of its texts in `Rounds`. */
+  id: RoundId;
   scenario: Scenario;
   /** Components added to the palette by this round (Learn only). */
   unlocks: ComponentType[];
@@ -49,16 +38,13 @@ export type LearnRound = Round & { chapter: ChapterId };
 
 /** A design problem: several rounds on one product, like a system design interview. */
 export type Track = {
-  id: string;
+  /** Also the key of its texts in `Tracks`. */
+  id: keyof Messages['Tracks'];
   difficulty: 'easy' | 'medium' | 'hard';
-  text: {
-    vi: { title: string; pitch: string; tags: string[] };
-    en: { title: string; pitch: string; tags: string[] };
-  };
   rounds: Round[];
 };
 
-const ROUNDS_DATA: Omit<LearnRound, 'text'>[] = [
+export const ROUNDS: LearnRound[] = [
   {
     id: 'first-users',
     chapter: 'basics',
@@ -656,15 +642,6 @@ const ROUNDS_DATA: Omit<LearnRound, 'text'>[] = [
   },
 ];
 
-export const ROUNDS: LearnRound[] = ROUNDS_DATA.map((round) => {
-  const text = LEARN_TEXT[round.id];
-
-  if (!text) {
-    throw new Error(`Missing text for round ${round.id}`);
-  }
-
-  return { ...round, text };
-});
 
 /**
  * Lists the components a player can use in a Learn round.

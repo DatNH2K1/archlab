@@ -1,74 +1,61 @@
-import { performanceCostComparisons } from './comparisons/performance-cost';
-import { secureResilientComparisons } from './comparisons/secure-resilient';
-import { performanceCostComparisonsEn } from './en/comparisons/performance-cost';
-import { secureResilientComparisonsEn } from './en/comparisons/secure-resilient';
-import { costFlashcardsEn } from './en/flashcards/cost';
-import { performanceFlashcardsEn } from './en/flashcards/performance';
-import { resilientFlashcardsEn } from './en/flashcards/resilient';
-import { secureFlashcardsEn } from './en/flashcards/secure';
-import { costLessonsEn } from './en/lessons/cost';
-import { performanceLessonsEn } from './en/lessons/performance';
-import { resilientLessonsEn } from './en/lessons/resilient';
-import { secureLessonsEn } from './en/lessons/secure';
-import { costQuestionsEn } from './en/questions/cost';
-import { performanceQuestionsEn } from './en/questions/performance';
-import { resilientQuestionsEn } from './en/questions/resilient';
-import { secureQuestionsEn } from './en/questions/secure';
-import { costFlashcards } from './flashcards/cost';
-import { performanceFlashcards } from './flashcards/performance';
-import { resilientFlashcards } from './flashcards/resilient';
-import { secureFlashcards } from './flashcards/secure';
-import { costLessons } from './lessons/cost';
-import { performanceLessons } from './lessons/performance';
-import { resilientLessons } from './lessons/resilient';
-import { secureLessons } from './lessons/secure';
+import { getMessages } from 'next-intl/server';
+import { COMPARISONS } from './comparisons';
+import { FLASHCARDS } from './flashcards';
+import { LESSONS } from './lessons';
 import { costQuestions } from './questions/cost';
 import { performanceQuestions } from './questions/performance';
 import { resilientQuestions } from './questions/resilient';
 import { secureQuestions } from './questions/secure';
 import type { Comparison, Flashcard, Lesson, Question } from './types';
 
-const CONTENT = {
-  vi: {
-    lessons: [...secureLessons, ...resilientLessons, ...performanceLessons, ...costLessons],
-    questions: [...secureQuestions, ...resilientQuestions, ...performanceQuestions, ...costQuestions],
-    flashcards: [...secureFlashcards, ...resilientFlashcards, ...performanceFlashcards, ...costFlashcards],
-    comparisons: [...secureResilientComparisons, ...performanceCostComparisons],
-  },
-  en: {
-    lessons: [...secureLessonsEn, ...resilientLessonsEn, ...performanceLessonsEn, ...costLessonsEn],
-    questions: [...secureQuestionsEn, ...resilientQuestionsEn, ...performanceQuestionsEn, ...costQuestionsEn],
-    flashcards: [...secureFlashcardsEn, ...resilientFlashcardsEn, ...performanceFlashcardsEn, ...costFlashcardsEn],
-    comparisons: [...secureResilientComparisonsEn, ...performanceCostComparisonsEn],
-  },
-};
+const QUESTIONS = [...secureQuestions, ...resilientQuestions, ...performanceQuestions, ...costQuestions];
 
-const pick = (locale: string) => (locale === 'en' ? CONTENT.en : CONTENT.vi);
+/** Slugs of every lesson, for static params. */
+export const LESSON_SLUGS = LESSONS.map((lesson) => lesson.slug);
 
 /**
  * Returns the lessons in a language.
  * @param locale The page locale.
  * @returns Lessons ordered by domain.
  */
-export const getLessons = (locale: string): Lesson[] => pick(locale).lessons;
+export const getLessons = async (locale: string): Promise<Lesson[]> => {
+  const messages = await getMessages({ locale });
+
+  return LESSONS.map((lesson) => ({ ...lesson, ...messages.Lessons[lesson.slug] }));
+};
 
 /**
  * Returns the practice questions in a language.
  * @param locale The page locale.
  * @returns Questions ordered by domain.
  */
-export const getQuestions = (locale: string): Question[] => pick(locale).questions;
+export const getQuestions = async (locale: string): Promise<Question[]> => {
+  const messages = await getMessages({ locale });
+
+  return QUESTIONS.map((question) => ({ ...question, ...messages.Questions[question.id] }));
+};
 
 /**
  * Returns the flashcards in a language.
  * @param locale The page locale.
  * @returns Flashcards ordered by domain.
  */
-export const getFlashcards = (locale: string): Flashcard[] => pick(locale).flashcards;
+export const getFlashcards = async (locale: string): Promise<Flashcard[]> => {
+  const messages = await getMessages({ locale });
+
+  return FLASHCARDS.map((card) => ({ ...card, ...messages.Flashcards[card.id] }));
+};
 
 /**
  * Returns the comparisons of commonly confused services in a language.
  * @param locale The page locale.
  * @returns Comparisons ordered by domain.
  */
-export const getComparisons = (locale: string): Comparison[] => pick(locale).comparisons;
+export const getComparisons = async (locale: string): Promise<Comparison[]> => {
+  const messages = await getMessages({ locale });
+
+  return COMPARISONS.map((comparison) => ({ ...comparison, ...messages.Comparisons[comparison.id] }));
+};
+
+/** Number of lessons, questions and flashcards, the same in every language. */
+export const CONTENT_COUNTS = { lessons: LESSONS.length, questions: QUESTIONS.length, flashcards: FLASHCARDS.length };

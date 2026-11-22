@@ -1,7 +1,6 @@
-import type { Question } from '@/content/types';
+import type { QuestionData } from '@/content/types';
 
-export const resilientQuestions: Question[] = [
-  // ---------------------------------------------------------------- high-availability-multi-az
+export const resilientQuestions: QuestionData[] = [
   {
     id: 'res-001',
     domain: 'resilient',
@@ -14,8 +13,6 @@ export const resilientQuestions: Question[] = [
       'Store sessions on an Amazon EBS volume and attach the volume to every instance in the Auto Scaling group.',
     ],
     answer: [2],
-    explanation:
-      'Đáp án đúng: đưa session ra ElastiCache giúp ứng dụng stateless, nên ASG trải nhiều AZ sau ALB có thể scale ngang và thay instance mà không mất session. Scale up + auto recovery vẫn là một instance, một AZ (SPOF). Sticky session vẫn lưu session trong RAM, instance chết là mất session. EBS volume chỉ nằm trong một AZ và (trừ io1/io2 Multi-Attach trong cùng AZ) không gắn được cho nhiều instance.',
   },
   {
     id: 'res-002',
@@ -29,8 +26,6 @@ export const resilientQuestions: Question[] = [
       'Take automated snapshots every 5 minutes and restore them in another Availability Zone if needed.',
     ],
     answer: [0],
-    explanation:
-      'Multi-AZ DB cluster có 1 writer + 2 standby ở 3 AZ, standby đọc được và failover thường dưới 35 giây, đáp ứng cả hai yêu cầu. Standby của Multi-AZ DB instance không phục vụ đọc. Read replica cần promote thủ công nên không phải automatic failover. Restore từ snapshot tốn nhiều thời gian, không đạt RTO dưới 1 phút.',
   },
   {
     id: 'res-003',
@@ -44,8 +39,6 @@ export const resilientQuestions: Question[] = [
       'Create a NAT gateway in each Availability Zone and configure each private subnet route table to use the NAT gateway in the same AZ.',
     ],
     answer: [3],
-    explanation:
-      'NAT gateway là tài nguyên theo AZ; best practice là một NAT gateway mỗi AZ và route table của từng AZ trỏ tới NAT cùng AZ. NAT instance tự quản, nhiều vận hành và vẫn ở một AZ. Một VPC chỉ gắn được một internet gateway. Gán Elastic IP cho instance private không có tác dụng nếu subnet không route ra internet gateway, và phá vỡ thiết kế private subnet.',
   },
   {
     id: 'res-004',
@@ -59,8 +52,6 @@ export const resilientQuestions: Question[] = [
       'Instance store volumes synchronized with a cron job',
     ],
     answer: [1],
-    explanation:
-      'EFS Standard lưu dữ liệu dư thừa trên nhiều AZ, có mount target ở từng AZ và hỗ trợ POSIX, truy cập đồng thời từ nhiều instance. EBS Multi-Attach chỉ trong cùng một AZ. EFS One Zone không chịu được lỗi AZ. Instance store là ephemeral, mất dữ liệu khi instance dừng, đồng bộ bằng cron phức tạp và không nhất quán.',
   },
   {
     id: 'res-005',
@@ -74,8 +65,6 @@ export const resilientQuestions: Question[] = [
       'Use AWS Global Accelerator with endpoints in the nearest AWS Region.',
     ],
     answer: [0],
-    explanation:
-      'Local Zones đặt compute, storage gần các thành phố lớn để đạt độ trễ một chữ số mili-giây cho người dùng tại đó. CloudFront chỉ cache nội dung HTTP, không chạy game server. Outposts đặt tại data center của công ty, không phải gần người chơi. Global Accelerator tối ưu đường mạng nhưng server vẫn ở Region xa.',
   },
   {
     id: 'res-006',
@@ -89,8 +78,6 @@ export const resilientQuestions: Question[] = [
       'Create an RDS read replica and point the reporting queries to the read replica endpoint.',
     ],
     answer: [3],
-    explanation:
-      'Read replica nhận replication bất đồng bộ và có endpoint riêng, phù hợp để tách tải đọc của báo cáo. Standby của Multi-AZ DB instance không phục vụ đọc. Scale up không cô lập workload và tốn chi phí. Export hằng đêm sang S3 làm dữ liệu cũ và tăng vận hành.',
   },
   {
     id: 'res-007',
@@ -105,10 +92,7 @@ export const resilientQuestions: Question[] = [
       'Run the database on an EC2 instance and take hourly EBS snapshots.',
     ],
     answer: [0, 2],
-    explanation:
-      'ASG trải nhiều AZ sau ALB giúp app tier sống sót khi một AZ lỗi; RDS Multi-AZ replicate đồng bộ nên không mất transaction đã commit và tự động failover. Một instance với Elastic IP là SPOF. Cross-Region read replica bất đồng bộ và phải promote thủ công. Snapshot hằng giờ có thể mất tới 1 giờ dữ liệu và không tự failover.',
   },
-  // ---------------------------------------------------------------- elastic-load-balancing
   {
     id: 'res-008',
     domain: 'resilient',
@@ -121,8 +105,6 @@ export const resilientQuestions: Question[] = [
       'Use Amazon Route 53 weighted routing to distribute requests to each service.',
     ],
     answer: [1],
-    explanation:
-      'ALB hoạt động ở layer 7, hỗ trợ rule theo path (/orders, /users) forward tới các target group khác nhau trên cùng một load balancer. NLB ở layer 4 không đọc được path URL. GWLB dùng để chèn appliance bảo mật, không phải routing HTTP. Route 53 làm việc ở mức DNS, không thấy path của URL.',
   },
   {
     id: 'res-009',
@@ -136,8 +118,6 @@ export const resilientQuestions: Question[] = [
       'Publish the current ALB IP addresses to the partner and update them weekly.',
     ],
     answer: [2],
-    explanation:
-      'NLB có một IP tĩnh/Elastic IP mỗi AZ và hỗ trợ ALB làm target, nên vừa có IP cố định vừa giữ routing layer 7 (Global Accelerator cũng là một cách khác). Không thể gắn Elastic IP vào ALB. Tự chạy NGINX trên EC2 tăng vận hành và tạo SPOF. IP của ALB thay đổi bất kỳ lúc nào nên cập nhật hằng tuần không đáng tin cậy.',
   },
   {
     id: 'res-010',
@@ -151,23 +131,14 @@ export const resilientQuestions: Question[] = [
       'Terminate TLS on each EC2 instance and use a Network Load Balancer with TCP listeners.',
     ],
     answer: [1],
-    explanation:
-      'ALB hỗ trợ SNI: một listener HTTPS gắn nhiều certificate từ ACM và tự chọn certificate theo hostname client yêu cầu. Tạo 20 ALB tốn chi phí và vận hành. CLB không hỗ trợ SNI và không thể có nhiều listener cùng port 443. Terminate TLS trên từng instance làm tăng tải CPU và công quản lý certificate.',
   },
   {
     id: 'res-011',
     domain: 'resilient',
     lesson: 'elastic-load-balancing',
     stem: 'A company is deploying a fleet of third-party virtual firewall appliances. All traffic entering the VPC from the internet must be inspected by these appliances transparently, and the appliance fleet must scale and be highly available. Which AWS service should the company use?',
-    options: [
-      'Application Load Balancer',
-      'Network Load Balancer',
-      'AWS Global Accelerator',
-      'Gateway Load Balancer',
-    ],
+    options: ['Application Load Balancer', 'Network Load Balancer', 'AWS Global Accelerator', 'Gateway Load Balancer'],
     answer: [3],
-    explanation:
-      'Gateway Load Balancer hoạt động ở layer 3, dùng GENEVE để chuyển traffic qua fleet appliance bên thứ ba một cách trong suốt, có health check và scale. ALB chỉ xử lý HTTP/HTTPS. NLB cân bằng TCP/UDP nhưng không thiết kế để chèn appliance vào đường đi (bump-in-the-wire). Global Accelerator tối ưu đường mạng toàn cầu, không kiểm tra traffic.',
   },
   {
     id: 'res-012',
@@ -181,23 +152,14 @@ export const resilientQuestions: Question[] = [
       'Decrease the health check interval on the target group.',
     ],
     answer: [0],
-    explanation:
-      'Deregistration delay (connection draining) cho phép request đang xử lý hoàn tất trước khi target bị gỡ; mặc định 300 giây, đặt được tới 3.600 giây, nên tăng lên hơn 10 phút. Cross-zone chỉ ảnh hưởng phân bổ tải. Sticky session không ngăn instance bị gỡ. Giảm health check interval không liên quan đến scale-in.',
   },
   {
     id: 'res-013',
     domain: 'resilient',
     lesson: 'elastic-load-balancing',
     stem: 'A company runs an online multiplayer game that uses a custom UDP protocol. The game requires extremely low latency and must handle millions of packets per second. Which load balancer should the company use?',
-    options: [
-      'Application Load Balancer',
-      'Classic Load Balancer',
-      'Network Load Balancer',
-      'Gateway Load Balancer',
-    ],
+    options: ['Application Load Balancer', 'Classic Load Balancer', 'Network Load Balancer', 'Gateway Load Balancer'],
     answer: [2],
-    explanation:
-      'NLB hoạt động ở layer 4, hỗ trợ UDP, độ trễ cực thấp và xử lý hàng triệu request mỗi giây. ALB chỉ hỗ trợ HTTP/HTTPS/gRPC. CLB là legacy và không hỗ trợ UDP. GWLB dùng cho appliance bảo mật, không phải cân bằng tải ứng dụng game.',
   },
   {
     id: 'res-014',
@@ -207,15 +169,12 @@ export const resilientQuestions: Question[] = [
     options: [
       'Enable AWS Shield Advanced on the EC2 instances only.',
       'Associate an AWS WAF web ACL with the Application Load Balancer.',
-      'Configure a network ACL that allows inbound traffic only from the ALB\'s DNS name.',
+      "Configure a network ACL that allows inbound traffic only from the ALB's DNS name.",
       'Enable cross-zone load balancing on the ALB.',
-      'Configure the EC2 instances\' security group to allow inbound traffic only from the ALB\'s security group.',
+      "Configure the EC2 instances' security group to allow inbound traffic only from the ALB's security group.",
     ],
     answer: [1, 4],
-    explanation:
-      'AWS WAF gắn vào ALB với managed rule chặn SQL injection và XSS. Security group của EC2 tham chiếu security group của ALB đảm bảo chỉ ALB gửi được traffic tới. Shield Advanced chủ yếu chống DDoS, không thay WAF. Network ACL dùng CIDR, không dùng DNS name. Cross-zone load balancing không liên quan tới bảo mật.',
   },
-  // ---------------------------------------------------------------- auto-scaling
   {
     id: 'res-015',
     domain: 'resilient',
@@ -228,14 +187,12 @@ export const resilientQuestions: Question[] = [
       'Create a CloudWatch alarm on CPU utilization that reboots the instances.',
     ],
     answer: [0],
-    explanation:
-      'Mặc định ASG chỉ dùng EC2 status check nên không biết ứng dụng treo. Bật ELB health check thì instance bị ALB đánh dấu unhealthy sẽ bị ASG terminate và thay thế. Detailed monitoring chỉ tăng tần suất metric. Thay instance theo lịch không xử lý đúng nguyên nhân. Alarm CPU không phản ánh tình trạng ứng dụng treo.',
   },
   {
     id: 'res-016',
     domain: 'resilient',
     lesson: 'auto-scaling',
-    stem: 'A company\'s application experiences a predictable traffic spike every weekday at 9:00 AM. Instances take several minutes to become ready, and users experience slow responses for the first 15 minutes of the spike. The rest of the day, traffic fluctuates unpredictably. Which scaling approach should the company use?',
+    stem: "A company's application experiences a predictable traffic spike every weekday at 9:00 AM. Instances take several minutes to become ready, and users experience slow responses for the first 15 minutes of the spike. The rest of the day, traffic fluctuates unpredictably. Which scaling approach should the company use?",
     options: [
       'Use only a simple scaling policy based on CPU utilization with a 300-second cooldown.',
       'Increase the maximum capacity of the Auto Scaling group.',
@@ -243,8 +200,6 @@ export const resilientQuestions: Question[] = [
       'Use manual scaling every morning.',
     ],
     answer: [2],
-    explanation:
-      'Scheduled scaling tăng capacity trước giờ cao điểm đã biết, còn target tracking xử lý biến động không đoán trước; kết hợp hai policy là phù hợp (predictive scaling cũng là lựa chọn hợp lý cho mẫu tải lặp lại). Simple scaling phản ứng sau khi tải đã tăng và bị cooldown chặn. Tăng max capacity không làm instance được launch sớm hơn. Scale thủ công tốn vận hành.',
   },
   {
     id: 'res-017',
@@ -258,8 +213,6 @@ export const resilientQuestions: Question[] = [
       'Publish a custom backlog-per-instance metric and use a target tracking policy with a target value based on acceptable latency divided by processing time.',
     ],
     answer: [3],
-    explanation:
-      'AWS khuyến nghị tính backlog per instance (số message visible chia số instance InService) và dùng target tracking với giá trị mục tiêu = độ trễ chấp nhận được / thời gian xử lý mỗi message. CPU không phản ánh độ dài hàng đợi. Step scaling với một bước lớn dễ scale quá đà hoặc chậm. Scheduled scaling không phản ứng với tải thực tế.',
   },
   {
     id: 'res-018',
@@ -273,8 +226,6 @@ export const resilientQuestions: Question[] = [
       'Use a launch template user data script to copy logs to S3.',
     ],
     answer: [1],
-    explanation:
-      'Lifecycle hook Terminating:Wait tạm dừng instance trước khi bị xoá để chạy script (qua EventBridge/Lambda hoặc SSM) đẩy log lên S3, rồi gọi complete-lifecycle-action. Termination protection không ngăn ASG scale in. Cooldown chỉ trì hoãn hoạt động scale tiếp theo. User data chỉ chạy khi khởi động, không chạy lúc terminate.',
   },
   {
     id: 'res-019',
@@ -288,8 +239,6 @@ export const resilientQuestions: Question[] = [
       'Set the desired capacity equal to the maximum capacity at all times.',
     ],
     answer: [0],
-    explanation:
-      'Warm pool giữ sẵn instance đã khởi tạo; ở trạng thái Stopped chỉ trả phí EBS, khi scale out instance chuyển sang InService nhanh hơn nhiều. Tăng grace period chỉ hoãn health check. Instance lớn hơn không chắc rút ngắn thời gian load dữ liệu. Luôn chạy ở max capacity rất tốn kém.',
   },
   {
     id: 'res-020',
@@ -303,8 +252,6 @@ export const resilientQuestions: Question[] = [
       'Target tracking scaling policy with a target value of 50%',
     ],
     answer: [3],
-    explanation:
-      'Target tracking tự tạo và quản lý CloudWatch alarm, tự điều chỉnh capacity để giữ metric quanh giá trị mục tiêu, nên ít vận hành nhất. Simple và step scaling yêu cầu tự tạo alarm và cấu hình bước. Scheduled scaling không phản ứng theo CPU thực tế.',
   },
   {
     id: 'res-021',
@@ -318,10 +265,7 @@ export const resilientQuestions: Question[] = [
       'Detach all instances from the Auto Scaling group and reattach new instances.',
     ],
     answer: [2],
-    explanation:
-      'Instance refresh thay thế dần instance theo launch template mới, tôn trọng minimum healthy percentage, không cần thao tác thủ công. Terminate thủ công từng instance tốn công và dễ sai. Tạo ASG mới và chuyển target group là blue/green thủ công, nhiều vận hành hơn. Detach/attach instance không tự cập nhật AMI.',
   },
-  // ---------------------------------------------------------------- decoupling-messaging
   {
     id: 'res-022',
     domain: 'resilient',
@@ -334,8 +278,6 @@ export const resilientQuestions: Question[] = [
       'Put an Application Load Balancer between the web tier and the backend.',
     ],
     answer: [1],
-    explanation:
-      'SQS lưu message bền vững (tới 14 ngày), hấp thụ spike và cho backend xử lý theo tốc độ riêng; đây là mẫu decoupling chuẩn. Scale up không đảm bảo hết mất đơn khi tải vượt quá. SNS đẩy (push) tới HTTP endpoint, backend quá tải vẫn có thể làm lỗi sau khi hết retry. ALB chỉ phân tải, không đệm request.',
   },
   {
     id: 'res-023',
@@ -349,8 +291,6 @@ export const resilientQuestions: Question[] = [
       'Use an Amazon SQS FIFO queue with the account ID as the message group ID.',
     ],
     answer: [3],
-    explanation:
-      'SQS FIFO đảm bảo thứ tự trong từng message group (đặt group ID = account ID để vẫn xử lý song song giữa các tài khoản) và exactly-once processing nhờ deduplication. SQS standard có thể giao trùng và sai thứ tự. SNS standard không đảm bảo thứ tự. Firehose dùng để nạp dữ liệu vào đích lưu trữ, không phải xử lý giao dịch theo thứ tự.',
   },
   {
     id: 'res-024',
@@ -364,23 +304,14 @@ export const resilientQuestions: Question[] = [
       'Invoke three AWS Lambda functions synchronously from the order service.',
     ],
     answer: [0],
-    explanation:
-      'Fan-out SNS tới nhiều SQS: mỗi hệ thống có queue riêng, nhận bản sao đầy đủ, xử lý và retry độc lập. Một SQS queue dùng chung khiến mỗi message chỉ được một consumer xử lý. Liệt kê S3 bucket định kỳ không hiệu quả và dễ bỏ sót. Gọi Lambda đồng bộ làm các hệ thống bị coupling chặt với order service.',
   },
   {
     id: 'res-025',
     domain: 'resilient',
     lesson: 'decoupling-messaging',
     stem: 'A company is migrating an on-premises application to AWS. The application uses Apache ActiveMQ with the JMS API and the AMQP protocol. The company wants to minimize code changes and use a managed service. Which service should the company use?',
-    options: [
-      'Amazon SQS',
-      'Amazon Kinesis Data Streams',
-      'Amazon MQ',
-      'Amazon EventBridge',
-    ],
+    options: ['Amazon SQS', 'Amazon Kinesis Data Streams', 'Amazon MQ', 'Amazon EventBridge'],
     answer: [2],
-    explanation:
-      'Amazon MQ là managed broker cho ActiveMQ và RabbitMQ, hỗ trợ JMS, AMQP, MQTT, STOMP, OpenWire nên migrate gần như không sửa code. SQS, Kinesis và EventBridge dùng API riêng của AWS, phải viết lại phần messaging.',
   },
   {
     id: 'res-026',
@@ -394,8 +325,6 @@ export const resilientQuestions: Question[] = [
       'Increase the message retention period to 14 days.',
     ],
     answer: [1],
-    explanation:
-      'Visibility timeout mặc định 30 giây; nếu xử lý lâu hơn, message hiện lại và consumer khác nhận nó. Tăng visibility timeout lớn hơn thời gian xử lý tối đa (hoặc gọi ChangeMessageVisibility) sẽ khắc phục. Long polling chỉ giảm số lần nhận rỗng. Delay queue trì hoãn trước khi message hiển thị lần đầu, không giúp gì sau khi đã nhận. Retention không liên quan đến xử lý trùng.',
   },
   {
     id: 'res-027',
@@ -409,8 +338,6 @@ export const resilientQuestions: Question[] = [
       'Amazon Kinesis Data Streams with extended data retention',
     ],
     answer: [3],
-    explanation:
-      'Kinesis Data Streams cho nhiều consumer đọc cùng dữ liệu, xử lý real-time và replay trong thời gian retention (mặc định 24 giờ, tăng được tới 365 ngày). SQS xoá message sau khi xử lý và không có replay. SNS không lưu message. Amazon MQ là broker cho ứng dụng truyền thống, không thiết kế cho clickstream và replay.',
   },
   {
     id: 'res-028',
@@ -425,10 +352,7 @@ export const resilientQuestions: Question[] = [
       'Set the delivery delay of the queue to 15 minutes.',
     ],
     answer: [0, 2],
-    explanation:
-      'DLQ với maxReceiveCount tách các message lỗi nhiều lần ra để phân tích. Long polling (WaitTimeSeconds tới 20) giảm số lần ReceiveMessage trả về rỗng, giảm chi phí. Chuyển sang FIFO không giải quyết message lỗi. Retention 1 phút làm mất dữ liệu hợp lệ. Delivery delay chỉ làm chậm toàn bộ message.',
   },
-  // ---------------------------------------------------------------- serverless-workflows
   {
     id: 'res-029',
     domain: 'resilient',
@@ -441,8 +365,6 @@ export const resilientQuestions: Question[] = [
       'Run the job as an AWS Step Functions Express workflow with a single task.',
     ],
     answer: [1],
-    explanation:
-      'Fargate là compute serverless cho container, không giới hạn 15 phút như Lambda; EventBridge Scheduler kích hoạt theo lịch. Lambda tối đa 15 phút. Lambda@Edge dùng cho CloudFront, thời gian chạy còn ngắn hơn. Step Functions Express tối đa 5 phút và một task Lambda vẫn bị giới hạn 15 phút.',
   },
   {
     id: 'res-030',
@@ -457,8 +379,6 @@ export const resilientQuestions: Question[] = [
       'Set reserved concurrency on the Lambda function to limit the maximum number of concurrent executions.',
     ],
     answer: [2, 4],
-    explanation:
-      'RDS Proxy gom và tái sử dụng kết nối database cho các Lambda đồng thời. Reserved concurrency giới hạn số execution đồng thời, bảo vệ database phía sau. Tăng timeout không giảm số kết nối. Đưa Lambda ra khỏi VPC khiến nó không truy cập được RDS private. Caching không áp dụng cho request ghi (POST).',
   },
   {
     id: 'res-031',
@@ -472,8 +392,6 @@ export const resilientQuestions: Question[] = [
       'Stage-level caching',
     ],
     answer: [0],
-    explanation:
-      'Usage plan + API key trong API Gateway REST API cho phép đặt throttle (rate, burst) và quota theo từng khách hàng/gói. Reserved concurrency áp dụng cho cả function, không phân biệt khách hàng. WAF rate-based rule chặn theo IP, không gắn với gói thuê bao. Caching không giới hạn request.',
   },
   {
     id: 'res-032',
@@ -487,8 +405,6 @@ export const resilientQuestions: Question[] = [
       'Amazon SQS FIFO queue between each step',
     ],
     answer: [2],
-    explanation:
-      'Step Functions Standard chạy tới 1 năm, exactly-once, lưu lịch sử thực thi để audit; callback với task token cho phép chờ phê duyệt thủ công. Express tối đa 5 phút. Chuỗi Lambda gọi nhau khó theo dõi, khó xử lý lỗi và không có lịch sử tập trung. SQS FIFO giữa các bước không cung cấp orchestration hay audit.',
   },
   {
     id: 'res-033',
@@ -502,8 +418,6 @@ export const resilientQuestions: Question[] = [
       'CloudFront Functions on viewer request and viewer response',
     ],
     answer: [3],
-    explanation:
-      'CloudFront Functions chạy JavaScript nhẹ tại edge ở viewer request/response, thời gian dưới 1 ms, scale cực lớn và rẻ hơn Lambda@Edge; phù hợp rewrite URL và thêm header. Lambda@Edge dùng cho logic phức tạp hơn và đắt hơn. Xử lý ở origin bằng ALB/Lambda hoặc API Gateway làm tăng độ trễ và chi phí.',
   },
   {
     id: 'res-034',
@@ -512,15 +426,12 @@ export const resilientQuestions: Question[] = [
     stem: 'A company has a Lambda function that is attached to private subnets in a VPC to access an Amazon RDS database. The function now also needs to call a third-party payment API on the internet. The function currently times out when it calls the API. What should a solutions architect do?',
     options: [
       'Attach an Elastic IP address to the Lambda function.',
-      'Route the private subnets\' outbound traffic through a NAT gateway in a public subnet.',
+      "Route the private subnets' outbound traffic through a NAT gateway in a public subnet.",
       'Move the Lambda function into a public subnet with an internet gateway route.',
       'Create a VPC gateway endpoint for the payment API.',
     ],
     answer: [1],
-    explanation:
-      'Lambda gắn vào VPC không có public IP; muốn ra internet phải đi qua NAT gateway trong public subnet. Không gắn Elastic IP trực tiếp cho Lambda. Đặt Lambda vào public subnet cũng không có internet vì ENI của Lambda không có public IP. Gateway endpoint chỉ hỗ trợ S3 và DynamoDB, không dùng cho API bên thứ ba.',
   },
-  // ---------------------------------------------------------------- route53-routing
   {
     id: 'res-035',
     domain: 'resilient',
@@ -533,8 +444,6 @@ export const resilientQuestions: Question[] = [
       'An MX record for example.com that points to the ALB',
     ],
     answer: [2],
-    explanation:
-      'Alias record dùng được ở zone apex, trỏ tới ALB, tự cập nhật khi IP thay đổi và không tính phí truy vấn. CNAME không được phép ở zone apex. IP của ALB thay đổi nên A record cố định IP sẽ hỏng. MX dùng cho mail server.',
   },
   {
     id: 'res-036',
@@ -548,8 +457,6 @@ export const resilientQuestions: Question[] = [
       'Weighted routing with equal weights and no health checks',
     ],
     answer: [0],
-    explanation:
-      'Latency-based routing trả Region có độ trễ thấp nhất; gắn health check (hoặc Evaluate Target Health) để loại bỏ Region unhealthy. Geolocation dựa trên vị trí người dùng, không phải độ trễ. Simple routing không hỗ trợ health check. Weighted không tối ưu độ trễ và không có health check thì không failover.',
   },
   {
     id: 'res-037',
@@ -563,29 +470,20 @@ export const resilientQuestions: Question[] = [
       'Geolocation routing with a record for Germany and a default record',
     ],
     answer: [3],
-    explanation:
-      'Geolocation route theo vị trí người dùng (quốc gia), phù hợp ràng buộc bản quyền/pháp lý; record Default phục vụ các quốc gia còn lại. Latency có thể đưa người Đức sang Region khác nếu độ trễ thấp hơn. Geoproximity dựa trên khoảng cách và bias, không đảm bảo theo ranh giới quốc gia. Weighted chia theo tỷ lệ, không theo vị trí.',
   },
   {
     id: 'res-038',
     domain: 'resilient',
     lesson: 'route53-routing',
     stem: 'A company is deploying a new version of its application. It wants to send 5% of production traffic to the new version and gradually increase the percentage, using DNS. Which Route 53 routing policy should the company use?',
-    options: [
-      'Failover routing',
-      'Weighted routing',
-      'Multivalue answer routing',
-      'IP-based routing',
-    ],
+    options: ['Failover routing', 'Weighted routing', 'Multivalue answer routing', 'IP-based routing'],
     answer: [1],
-    explanation:
-      'Weighted routing chia traffic theo trọng số (ví dụ 95/5) và có thể thay đổi dần, phù hợp canary. Failover chỉ có primary/secondary. Multivalue trả nhiều record ngẫu nhiên, không kiểm soát tỷ lệ. IP-based route theo CIDR của client.',
   },
   {
     id: 'res-039',
     domain: 'resilient',
     lesson: 'route53-routing',
-    stem: 'A company has a hybrid network with AWS Direct Connect. EC2 instances in a VPC must resolve hostnames in the company\'s on-premises domain corp.example.internal, which is hosted on on-premises DNS servers. Which solution meets this requirement?',
+    stem: "A company has a hybrid network with AWS Direct Connect. EC2 instances in a VPC must resolve hostnames in the company's on-premises domain corp.example.internal, which is hosted on on-premises DNS servers. Which solution meets this requirement?",
     options: [
       'Create a Route 53 Resolver outbound endpoint and a forwarding rule for corp.example.internal that targets the on-premises DNS servers.',
       'Create a Route 53 Resolver inbound endpoint in the VPC.',
@@ -593,8 +491,6 @@ export const resilientQuestions: Question[] = [
       'Configure the on-premises DNS servers to forward all queries to the VPC CIDR +2 address over the internet.',
     ],
     answer: [0],
-    explanation:
-      'Outbound endpoint + forwarding rule cho phép truy vấn từ VPC tới domain on-premises được chuyển tới DNS server on-premises. Inbound endpoint dùng cho chiều ngược lại (on-premises phân giải tên trong AWS). Public hosted zone làm lộ tên nội bộ và không chứa bản ghi on-premises. Resolver ở VPC +2 không truy cập được từ bên ngoài VPC.',
   },
   {
     id: 'res-040',
@@ -608,10 +504,7 @@ export const resilientQuestions: Question[] = [
       'Route 53 multivalue answer routing with health checks',
     ],
     answer: [2],
-    explanation:
-      'Global Accelerator cung cấp 2 anycast IP tĩnh, hỗ trợ UDP, đi qua mạng backbone AWS và failover nhanh không phụ thuộc DNS cache. Các giải pháp Route 53 vẫn phụ thuộc TTL và cache phía client. CloudFront dành cho HTTP/HTTPS, không hỗ trợ UDP cho game.',
   },
-  // ---------------------------------------------------------------- disaster-recovery
   {
     id: 'res-041',
     domain: 'resilient',
@@ -624,8 +517,6 @@ export const resilientQuestions: Question[] = [
       'Backup and restore with cross-Region backup copies and infrastructure as code',
     ],
     answer: [3],
-    explanation:
-      'RPO 24 giờ và RTO 12 giờ đủ rộng để dùng backup & restore: copy backup sang Region khác, khi sự cố dựng lại bằng CloudFormation và restore. Đây là chiến lược rẻ nhất. Active/active, warm standby, pilot light đều đạt yêu cầu nhưng tốn chi phí hơn.',
   },
   {
     id: 'res-042',
@@ -639,8 +530,6 @@ export const resilientQuestions: Question[] = [
       'Multi-site active/active with full capacity in both Regions',
     ],
     answer: [0],
-    explanation:
-      'Warm standby chạy liên tục bản thu nhỏ của toàn bộ stack với dữ liệu replicate liên tục, khi sự cố chỉ cần scale lên và chuyển DNS, đáp ứng RTO 10 phút. Backup & restore không đạt RPO vài giây. Pilot light phải khởi chạy app server nên RTO thường dài hơn và rủi ro hơn. Active/active full capacity đắt hơn mức cần thiết.',
   },
   {
     id: 'res-043',
@@ -654,8 +543,6 @@ export const resilientQuestions: Question[] = [
       'Run a full copy of all 200 servers on EC2 instances in a warm standby configuration.',
     ],
     answer: [1],
-    explanation:
-      'AWS Elastic Disaster Recovery replicate liên tục ở mức block vào staging area chi phí thấp, RPO tính bằng giây và RTO tính bằng phút, chỉ launch instance đầy đủ khi failover hoặc drill. Application Migration Service dùng cho migration, không phải DR liên tục. Backup hằng ngày vào Deep Archive có RPO 24 giờ và restore mất nhiều giờ. Chạy đủ 200 server liên tục rất tốn kém.',
   },
   {
     id: 'res-044',
@@ -670,8 +557,6 @@ export const resilientQuestions: Question[] = [
       'Store database dumps on an EBS volume in us-east-1.',
     ],
     answer: [0, 3],
-    explanation:
-      'Đây là pilot light: database replicate liên tục bằng cross-Region read replica (promote khi sự cố), còn app server chỉ có AMI và launch template/ASG với capacity 0 sẵn sàng scale. ASG full-size phục vụ 50% traffic là active/active. Multi-AZ chỉ chịu lỗi AZ trong cùng Region. Dump trên EBS ở us-east-1 sẽ mất khi Region đó lỗi.',
   },
   {
     id: 'res-045',
@@ -685,8 +570,6 @@ export const resilientQuestions: Question[] = [
       'Warm standby with a single-Region Amazon RDS Multi-AZ database',
     ],
     answer: [2],
-    explanation:
-      'Active/active: mọi Region cùng phục vụ (latency routing tới Region gần nhất), DynamoDB global tables cho ghi multi-Region với replication thường dưới 1 giây, RTO gần 0. Pilot light và backup & restore có RTO dài. Warm standby với database chỉ ở một Region không chịu được lỗi Region đó.',
   },
   {
     id: 'res-046',
@@ -700,10 +583,7 @@ export const resilientQuestions: Question[] = [
       'Use Amazon EBS Multi-Attach to attach volumes to instances in eu-central-1.',
     ],
     answer: [1],
-    explanation:
-      'Data Lifecycle Manager (hoặc AWS Backup) tự động tạo snapshot theo lịch và cross-Region copy, mã hoá lại bằng KMS key ở Region đích, không cần quản lý server. Cron job trên EC2 tăng vận hành và là SPOF. EBS snapshot lưu ở S3 do AWS quản lý, người dùng không truy cập bucket để bật CRR. Multi-Attach chỉ trong cùng AZ.',
   },
-  // ---------------------------------------------------------------- backup-replication
   {
     id: 'res-047',
     domain: 'resilient',
@@ -716,8 +596,6 @@ export const resilientQuestions: Question[] = [
       'Use Amazon Data Lifecycle Manager in every account with a governance-mode retention lock.',
     ],
     answer: [0],
-    explanation:
-      'AWS Backup quản lý tập trung qua Organizations, hỗ trợ nhiều dịch vụ, cross-account copy; Vault Lock compliance mode làm backup bất biến, kể cả root user cũng không xoá được. Lambda tự viết tốn vận hành và không bất biến. RDS backup và DynamoDB PITR không tập trung, không cross-account, không chống xoá. DLM chỉ cho EBS snapshot/AMI và không có compliance lock như mô tả.',
   },
   {
     id: 'res-048',
@@ -731,8 +609,6 @@ export const resilientQuestions: Question[] = [
       'Convert the cluster to an Aurora Global Database with secondary Regions in Europe and Asia.',
     ],
     answer: [3],
-    explanation:
-      'Aurora Global Database replicate ở tầng storage tới secondary Region với độ trễ thường dưới 1 giây, cho đọc tại chỗ và failover sang Region khác với RPO khoảng 1 giây, RTO dưới 1 phút. Aurora Replicas cùng Region không bảo vệ khỏi lỗi Region. Snapshot hằng giờ có RPO 1 giờ. DMS tăng vận hành và không đạt RTO như yêu cầu.',
   },
   {
     id: 'res-049',
@@ -746,8 +622,6 @@ export const resilientQuestions: Question[] = [
       'Use the RDS Recycle Bin to recover the deleted rows.',
     ],
     answer: [2],
-    explanation:
-      'PITR dùng automated backup + transaction log để khôi phục tới thời điểm bất kỳ trong retention, luôn tạo DB instance mới với endpoint mới. Manual snapshot có thể cũ hơn nhiều và restore cũng không ghi đè instance hiện có. Standby Multi-AZ replicate đồng bộ nên cũng đã xoá dữ liệu. Recycle Bin áp dụng cho EBS snapshot và AMI, không khôi phục dòng dữ liệu RDS.',
   },
   {
     id: 'res-050',
@@ -761,8 +635,6 @@ export const resilientQuestions: Question[] = [
       'Use an S3 Lifecycle rule to transition objects to the bucket in us-west-2.',
     ],
     answer: [1],
-    explanation:
-      'CRR yêu cầu versioning ở cả hai bucket; Replication Time Control có SLA replicate 99,99% object trong 15 phút kèm metric và thông báo khi chậm. SRR chỉ trong cùng Region. DataSync theo lịch không có SLA 15 phút cho từng object. Lifecycle rule chỉ chuyển storage class hoặc xoá, không copy sang bucket khác.',
   },
   {
     id: 'res-051',
@@ -776,8 +648,6 @@ export const resilientQuestions: Question[] = [
       'Enable Recycle Bin for EBS snapshots.',
     ],
     answer: [0],
-    explanation:
-      'Fast Snapshot Restore làm volume tạo từ snapshot được khởi tạo đầy đủ ngay, không có độ trễ khi đọc block lần đầu; bật theo từng AZ. Snapshot Archive rẻ hơn nhưng restore mất 24–72 giờ. Multi-Attach không liên quan đến hiệu năng khởi tạo. Recycle Bin dùng để khôi phục snapshot bị xoá nhầm.',
   },
   {
     id: 'res-052',
@@ -792,10 +662,7 @@ export const resilientQuestions: Question[] = [
       'Enable S3 Intelligent-Tiering on the bucket.',
     ],
     answer: [1, 3],
-    explanation:
-      'Versioning giữ mọi phiên bản nên khôi phục được khi ghi đè hoặc xoá nhầm, đồng thời là điều kiện bắt buộc của replication. CRR replicate object mới sang Region khác, còn S3 Batch Replication xử lý object đã tồn tại trước đó. Transfer Acceleration chỉ tăng tốc upload. Xoá noncurrent version sau 1 ngày làm giảm khả năng khôi phục. Intelligent-Tiering chỉ tối ưu chi phí lưu trữ.',
   },
-  // ---------------------------------------------------------------- management-iac
   {
     id: 'res-053',
     domain: 'resilient',
@@ -808,8 +675,6 @@ export const resilientQuestions: Question[] = [
       'Enable termination protection on the stack.',
     ],
     answer: [2],
-    explanation:
-      'Change set cho xem trước tài nguyên nào sẽ được thêm, sửa hay bị replace trước khi thực thi; nếu thấy database bị replace thì không execute. Update trực tiếp chỉ rollback khi lỗi, replace thành công thì dữ liệu đã mất. Drift detection so sánh tài nguyên thực tế với template hiện tại, không cho xem trước thay đổi của template mới. Termination protection chỉ chặn xoá stack, không chặn update.',
   },
   {
     id: 'res-054',
@@ -823,8 +688,6 @@ export const resilientQuestions: Question[] = [
       'Share the CloudFormation template with every account through AWS RAM and ask account owners to deploy it.',
     ],
     answer: [0],
-    explanation:
-      'StackSets triển khai một template tới nhiều tài khoản và nhiều Region bằng một thao tác; với service-managed permissions (Organizations) và automatic deployment, tài khoản mới vào OU được deploy tự động. Nested stacks chỉ tái sử dụng template trong một stack ở một tài khoản. Script tự viết tốn công vận hành và không tự xử lý tài khoản mới. Chia sẻ template rồi nhờ chủ tài khoản deploy là thủ công, không đảm bảo nhất quán.',
   },
   {
     id: 'res-055',
@@ -838,23 +701,14 @@ export const resilientQuestions: Question[] = [
       'Set the DeletionPolicy attribute of the DB instance resource to Snapshot.',
     ],
     answer: [3],
-    explanation:
-      'DeletionPolicy: Snapshot khiến CloudFormation tạo snapshot cuối của DB trước khi xoá tài nguyên, hoàn toàn tự động. Termination protection chặn việc xoá stack chứ không tạo backup. Stack policy chỉ áp dụng khi update stack, không áp dụng khi xoá stack. Automated backup của RDS bị xoá cùng DB instance (trừ khi chọn giữ lại), nên không đảm bảo yêu cầu.',
   },
   {
     id: 'res-056',
     domain: 'resilient',
     lesson: 'management-iac',
     stem: 'A company runs a web application on AWS Elastic Beanstalk. Deployments must keep full capacity at all times. If the new version fails health checks, the existing instances must not be affected and rollback must be as fast as possible. Which deployment policy should the company use?',
-    options: [
-      'All at once',
-      'Immutable',
-      'Rolling',
-      'Rolling with additional batch',
-    ],
+    options: ['All at once', 'Immutable', 'Rolling', 'Rolling with additional batch'],
     answer: [1],
-    explanation:
-      'Immutable deploy bản mới lên instance mới trong một ASG tạm; instance cũ không bị đụng tới, nếu bản mới lỗi chỉ cần terminate instance mới nên rollback nhanh nhất. All at once gây downtime. Rolling giảm capacity trong lúc deploy. Rolling with additional batch giữ đủ capacity nhưng cập nhật dần instance hiện có, rollback phải deploy lại bản cũ.',
   },
   {
     id: 'res-057',
@@ -868,8 +722,6 @@ export const resilientQuestions: Question[] = [
       'Use AWS Config remediation to rebuild each server from an updated AMI every week.',
     ],
     answer: [2],
-    explanation:
-      'Systems Manager quản lý cả EC2 và server on-premises (qua hybrid activation) có SSM Agent; Patch Manager áp patch baseline trong Maintenance Window và báo cáo compliance. Lambda SSH vào từng server tốn công, cần mở port và quản lý key. Inspector chỉ quét lỗ hổng, không cài patch. Config remediation dựng lại server từ AMI không áp dụng được cho server on-premises và rất phức tạp.',
   },
   {
     id: 'res-058',
@@ -884,8 +736,6 @@ export const resilientQuestions: Question[] = [
       'Create an AWS CloudTrail trail that sends events to CloudWatch Logs.',
     ],
     answer: [0, 3],
-    explanation:
-      'EC2 không gửi metric memory mặc định; CloudWatch agent thu memory và publish thành metric, sau đó CloudWatch alarm với action SNS gửi thông báo khi vượt 85%. Detailed monitoring chỉ tăng tần suất metric có sẵn lên 1 phút, không thêm metric memory. X-Ray trace request, không đo memory của OS. CloudTrail ghi API call, không phải metric hiệu năng.',
   },
   {
     id: 'res-059',
@@ -899,8 +749,6 @@ export const resilientQuestions: Question[] = [
       'Use AWS Trusted Advisor performance checks.',
     ],
     answer: [1],
-    explanation:
-      'X-Ray theo dõi một request đi qua API Gateway, Lambda tới DynamoDB, hiển thị service map và thời gian từng đoạn nên chỉ ra service gây chậm. CloudTrail data events ghi ai gọi API, không đo độ trễ từng bước. Metric filter đếm lỗi nhưng request chậm chưa chắc có lỗi. Trusted Advisor đưa khuyến nghị best practice chung, không trace request.',
   },
   {
     id: 'res-060',
@@ -914,10 +762,7 @@ export const resilientQuestions: Question[] = [
       'Create an AWS Service Catalog portfolio with the approved products and a launch constraint that specifies an IAM role used to provision the resources.',
     ],
     answer: [3],
-    explanation:
-      'Service Catalog cho admin publish portfolio sản phẩm đã duyệt; launch constraint chỉ định IAM role dùng để tạo tài nguyên, nên developer tự launch mà không cần quyền trực tiếp trên dịch vụ bên dưới. AdministratorAccess + Config chỉ phát hiện sau khi sai, vi phạm least privilege. Deploy template bằng credentials riêng đòi developer có quyền rộng và có thể sửa template. IAM user dùng chung vi phạm best practice và không giới hạn template.',
   },
-  // ---------------------------------------------------------------- application-integration
   {
     id: 'res-061',
     domain: 'resilient',
@@ -930,8 +775,6 @@ export const resilientQuestions: Question[] = [
       'Configure the SaaS partner event source, associate it with a partner event bus, and create a rule with an event pattern that matches high-priority tickets and targets the Lambda function.',
     ],
     answer: [3],
-    explanation:
-      'Partner event source đẩy sự kiện từ SaaS thẳng vào partner event bus; rule với event pattern lọc ticket ưu tiên cao rồi gọi Lambda, không cần viết code nhận webhook hay poll. API Gateway + webhook phải tự xây và bảo mật endpoint. AppFlow theo giờ không phải gần real-time. Poll mỗi phút tốn chi phí, tốn code và vẫn có độ trễ.',
   },
   {
     id: 'res-062',
@@ -945,8 +788,6 @@ export const resilientQuestions: Question[] = [
       'Configure EventBridge Pipes in the central account with each member account as a source.',
     ],
     answer: [2],
-    explanation:
-      'Mẫu chuẩn cross-account của EventBridge: rule ở tài khoản nguồn gửi sự kiện tới event bus trung tâm; bus trung tâm cần resource-based policy cho phép các tài khoản (hoặc cả organization) PutEvents, rồi rule ở đó gọi Lambda. Nhiều SNS topic tạo nhiều điểm quản lý và phải xử lý quyền cross-account cho từng topic. CloudTrail log trên S3 có độ trễ và không phải cơ chế event-driven. Pipes nối source như SQS/Kinesis tới target, không nhận tài khoản làm source.',
   },
   {
     id: 'res-063',
@@ -960,14 +801,12 @@ export const resilientQuestions: Question[] = [
       'Increase the retry policy of the rule target to 72 hours.',
     ],
     answer: [1],
-    explanation:
-      'Archive lưu sự kiện của event bus theo retention; replay phát lại sự kiện trong khoảng thời gian chọn để consumer đã sửa xử lý lại. DLQ chỉ chứa sự kiện gửi tới target thất bại, còn các sự kiện này đã gửi thành công. Log + script tự viết tốn công và dễ sai. Retry policy chỉ áp dụng khi gửi lỗi (tối đa 24 giờ), không giúp xử lý lại sự kiện đã giao thành công.',
   },
   {
     id: 'res-064',
     domain: 'resilient',
     lesson: 'application-integration',
-    stem: 'A company receives messages in an Amazon SQS queue. Only messages with a status of NEW must be processed. Each message must be enriched with customer data from a partner\'s public HTTP API before it starts an AWS Step Functions workflow. The company wants to minimize custom integration code. Which solution meets these requirements?',
+    stem: "A company receives messages in an Amazon SQS queue. Only messages with a status of NEW must be processed. Each message must be enriched with customer data from a partner's public HTTP API before it starts an AWS Step Functions workflow. The company wants to minimize custom integration code. Which solution meets these requirements?",
     options: [
       'Create an Amazon EventBridge Pipe with the SQS queue as the source, a filter on status NEW, an enrichment step that calls the partner API, and the Step Functions state machine as the target.',
       'Create an AWS Lambda function that polls the queue, filters messages, calls the API, and starts the workflow.',
@@ -975,8 +814,6 @@ export const resilientQuestions: Question[] = [
       'Use Amazon SNS message filtering on the SQS queue and invoke Step Functions from SNS.',
     ],
     answer: [0],
-    explanation:
-      'EventBridge Pipes nối point-to-point source → filter → enrichment → target: SQS làm source, filter chỉ giữ status NEW, enrichment gọi API (API destination, API Gateway hoặc Lambda), rồi khởi chạy Step Functions, gần như không cần code glue. Lambda tự viết làm được nhưng nhiều code hơn. Step Functions không subscribe trực tiếp vào SQS queue. SNS filter áp dụng cho subscription của topic, không lọc message trong SQS queue.',
   },
   {
     id: 'res-065',
@@ -990,23 +827,14 @@ export const resilientQuestions: Question[] = [
       'Use a Step Functions Distributed Map state that reads the objects from the S3 bucket and invokes the Lambda function in parallel child workflow executions.',
     ],
     answer: [3],
-    explanation:
-      'Distributed Map đọc item trực tiếp từ S3 và chạy tới 10.000 child execution song song, theo dõi item lỗi và có thể đặt ngưỡng lỗi chấp nhận, phù hợp hàng triệu object. Inline Map giới hạn concurrency (tối đa 40) và kích thước input của execution không chứa nổi 5 triệu key. Một Lambda lặp tuần tự bị giới hạn 15 phút. SQS FIFO với một consumer không song song.',
   },
   {
     id: 'res-066',
     domain: 'resilient',
     lesson: 'application-integration',
     stem: 'A sales team uses Salesforce. The analytics team needs Salesforce opportunity records copied into an Amazon S3 data lake every day, with sensitive fields masked. The company does not want to write or maintain integration code. Which AWS service should the company use?',
-    options: [
-      'AWS DataSync',
-      'Amazon Data Firehose',
-      'Amazon AppFlow',
-      'AWS Transfer Family',
-    ],
+    options: ['AWS DataSync', 'Amazon Data Firehose', 'Amazon AppFlow', 'AWS Transfer Family'],
     answer: [2],
-    explanation:
-      'AppFlow là dịch vụ không cần code để chuyển dữ liệu giữa SaaS như Salesforce và AWS (S3, Redshift), chạy theo lịch, có filter, mapping và mask field. DataSync chuyển dữ liệu từ storage (NFS, SMB, HDFS, object storage), không gọi API Salesforce. Firehose nhận stream do producer gửi vào, không tự kéo dữ liệu từ Salesforce. Transfer Family là SFTP/FTPS/FTP endpoint cho file.',
   },
   {
     id: 'res-067',
@@ -1020,8 +848,6 @@ export const resilientQuestions: Question[] = [
       'Have the sensors call Amazon SQS directly with HTTP and process messages with AWS Lambda.',
     ],
     answer: [0],
-    explanation:
-      'IoT Core là MQTT broker managed, xác thực thiết bị bằng X.509; rules engine dùng câu lệnh kiểu SQL lọc reading vượt ngưỡng ghi vào DynamoDB và gửi toàn bộ qua Firehose vào S3, không cần server. MQTT broker trên EC2 phải tự vận hành. Amazon MQ chạy trên broker instance, không serverless, không có rules engine và vẫn cần code consumer. Sensor thường dùng MQTT, gọi SQS qua HTTP cần ký request SigV4 và tự viết logic định tuyến.',
   },
   {
     id: 'res-068',
@@ -1036,7 +862,5 @@ export const resilientQuestions: Question[] = [
       'Configure an Amazon SQS dead-letter queue on the state machine to store failed executions.',
     ],
     answer: [1, 2],
-    explanation:
-      'Retry với BackoffRate lớn hơn 1 thực hiện exponential backoff cho lỗi tạm thời; Catch chuyển tới compensating state huỷ giữ chỗ khi hết retry, đúng pattern saga. Express không làm retry nhanh hơn và không phải yêu cầu. Tăng timeout Lambda không giải quyết lỗi tạm thời hay hoàn tác. State machine không có DLQ SQS kiểu này; xử lý lỗi trong workflow dùng Retry/Catch.',
   },
 ];

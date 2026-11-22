@@ -1,21 +1,18 @@
-import type { Question } from '@/content/types';
+import type { QuestionData } from '@/content/types';
 
-export const secureQuestions: Question[] = [
-  // iam-fundamentals
+export const secureQuestions: QuestionData[] = [
   {
     id: 'sec-001',
     domain: 'secure',
     lesson: 'iam-fundamentals',
-    stem: 'An application running on Amazon EC2 instances needs to read objects from an Amazon S3 bucket. A developer has stored an IAM user\'s access key and secret key in a configuration file on each instance. A security review flags this as a risk. Which solution is the MOST secure?',
+    stem: "An application running on Amazon EC2 instances needs to read objects from an Amazon S3 bucket. A developer has stored an IAM user's access key and secret key in a configuration file on each instance. A security review flags this as a risk. Which solution is the MOST secure?",
     options: [
       'Encrypt the configuration file with AWS KMS and decrypt it when the application starts.',
       'Create an IAM role with read access to the bucket and attach it to the instances through an instance profile.',
       'Store the access key in AWS Systems Manager Parameter Store as a SecureString and rotate it every 90 days.',
-      'Make the bucket public but restrict access with a bucket policy that allows only the instances\' public IP addresses.',
+      "Make the bucket public but restrict access with a bucket policy that allows only the instances' public IP addresses.",
     ],
     answer: [1],
-    explanation:
-      'IAM role gắn qua instance profile cung cấp temporary credentials tự động xoay vòng, không phải lưu credentials dài hạn trên máy. Mã hóa file cấu hình vẫn là lưu access key dài hạn. Lưu access key trong Parameter Store tốt hơn file nhưng vẫn là credentials dài hạn, không an toàn bằng role. Mở bucket public dựa trên IP là sai thiết kế và dễ lộ dữ liệu.',
   },
   {
     id: 'sec-002',
@@ -29,8 +26,6 @@ export const secureQuestions: Question[] = [
       'Allow developers to create roles only if a specific permissions boundary is attached, using the iam:PermissionsBoundary condition key.',
     ],
     answer: [3],
-    explanation:
-      'Permission boundary đặt quyền tối đa cho role; điều kiện iam:PermissionsBoundary buộc developer phải gắn boundary khi tạo role, nên không thể leo thang đặc quyền. AdministratorAccess kèm review định kỳ chỉ phát hiện sau, không ngăn chặn. SCP chặn iam:CreateRole làm developer không tạo được role, trái yêu cầu. Inline policy cho group chỉ kiểm soát quyền của developer, không giới hạn quyền của role họ tạo ra.',
   },
   {
     id: 'sec-003',
@@ -44,8 +39,6 @@ export const secureQuestions: Question[] = [
       'The request is denied only if the bucket policy also denies the action.',
     ],
     answer: [0],
-    explanation:
-      'Trong logic đánh giá policy của IAM, explicit Deny luôn thắng mọi Allow, bất kể Deny nằm ở policy nào. Không có quy tắc group ưu tiên hơn user. Bucket policy không cần Deny vì explicit Deny trong identity policy đã đủ để từ chối.',
   },
   {
     id: 'sec-004',
@@ -59,8 +52,6 @@ export const secureQuestions: Question[] = [
       'Attach a permissions boundary to the root user that limits it to read-only actions.',
     ],
     answer: [2],
-    explanation:
-      'Best practice: bật MFA cho root, xóa access key của root và dùng một danh tính quản trị riêng (IAM Identity Center hoặc IAM) cho công việc hằng ngày. Xoay vòng access key của root vẫn giữ credentials rủi ro cao. Không thể đổi tên root user. Không thể gắn permission boundary cho root user.',
   },
   {
     id: 'sec-005',
@@ -74,8 +65,6 @@ export const secureQuestions: Question[] = [
       'Amazon Inspector reports for IAM roles.',
     ],
     answer: [1],
-    explanation:
-      'IAM Access Advisor (last accessed information) cho biết service nào được role dùng lần cuối khi nào, phục vụ dọn quyền thừa. AWS Config ghi thay đổi cấu hình của role, không ghi việc sử dụng quyền. GuardDuty phát hiện mối đe dọa, không liệt kê service được dùng. Inspector quét lỗ hổng phần mềm, không phân tích IAM.',
   },
   {
     id: 'sec-006',
@@ -89,8 +78,6 @@ export const secureQuestions: Question[] = [
       'Require MFA in the account password policy.',
     ],
     answer: [0],
-    explanation:
-      'Điều kiện aws:MultiFactorAuthPresent trong policy chỉ cho phép hành động khi phiên đã xác thực MFA. Termination protection không liên quan MFA và không chặn stop. Config rule chỉ kiểm tra user có bật MFA hay không, không ép buộc khi gọi API. Password policy không có tùy chọn bắt buộc MFA.',
   },
   {
     id: 'sec-007',
@@ -99,13 +86,11 @@ export const secureQuestions: Question[] = [
     stem: 'A company runs containers on Amazon ECS with the AWS Fargate launch type. The application inside one task must write items to an Amazon DynamoDB table. Which configuration grants the required permissions following least privilege?',
     options: [
       'Add DynamoDB write permissions to the task execution role.',
-      'Attach a DynamoDB write policy to the IAM role of the ECS cluster\'s container instances.',
-      'Pass an IAM user\'s access key to the container as environment variables in the task definition.',
+      "Attach a DynamoDB write policy to the IAM role of the ECS cluster's container instances.",
+      "Pass an IAM user's access key to the container as environment variables in the task definition.",
       'Create a task role with a policy that allows writes to the specific table and reference it in the task definition.',
     ],
     answer: [3],
-    explanation:
-      'Task role cấp quyền cho code chạy trong container; policy giới hạn đúng bảng cần ghi là least privilege. Task execution role dùng để ECS pull image và ghi log, không dành cho ứng dụng. Fargate không có container instance do bạn quản lý, và gắn quyền ở cấp instance làm mọi task có quyền. Truyền access key qua biến môi trường là credentials dài hạn, không an toàn.',
   },
   {
     id: 'sec-008',
@@ -120,10 +105,7 @@ export const secureQuestions: Question[] = [
       'Create access keys for the root user so that automation can recover from IAM misconfigurations.',
     ],
     answer: [0, 3],
-    explanation:
-      'Dùng role với temporary credentials và dùng IAM Access Analyzer để phát hiện tài nguyên chia sẻ ra ngoài là best practice. Dùng chung một IAM user làm mất khả năng truy vết từng người. Cấp full-access cho mọi developer vi phạm least privilege. Tạo access key cho root là điều AWS khuyến cáo tránh tuyệt đối.',
   },
-  // iam-organizations-scp
   {
     id: 'sec-009',
     domain: 'secure',
@@ -136,14 +118,12 @@ export const secureQuestions: Question[] = [
       'Use IAM Identity Center permission sets that do not include CloudTrail permissions.',
     ],
     answer: [2],
-    explanation:
-      'SCP gắn ở root của organization giới hạn quyền của mọi principal trong member account, kể cả root user, nên chặn được hành động này. IAM policy không áp dụng cho root user và dễ bị bỏ sót user mới. AWS Config chỉ phát hiện sau khi sự việc xảy ra. Permission set chỉ áp dụng cho người dùng Identity Center, không ảnh hưởng root hay IAM user khác.',
   },
   {
     id: 'sec-010',
     domain: 'secure',
     lesson: 'iam-organizations-scp',
-    stem: 'A company has an Amazon S3 bucket that stores shared reports. The bucket must be accessible to IAM principals from every account in the company\'s organization in AWS Organizations, including accounts added in the future, and to no one else. Which solution requires the LEAST ongoing maintenance?',
+    stem: "A company has an Amazon S3 bucket that stores shared reports. The bucket must be accessible to IAM principals from every account in the company's organization in AWS Organizations, including accounts added in the future, and to no one else. Which solution requires the LEAST ongoing maintenance?",
     options: [
       'List every account ID in the bucket policy Principal element and update it when accounts are added.',
       'Add a bucket policy statement that allows access when the aws:PrincipalOrgID condition matches the organization ID.',
@@ -151,8 +131,6 @@ export const secureQuestions: Question[] = [
       'Use AWS Resource Access Manager to share the bucket with the organization.',
     ],
     answer: [1],
-    explanation:
-      'Điều kiện aws:PrincipalOrgID trong bucket policy tự động bao gồm mọi account hiện tại và tương lai của organization, không cần cập nhật. Liệt kê account ID phải sửa policy mỗi khi thêm account. Role cross-account chạy được nhưng mỗi ứng dụng phải assume role, vận hành phức tạp hơn. RAM không hỗ trợ chia sẻ S3 bucket.',
   },
   {
     id: 'sec-011',
@@ -166,23 +144,19 @@ export const secureQuestions: Question[] = [
       'AWS Control Tower.',
     ],
     answer: [3],
-    explanation:
-      'Control Tower dựng landing zone theo best practice: tạo account Log Archive và Audit, cấu hình IAM Identity Center, áp controls preventive (SCP) và detective (Config) cho account mới qua Account Factory. Organizations với SCP thủ công tốn nhiều công sức. Conformance packs chỉ là tập Config rules. Security Hub tổng hợp findings, không dựng môi trường đa account.',
   },
   {
     id: 'sec-012',
     domain: 'secure',
     lesson: 'iam-organizations-scp',
-    stem: 'A software vendor needs to access resources in a customer\'s AWS account to provide a monitoring service. The customer wants to avoid sharing long-term credentials and to protect against the confused deputy problem. What should the customer do?',
+    stem: "A software vendor needs to access resources in a customer's AWS account to provide a monitoring service. The customer wants to avoid sharing long-term credentials and to protect against the confused deputy problem. What should the customer do?",
     options: [
-      'Create an IAM role that trusts the vendor\'s AWS account and require a unique external ID in the trust policy condition.',
+      "Create an IAM role that trusts the vendor's AWS account and require a unique external ID in the trust policy condition.",
       'Create an IAM user for the vendor and share its access keys through an encrypted email.',
-      'Add the vendor\'s account to the customer\'s organization in AWS Organizations.',
-      'Create a resource-based policy on every resource that allows the vendor\'s root user.',
+      "Add the vendor's account to the customer's organization in AWS Organizations.",
+      "Create a resource-based policy on every resource that allows the vendor's root user.",
     ],
     answer: [0],
-    explanation:
-      'Role cross-account với External ID trong trust policy là cách AWS khuyến nghị cho bên thứ ba, vừa dùng temporary credentials vừa chống confused deputy. Chia sẻ access key IAM user là credentials dài hạn. Đưa account vendor vào organization của mình là không phù hợp và không cấp quyền. Không phải tài nguyên nào cũng hỗ trợ resource-based policy, và cách này khó quản lý.',
   },
   {
     id: 'sec-013',
@@ -196,8 +170,6 @@ export const secureQuestions: Question[] = [
       'Use IAM permission boundaries on every role that list the allowed Regions.',
     ],
     answer: [2],
-    explanation:
-      'SCP với điều kiện aws:RequestedRegion (kèm NotAction ngoại lệ cho service global như IAM, CloudFront, Route 53) là cách chuẩn để giới hạn Region trên toàn organization. Các Region mặc định không thể tắt qua account settings. Config rule xóa tài nguyên chỉ khắc phục sau và rủi ro. Permission boundary phải gắn từng role và không áp dụng root user.',
   },
   {
     id: 'sec-014',
@@ -211,8 +183,6 @@ export const secureQuestions: Question[] = [
       'Deploy AWS Managed Microsoft AD and create a forest trust with each account.',
     ],
     answer: [1],
-    explanation:
-      'IAM Identity Center kết nối IdP bên ngoài qua SAML 2.0 và SCIM, gán permission set cho group trên nhiều account từ một nơi, ít vận hành nhất. Tạo IAM user ở từng account vừa tốn công vừa kém an toàn. Cấu hình SAML riêng cho 40 account chạy được nhưng vận hành nặng. Managed Microsoft AD không tạo trust với AWS account; trust là giữa các domain AD.',
   },
   {
     id: 'sec-015',
@@ -226,10 +196,7 @@ export const secureQuestions: Question[] = [
       'Use AWS Transit Gateway to attach application VPCs to the central VPC.',
     ],
     answer: [0],
-    explanation:
-      'VPC sharing qua RAM cho phép account khác tạo tài nguyên trong subnet dùng chung, còn account sở hữu VPC giữ quyền quản lý route table, NACL. Peering và Transit Gateway yêu cầu mỗi account có VPC riêng, không đáp ứng việc launch vào subnet trung tâm. Launch trực tiếp trong account networking làm mất ranh giới billing và quyền sở hữu tài nguyên của team.',
   },
-  // identity-federation-cognito
   {
     id: 'sec-016',
     domain: 'secure',
@@ -240,11 +207,9 @@ export const secureQuestions: Question[] = [
       'An Amazon Cognito user pool configured with Google as a federated identity provider.',
       'AWS IAM Identity Center with Google as the identity source.',
       'An AWS Directory Service Simple AD directory.',
-      'An Amazon Cognito identity pool that exchanges tokens for temporary AWS credentials scoped to the user\'s prefix.',
+      "An Amazon Cognito identity pool that exchanges tokens for temporary AWS credentials scoped to the user's prefix.",
     ],
     answer: [1, 4],
-    explanation:
-      'Cognito User Pool xử lý sign-up/sign-in với email và Google; Cognito Identity Pool đổi token lấy temporary credentials, dùng policy variable để giới hạn prefix S3 của từng user. Tạo IAM user cho người dùng cuối không mở rộng được. IAM Identity Center dành cho nhân viên (workforce), không phải khách hàng ứng dụng mobile. Simple AD là thư mục cho doanh nghiệp, không phục vụ đăng nhập ứng dụng mobile.',
   },
   {
     id: 'sec-017',
@@ -258,23 +223,14 @@ export const secureQuestions: Question[] = [
       'Deploy AD Connector and connect it to the on-premises Active Directory over a VPN or AWS Direct Connect.',
     ],
     answer: [3],
-    explanation:
-      'AD Connector là proxy chuyển yêu cầu xác thực về AD on-prem, không lưu hay cache dữ liệu thư mục trên cloud. Managed Microsoft AD là một directory chạy trên AWS và lưu dữ liệu thư mục trên cloud. Simple AD cũng lưu dữ liệu trên AWS và không đồng bộ với AD on-prem. Cognito không dùng để đăng nhập WorkSpaces bằng AD và di chuyển user lên cloud trái chính sách.',
   },
   {
     id: 'sec-018',
     domain: 'secure',
     lesson: 'identity-federation-cognito',
     stem: 'A company is migrating Microsoft SharePoint and SQL Server workloads that require Active Directory to AWS. The company also needs users from its on-premises AD domain to access the migrated workloads by using a trust relationship. Which directory service should the company use?',
-    options: [
-      'Simple AD',
-      'AD Connector',
-      'AWS Managed Microsoft AD',
-      'Amazon Cognito user pool',
-    ],
+    options: ['Simple AD', 'AD Connector', 'AWS Managed Microsoft AD', 'Amazon Cognito user pool'],
     answer: [2],
-    explanation:
-      'AWS Managed Microsoft AD là Active Directory thật do AWS quản lý, hỗ trợ ứng dụng AD-aware như SharePoint, SQL Server và tạo trust với AD on-prem. Simple AD không hỗ trợ trust và thiếu nhiều tính năng AD. AD Connector chỉ là proxy, không làm directory cho workload trên AWS khi không có on-prem. Cognito không phải Active Directory.',
   },
   {
     id: 'sec-019',
@@ -288,8 +244,6 @@ export const secureQuestions: Question[] = [
       'Use an Amazon Cognito identity pool attached directly to the target group.',
     ],
     answer: [0],
-    explanation:
-      'ALB hỗ trợ action authenticate-cognito hoặc authenticate-oidc ngay trên listener rule, xác thực người dùng trước khi chuyển request tới target, không cần sửa code. WAF chỉ kiểm tra header có tồn tại, không xác thực danh tính. Security Group lọc theo IP/port, không biết người dùng đã xác thực hay chưa. Identity pool cấp AWS credentials, không gắn vào target group.',
   },
   {
     id: 'sec-020',
@@ -303,8 +257,6 @@ export const secureQuestions: Question[] = [
       'AWS Directory Service Simple AD with a one-way trust to the identity provider.',
     ],
     answer: [1],
-    explanation:
-      'Tạo SAML identity provider trong IAM và role tin cậy provider đó cho phép nhân viên đăng nhập console bằng tài khoản công ty qua AssumeRoleWithSAML. Cognito user pool dành cho người dùng ứng dụng, không dùng để đăng nhập console. Tạo IAM user cho từng nhân viên trái yêu cầu. Simple AD không hỗ trợ trust.',
   },
   {
     id: 'sec-021',
@@ -318,14 +270,12 @@ export const secureQuestions: Question[] = [
       'Enable unauthenticated identities in an Amazon Cognito identity pool and attach a read-only role for guest users.',
     ],
     answer: [3],
-    explanation:
-      'Cognito Identity Pool hỗ trợ guest (unauthenticated) identities với IAM role riêng có quyền chỉ đọc, cấp temporary credentials. Nhúng credentials IAM user vào app là lộ credentials dài hạn. User pool không cấp AWS credentials và không có khái niệm sign-in ẩn danh. VPC endpoint không phải public và không thay thế xác thực.',
   },
   {
     id: 'sec-022',
     domain: 'secure',
     lesson: 'identity-federation-cognito',
-    stem: 'A company runs a REST API on Amazon API Gateway. Only users who have signed in to the company\'s web application through an Amazon Cognito user pool should be able to call the API. Which solution requires the LEAST development effort?',
+    stem: "A company runs a REST API on Amazon API Gateway. Only users who have signed in to the company's web application through an Amazon Cognito user pool should be able to call the API. Which solution requires the LEAST development effort?",
     options: [
       'Write a Lambda authorizer that validates usernames and passwords against a DynamoDB table.',
       'Use an API key and usage plan for every user.',
@@ -333,10 +283,7 @@ export const secureQuestions: Question[] = [
       'Use IAM authorization and create an IAM user for each web application user.',
     ],
     answer: [2],
-    explanation:
-      'API Gateway có Cognito user pool authorizer tích hợp sẵn, tự kiểm tra JWT mà không cần viết code. Lambda authorizer tự kiểm tra mật khẩu tốn công và kém an toàn. API key dùng để định danh/throttling, không phải cơ chế xác thực người dùng. Tạo IAM user cho từng người dùng web không mở rộng được.',
   },
-  // vpc-networking-security
   {
     id: 'sec-023',
     domain: 'secure',
@@ -349,8 +296,6 @@ export const secureQuestions: Question[] = [
       'Enable VPC Flow Logs and filter the IP address.',
     ],
     answer: [0],
-    explanation:
-      'NACL hoạt động ở cấp subnet và hỗ trợ rule Deny, nên chặn được một IP cụ thể. Security Group chỉ có rule Allow, không thể Deny. Xóa route tới IGW làm sập toàn bộ ứng dụng. Flow Logs chỉ ghi lại traffic, không chặn.',
   },
   {
     id: 'sec-024',
@@ -359,14 +304,12 @@ export const secureQuestions: Question[] = [
     stem: 'A company has a three-tier application with web servers behind an Application Load Balancer, application servers, and an Amazon RDS for MySQL database. The security team requires that the database accepts connections only from the application tier, and that the application tier accepts traffic only from the load balancer. Which TWO configurations meet these requirements? (Choose TWO.)',
     options: [
       'Configure the database network ACL to allow port 3306 from 0.0.0.0/0.',
-      'Place the RDS instance in a public subnet with a security group that allows the application servers\' public IP addresses.',
+      "Place the RDS instance in a public subnet with a security group that allows the application servers' public IP addresses.",
       'Configure the application tier security group to allow inbound traffic only from the ALB security group.',
       'Configure the application servers to use a NAT gateway to reach the database.',
       'Configure the database security group to allow inbound port 3306 only from the application tier security group.',
     ],
     answer: [2, 4],
-    explanation:
-      'Tham chiếu Security Group: SG tầng app chỉ cho phép từ SG của ALB, SG của DB chỉ cho phép port 3306 từ SG tầng app; cách này tự động cập nhật khi Auto Scaling thêm instance. NACL mở 3306 cho 0.0.0.0/0 nới lỏng bảo mật. Đặt RDS ở public subnet là sai thiết kế. NAT Gateway dùng để ra Internet, không liên quan truy cập DB nội bộ.',
   },
   {
     id: 'sec-025',
@@ -380,14 +323,12 @@ export const secureQuestions: Question[] = [
       'Attach an egress-only internet gateway to the VPC and route private subnets to it.',
     ],
     answer: [1],
-    explanation:
-      'NAT Gateway là managed service; đặt một NAT Gateway ở public subnet của mỗi AZ tránh điểm lỗi đơn và phí cross-AZ. NAT instance phải tự quản lý và một instance là điểm lỗi đơn. NAT Gateway phải nằm ở public subnet, và một NAT duy nhất không HA khi AZ lỗi. Egress-only IGW chỉ dành cho IPv6.',
   },
   {
     id: 'sec-026',
     domain: 'secure',
     lesson: 'vpc-networking-security',
-    stem: 'A company\'s administrators currently connect to Linux EC2 instances in private subnets through a bastion host that allows SSH from the corporate network. The company wants to remove the bastion host, close all inbound ports, and keep an audit log of all session activity. Which solution meets these requirements with the LEAST operational overhead?',
+    stem: "A company's administrators currently connect to Linux EC2 instances in private subnets through a bastion host that allows SSH from the corporate network. The company wants to remove the bastion host, close all inbound ports, and keep an audit log of all session activity. Which solution meets these requirements with the LEAST operational overhead?",
     options: [
       'Replace the bastion host with an AWS Client VPN endpoint and use SSH keys.',
       'Move the instances to public subnets and restrict SSH to the corporate IP range.',
@@ -395,8 +336,6 @@ export const secureQuestions: Question[] = [
       'Use AWS Systems Manager Session Manager with an instance profile that allows SSM, and send session logs to Amazon S3 or CloudWatch Logs.',
     ],
     answer: [3],
-    explanation:
-      'Session Manager cho truy cập shell không cần mở port inbound, không cần bastion hay SSH key, quyền kiểm soát bằng IAM và ghi log session vào S3/CloudWatch Logs. Client VPN vẫn cần mở port 22 trên SG và quản lý key. Chuyển instance sang public subnet làm tăng bề mặt tấn công. NLB chuyển SSH vẫn cần mở port và không có audit session.',
   },
   {
     id: 'sec-027',
@@ -410,23 +349,14 @@ export const secureQuestions: Question[] = [
       'Network ACLs evaluate deny rules before allow rules.',
     ],
     answer: [2],
-    explanation:
-      'NACL là stateless nên phản hồi tới client đi ra bằng ephemeral port (1024-65535) phải được cho phép riêng ở outbound. Security Group là stateful, phản hồi tự được phép. IGW không lọc giao thức. NACL đánh giá theo số thứ tự rule, không phải Deny trước Allow.',
   },
   {
     id: 'sec-028',
     domain: 'secure',
     lesson: 'vpc-networking-security',
     stem: 'A company needs to inspect all outbound traffic from its VPCs and block connections to domain names that are not on an approved list. The company also needs intrusion prevention capabilities with Suricata-compatible rules. Which AWS service should be used?',
-    options: [
-      'AWS Network Firewall',
-      'AWS WAF',
-      'Security groups with outbound rules',
-      'Amazon GuardDuty',
-    ],
+    options: ['AWS Network Firewall', 'AWS WAF', 'Security groups with outbound rules', 'Amazon GuardDuty'],
     answer: [0],
-    explanation:
-      'AWS Network Firewall là firewall managed cấp VPC, lọc theo domain (FQDN), hỗ trợ IPS với rule tương thích Suricata. WAF lọc HTTP layer 7 cho ALB/CloudFront/API Gateway, không lọc egress của VPC. Security Group chỉ lọc theo IP/port, không theo domain. GuardDuty phát hiện mối đe dọa nhưng không chặn traffic.',
   },
   {
     id: 'sec-029',
@@ -435,13 +365,11 @@ export const secureQuestions: Question[] = [
     stem: 'A solutions architect needs to troubleshoot why connections from an on-premises network to an EC2 instance are being rejected. The architect wants to see whether traffic is accepted or rejected at the network interface, without capturing packet contents. What should the architect enable?',
     options: [
       'AWS CloudTrail data events for Amazon EC2.',
-      'VPC Flow Logs on the instance\'s network interface.',
+      "VPC Flow Logs on the instance's network interface.",
       'VPC Traffic Mirroring on the instance.',
       'Amazon Inspector network reachability analysis.',
     ],
     answer: [1],
-    explanation:
-      'VPC Flow Logs ghi metadata traffic ở cấp ENI kèm trạng thái ACCEPT/REJECT, đúng nhu cầu chẩn đoán SG/NACL. CloudTrail ghi API call, không ghi traffic mạng. Traffic Mirroring bắt cả nội dung gói tin, vượt yêu cầu và phức tạp hơn. Inspector đánh giá khả năng tiếp cận mạng theo cấu hình, không cho thấy traffic thực tế bị từ chối.',
   },
   {
     id: 'sec-030',
@@ -455,10 +383,7 @@ export const secureQuestions: Question[] = [
       'Disable the source/destination check on the NAT instance.',
     ],
     answer: [3],
-    explanation:
-      'NAT instance phải tắt source/destination check vì nó chuyển tiếp traffic không có nguồn/đích là chính nó. Gán Elastic IP cho instance private không giúp ra Internet vì không có route tới IGW. NAT instance phải ở public subnet. Thêm route IGW cho private subnet biến nó thành public subnet, trái thiết kế.',
   },
-  // vpc-connectivity
   {
     id: 'sec-031',
     domain: 'secure',
@@ -471,8 +396,6 @@ export const secureQuestions: Question[] = [
       'Enable S3 Transfer Acceleration on the bucket.',
     ],
     answer: [2],
-    explanation:
-      'Gateway endpoint cho S3 miễn phí, traffic đi trong mạng AWS và loại bỏ phí data processing của NAT Gateway. Interface endpoint cũng riêng tư nhưng tính phí theo giờ và theo GB, nên không rẻ nhất. NAT instance vẫn đi qua Internet và tốn công quản lý. Transfer Acceleration tăng tốc qua edge, tốn thêm phí và vẫn đi Internet.',
   },
   {
     id: 'sec-032',
@@ -487,8 +410,6 @@ export const secureQuestions: Question[] = [
       'Order a second Direct Connect connection at the same location for encryption.',
     ],
     answer: [0, 2],
-    explanation:
-      'Direct Connect không mã hóa mặc định; chạy IPsec VPN trên DX đáp ứng yêu cầu mã hóa. Site-to-Site VPN qua Internet là đường dự phòng rẻ cho DX. Không có tùy chọn "default encryption" bật trong console cho DX. VPC peering chỉ kết nối VPC với VPC. Thêm một DX cùng location tăng độ bền nhưng không mã hóa và tốn kém hơn VPN.',
   },
   {
     id: 'sec-033',
@@ -502,14 +423,12 @@ export const secureQuestions: Question[] = [
       'Deploy EC2-based transit routers in a hub VPC.',
     ],
     answer: [0],
-    explanation:
-      'Transit Gateway theo mô hình hub-and-spoke, hỗ trợ transitive routing cho hàng nghìn VPC và VPN, chia sẻ cross-account qua RAM. PrivateLink cung cấp dịch vụ một chiều, không thay thế được kết nối toàn mạng. VPN CloudHub dành cho các chi nhánh kết nối tới một VGW, không định tuyến giữa 150 VPC. Router tự dựng trên EC2 tốn nhiều công vận hành.',
   },
   {
     id: 'sec-034',
     domain: 'secure',
     lesson: 'vpc-connectivity',
-    stem: 'A SaaS provider wants to offer its application, running behind a Network Load Balancer in its VPC, to hundreds of customers. Customers must connect privately from their own VPCs. Many customer VPCs use CIDR ranges that overlap with the provider\'s VPC. Which solution should the provider use?',
+    stem: "A SaaS provider wants to offer its application, running behind a Network Load Balancer in its VPC, to hundreds of customers. Customers must connect privately from their own VPCs. Many customer VPCs use CIDR ranges that overlap with the provider's VPC. Which solution should the provider use?",
     options: [
       'VPC peering with each customer VPC.',
       'AWS Transit Gateway shared with all customers.',
@@ -517,8 +436,6 @@ export const secureQuestions: Question[] = [
       'A VPC endpoint service powered by AWS PrivateLink that customers connect to with interface endpoints.',
     ],
     answer: [3],
-    explanation:
-      'PrivateLink cho phép provider đặt dịch vụ sau NLB và khách hàng truy cập riêng tư qua interface endpoint, không cần quan tâm CIDR chồng lấn và không lộ cả VPC. VPC peering không cho phép CIDR chồng lấn và không mở rộng tới hàng trăm khách hàng. Transit Gateway cũng gặp vấn đề CIDR chồng lấn và lộ mạng. ALB public đi qua Internet, không riêng tư.',
   },
   {
     id: 'sec-035',
@@ -532,8 +449,6 @@ export const secureQuestions: Question[] = [
       'AWS Client VPN for every server in the data center.',
     ],
     answer: [1],
-    explanation:
-      'Site-to-Site VPN dùng IPsec mã hóa, thiết lập nhanh trong vài giờ. Direct Connect thường mất hơn một tháng để triển khai và không mã hóa mặc định. VPC peering không dùng cho mạng on-prem. Client VPN dành cho người dùng cá nhân, không phải kết nối site-to-site cho cả data center.',
   },
   {
     id: 'sec-036',
@@ -547,8 +462,6 @@ export const secureQuestions: Question[] = [
       'Set up Site-to-Site VPN connections from the data center to each Region.',
     ],
     answer: [2],
-    explanation:
-      'Direct Connect Gateway cho phép một kết nối DX tới VPC ở nhiều Region mà không cần đặt thêm đường truyền. Đặt DX mới ở từng Region tốn kém và chậm. VPC peering không transitive nên traffic từ on-prem không đi tiếp sang VPC peer. VPN qua Internet không phải kết nối riêng như yêu cầu.',
   },
   {
     id: 'sec-037',
@@ -562,8 +475,6 @@ export const secureQuestions: Question[] = [
       'Configure a network ACL that allows only the S3 prefix list.',
     ],
     answer: [0],
-    explanation:
-      'Bucket policy Deny với điều kiện aws:SourceVpce khác endpoint chỉ định bảo đảm bucket chỉ truy cập được qua endpoint đó. Gateway endpoint không gắn Security Group. Block Public Access ngăn truy cập public nhưng không giới hạn theo VPC. NACL kiểm soát traffic subnet, không ngăn người khác truy cập bucket từ nơi khác.',
   },
   {
     id: 'sec-038',
@@ -577,10 +488,7 @@ export const secureQuestions: Question[] = [
       'Enable VPC peering between the on-premises network and SQS.',
     ],
     answer: [1],
-    explanation:
-      'Interface endpoint tạo ENI có IP private trong VPC, truy cập được từ on-prem qua Direct Connect/VPN. Gateway endpoint chỉ hỗ trợ S3 và DynamoDB và không truy cập được từ on-prem. NAT Gateway đưa traffic ra endpoint public qua Internet. Không thể peering với một dịch vụ AWS.',
   },
-  // data-encryption-kms
   {
     id: 'sec-039',
     domain: 'secure',
@@ -593,8 +501,6 @@ export const secureQuestions: Question[] = [
       'Take a snapshot, copy the snapshot with encryption enabled, restore a new DB instance from the encrypted snapshot, and switch the application to it.',
     ],
     answer: [3],
-    explanation:
-      'Không thể bật mã hóa cho RDS đang chạy; cách chuẩn là snapshot, copy snapshot có bật encryption, restore DB mới và chuyển ứng dụng. Modify DB không cho bật encryption cho instance chưa mã hóa. Read replica phải có cùng trạng thái mã hóa với primary nên không tạo được replica mã hóa từ DB chưa mã hóa. EBS encryption by default không ảnh hưởng RDS hiện có.',
   },
   {
     id: 'sec-040',
@@ -609,8 +515,6 @@ export const secureQuestions: Question[] = [
       'Enable MFA Delete and give the MFA device to the compliance officer.',
     ],
     answer: [1, 3],
-    explanation:
-      'Object Lock compliance mode ngăn mọi người, kể cả root, xóa hay ghi đè object tới hết hạn retention. SSE-KMS với customer managed key ghi lại mọi lần dùng key trong CloudTrail. Governance mode cho phép user có quyền bypass xóa object. SSE-C không có audit sử dụng key trong KMS. MFA Delete chỉ thêm bước xác thực, người có thiết bị MFA vẫn xóa được.',
   },
   {
     id: 'sec-041',
@@ -624,14 +528,12 @@ export const secureQuestions: Question[] = [
       'AWS Secrets Manager.',
     ],
     answer: [2],
-    explanation:
-      'CloudHSM cung cấp HSM single-tenant, khách hàng toàn quyền quản lý key và user, AWS không truy cập được key, hỗ trợ Oracle TDE. KMS (cả AWS managed lẫn customer managed) là dịch vụ multi-tenant do AWS vận hành HSM. Secrets Manager lưu secrets, không phải HSM.',
   },
   {
     id: 'sec-042',
     domain: 'secure',
     lesson: 'data-encryption-kms',
-    stem: 'A company needs to share an encrypted Amazon EBS snapshot with a partner\'s AWS account. The snapshot is currently encrypted with the AWS managed key aws/ebs. What must the company do?',
+    stem: "A company needs to share an encrypted Amazon EBS snapshot with a partner's AWS account. The snapshot is currently encrypted with the AWS managed key aws/ebs. What must the company do?",
     options: [
       'Copy the snapshot and re-encrypt it with a customer managed KMS key, share that key with the partner account through the key policy, and then share the snapshot.',
       'Share the snapshot directly and grant the partner access to the aws/ebs key.',
@@ -639,8 +541,6 @@ export const secureQuestions: Question[] = [
       'Export the AWS managed key and send it to the partner securely.',
     ],
     answer: [0],
-    explanation:
-      'Snapshot mã hóa bằng AWS managed key không chia sẻ được; phải copy và mã hóa lại bằng customer managed key, cấp quyền key cho account đối tác, rồi chia sẻ snapshot. Không thể sửa key policy của aws/ebs. Snapshot mã hóa không thể public, và làm public dữ liệu nhạy cảm là sai. KMS key material không export được.',
   },
   {
     id: 'sec-043',
@@ -654,8 +554,6 @@ export const secureQuestions: Question[] = [
       'Use a different KMS key for each prefix.',
     ],
     answer: [1],
-    explanation:
-      'S3 Bucket Keys tạo key cấp bucket để giảm mạnh số request tới KMS, vừa giảm throttling vừa giảm chi phí, chỉ cần bật một tùy chọn. Client-side encryption đòi sửa ứng dụng. Tăng quota giảm throttling nhưng không giảm chi phí. Dùng nhiều key không giảm số request vì quota tính theo account/Region.',
   },
   {
     id: 'sec-044',
@@ -669,8 +567,6 @@ export const secureQuestions: Question[] = [
       'Set default encryption to SSE-KMS with the key, and add a bucket policy that denies requests where aws:SecureTransport is false and denies PutObject requests that specify a different encryption key.',
     ],
     answer: [3],
-    explanation:
-      'Default encryption SSE-KMS với key chỉ định kết hợp bucket policy Deny khi aws:SecureTransport là false và Deny PutObject dùng key khác bảo đảm cả hai yêu cầu. SSE-S3 không dùng KMS key chỉ định, Block Public Access không ép TLS. Object Lock và MFA Delete là chống xóa, không liên quan mã hóa. Lifecycle không re-encrypt object.',
   },
   {
     id: 'sec-045',
@@ -684,8 +580,6 @@ export const secureQuestions: Question[] = [
       'Store a symmetric key in AWS Secrets Manager and replicate the secret.',
     ],
     answer: [0],
-    explanation:
-      'Multi-Region keys có cùng key ID và key material ở các Region, nên dữ liệu mã hóa ở Region này giải mã được ở Region kia bằng replica key cục bộ. Key riêng ở mỗi Region có key material khác nhau nên không giải mã chéo được. AWS managed key ở mỗi Region là key khác nhau và dùng cho mã hóa phía server. Tự lưu key trong Secrets Manager là tự quản lý key thủ công, không được kiểm soát và audit như KMS.',
   },
   {
     id: 'sec-046',
@@ -699,8 +593,6 @@ export const secureQuestions: Question[] = [
       'Temporarily disable S3 Block Public Access on the bucket.',
     ],
     answer: [2],
-    explanation:
-      'Presigned URL cho phép tải một object riêng tư trong thời gian giới hạn bằng quyền của người tạo URL, không cần cấp credentials cho người dùng. Static website hosting yêu cầu object public. Tạo IAM user và chia sẻ key là credentials dài hạn. Tắt Block Public Access làm lộ dữ liệu.',
   },
   {
     id: 'sec-047',
@@ -714,15 +606,12 @@ export const secureQuestions: Question[] = [
       'Attach an IAM policy that requires encryption to the instance profile.',
     ],
     answer: [1],
-    explanation:
-      'Volume hiện có không mã hóa trực tiếp được; phải qua snapshot copy có encryption rồi tạo volume mới. Bật EBS encryption by default bảo đảm volume mới trong Region luôn được mã hóa. Không có tùy chọn bật mã hóa trên volume có sẵn, và tag policy không ép mã hóa. AWS Backup không mã hóa volume gốc. Policy trên instance profile không ảnh hưởng việc tạo volume.',
   },
-  // secrets-certificates
   {
     id: 'sec-048',
     domain: 'secure',
     lesson: 'secrets-certificates',
-    stem: 'A company\'s Lambda functions connect to an Amazon Aurora MySQL database using a password that is hard-coded in the function code. The security team requires that the password is removed from code and rotated automatically every 30 days. Which TWO steps should a solutions architect take? (Choose TWO.)',
+    stem: "A company's Lambda functions connect to an Amazon Aurora MySQL database using a password that is hard-coded in the function code. The security team requires that the password is removed from code and rotated automatically every 30 days. Which TWO steps should a solutions architect take? (Choose TWO.)",
     options: [
       'Store the password in an SSM Parameter Store String parameter.',
       'Store the password as a Lambda environment variable encrypted with the default key.',
@@ -731,8 +620,6 @@ export const secureQuestions: Question[] = [
       'Update the Lambda functions to retrieve the secret from AWS Secrets Manager at runtime and grant the execution role permission to read the secret.',
     ],
     answer: [3, 4],
-    explanation:
-      'Secrets Manager hỗ trợ rotation tự động tích hợp với Aurora; Lambda đọc secret lúc chạy bằng quyền trong execution role. Parameter Store String không mã hóa và không có rotation tích hợp. Biến môi trường không giải quyết rotation. Cron job trên EC2 tăng vận hành và không đồng bộ được với ứng dụng.',
   },
   {
     id: 'sec-049',
@@ -746,8 +633,6 @@ export const secureQuestions: Question[] = [
       'Use CloudFront signed URLs for all objects.',
     ],
     answer: [0],
-    explanation:
-      'OAC là cơ chế hiện tại thay thế OAI, hỗ trợ SSE-KMS; bucket policy chỉ cho phép cloudfront.amazonaws.com với AWS:SourceArn là distribution, bucket giữ private. OAI là cơ chế cũ, không hỗ trợ SSE-KMS, và website endpoint của S3 không dùng được với OAI/OAC. Transfer Acceleration không chặn truy cập. Signed URL kiểm soát người xem qua CloudFront nhưng không chặn truy cập trực tiếp S3.',
   },
   {
     id: 'sec-050',
@@ -761,8 +646,6 @@ export const secureQuestions: Question[] = [
       'In IAM by uploading a self-signed certificate.',
     ],
     answer: [2],
-    explanation:
-      'CloudFront chỉ dùng chứng chỉ ACM được tạo hoặc import ở us-east-1; ACM cấp chứng chỉ public miễn phí và tự gia hạn. Chứng chỉ ở eu-west-1 không gắn được vào CloudFront. Private CA cấp chứng chỉ private, có phí, trình duyệt không tin cậy. Chứng chỉ self-signed không được trình duyệt tin cậy và không tự gia hạn.',
   },
   {
     id: 'sec-051',
@@ -776,8 +659,6 @@ export const secureQuestions: Question[] = [
       'CloudFront signed cookies issued to authenticated subscribers.',
     ],
     answer: [3],
-    explanation:
-      'Signed cookies cấp quyền truy cập nhiều file mà không phải thay đổi URL, phù hợp cho nội dung premium gồm nhiều segment. Signed URL phải tạo cho từng file và làm thay đổi URL. S3 presigned URL bỏ qua CloudFront và cũng thay đổi URL. Geo match chỉ lọc theo quốc gia, không xác định thuê bao.',
   },
   {
     id: 'sec-052',
@@ -791,8 +672,6 @@ export const secureQuestions: Question[] = [
       'Store the values in an S3 object encrypted with SSE-C.',
     ],
     answer: [1],
-    explanation:
-      'Parameter Store standard tier miễn phí, hỗ trợ cấu trúc phân cấp và SecureString mã hóa bằng KMS, đủ cho secret không cần rotation. Secrets Manager tính phí theo secret, tốn kém hơn khi không cần rotation. DynamoDB và S3 đòi tự xây cơ chế quản lý cấu hình, và SSE-C phải tự quản lý key.',
   },
   {
     id: 'sec-053',
@@ -806,15 +685,12 @@ export const secureQuestions: Question[] = [
       'Store the certificate in Secrets Manager and load it on the instances at boot.',
     ],
     answer: [0],
-    explanation:
-      'Chứng chỉ public của ACM gắn vào HTTPS listener của ALB vừa giảm tải TLS khỏi EC2 vừa tự gia hạn. Cài cert trên từng EC2 không giảm tải TLS và phải tự gia hạn. ACM không tự gia hạn chứng chỉ import. Lưu cert trong Secrets Manager vẫn để EC2 xử lý TLS và phải tự quản lý gia hạn.',
   },
-  // threat-detection-waf-shield
   {
     id: 'sec-054',
     domain: 'secure',
     lesson: 'threat-detection-waf-shield',
-    stem: 'A company\'s e-commerce website runs behind an Application Load Balancer. The website is experiencing SQL injection attempts and an HTTP flood from a small set of IP addresses. Which solution addresses both issues?',
+    stem: "A company's e-commerce website runs behind an Application Load Balancer. The website is experiencing SQL injection attempts and an HTTP flood from a small set of IP addresses. Which solution addresses both issues?",
     options: [
       'Enable AWS Shield Standard on the ALB.',
       'Add network ACL deny rules for every attacking IP address.',
@@ -822,23 +698,14 @@ export const secureQuestions: Question[] = [
       'Enable Amazon GuardDuty and Amazon Inspector.',
     ],
     answer: [2],
-    explanation:
-      'WAF gắn vào ALB với managed rule chống SQL injection và rate-based rule chặn IP gửi quá nhiều request giải quyết cả hai vấn đề. Shield Standard đã tự bật và chỉ bảo vệ DDoS layer 3/4, không chặn SQLi. NACL không chặn SQLi và phải cập nhật thủ công khi IP thay đổi. GuardDuty phát hiện, Inspector quét lỗ hổng; cả hai không chặn request.',
   },
   {
     id: 'sec-055',
     domain: 'secure',
     lesson: 'threat-detection-waf-shield',
     stem: 'A financial services company is concerned about large, sophisticated DDoS attacks against its applications on CloudFront, Route 53, and Elastic Load Balancing. The company wants access to a 24/7 DDoS response team and protection against scaling charges caused by attacks. Which service should the company use?',
-    options: [
-      'AWS Shield Standard',
-      'AWS WAF with rate-based rules',
-      'Amazon GuardDuty',
-      'AWS Shield Advanced',
-    ],
+    options: ['AWS Shield Standard', 'AWS WAF with rate-based rules', 'Amazon GuardDuty', 'AWS Shield Advanced'],
     answer: [3],
-    explanation:
-      'Shield Advanced cung cấp bảo vệ DDoS nâng cao cho CloudFront, Route 53, ELB, Global Accelerator, EC2, có Shield Response Team 24/7 và cost protection. Shield Standard miễn phí nhưng không có SRT và cost protection. WAF lọc layer 7 nhưng không có đội phản ứng hay bảo vệ chi phí. GuardDuty phát hiện mối đe dọa trong account, không chống DDoS.',
   },
   {
     id: 'sec-056',
@@ -853,23 +720,14 @@ export const secureQuestions: Question[] = [
       'Amazon EventBridge with an AWS Lambda function that modifies the instance security group when a finding is published.',
     ],
     answer: [0, 4],
-    explanation:
-      'GuardDuty phát hiện đào coin dựa trên Flow Logs, DNS logs và threat intelligence; EventBridge bắt finding và gọi Lambda đổi Security Group để cách ly instance. Macie tìm dữ liệu nhạy cảm trong S3. Trusted Advisor đưa khuyến nghị best practice, không phát hiện mối đe dọa thời gian thực. Inspector quét lỗ hổng phần mềm, không giám sát traffic.',
   },
   {
     id: 'sec-057',
     domain: 'secure',
     lesson: 'threat-detection-waf-shield',
     stem: 'A company stores millions of documents in Amazon S3 across many buckets. The compliance team needs to discover which objects contain personally identifiable information (PII) such as passport numbers and credit card numbers. Which service should be used?',
-    options: [
-      'Amazon GuardDuty S3 Protection',
-      'Amazon Macie',
-      'AWS Config',
-      'Amazon Detective',
-    ],
+    options: ['Amazon GuardDuty S3 Protection', 'Amazon Macie', 'AWS Config', 'Amazon Detective'],
     answer: [1],
-    explanation:
-      'Macie dùng machine learning và pattern matching để phát hiện dữ liệu nhạy cảm (PII) trong S3. GuardDuty S3 Protection phát hiện hoạt động truy cập đáng ngờ, không phân loại nội dung. AWS Config đánh giá cấu hình bucket, không quét nội dung. Detective dùng để điều tra nguyên nhân gốc của findings.',
   },
   {
     id: 'sec-058',
@@ -883,23 +741,14 @@ export const secureQuestions: Question[] = [
       'Write a Lambda function in each account that attaches the web ACL when resources are created.',
     ],
     answer: [2],
-    explanation:
-      'Firewall Manager quản lý tập trung WAF policy trên mọi account trong Organizations và tự áp dụng cho tài nguyên mới. StackSet chỉ triển khai web ACL, việc gắn vẫn thủ công. Config rule chỉ phát hiện và thông báo. Lambda tự viết ở mỗi account tốn công phát triển và bảo trì.',
   },
   {
     id: 'sec-059',
     domain: 'secure',
     lesson: 'threat-detection-waf-shield',
     stem: 'An auditor asks a company to show who deleted a security group in production last month and from which IP address the request was made. Which service provides this information?',
-    options: [
-      'AWS Config configuration history.',
-      'VPC Flow Logs.',
-      'Amazon CloudWatch metrics.',
-      'AWS CloudTrail.',
-    ],
+    options: ['AWS Config configuration history.', 'VPC Flow Logs.', 'Amazon CloudWatch metrics.', 'AWS CloudTrail.'],
     answer: [3],
-    explanation:
-      'CloudTrail ghi lại mọi API call gồm danh tính người gọi, thời điểm và địa chỉ IP nguồn, nên trả lời được câu hỏi "ai đã xóa". AWS Config cho thấy cấu hình thay đổi thế nào nhưng câu hỏi "ai" và "từ IP nào" thuộc về CloudTrail. Flow Logs ghi traffic mạng, không ghi API call. CloudWatch metrics là số liệu hiệu năng.',
   },
   {
     id: 'sec-060',
@@ -913,7 +762,5 @@ export const secureQuestions: Question[] = [
       'Create CloudTrail trails and query them with Amazon Athena each day.',
     ],
     answer: [0],
-    explanation:
-      'AWS Config rules liên tục đánh giá cấu hình tài nguyên và hỗ trợ remediation tự động bằng SSM Automation. GuardDuty phát hiện mối đe dọa, không kiểm tra cấu hình tuân thủ. Inspector quét lỗ hổng phần mềm trên EC2/ECR/Lambda, không đánh giá S3 hay SG theo quy tắc. Truy vấn CloudTrail bằng Athena là thủ công và không tự khắc phục.',
   },
 ];

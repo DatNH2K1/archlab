@@ -1,0 +1,823 @@
+{
+  "Tracks": {
+    "url-shortener": {
+      "title": "Rút gọn link",
+      "pitch": "Dịch vụ tạo link gọn cho chiến dịch marketing: tạo ít, bấm cực nhiều, từ khắp nơi.",
+      "tags": [
+        "Serverless",
+        "Cache ở edge",
+        "WAF",
+        "Chi phí"
+      ]
+    },
+    "static-website": {
+      "title": "Website giới thiệu",
+      "pitch": "Một trang marketing lớn dần: từ vài file tĩnh tới form liên hệ, khách toàn cầu và bot.",
+      "tags": [
+        "S3 + CloudFront",
+        "Serverless",
+        "WAF",
+        "Mã hoá",
+        "Chi phí"
+      ]
+    },
+    "notifications": {
+      "title": "Dịch vụ thông báo",
+      "pitch": "Gửi push, email và SMS cho khách hàng mà không bắt ai phải chờ, kể cả trong ngày flash sale.",
+      "tags": [
+        "SQS",
+        "SNS fan-out",
+        "Lambda vs EC2",
+        "Mã hoá"
+      ]
+    },
+    "startup-api": {
+      "title": "API của startup",
+      "pitch": "Đi cùng một API từ ngày ra mắt tới khi có hàng nghìn yêu cầu mỗi giây, và giữ hoá đơn trong tầm kiểm soát.",
+      "tags": [
+        "Serverless",
+        "EC2 + ALB",
+        "Multi-AZ",
+        "Cache",
+        "Reserved"
+      ]
+    },
+    "document-vault": {
+      "title": "Kho tài liệu doanh nghiệp",
+      "pitch": "Xây nơi chia sẻ tài liệu nội bộ: tệp không bao giờ public, tệp tải lên được quét virus, và bot không lấy trộm được.",
+      "tags": [
+        "Bảo mật",
+        "S3 private",
+        "Serverless",
+        "WAF",
+        "Đa Region"
+      ]
+    },
+    "photo-sharing": {
+      "title": "Chia sẻ ảnh",
+      "pitch": "Người dùng đăng ảnh, bạn bè xem và nhận thông báo, cho tới ngày một tấm ảnh lan truyền khắp mạng.",
+      "tags": [
+        "S3 + CloudFront",
+        "SQS",
+        "SNS fan-out",
+        "Spot",
+        "Auto Scaling"
+      ]
+    },
+    "ecommerce": {
+      "title": "Cửa hàng online",
+      "pitch": "Từ một máy chủ tới ngày ra mắt: xây shop 3 tầng chịu được sự cố AZ, flash sale và cơn mưa đơn hàng.",
+      "tags": [
+        "3 tầng",
+        "Multi-AZ",
+        "Auto Scaling",
+        "Cache",
+        "SQS"
+      ]
+    },
+    "ticketing": {
+      "title": "Bán vé concert",
+      "pitch": "Hàng chục nghìn fan cùng bấm \"Mua\" đúng giây mở bán: giữ cho hệ thống bán vé đứng vững.",
+      "tags": [
+        "Flash sale",
+        "SQS",
+        "DynamoDB",
+        "WAF"
+      ]
+    },
+    "news-feed": {
+      "title": "News feed mạng xã hội",
+      "pitch": "Một dòng tin được đọc nhiều hơn ghi cả chục lần: cache, read replica và edge giúp ai cũng lướt mượt.",
+      "tags": [
+        "Đọc nhiều",
+        "Read Replica",
+        "ElastiCache",
+        "CloudFront"
+      ]
+    },
+    "health-records": {
+      "title": "Hồ sơ bệnh án điện tử",
+      "pitch": "Xây cổng hồ sơ bệnh án cho chuỗi phòng khám: dữ liệu y tế phải luôn mã hoá, riêng tư và chịu được tấn công.",
+      "tags": [
+        "Bảo mật",
+        "KMS",
+        "S3 private",
+        "WAF",
+        "SQS"
+      ]
+    },
+    "video-streaming": {
+      "title": "Nền tảng video khoá học",
+      "pitch": "Một nền tảng e-learning: video phát mượt cho học viên ở mọi châu lục, video mới được chuyển mã tự động, và hệ thống vẫn chạy khi một Region gặp sự cố.",
+      "tags": [
+        "CloudFront",
+        "SQS + Spot",
+        "Route 53",
+        "Multi-Region"
+      ]
+    },
+    "saas-dr": {
+      "title": "SaaS không được phép sập",
+      "pitch": "Một phần mềm B2B mà khách hàng doanh nghiệp trả tiền để nó luôn chạy, kể cả khi mất một AZ hay cả một Region.",
+      "tags": [
+        "Multi-AZ",
+        "Disaster recovery",
+        "Bảo mật",
+        "Reserved"
+      ]
+    },
+    "iot-telemetry": {
+      "title": "Thu thập dữ liệu IoT",
+      "pitch": "Hàng nghìn cảm biến gửi số đo mỗi giây; hãy ghi hết vào database và vẽ dashboard mà không đánh rơi dữ liệu nào.",
+      "tags": [
+        "DynamoDB",
+        "SQS",
+        "Auto Scaling",
+        "ElastiCache"
+      ]
+    },
+    "game-leaderboard": {
+      "title": "Bảng xếp hạng game",
+      "pitch": "Backend cho một game mobile toàn cầu: bảng xếp hạng nóng, người chơi khắp thế giới, bot tấn công và cả một Region sập.",
+      "tags": [
+        "ElastiCache",
+        "Toàn cầu",
+        "WAF",
+        "Multi-Region",
+        "Auto Scaling"
+      ]
+    },
+    "banking-portal": {
+      "title": "Cổng ngân hàng trực tuyến",
+      "pitch": "Xây cổng ngân hàng vừa tuân thủ quy định bảo mật, vừa chịu được sự cố, tấn công và ngày lương về.",
+      "tags": [
+        "Bảo mật",
+        "Multi-AZ",
+        "WAF",
+        "SQS",
+        "Toàn cầu"
+      ]
+    },
+    "payment-api": {
+      "title": "API thanh toán thẻ",
+      "pitch": "Xây API thanh toán serverless theo chuẩn PCI DSS: mã hoá dữ liệu thẻ, chặn bot thử thẻ và xử lý gian lận bất đồng bộ.",
+      "tags": [
+        "Bảo mật",
+        "Serverless",
+        "WAF",
+        "KMS",
+        "SNS + SQS"
+      ]
+    }
+  },
+  "Rounds": {
+    "first-users": {
+      "title": "Bản beta kín",
+      "story": "Bản beta kín vừa mở cho nhóm người dùng đầu tiên: khoảng 50 yêu cầu mỗi giây, chủ yếu xem trang và lưu dữ liệu.",
+      "concept": "Yêu cầu nào cũng cần một máy chủ (EC2) để chạy code và một database (RDS) để đọc/ghi dữ liệu.",
+      "nudge": "Kéo EC2 và RDS vào, rồi nối Người dùng → EC2 → RDS."
+    },
+    "scale-up": {
+      "title": "Lên báo địa phương",
+      "story": "Một tờ báo nhắc tới ứng dụng của bạn. Lưu lượng tăng lên 350 yêu cầu/giây.",
+      "concept": "Scale dọc (vertical scaling): đổi sang máy mạnh hơn. Nhanh, nhưng có giới hạn và vẫn là điểm chết duy nhất.",
+      "nudge": "Chọn EC2, đổi kích cỡ sang Vừa. RDS cũng cần cỡ Vừa."
+    },
+    "scale-out": {
+      "title": "Lên top App Store",
+      "story": "1.300 yêu cầu/giây. Đến máy mạnh nhất cũng vượt ngân sách.",
+      "concept": "Scale ngang (horizontal scaling): nhiều máy nhỏ đứng sau Application Load Balancer vừa rẻ hơn vừa bền hơn một máy to.",
+      "nudge": "Người dùng → ALB → 3 EC2 cỡ Vừa → RDS cỡ Lớn."
+    },
+    "az-outage": {
+      "title": "Một AZ mất điện",
+      "story": "Mọi thứ đang chạy ổn ở AZ us-east-1a… cho tới hôm nay.",
+      "concept": "Sẵn sàng cao (high availability): trải máy chủ qua ít nhất 2 AZ và bật RDS Multi-AZ để tự chuyển sang bản dự phòng.",
+      "nudge": "2 EC2 đặt ở \"Cả a và b\" sau ALB; bật Multi-AZ cho RDS."
+    },
+    "flash-sale": {
+      "title": "Flash sale 12 giờ trưa",
+      "story": "Bình thường chỉ 220 yêu cầu/giây, nhưng flash sale đẩy lên gấp 3. Trả tiền cho mức đỉnh cả ngày thì lỗ.",
+      "concept": "Auto Scaling Group: tự thêm máy khi tải tăng, bớt máy khi tải giảm. Chỉ trả tiền cho máy đang chạy.",
+      "nudge": "Bật Auto Scaling cho EC2 cỡ Vừa (tối thiểu 1, tối đa 3). RDS cỡ Lớn để chịu giờ cao điểm."
+    },
+    "region-down": {
+      "title": "Cả Region sập",
+      "story": "Sếp hỏi: \"Nếu cả us-east-1 sập thì sao?\" Hôm nay là lúc kiểm chứng câu trả lời.",
+      "concept": "Khôi phục sau thảm hoạ (DR): dựng sẵn một bản ở Region khác (warm standby) và để Route 53 chuyển sang khi health check báo lỗi. Database phải là loại multi-Region có sẵn: Aurora Global Database giữ bản sao ở Region kia và tự failover trong ~1 phút, không cần promote bằng tay như bản sao RDS khác Region.",
+      "nudge": "Người dùng → Route 53 → hai bộ ALB → EC2; bộ thứ hai đặt ở eu-west-1. Dùng một Aurora, bật Aurora Global Database, và nối EC2 ở cả hai Region tới nó."
+    },
+    "cache-it": {
+      "title": "Đọc nhiều, ghi ít",
+      "story": "95% yêu cầu chỉ đọc đi đọc lại cùng một nhóm dữ liệu. Database đang phải gồng mình.",
+      "concept": "Dùng cache: ElastiCache trả phần lớn yêu cầu đọc trong 1–2 ms để database nhỏ lại.",
+      "nudge": "Nối EC2 tới cả ElastiCache và RDS. Cache gánh 85% yêu cầu đọc nên RDS cỡ Vừa là đủ."
+    },
+    "cache-crash": {
+      "title": "Cache sập",
+      "story": "Cache giúp tiết kiệm rất nhiều, nhưng nếu nó chết thì sao?",
+      "concept": "Cache cũng cần sẵn sàng cao: bật bản sao Multi-AZ, hoặc để database đủ sức chịu khi mất cache.",
+      "nudge": "Bật Multi-AZ cho ElastiCache (hoặc thêm Read Replica để gánh yêu cầu đọc)."
+    },
+    "static-files": {
+      "title": "Toàn là ảnh",
+      "story": "Ứng dụng giờ toàn ảnh: 85% trong 4.000 yêu cầu/giây là tải file tĩnh.",
+      "concept": "Đừng bắt máy chủ trả file tĩnh: để S3 lưu trữ và CloudFront phát từ edge.",
+      "nudge": "Người dùng → CloudFront; CloudFront → S3 (file tĩnh) và → ALB → EC2 → RDS (phần động)."
+    },
+    "global-users": {
+      "title": "Người dùng khắp thế giới",
+      "story": "70% người dùng ở châu Âu, trong khi hệ thống đặt ở us-east-1. Mục tiêu: không quá 140 ms.",
+      "concept": "Xa thì chậm: đưa nội dung tới edge (CloudFront) và đi đường backbone của AWS (Global Accelerator).",
+      "nudge": "Đặt CloudFront trước mọi thứ, bật \"Cache cả phản hồi API\", dùng S3 cho file tĩnh."
+    },
+    "background-jobs": {
+      "title": "Gửi email và xuất PDF",
+      "story": "30% yêu cầu là việc nặng: gửi email, xuất hoá đơn PDF. Người dùng phải chờ 400 ms mỗi lần.",
+      "concept": "Xử lý bất đồng bộ: đẩy việc nặng vào SQS, trả lời người dùng ngay, để worker làm sau.",
+      "nudge": "EC2 web → SQS → EC2 worker → RDS. EC2 web vẫn nối RDS để đọc/ghi."
+    },
+    "fan-out": {
+      "title": "Một đơn hàng, nhiều hệ thống",
+      "story": "Mỗi đơn hàng phải tới cả hệ thống email lẫn hệ thống phân tích, và hệ này hỏng không được kéo theo hệ kia.",
+      "concept": "Fan-out: SNS đẩy một message tới nhiều hàng đợi SQS, mỗi hàng đợi có worker riêng.",
+      "nudge": "EC2 → SNS → 2 hàng đợi SQS → mỗi hàng đợi một EC2 worker cỡ Vừa."
+    },
+    "lock-it-down": {
+      "title": "Kiểm toán bảo mật",
+      "story": "Kiểm toán viên mở thiết kế của bạn và nhíu mày: database nối thẳng ra Internet, lại không mã hoá.",
+      "concept": "Phòng thủ nhiều lớp: database trong private subnet, máy chủ đứng sau load balancer, dữ liệu mã hoá bằng KMS.",
+      "nudge": "Xoá đường nối Người dùng → RDS, đặt ALB trước EC2, bật mã hoá cho RDS."
+    },
+    "bot-attack": {
+      "title": "Bot tấn công",
+      "story": "Một botnet bắn yêu cầu rác nhiều gấp 6 lần lưu lượng thật.",
+      "concept": "Chặn từ vòng ngoài: WAF lọc bot và chặn theo tần suất trước khi tới máy chủ. Mua thêm máy chỉ là trả tiền cho kẻ tấn công.",
+      "nudge": "Người dùng → WAF → ALB → EC2 → RDS."
+    },
+    "serverless": {
+      "title": "Dự án phụ, ví mỏng",
+      "story": "Chỉ 20 yêu cầu/giây và ngân sách $12/tháng. Riêng một EC2 + RDS đã vượt.",
+      "concept": "Serverless: API Gateway + Lambda + DynamoDB on-demand, trả theo từng yêu cầu, gần như $0 khi vắng khách.",
+      "nudge": "Người dùng → API Gateway → Lambda → DynamoDB."
+    },
+    "spot-workers": {
+      "title": "Worker giá rẻ",
+      "story": "60% lưu lượng là tác vụ xử lý ảnh. Worker On-Demand vượt ngân sách.",
+      "concept": "Spot rẻ tới 90% nhưng có thể bị thu hồi. Kết hợp SQS: việc nằm chờ trong hàng đợi và được xử lý bù sau.",
+      "nudge": "2 EC2 worker cỡ Lớn, tính giá Spot, nhận việc từ SQS."
+    },
+    "steady-table": {
+      "title": "Lưu lượng đều đặn",
+      "story": "2.000 yêu cầu/giây suốt ngày đêm, gần như không đổi. DynamoDB on-demand tính tiền từng yêu cầu.",
+      "concept": "Lưu lượng dễ đoán → provisioned capacity rẻ hơn on-demand. Lưu lượng khó đoán → on-demand.",
+      "nudge": "Bật Provisioned capacity cho DynamoDB, kích cỡ Lớn."
+    },
+    "reserved": {
+      "title": "Chạy 24/7 cả năm",
+      "story": "Tải ổn định 1.000 yêu cầu/giây và sẽ chạy suốt năm. Ngân sách vừa bị cắt.",
+      "concept": "Cam kết 1–3 năm (Reserved Instances / Savings Plans) giảm tới ~72% cho phần tải nền ổn định.",
+      "nudge": "3 EC2 cỡ Vừa tính giá Reserved; thêm ElastiCache để RDS chỉ cần cỡ Vừa."
+    },
+    "final-boss": {
+      "title": "Ngày ra mắt toàn cầu",
+      "story": "Mọi thứ cùng lúc: người dùng khắp thế giới, ảnh, tác vụ nền, kiểm toán bảo mật, và một AZ sắp sập.",
+      "concept": "Kết hợp tất cả: edge, sẵn sàng cao nhiều AZ, cache, xử lý bất đồng bộ, mã hoá và chi phí hợp lý.",
+      "nudge": "CloudFront (+S3, cache API) → ALB → EC2 (cả a và b, Auto Scaling) → ElastiCache + RDS (Multi-AZ, mã hoá); EC2 → SQS → worker."
+    },
+    "short-mvp": {
+      "title": "Bản đầu tiên",
+      "story": "Vài người bạn dùng thử: 30 lượt/giây, phần lớn là bấm link (đọc), thỉnh thoảng tạo link mới (ghi). Ngân sách chỉ $15/tháng.",
+      "concept": "Lưu lượng thấp và thất thường hợp với serverless: API Gateway + Lambda + DynamoDB on-demand, trả theo từng yêu cầu.",
+      "nudge": "Người dùng → API Gateway → Lambda → DynamoDB. Một EC2 + RDS đã tốn $30."
+    },
+    "short-viral": {
+      "title": "Một link lên top",
+      "story": "Một link được chia sẻ khắp mạng xã hội: 1.200 lượt bấm mỗi giây, mà Lambda trả theo yêu cầu đang đốt tiền. Lượt bấm vào cùng một link trả cùng một kết quả.",
+      "concept": "Kết quả chuyển hướng cache được: CloudFront giữ phản hồi ở edge, phần lớn lượt bấm không tới Lambda nữa.",
+      "nudge": "Đặt CloudFront trước API Gateway và bật \"Cache cả phản hồi API\"."
+    },
+    "short-global": {
+      "title": "Bấm từ khắp nơi",
+      "story": "60% lượt bấm đến từ châu Âu. Người dùng ở xa phải chờ lâu, mục tiêu giờ là dưới 100 ms.",
+      "concept": "CloudFront đã trả phần cache được ở edge. Phần còn lại (link mới, link hiếm) cần Global Accelerator để đi trên mạng backbone AWS thay vì Internet công cộng.",
+      "nudge": "Chèn Global Accelerator giữa CloudFront và API Gateway."
+    },
+    "short-spam": {
+      "title": "Bot tạo link rác",
+      "story": "Một botnet bơm yêu cầu rác gấp 6 lần lưu lượng thật. Lambda và DynamoDB trả theo yêu cầu, nên mỗi yêu cầu rác đều tốn tiền.",
+      "concept": "Chặn bot ở vòng ngoài bằng WAF (rate-based rule) để không phải trả tiền cho lưu lượng tấn công.",
+      "nudge": "Đặt WAF ngay sau Người dùng, trước CloudFront."
+    },
+    "site-1-launch": {
+      "title": "Ra mắt trang",
+      "story": "Trang chỉ có HTML, CSS và ảnh: 300 yêu cầu/giây, 30% khách ở nước ngoài. Ngân sách $8/tháng, mục tiêu dưới 60 ms.",
+      "concept": "Nội dung tĩnh không cần máy chủ: lưu trên S3 và phát qua CloudFront để cache gần người dùng.",
+      "nudge": "Người dùng → CloudFront → S3. Một EC2 nhỏ đã tốn $15."
+    },
+    "site-2-contact": {
+      "title": "Form liên hệ",
+      "story": "Marketing muốn thêm form liên hệ và danh sách bài viết: 400 yêu cầu/giây, 15% là đọc API, 5% là gửi form. Ngân sách $24.",
+      "concept": "Phần động nhỏ và thất thường hợp với serverless: API Gateway + Lambda + DynamoDB, trả theo từng yêu cầu.",
+      "nudge": "Giữ CloudFront → S3, thêm CloudFront → API Gateway → Lambda → DynamoDB."
+    },
+    "site-3-global": {
+      "title": "Khách khắp thế giới",
+      "story": "Chiến dịch quốc tế: 800 yêu cầu/giây, 70% khách ở châu Âu, xa us-east-1. Danh sách bài viết giống nhau cho mọi người. Mục tiêu dưới 55 ms.",
+      "concept": "CloudFront cache được cả phản hồi API đọc nhiều: một nửa lượt đọc được trả ở edge, không phải đi về Region.",
+      "nudge": "Bật \"Cache cả phản hồi API\" trên CloudFront."
+    },
+    "site-4-bots": {
+      "title": "Bot spam form",
+      "story": "Một botnet bơm yêu cầu rác gấp 6 lần lưu lượng thật vào form. Lambda quá tải và API Gateway tính tiền từng yêu cầu rác.",
+      "concept": "AWS WAF với rate-based rule chặn bot ở vòng ngoài, trước khi chúng tới (và được tính tiền ở) các dịch vụ trả theo yêu cầu.",
+      "nudge": "Đặt WAF ngay sau Người dùng, trước CloudFront."
+    },
+    "site-5-encrypt": {
+      "title": "Dữ liệu khách hàng",
+      "story": "Form giờ lưu email và số điện thoại; bộ phận pháp lý yêu cầu mọi dữ liệu phải được mã hoá khi lưu và chỉ code mới được đọc database. 1.000 yêu cầu/giây.",
+      "concept": "Mã hoá at rest bằng KMS: S3 mặc định đã mã hoá, nhưng bảng DynamoDB cũng phải bật. Database chỉ nằm sau Lambda.",
+      "nudge": "Bật mã hoá trên DynamoDB; giữ DynamoDB chỉ nối từ Lambda."
+    },
+    "site-6-squeeze": {
+      "title": "Cắt chi phí",
+      "story": "Lưu lượng đã ổn định ở 1.600 yêu cầu/giây, nhiều lượt đăng ký nhận tin (ghi). Sếp cắt ngân sách xuống $68.",
+      "concept": "Lưu lượng đều và dự đoán được thì DynamoDB provisioned capacity rẻ hơn on-demand, vốn tính tiền từng yêu cầu.",
+      "nudge": "Bật provisioned capacity trên DynamoDB, kích cỡ Nhỏ là đủ."
+    },
+    "notif-1-mvp": {
+      "title": "Bản chạy thử",
+      "story": "40 yêu cầu/giây: xem lịch sử thông báo (đọc), lưu cài đặt (ghi) và 30% là lệnh gửi thông báo. Ngân sách $7, chấp nhận chờ tới 250 ms.",
+      "concept": "Lưu lượng nhỏ thì serverless rẻ nhất: API Gateway + Lambda + DynamoDB, chưa cần máy chủ nào chạy suốt ngày.",
+      "nudge": "Người dùng → API Gateway → Lambda → DynamoDB. Lambda tự gửi thông báo luôn cũng được."
+    },
+    "notif-2-queue": {
+      "title": "Gửi chậm quá",
+      "story": "Các team khác bắt đầu gọi API: 250 yêu cầu/giây. Gửi ngay trong yêu cầu làm mỗi lệnh chờ thêm 400 ms; giờ mục tiêu là dưới 100 ms.",
+      "concept": "Tách việc gửi khỏi yêu cầu: Lambda bỏ lệnh vào SQS rồi trả lời ngay, một worker đọc hàng đợi và gửi sau.",
+      "nudge": "Nối Lambda → SQS → một EC2 worker kích cỡ Vừa."
+    },
+    "notif-3-fanout": {
+      "title": "Ba kênh gửi",
+      "story": "Mỗi lệnh giờ phải gửi qua cả push, email và SMS. Một kênh chậm không được làm chậm kênh khác, và không lệnh nào được bỏ sót. 300 yêu cầu/giây.",
+      "concept": "SNS fan-out: Lambda gửi một tin tới topic, SNS sao chép vào ba hàng đợi SQS, mỗi kênh một worker riêng.",
+      "nudge": "Lambda → SNS → ba SQS (Push, Email, SMS), mỗi SQS một EC2 worker kích cỡ Vừa."
+    },
+    "notif-4-sale": {
+      "title": "Flash sale",
+      "story": "Một khách hàng lớn chạy flash sale: lưu lượng gấp 3 trong gần một phần ba ngày. Mọi thông báo vẫn phải được gửi hết trước cuối ngày.",
+      "concept": "SQS hấp thụ đợt tăng đột biến; Auto Scaling cho nhóm worker thêm máy khi bận để xả kịp hàng đợi.",
+      "nudge": "Bật Auto Scaling cho cả ba EC2 worker."
+    },
+    "notif-5-lambda": {
+      "title": "Trả theo lượt gửi",
+      "story": "Ngoài flash sale, worker EC2 ngồi chơi phần lớn thời gian. Ngân sách bị cắt còn $95.",
+      "concept": "Worker chỉ bận theo đợt hợp với Lambda: SQS kích hoạt Lambda, tự co giãn và chỉ trả tiền cho từng tin được xử lý.",
+      "nudge": "Thay ba EC2 worker bằng ba Lambda đọc từ ba hàng đợi SQS."
+    },
+    "notif-6-encrypt": {
+      "title": "Email và số điện thoại",
+      "story": "Tin nhắn trong hàng đợi chứa email và số điện thoại của khách; kiểm toán yêu cầu mọi dữ liệu phải được mã hoá khi lưu. Lưu lượng lên 450 yêu cầu/giây.",
+      "concept": "Mã hoá at rest bằng KMS cho mọi nơi lưu dữ liệu: cả hàng đợi SQS lẫn bảng DynamoDB.",
+      "nudge": "Bật mã hoá trên DynamoDB và cả ba SQS."
+    },
+    "sapi-launch": {
+      "title": "Ngày ra mắt",
+      "story": "API vừa lên sóng: khoảng 80 yêu cầu/giây, 70% đọc và 30% ghi. Tiền còn ít, ngân sách chỉ $15/tháng.",
+      "concept": "Lưu lượng nhỏ và chưa ổn định hợp với serverless: API Gateway + Lambda + DynamoDB on-demand chỉ tính tiền theo yêu cầu, không trả cho máy chủ ngồi chờ.",
+      "nudge": "Người dùng → API Gateway → Lambda → DynamoDB. Một EC2 + RDS kích cỡ Nhỏ đã tốn $30."
+    },
+    "sapi-growth": {
+      "title": "Lưu lượng ổn định",
+      "story": "Sản phẩm bắt đầu có khách: 900 yêu cầu/giây suốt ngày đêm. Hoá đơn serverless đã vượt $130 trong khi ngân sách là $120.",
+      "concept": "Tiền theo yêu cầu tăng tuyến tính với lưu lượng. Khi tải cao và đều, EC2 sau ALB cùng DynamoDB provisioned (trả cố định) rẻ hơn Lambda và DynamoDB on-demand.",
+      "nudge": "Thay API Gateway + Lambda bằng ALB → một EC2 kích cỡ Lớn, và bật provisioned cho DynamoDB (kích cỡ Vừa)."
+    },
+    "sapi-az": {
+      "title": "Mất một AZ",
+      "story": "Khách doanh nghiệp đòi cam kết uptime. Đúng tuần đó một AZ gặp sự cố và máy chủ duy nhất nằm trong AZ ấy.",
+      "concept": "Multi-AZ: chạy ít nhất hai máy chủ ở hai AZ sau ALB. Mỗi AZ phải tự gánh được toàn bộ 900 yêu cầu/giây khi AZ kia mất. DynamoDB vốn đã nhân bản qua nhiều AZ.",
+      "nudge": "Đặt EC2 thành 2 máy kích cỡ Lớn, AZ \"Cả a và b\"."
+    },
+    "sapi-cache": {
+      "title": "Đọc nhiều hơn ghi",
+      "story": "Có thêm ứng dụng di động: 2.000 yêu cầu/giây, 90% là đọc lại cùng dữ liệu. Bảng DynamoDB kích cỡ Vừa quá tải, lên kích cỡ Lớn thì vượt ngân sách $200.",
+      "concept": "ElastiCache trước database giữ dữ liệu nóng trong bộ nhớ: khoảng 85% lượt đọc không chạm tới DynamoDB, nên bảng nhỏ vẫn đủ.",
+      "nudge": "Thêm ElastiCache (kích cỡ Nhỏ) và nối EC2 → ElastiCache, giữ cạnh EC2 → DynamoDB cho lượt ghi và cache miss."
+    },
+    "sapi-reserved": {
+      "title": "Cắt hoá đơn",
+      "story": "Nhà đầu tư muốn hoá đơn dưới $145/tháng. Tải vẫn 2.000 yêu cầu/giây, đều đặn 24/7. Ai đó đề xuất Spot, nhưng AWS có thể thu hồi Spot bất cứ lúc nào.",
+      "concept": "Tải nền ổn định và chạy lâu dài nên dùng Reserved Instances (hoặc Savings Plans): rẻ hơn khoảng 40% mà không bị thu hồi như Spot. Spot chỉ dành cho việc chịu được gián đoạn.",
+      "nudge": "Đổi kiểu giá của EC2 sang Reserved. Đừng dùng Spot cho máy chủ API."
+    },
+    "sapi-peak": {
+      "title": "Chiến dịch khuyến mãi",
+      "story": "Ngày thường chỉ 1.000 yêu cầu/giây, nhưng chiến dịch khuyến mãi đẩy lưu lượng lên gấp ba trong vài giờ. Ngân sách $195.",
+      "concept": "Kết hợp mô hình giá: Reserved cho phần tải nền luôn có, Auto Scaling thêm máy on-demand cho đỉnh ngắn. Mua Reserved cho cả đỉnh là trả tiền cho máy ngồi không.",
+      "nudge": "Giữ 2 máy Reserved làm nền và bật Auto Scaling cho EC2 (tối đa 4)."
+    },
+    "vault-share": {
+      "title": "Chia sẻ mà không public",
+      "story": "Công ty cần nơi chia sẻ hợp đồng và báo cáo: 400 yêu cầu/giây, 70% là tải tệp, phần còn lại xem danh sách và quyền truy cập. Năm ngoái một bucket để public làm lộ hợp đồng khách hàng: lần này không bucket nào được mở ra Internet.",
+      "concept": "S3 bật Block Public Access ở cấp tài khoản, mã hoá SSE-KMS. CloudFront đọc bucket qua Origin Access Control; API Gateway + Lambda kiểm tra quyền rồi cấp signed URL ngắn hạn. Nhân viên đăng nhập qua Cognito hoặc IAM Identity Center thay vì chia sẻ khoá.",
+      "nudge": "Người dùng → CloudFront; CloudFront → S3 cho tệp và CloudFront → API Gateway → Lambda → DynamoDB (bật mã hoá)."
+    },
+    "vault-scan": {
+      "title": "Quét virus tệp tải lên",
+      "story": "Nhân viên bắt đầu tải tệp lên: 15% yêu cầu là tệp mới cần quét virus, mỗi lần quét mất vài trăm ms. Quét ngay trong yêu cầu làm cả trang chậm, mà tệp chưa quét thì không được chia sẻ.",
+      "concept": "Lambda lưu tệp ở trạng thái chờ và đẩy job vào SQS bật mã hoá; một Lambda khác quét rồi đánh dấu sạch. Trên AWS còn có GuardDuty Malware Protection for S3 tự quét tệp mới mà không cần tự viết.",
+      "nudge": "Thêm SQS (bật mã hoá) nối từ Lambda, và một Lambda thứ hai đọc từ SQS."
+    },
+    "vault-scrape": {
+      "title": "Bot cào tài liệu",
+      "story": "Một botnet dùng tài khoản bị lộ để cào tài liệu hàng loạt, gửi yêu cầu gấp 6 lần lưu lượng thật. Lambda bị chiếm hết, nhân viên thật không mở được tệp. Bảo mật yêu cầu mọi yêu cầu phải qua WAF.",
+      "concept": "WAF gắn vào CloudFront chặn ở edge, trước khi tới API: rate-based rule, Bot Control, và geo match nếu công ty chỉ làm việc ở vài nước. GuardDuty phát hiện thông tin đăng nhập bị dùng bất thường để khoá tài khoản kịp thời.",
+      "nudge": "Đặt WAF giữa Người dùng và CloudFront."
+    },
+    "vault-region": {
+      "title": "Cả Region gặp sự cố",
+      "story": "us-east-1 gặp sự cố lớn vài giờ. Hợp đồng vẫn phải mở được, và văn phòng châu Âu (40% người dùng) cần nhanh. Bản sao ở Region khác cũng phải giữ đúng các quy tắc bảo mật như bản gốc.",
+      "concept": "S3 Cross-Region Replication sang eu-west-1, bucket đích cũng bật mã hoá và Block Public Access; dùng KMS multi-Region key để hai Region giải mã bằng cùng một khoá. DynamoDB global table giữ dữ liệu ở cả hai Region; Route 53 đưa yêu cầu sang Region còn sống.",
+      "nudge": "Thêm S3 thứ hai ở eu-west-1 sau CloudFront; CloudFront → Route 53 → API Gateway + Lambda + SQS ở mỗi Region, và bật Global cho DynamoDB."
+    },
+    "photo-1-launch": {
+      "title": "Xem ảnh nhanh",
+      "story": "600 yêu cầu/giây, 75% là tải ảnh, phần còn lại là đọc feed và lưu ảnh mới (ghi). 20% người dùng ở châu Âu. Mục tiêu dưới 80 ms.",
+      "concept": "Ảnh là nội dung tĩnh: để trên S3 và phát qua CloudFront. Máy chủ ứng dụng chỉ lo API.",
+      "nudge": "CloudFront → S3 cho ảnh, CloudFront → ALB → EC2 → RDS cho API."
+    },
+    "photo-2-thumbs": {
+      "title": "Tạo ảnh thu nhỏ",
+      "story": "Mỗi ảnh mới cần tạo ảnh thu nhỏ: 10% yêu cầu là việc nặng. Làm ngay trong máy chủ ứng dụng thì người dùng chờ thêm 400 ms. 800 yêu cầu/giây, mục tiêu dưới 75 ms.",
+      "concept": "Tách việc nặng khỏi yêu cầu: máy chủ đẩy việc vào SQS và trả lời ngay, worker riêng xử lý sau.",
+      "nudge": "Nối EC2 ứng dụng → SQS → một EC2 worker kích cỡ Vừa."
+    },
+    "photo-3-fanout": {
+      "title": "Báo cho người theo dõi",
+      "story": "Khi có ảnh mới, ngoài tạo ảnh thu nhỏ còn phải cập nhật feed của mọi người theo dõi. Hai việc độc lập, không việc nào được chờ việc kia. 1.000 yêu cầu/giây.",
+      "concept": "SNS fan-out: một tin nhắn gửi tới topic được sao chép vào nhiều hàng đợi SQS, mỗi hàng đợi có worker riêng.",
+      "nudge": "EC2 ứng dụng → SNS → hai SQS (ảnh thu nhỏ, feed), mỗi SQS một EC2 worker."
+    },
+    "photo-4-spot": {
+      "title": "Worker giá rẻ",
+      "story": "Lưu lượng giữ nguyên nhưng ngân sách bị cắt còn $130. Worker xử lý việc từ hàng đợi, chậm vài giây cũng không sao.",
+      "concept": "Việc chạy nền, chịu được gián đoạn là chỗ lý tưởng cho Spot Instances: rẻ hơn on-demand tới 70%.",
+      "nudge": "Đổi cả hai EC2 worker sang giá Spot."
+    },
+    "photo-5-interrupt": {
+      "title": "AWS lấy lại Spot",
+      "story": "Giữa ngày, AWS thu hồi toàn bộ máy Spot trong một lúc. Việc dồn lại trong hàng đợi và phải xử lý hết trước cuối ngày.",
+      "concept": "Spot có thể bị thu hồi bất cứ lúc nào. SQS giữ việc an toàn, nhưng worker cần dư công suất để xả hết phần tồn đọng khi quay lại.",
+      "nudge": "Tăng worker Spot lên kích cỡ Lớn để có dư công suất xả hàng đợi."
+    },
+    "photo-6-viral": {
+      "title": "Ảnh lan truyền",
+      "story": "Một tấm ảnh lan khắp mạng: lưu lượng tăng dần từ 1.000 lên 4.000 yêu cầu/giây trong ngày. Feed đọc nhiều hơn hẳn, việc nền cũng tăng theo.",
+      "concept": "Auto Scaling cho cả máy chủ ứng dụng lẫn worker, ElastiCache và CloudFront cache để database không gánh hết lượt đọc.",
+      "nudge": "Bật Auto Scaling cho EC2 ứng dụng và worker, thêm ElastiCache sau EC2 ứng dụng, bật \"Cache cả phản hồi API\"."
+    },
+    "shop-1-mvp": {
+      "title": "Mở cửa hàng",
+      "story": "Shop đồ thủ công mở bán: 250 yêu cầu/giây, 80% là xem sản phẩm (đọc), 20% là thêm vào giỏ và đặt hàng (ghi). Ngân sách $70/tháng.",
+      "concept": "Kiến trúc cơ bản: máy chủ EC2 chạy code, RDS lưu dữ liệu. Chọn kích cỡ theo tải, và nhớ rằng mỗi lượt ghi tốn RDS gấp 3 lượt đọc.",
+      "nudge": "Người dùng → EC2 → RDS. Kích cỡ Nhỏ không đủ cho cả hai: thử kích cỡ Vừa."
+    },
+    "shop-2-scale-out": {
+      "title": "Thêm máy chủ",
+      "story": "Shop lên báo: 1.200 yêu cầu/giây. Một máy chủ Lớn chịu đúng 1.200 đơn vị/giây, chưa tính lúc lưu lượng dao động. Ngân sách $178/tháng.",
+      "concept": "Scale ngang thay vì scale dọc: đặt ALB phía trước và chia tải cho nhiều EC2 nhỏ hơn. Vài máy Vừa rẻ hơn một máy Rất lớn và không còn là một điểm lỗi duy nhất.",
+      "nudge": "Người dùng → ALB → EC2 cỡ Vừa (3 máy) → RDS cỡ Lớn."
+    },
+    "shop-3-az-outage": {
+      "title": "Mất một AZ",
+      "story": "Vẫn 1.200 yêu cầu/giây, nhưng hôm nay AZ us-east-1a mất điện gần nửa buổi, mà mọi máy chủ lẫn database đều nằm ở AZ a. Ngân sách $320/tháng.",
+      "concept": "Sẵn sàng cao: trải EC2 qua 2 AZ trong một Auto Scaling Group để nhóm tự thay máy chết bằng máy mới ở AZ còn sống, và bật Multi-AZ cho RDS để tự chuyển sang bản dự phòng.",
+      "nudge": "EC2 cỡ Vừa, 4 máy, AZ \"Cả a và b\", bật Auto Scaling Group (tối đa 4). RDS cỡ Lớn bật Multi-AZ."
+    },
+    "shop-4-catalog-cache": {
+      "title": "Cache danh mục sản phẩm",
+      "story": "Mùa mua sắm: 2.000 yêu cầu/giây, 95% là xem danh mục và trang sản phẩm, những dữ liệu được đọc đi đọc lại. Để RDS gánh hết thì cần cỡ Rất lớn có Multi-AZ, vượt xa ngân sách $230/tháng.",
+      "concept": "Dữ liệu đọc nhiều, ít thay đổi nên được cache: ElastiCache trả ~85% lượt đọc chỉ trong vài ms, RDS chỉ còn nhận phần trượt cache và lượt ghi.",
+      "nudge": "Nối EC2 → ElastiCache và giữ EC2 → RDS. RDS giờ chỉ cần cỡ Vừa; EC2 dùng 2 máy cỡ Lớn."
+    },
+    "shop-5-flash-sale": {
+      "title": "Flash sale nửa đêm",
+      "story": "Bình thường 2.000 yêu cầu/giây; flash sale nửa đêm đẩy lưu lượng lên gấp 3 trong khoảng một phần ba buổi. Giữ đủ máy cho mức đỉnh suốt ngày sẽ vượt ngân sách $480/tháng.",
+      "concept": "Auto Scaling Group theo target tracking: thêm máy khi tải vượt ~60%, bớt máy khi sale kết thúc. Cache và database không tự scale nên phải đủ lớn cho giờ cao điểm.",
+      "nudge": "EC2 cỡ Lớn, tối thiểu 3, tối đa 8, bật Auto Scaling Group. ElastiCache cỡ Vừa, RDS cỡ Lớn."
+    },
+    "shop-6-launch-day": {
+      "title": "Ngày ra mắt",
+      "story": "Ra mắt bộ sưu tập mới: 2.000 yêu cầu/giây, flash sale gấp 3, và 20% yêu cầu là đặt hàng (thanh toán, trừ kho, gửi email), mỗi đơn mất 400 ms nếu xử lý ngay. Mục tiêu dưới 150 ms, và mọi đơn phải xử lý xong trước khi hết buổi.",
+      "concept": "Tách xử lý đơn hàng khỏi luồng web: web đẩy đơn vào SQS rồi trả lời ngay, worker lấy đơn ra xử lý theo nhịp của mình. Hàng đợi hấp thụ đỉnh sale nên worker không cần lớn bằng mức đỉnh.",
+      "nudge": "EC2 web → SQS → EC2 worker (một máy cỡ Rất lớn đủ xả hàng đợi sau đợt sale). Web vẫn nối ElastiCache và RDS."
+    },
+    "tix-1-on-sale": {
+      "title": "Mở bán show nhỏ",
+      "story": "Một show 2.000 chỗ: bình thường 200 yêu cầu/giây (60% xem chỗ, 40% đặt vé), lúc mở bán tăng gấp 3. Ngân sách $140/tháng.",
+      "concept": "Auto Scaling Group giúp tầng web theo kịp đợt mở bán rồi thu lại. Database không tự scale nên phải đủ lớn cho mức đỉnh, nhất là khi mỗi lượt ghi tốn RDS gấp 3 lượt đọc.",
+      "nudge": "Người dùng → ALB → EC2 cỡ Vừa (bật Auto Scaling Group, tối đa 4) → RDS cỡ Lớn."
+    },
+    "tix-2-write-behind": {
+      "title": "Xếp hàng lượt đặt vé",
+      "story": "Show sân vận động: 900 yêu cầu/giây, 60% là đặt vé. Lúc mở bán, lượt ghi tăng gấp 3 và vượt sức cả RDS cỡ Rất lớn. Nhưng tính trung bình cả buổi thì RDS Rất lớn vẫn ghi kịp. Ngân sách $460/tháng.",
+      "concept": "Write-behind: máy chủ web không ghi thẳng vào database mà đẩy lượt đặt vé vào SQS, worker ghi vào RDS với tốc độ đều. Lượt đọc đi qua ElastiCache, chỉ phần trượt cache mới xuống RDS. Hàng đợi biến đỉnh nhọn thành dòng chảy đều.",
+      "nudge": "Bỏ cạnh EC2 web → RDS. Nối web → ElastiCache → RDS (đọc) và web → SQS → EC2 worker (cỡ Vừa, 3 máy) → RDS (ghi)."
+    },
+    "tix-3-dynamodb": {
+      "title": "Chuyển sang DynamoDB",
+      "story": "Tour diễn toàn quốc: 2.000 yêu cầu/giây, vẫn 60% đặt vé, mở bán gấp 3. Dù có hàng đợi, tốc độ ghi trung bình đã vượt sức RDS lớn nhất. Ngân sách $650/tháng.",
+      "concept": "DynamoDB scale ngang gần như không giới hạn. Chọn chế độ capacity theo dạng tải: On-demand cho tải khó đoán, Provisioned rẻ hơn nhiều khi tải đều, và worker đứng sau hàng đợi chính là tải đều.",
+      "nudge": "Thay RDS bằng DynamoDB, bật Provisioned capacity cỡ Lớn. Worker: một máy cỡ Rất lớn. EC2 web cỡ Lớn, tối thiểu 2, tối đa 8."
+    },
+    "tix-4-bots": {
+      "title": "Bot gom vé",
+      "story": "Phe vé dùng botnet bắn yêu cầu gấp 6 lần lưu lượng thật để gom vé. Máy chủ web bị nhấn chìm và fan thật không mua được.",
+      "concept": "AWS WAF với rate-based rule chặn bot ở vòng ngoài, trước khi chúng tới ALB và máy chủ. Rẻ hơn nhiều so với thêm máy để gánh lưu lượng rác.",
+      "nudge": "Đặt WAF ngay sau Người dùng, trước ALB."
+    },
+    "tix-5-e-tickets": {
+      "title": "Gửi vé điện tử",
+      "story": "Mỗi vé bán ra cần tạo vé điện tử có mã QR và gửi email: 40% yêu cầu giờ là việc nặng đi qua hàng đợi. Một worker không xả kịp, mà mọi vé phải được gửi trước khi hết buổi.",
+      "concept": "Worker cũng cần scale: mỗi việc nặng tốn worker gấp 3 một lượt ghi. Auto Scaling Group cho worker tự thêm máy khi hàng đợi dồn lại (thực tế thường scale theo số message trong SQS).",
+      "nudge": "Đổi worker sang cỡ Lớn, tối thiểu 2, tối đa 4, bật Auto Scaling Group."
+    },
+    "tix-6-world-tour": {
+      "title": "World tour",
+      "story": "Tour vòng quanh thế giới: 2.000 yêu cầu/giây, 60% fan ở châu Âu, mở bán gấp 3. Một phần tư yêu cầu là tải sơ đồ chỗ ngồi (file tĩnh). Mục tiêu dưới 100 ms.",
+      "concept": "CloudFront trả file tĩnh từ S3 ngay ở edge gần fan và đưa phần còn lại về origin qua mạng AWS nhanh hơn. Máy chủ web không phải phục vụ file tĩnh nữa.",
+      "nudge": "Thêm CloudFront sau WAF: nối CloudFront → S3 (sơ đồ chỗ ngồi) và CloudFront → ALB."
+    },
+    "feed-1-launch": {
+      "title": "Ra mắt dòng tin",
+      "story": "800 yêu cầu/giây: 90% là lướt dòng tin (đọc), 10% là đăng bài và thả tim (ghi). Ngân sách $150/tháng.",
+      "concept": "Ứng dụng đọc nhiều: tầng web scale ngang sau ALB, còn database phải đủ sức cho cả lượt đọc lẫn lượt ghi (mỗi lượt ghi tốn RDS gấp 3 lượt đọc).",
+      "nudge": "Người dùng → ALB → EC2 cỡ Vừa (2 máy) → RDS cỡ Lớn."
+    },
+    "feed-2-read-replica": {
+      "title": "Read replica gánh lượt đọc",
+      "story": "Vẫn 800 yêu cầu/giây, nhưng một AZ sắp mất điện gần nửa buổi. Bật Multi-AZ cho RDS cỡ Lớn thì giá ×2, vượt ngân sách $275/tháng, mà bản dự phòng Multi-AZ không phục vụ lượt đọc nào.",
+      "concept": "Multi-AZ để sống sót, read replica để scale đọc: giữ RDS chính cỡ Vừa có Multi-AZ và thêm một Read Replica ở AZ b gánh bớt lượt đọc. Replica không nhân đôi giá như Multi-AZ.",
+      "nudge": "EC2 cỡ Vừa, 4 máy, \"Cả a và b\", bật Auto Scaling Group (tối đa 4). RDS cỡ Vừa bật Multi-AZ, thêm Read Replica cỡ Vừa ở AZ b; nối EC2 tới cả hai."
+    },
+    "feed-3-cache": {
+      "title": "Cache dòng tin",
+      "story": "Ứng dụng nổi lên: 2.500 yêu cầu/giây, 95% là đọc. Thêm replica cỡ Lớn để gánh hết lượt đọc sẽ vượt ngân sách $330/tháng.",
+      "concept": "Dòng tin của mỗi người được đọc lại rất nhiều lần: ElastiCache trả ~85% lượt đọc, database và replica chỉ nhận phần trượt cache và lượt ghi. Cache rẻ hơn nhiều so với thêm replica.",
+      "nudge": "Thêm ElastiCache cỡ Nhỏ, nối EC2 → ElastiCache. EC2 đổi sang cỡ Lớn, 3 máy."
+    },
+    "feed-4-cache-crash": {
+      "title": "Cache sập",
+      "story": "Node ElastiCache duy nhất chết giữa buổi. Toàn bộ 2.500 yêu cầu/giây đổ thẳng xuống database và replica, vốn chỉ được tính cho phần trượt cache.",
+      "concept": "Cache cũng là một điểm lỗi. ElastiCache Multi-AZ giữ một bản sao ở AZ khác để thay thế ngay khi node chính chết, rẻ hơn nhiều so với một database đủ lớn để gánh mọi lượt đọc.",
+      "nudge": "Bật Multi-AZ cho ElastiCache."
+    },
+    "feed-5-viral": {
+      "title": "Một bài đăng lan truyền",
+      "story": "Một bài đăng lan truyền: lưu lượng tăng đều từ 1.500 lên 6.000 yêu cầu/giây trong suốt buổi. Đội máy cố định không theo kịp, còn chuẩn bị sẵn cho mức cuối buổi thì quá phí. Ngân sách $680/tháng.",
+      "concept": "Auto Scaling giúp tầng web theo kịp lưu lượng tăng dần. Cache và database không tự scale: nâng ElastiCache lên cỡ Vừa và RDS chính lên cỡ Lớn để chịu được mức cuối buổi.",
+      "nudge": "EC2 cỡ Lớn, tối thiểu 2, tối đa 8, bật Auto Scaling Group. ElastiCache cỡ Vừa (Multi-AZ), RDS cỡ Lớn (Multi-AZ)."
+    },
+    "feed-6-global": {
+      "title": "Người đọc khắp thế giới",
+      "story": "Ứng dụng ra quốc tế: 3.000 yêu cầu/giây, 60% người dùng ở châu Âu. Họ phải chờ quá lâu: mục tiêu giờ là dưới 120 ms, và ngân sách chỉ còn $550/tháng.",
+      "concept": "CloudFront cache cả phản hồi API: dòng tin nóng được trả ngay ở edge gần người đọc, phần còn lại đi về origin qua mạng AWS. Nhanh hơn cho người ở xa, và EC2 bớt tải nên cần ít máy hơn.",
+      "nudge": "Đặt CloudFront giữa Người dùng và ALB, bật \"Cache cả phản hồi API\"."
+    },
+    "ehr-private": {
+      "title": "Dữ liệu y tế là nhạy cảm",
+      "story": "Chuỗi phòng khám đưa hồ sơ bệnh án lên mạng: 300 yêu cầu/giây, 70% bác sĩ và bệnh nhân xem hồ sơ, 30% cập nhật. Quy định về dữ liệu y tế bắt buộc: mã hoá mọi dữ liệu, database không lộ ra ngoài, không máy chủ nào nhận kết nối thẳng từ Internet.",
+      "concept": "Ba lớp tách biệt trong VPC: ALB ở subnet public, EC2 và RDS ở subnet private. Security group của RDS chỉ nhận cổng 5432 từ security group của EC2. RDS bật mã hoá at rest bằng khoá KMS, và phải bật lúc tạo: không bật thêm được cho database đang chạy.",
+      "nudge": "Người dùng → ALB → EC2 (kích cỡ Vừa) → RDS (kích cỡ Vừa), bật mã hoá cho RDS."
+    },
+    "ehr-scans": {
+      "title": "Ảnh chụp X-quang",
+      "story": "Bệnh nhân giờ xem được ảnh X-quang và kết quả xét nghiệm: lưu lượng lên 700 yêu cầu/giây, gần một nửa là tải tệp. Phục vụ tệp từ EC2 làm máy chủ quá tải. Bộ phận bảo mật cấm bucket public: ai có link cũng tải được là lộ dữ liệu bệnh nhân.",
+      "concept": "Lưu tệp trong S3 với Block Public Access bật, rồi phục vụ qua CloudFront dùng Origin Access Control (OAC): bucket policy chỉ cho CloudFront đọc. Muốn chỉ đúng bệnh nhân tải được, ứng dụng cấp signed URL hoặc signed cookie có hạn dùng ngắn.",
+      "nudge": "Người dùng → CloudFront; CloudFront → S3 cho tệp và CloudFront → ALB cho phần còn lại."
+    },
+    "ehr-cache": {
+      "title": "Bác sĩ cần tra cứu nhanh",
+      "story": "Trong phòng khám, bác sĩ mở hồ sơ liên tục: 900 yêu cầu/giây, phần lớn là đọc lại cùng một hồ sơ. RDS không theo kịp và mục tiêu độ trễ hạ xuống 70 ms. Dữ liệu y tế nằm trong cache cũng vẫn là dữ liệu y tế.",
+      "concept": "ElastiCache đỡ phần đọc lặp lại cho RDS. Bật encryption at rest và in-transit (TLS) cho cache, thêm AUTH token hoặc user RBAC của Redis, và đặt cache trong subnet private chỉ EC2 kết nối được.",
+      "nudge": "Thêm ElastiCache nối từ EC2 và bật mã hoá cho nó."
+    },
+    "ehr-stuffing": {
+      "title": "Dò mật khẩu hàng loạt",
+      "story": "Kẻ tấn công thử hàng triệu cặp email/mật khẩu bị lộ từ trang khác (credential stuffing), dội vào cổng gấp 6 lần lưu lượng thật. Kiểm toán cũng yêu cầu mọi yêu cầu phải qua tường lửa ứng dụng trước khi tới máy chủ.",
+      "concept": "Gắn AWS WAF vào CloudFront: rate-based rule giới hạn số lần đăng nhập mỗi IP, managed rule Account Takeover Prevention và Bot Control chặn bot. Shield Standard tự bảo vệ tầng mạng; Shield Advanced thêm đội ứng cứu DDoS và bảo vệ chi phí.",
+      "nudge": "Đặt WAF giữa Người dùng và CloudFront."
+    },
+    "ehr-audit": {
+      "title": "Nhật ký truy cập hồ sơ",
+      "story": "Luật yêu cầu ghi lại ai đã xem hồ sơ nào và gửi báo cáo truy cập cho bệnh nhân khi họ hỏi: 15% yêu cầu là tạo báo cáo, mỗi báo cáo mất vài trăm ms. Không được mất báo cáo nào, và hàng đợi cũng chứa dữ liệu bệnh nhân.",
+      "concept": "Đẩy việc tạo báo cáo vào SQS bật SSE-KMS, một worker riêng xử lý. CloudTrail ghi lại mọi lời gọi API vào AWS; bật CloudTrail log file validation và lưu log vào S3 có Object Lock để không ai sửa được.",
+      "nudge": "Thêm SQS (bật mã hoá) nối từ EC2 web, và một EC2 worker kích cỡ Vừa đọc từ SQS."
+    },
+    "vid-1-launch": {
+      "title": "Ra mắt khoá học đầu tiên",
+      "story": "2.000 yêu cầu/giây, 85% là đoạn video và ảnh tĩnh, 12% xem danh sách bài học, 3% lưu tiến độ. Một nửa học viên ở châu Âu, xa us-east-1. Mục tiêu dưới 110 ms, ngân sách $115/tháng.",
+      "concept": "Nội dung tĩnh nằm trên S3 và được CloudFront phát từ edge gần học viên: máy chủ không phải gánh video, người ở xa không phải chờ thêm ~150 ms.",
+      "nudge": "Người dùng → CloudFront. CloudFront → S3 cho video, và CloudFront → ALB → EC2 → RDS cho phần còn lại."
+    },
+    "vid-2-transcode": {
+      "title": "Giảng viên tải video lên",
+      "story": "Lưu lượng lên 2.500 yêu cầu/giây và 5% là video mới cần chuyển mã sang nhiều độ phân giải. Chuyển mã ngay trong máy chủ web làm học viên chờ thêm 400 ms và tốn gấp ba sức xử lý. Mọi job phải được xử lý xong trong vòng chơi.",
+      "concept": "Tách việc nặng ra khỏi luồng web: máy chủ đẩy job vào SQS rồi trả lời ngay, một nhóm worker riêng lấy job ra chuyển mã.",
+      "nudge": "Nối máy chủ web → SQS → một EC2 worker riêng (kích cỡ Vừa là đủ)."
+    },
+    "vid-3-spot": {
+      "title": "Cắt chi phí chuyển mã",
+      "story": "Ngân sách giảm còn $135/tháng. Chuyển mã không gấp, chậm vài phút cũng được, nhưng AWS có thể thu hồi máy Spot giữa chừng. Hàng đợi vẫn phải trống khi hết vòng.",
+      "concept": "Worker đọc từ hàng đợi là việc hợp với Spot (rẻ hơn ~70%): khi máy bị thu hồi, job vẫn nằm an toàn trong SQS. Chỉ cần đủ dư sức để xử lý bù phần tồn sau đó.",
+      "nudge": "Đổi worker sang Spot và tăng lên kích cỡ Lớn để kịp xử lý phần tồn sau khi bị thu hồi."
+    },
+    "vid-4-catalog": {
+      "title": "Mùa tuyển sinh",
+      "story": "4.000 yêu cầu/giây và học viên lướt danh mục khoá học nhiều hơn: 20% là yêu cầu đọc. RDS và máy chủ web quá tải, mục tiêu siết xuống 100 ms, ngân sách $200/tháng.",
+      "concept": "Danh mục khoá học ai xem cũng giống nhau: cache ở edge bằng CloudFront và cache trong Region bằng ElastiCache để phần lớn yêu cầu đọc không chạm tới database.",
+      "nudge": "Bật \"Cache cả phản hồi API\" trên CloudFront, thêm ElastiCache cạnh RDS, và chạy 2 máy chủ web kích cỡ Vừa."
+    },
+    "vid-5-region": {
+      "title": "Cả Region sập",
+      "story": "us-east-1 mất điện trong gần nửa vòng chơi. S3, ALB, EC2 và RDS ở đó đều chết, CloudFront không còn nơi nào để lấy nội dung. Học viên ở châu Âu vẫn chiếm một nửa. Ngân sách $330/tháng.",
+      "concept": "Dựng một stack thứ hai ở eu-west-1 (S3, ALB, EC2, database) và đặt Route 53 sau CloudFront: health check chuyển sang Region còn sống, còn latency routing đưa học viên châu Âu về Region gần họ.",
+      "nudge": "CloudFront → Route 53 → S3 + ALB ở cả hai Region. Ở eu-west-1: ALB → 2 EC2 Vừa. Thay RDS bằng Aurora Nhỏ, bật Aurora Global Database và nối EC2 ở cả hai Region tới nó."
+    },
+    "vid-6-sale": {
+      "title": "Ngày hội giảm giá",
+      "story": "Đợt giảm giá cuối năm làm lưu lượng tăng gấp ba trong vài phút giữa vòng chơi, ở cả hai Region. Giữ đủ máy cho đỉnh cả ngày thì vượt ngân sách $440/tháng.",
+      "concept": "Auto Scaling Group thêm máy khi tải tăng và bớt máy khi hết đợt, nên chỉ trả cho đỉnh lúc nó xảy ra.",
+      "nudge": "Bật Auto Scaling Group (tối đa 5 máy) cho máy chủ web ở cả hai Region."
+    },
+    "dr-1-launch": {
+      "title": "Khách hàng đầu tiên",
+      "story": "Ba công ty đầu tiên dùng thử: 300 yêu cầu/giây, 80% đọc dashboard, 20% ghi dữ liệu. Ngân sách $90/tháng.",
+      "concept": "Kiến trúc ba tầng cơ bản: ALB đứng trước EC2, dữ liệu nằm trong RDS. ALB là điểm vào ổn định để sau này thêm máy phía sau.",
+      "nudge": "Người dùng → ALB → EC2 (Vừa) → RDS (Vừa). RDS Nhỏ không chịu nổi phần ghi."
+    },
+    "dr-2-az": {
+      "title": "Hợp đồng có SLA",
+      "story": "Khách hàng lớn ký hợp đồng có SLA 99,9%. Lưu lượng 350 yêu cầu/giây, và giữa vòng chơi một AZ sẽ mất điện. Ngân sách $155/tháng.",
+      "concept": "High availability trong một Region: EC2 rải ở hai AZ sau ALB, RDS bật Multi-AZ để có bản dự phòng đồng bộ tự chuyển sang khi AZ chính chết.",
+      "nudge": "Đặt 2 EC2 ở \"Cả a và b\" và bật Multi-AZ cho RDS."
+    },
+    "dr-3-region": {
+      "title": "Kế hoạch DR",
+      "story": "Kiểm toán hỏi: nếu cả us-east-1 sập thì sao? Vòng này us-east-1 sẽ chết gần nửa thời gian. Ngân sách $250/tháng, mục tiêu dưới 150 ms.",
+      "concept": "Warm standby: một bản thu nhỏ của hệ thống luôn chạy ở một Region khác (eu-west-1). Database dùng Aurora Global Database: AWS giữ bản sao ở eu-west-1 (trễ ~1 giây) và tự failover sang đó trong ~1 phút khi mất Region chính, không phải promote bằng tay như bản sao RDS khác Region. Route 53 failover dùng health check để chuyển người dùng sang eu-west-1, rồi Auto Scaling nâng nó lên đủ tải.",
+      "nudge": "Người dùng → Route 53 → ALB ở cả hai Region. Ở eu-west-1: ALB → 1 EC2 Vừa có Auto Scaling Group (tối đa 3). Thay RDS bằng Aurora Nhỏ, bật Aurora Global Database, và nối EC2 ở cả hai Region tới Aurora."
+    },
+    "dr-4-comply": {
+      "title": "Kiểm tra tuân thủ",
+      "story": "Một ngân hàng muốn ký hợp đồng nhưng yêu cầu: mọi dữ liệu phải mã hoá khi lưu trữ, database không lộ ra ngoài, không máy chủ nào nhận yêu cầu trực tiếp từ Internet. us-east-1 vẫn có thể sập.",
+      "concept": "Mã hoá khi lưu trữ bằng KMS phải bật ở mọi nơi chứa dữ liệu; với Aurora Global Database, bản sao ở eu-west-1 dùng khoá KMS của Region đó. Database chỉ được nối từ tầng ứng dụng, EC2 nằm sau ALB trong subnet riêng.",
+      "nudge": "Bật \"Mã hoá khi lưu trữ (KMS)\" cho Aurora."
+    },
+    "dr-5-active": {
+      "title": "Khách hàng châu Âu",
+      "story": "Lưu lượng lên 1.000 yêu cầu/giây, 40% đến từ châu Âu và mục tiêu siết còn 120 ms. Route 53 đưa họ về eu-west-1 vì gần hơn, nên bản thu nhỏ ở đó quá tải ngay cả khi không có sự cố.",
+      "concept": "Từ warm standby sang active-active: latency routing của Route 53 phục vụ mỗi người dùng từ Region gần nhất, nên cả hai Region đều phải đủ sức. ElastiCache (có mã hoá) ở mỗi Region giảm tải đọc cho database.",
+      "nudge": "Cho cả hai Region 2 EC2 Vừa có Auto Scaling Group (tối đa 4), và thêm một ElastiCache có mã hoá ở mỗi Region."
+    },
+    "dr-6-reserved": {
+      "title": "Tối ưu hoá đơn",
+      "story": "Phòng tài chính yêu cầu giảm chi phí xuống $280/tháng mà không bỏ Region nào. Số máy nền chạy đều 24/7 và sẽ còn chạy nhiều năm.",
+      "concept": "Phần tải nền ổn định lâu dài nên mua Reserved (rẻ hơn ~40%), còn máy Auto Scaling thêm lúc cao điểm vẫn tính On-Demand. Spot không hợp cho tầng web phục vụ khách hàng vì có thể bị thu hồi bất cứ lúc nào.",
+      "nudge": "Đổi hình thức tính giá của EC2 ở cả hai Region sang Reserved."
+    },
+    "iot-1-pilot": {
+      "title": "Thí điểm",
+      "story": "Vài trăm cảm biến trong một nhà máy gửi 200 số đo/giây, toàn là ghi. Ngân sách $45/tháng.",
+      "concept": "Mỗi số đo là một bản ghi nhỏ theo khoá thiết bị + thời gian: hợp với DynamoDB. Ở mức tải nhỏ, API Gateway + Lambda + DynamoDB on-demand rẻ và không cần quản lý máy chủ.",
+      "nudge": "Người dùng → API Gateway → Lambda → DynamoDB. RDS Nhỏ không chịu nổi 200 lượt ghi/giây."
+    },
+    "iot-2-steady": {
+      "title": "Lưu lượng đều đặn",
+      "story": "Cả chuỗi nhà máy đã kết nối: 1.500 lượt ghi/giây, đều đặn suốt ngày đêm. Một hàm Lambda không gánh nổi, và trả theo từng yêu cầu trên DynamoDB giờ quá đắt. Ngân sách $250/tháng.",
+      "concept": "Lưu lượng đều và dự đoán được thì DynamoDB provisioned capacity (trả cố định theo WCU/RCU) rẻ hơn nhiều so với on-demand.",
+      "nudge": "ALB → 2 EC2 Lớn → DynamoDB, bật Provisioned capacity với kích cỡ Lớn."
+    },
+    "iot-3-storm": {
+      "title": "Cơn bão kết nối lại",
+      "story": "Sau một bản cập nhật firmware, mọi thiết bị kết nối lại cùng lúc và gửi bù dữ liệu: lưu lượng gấp ba trong vài phút. Nâng database cho đỉnh thì vượt ngân sách $400/tháng.",
+      "concept": "Đặt SQS làm vùng đệm: API Gateway ghi thẳng vào hàng đợi, worker lấy ra với tốc độ database chịu được. Đỉnh bị dàn đều ra theo thời gian, database giữ nguyên kích cỡ.",
+      "nudge": "Người dùng → API Gateway → SQS → 3 EC2 worker Lớn → DynamoDB (Provisioned, Lớn)."
+    },
+    "iot-4-growth": {
+      "title": "Tăng trưởng nóng",
+      "story": "Hợp đồng mới đưa thêm thiết bị lên mỗi ngày: lưu lượng tăng dần từ 1.500 lên 6.000 lượt ghi/giây trong vòng chơi. Hàng đợi phải trống khi hết vòng, không số đo nào được nằm chờ mãi.",
+      "concept": "Hàng đợi chỉ hoãn việc, không làm biến mất việc. Khi tải tăng mãi, nhóm worker phải tự lớn theo (Auto Scaling) và database phải đủ chỗ cho tốc độ ghi cuối cùng.",
+      "nudge": "Bật Auto Scaling Group cho worker (2 máy, tối đa 5) và nâng DynamoDB lên kích cỡ Rất lớn."
+    },
+    "iot-5-dash": {
+      "title": "Dashboard cho khách hàng",
+      "story": "Lưu lượng ổn định ở 5.000 yêu cầu/giây: 60% là số đo, 40% là khách hàng mở dashboard xem số liệu mới nhất. Đọc thẳng từ DynamoDB thì phải nâng bảng lên Rất lớn và vượt ngân sách $720/tháng.",
+      "concept": "Dashboard đọc đi đọc lại cùng số liệu: ElastiCache trả phần lớn lượt đọc trong vài ms, DynamoDB chỉ nhận phần trượt cache, nên bảng giữ được kích cỡ nhỏ hơn.",
+      "nudge": "API Gateway → ALB → 2 EC2 Lớn cho dashboard → ElastiCache → DynamoDB. Máy dashboard cũng nối vào SQS. Worker: 4 EC2 Lớn; DynamoDB Provisioned, Lớn."
+    },
+    "iot-6-cache-crash": {
+      "title": "Cache gặp sự cố",
+      "story": "Node ElastiCache sẽ chết giữa vòng chơi. Không có cache, mọi lượt mở dashboard đều thất bại hoặc dồn hết xuống DynamoDB.",
+      "concept": "Cache cũng là một điểm lỗi đơn. ElastiCache Multi-AZ giữ một bản sao ở AZ khác, tự thay thế khi node chính chết, nên dashboard vẫn chạy.",
+      "nudge": "Bật Multi-AZ (bản sao) cho ElastiCache."
+    },
+    "lb-hot": {
+      "title": "Bảng xếp hạng nóng",
+      "story": "Game vừa ra mắt: 2.500 yêu cầu/giây, 92% là mở bảng xếp hạng, 8% là gửi điểm. Ai cũng xem cùng một top 100. Ngân sách $260.",
+      "concept": "Dữ liệu được đọc liên tục như bảng xếp hạng nên nằm trong ElastiCache (Redis sorted set). Cache trả phần lớn lượt đọc, DynamoDB chỉ cần nhận lượt ghi và cache miss.",
+      "nudge": "Thêm ElastiCache giữa EC2 và dữ liệu, rồi bật provisioned cho DynamoDB (kích cỡ Vừa) thay vì trả theo yêu cầu."
+    },
+    "lb-global": {
+      "title": "Người chơi khắp thế giới",
+      "story": "Game lên top ở châu Âu: 60% người chơi ở xa us-east-1. Game thủ chê lag, mục tiêu giờ là dưới 80 ms.",
+      "concept": "CloudFront cache phản hồi API (bảng xếp hạng đổi theo giây, cache ngắn là đủ) ngay ở edge. Phần còn lại, như gửi điểm, đi qua Global Accelerator trên mạng backbone AWS.",
+      "nudge": "Người dùng → CloudFront (bật \"Cache cả phản hồi API\") → Global Accelerator → ALB. Edge gánh bớt lượt đọc nên 2 EC2 là đủ."
+    },
+    "lb-ddos": {
+      "title": "Bot phá giải đấu",
+      "story": "Giữa giải đấu, một botnet bơm yêu cầu rác gấp 6 lần lưu lượng thật để đánh sập máy chủ game. CloudFront tính tiền cả lưu lượng rác.",
+      "concept": "AWS WAF với rate-based rule chặn bot ở edge, trước khi chúng tới CloudFront và EC2. Shield Standard đã có sẵn cho tấn công tầng mạng; WAF lo tầng ứng dụng.",
+      "nudge": "Đặt WAF ngay sau Người dùng, trước CloudFront."
+    },
+    "lb-cachecrash": {
+      "title": "Cache sập giữa mùa giải",
+      "story": "Mùa giải mới: 3.600 yêu cầu/giây. Giữa trận, node ElastiCache duy nhất chết. Mọi lượt đọc dồn xuống DynamoDB và bảng quá tải.",
+      "concept": "ElastiCache Multi-AZ có replica ở AZ khác và tự động failover, nên cache không biến mất. Rẻ hơn nhiều so với nâng DynamoDB chỉ để chịu lúc cache sập.",
+      "nudge": "Bật Multi-AZ cho ElastiCache và tăng EC2 lên 3 máy kích cỡ Lớn cho lưu lượng mới."
+    },
+    "lb-region": {
+      "title": "Cả Region sập",
+      "story": "Một sự cố lớn làm cả us-east-1 ngừng hoạt động nhiều giờ. Người chơi ở xa vẫn chiếm 60%, nên một Region thứ hai gần họ còn giúp giảm độ trễ.",
+      "concept": "Multi-Region active-active: một bộ ALB + EC2 + ElastiCache ở mỗi Region, dùng chung một bảng DynamoDB Global Tables có bản sao ở cả hai Region và Region nào cũng ghi được. Route 53 gửi người chơi tới Region gần nhất và chuyển hết sang Region còn sống khi một Region sập.",
+      "nudge": "Thêm Route 53 sau Global Accelerator, dựng bộ thứ hai ở eu-west-1 (2 EC2 kích cỡ Lớn mỗi bên là đủ) và nối Route 53 tới cả hai ALB. Bật Global Tables cho DynamoDB và nối EC2 ở cả hai Region tới nó."
+    },
+    "lb-finals": {
+      "title": "Chung kết thế giới",
+      "story": "Đêm chung kết được livestream: lưu lượng tăng gấp ba trong vài giờ rồi trở lại 3.600 yêu cầu/giây. Ngân sách $650, không đủ để chạy cả đêm với số máy của giờ cao điểm.",
+      "concept": "Auto Scaling ở mỗi Region thêm máy khi tải tăng và bớt máy khi hết đỉnh. eu-west-1 phục vụ 60% người chơi nên được phép mở rộng nhiều hơn.",
+      "nudge": "Bật Auto Scaling cho EC2 ở cả hai Region (tối đa 5 và 6)."
+    },
+    "bank-secure": {
+      "title": "Kiểm toán ngày đầu",
+      "story": "Ngân hàng mở cổng giao dịch trực tuyến: 400 yêu cầu/giây, 70% xem số dư và lịch sử, 30% chuyển khoản. Bộ phận tuân thủ yêu cầu ngay từ đầu: mã hoá mọi dữ liệu, database không được lộ ra ngoài, không máy chủ nào nhận kết nối trực tiếp từ Internet.",
+      "concept": "Phòng thủ nhiều lớp: chỉ ALB ở subnet public, EC2 và RDS ở subnet private, chỉ nhận kết nối từ lớp ngay trước nó (security group). RDS bật mã hoá at rest bằng KMS.",
+      "nudge": "Người dùng → ALB → EC2 (kích cỡ Vừa) → RDS (kích cỡ Vừa) và bật mã hoá cho RDS."
+    },
+    "bank-az": {
+      "title": "Một AZ mất điện",
+      "story": "Một AZ mất điện giữa giờ làm việc. Cổng ngân hàng không được phép ngừng: chỉ một máy chủ và một database trong cùng một AZ là không đủ.",
+      "concept": "Multi-AZ cho cả hai tầng: EC2 trải trên hai AZ sau ALB, RDS Multi-AZ có bản standby đồng bộ ở AZ khác và tự failover.",
+      "nudge": "Đặt EC2 thành 2 máy, AZ \"Cả a và b\", rồi bật Multi-AZ cho RDS."
+    },
+    "bank-attack": {
+      "title": "Tấn công đăng nhập",
+      "story": "Một botnet dội yêu cầu rác gấp 6 lần lưu lượng thật vào trang đăng nhập. ALB chuyển hết tới EC2 và khách hàng thật không vào được.",
+      "concept": "AWS WAF gắn trước ALB lọc lưu lượng tầng ứng dụng: rate-based rule, managed rule chống SQL injection và bot. Yêu cầu bị chặn không bao giờ tới máy chủ.",
+      "nudge": "Đặt WAF giữa Người dùng và ALB."
+    },
+    "bank-statements": {
+      "title": "Sao kê PDF",
+      "story": "Khách hàng có thể tải sao kê PDF: 15% yêu cầu là tạo sao kê, mỗi file mất vài trăm ms. Tạo ngay trong yêu cầu làm cả trang chậm quá 120 ms, và không được bỏ sót sao kê nào.",
+      "concept": "Tách việc nặng ra khỏi luồng web: EC2 đẩy job vào SQS (bật mã hoá), một worker riêng lấy job ra xử lý. Web trả lời ngay, hàng đợi giữ job cho tới khi xong.",
+      "nudge": "Thêm SQS (bật mã hoá) nối từ EC2, và một EC2 worker kích cỡ Nhỏ đọc từ SQS."
+    },
+    "bank-far": {
+      "title": "Khách hàng ở nước ngoài",
+      "story": "Ngân hàng mở chi nhánh quốc tế: 600 yêu cầu/giây, 40% khách ở châu Âu, xa us-east-1. Một phần ba yêu cầu là tệp tĩnh của trang (JS, CSS, logo). Mục tiêu độ trễ là 80 ms.",
+      "concept": "CloudFront phục vụ tệp tĩnh từ S3 ở edge. Dữ liệu tài khoản là riêng tư nên không cache; thay vào đó Global Accelerator đưa các yêu cầu đó vào mạng backbone AWS gần khách nhất.",
+      "nudge": "WAF → CloudFront (không bật cache API) → S3 cho tệp tĩnh, và CloudFront → Global Accelerator → ALB cho phần còn lại."
+    },
+    "bank-payday": {
+      "title": "Ngày nhận lương",
+      "story": "Ngày lương về, lưu lượng tăng gấp ba trong vài giờ: ai cũng xem số dư, chuyển khoản và tải sao kê. Ngân sách $320, không đủ để chạy cả tháng với số máy của ngày lương.",
+      "concept": "Auto Scaling thêm máy web khi tải tăng và bớt khi hết đỉnh. Phần không tự co giãn được (RDS, worker) phải đủ lớn cho giờ cao điểm.",
+      "nudge": "Bật Auto Scaling cho EC2 web (tối đa 6), nâng RDS lên kích cỡ Lớn và worker lên kích cỡ Vừa."
+    },
+    "pay-launch": {
+      "title": "Giao dịch đầu tiên",
+      "story": "Một ví điện tử mở API thanh toán cho các cửa hàng: 300 yêu cầu/giây, một nửa tạo giao dịch, một nửa tra trạng thái. Đội muốn serverless để khỏi quản lý máy chủ. Chuẩn PCI DSS bắt buộc mã hoá dữ liệu thẻ khi lưu trữ.",
+      "concept": "API Gateway → Lambda → DynamoDB. Lambda chỉ có quyền tối thiểu qua IAM execution role (chỉ PutItem/GetItem trên đúng bảng). DynamoDB mã hoá bằng khoá KMS; dùng customer managed key khi cần tự xoay khoá và xem ai dùng khoá trong CloudTrail.",
+      "nudge": "Người dùng → API Gateway → Lambda → DynamoDB, bật mã hoá cho DynamoDB."
+    },
+    "pay-card-testing": {
+      "title": "Bot thử thẻ",
+      "story": "Kẻ gian dùng API để thử hàng loạt số thẻ đánh cắp (card testing): yêu cầu rác tăng gấp 6 lần. Lambda bị chiếm hết concurrency, giao dịch thật bị từ chối. PCI DSS cũng yêu cầu tường lửa ứng dụng trước mọi API công khai.",
+      "concept": "Gắn AWS WAF vào API Gateway: rate-based rule theo IP, Bot Control và rule chặn mẫu yêu cầu bất thường. Thêm usage plan với API key và throttling cho từng cửa hàng, và reserved concurrency để một hàm không ăn hết concurrency của tài khoản.",
+      "nudge": "Đặt WAF giữa Người dùng và API Gateway."
+    },
+    "pay-fraud": {
+      "title": "Chấm điểm gian lận",
+      "story": "Mỗi giao dịch giờ phải qua mô hình chấm điểm gian lận mất vài trăm ms: 20% yêu cầu cần chấm điểm. Làm ngay trong yêu cầu thì cửa hàng phải chờ quá lâu, mà không giao dịch nào được bỏ qua bước này.",
+      "concept": "Lambda ghi giao dịch ở trạng thái chờ rồi đẩy job vào SQS bật SSE-KMS; một Lambda khác lấy job ra chấm điểm. Khoá KMS của hàng đợi phải cho phép cả hai hàm dùng qua key policy, nếu không message sẽ không đọc được.",
+      "nudge": "Thêm SQS (bật mã hoá) nối từ Lambda, và một Lambda thứ hai đọc từ SQS."
+    },
+    "pay-receipts": {
+      "title": "Biên lai và đối soát",
+      "story": "Ngoài chấm điểm gian lận, mỗi giao dịch còn phải gửi biên lai cho khách và ghi vào hệ thống đối soát. Hai việc này độc lập, cái này chậm không được làm cái kia chậm theo.",
+      "concept": "Lambda gửi sự kiện tới SNS, SNS chia ra hai hàng đợi SQS, mỗi hàng đợi có Lambda riêng. Bật mã hoá cho cả hai SQS; topic SNS cũng có SSE với KMS, và access policy của hàng đợi chỉ cho đúng topic đó gửi vào.",
+      "nudge": "Thay SQS bằng SNS → 2 SQS (bật mã hoá), mỗi SQS một Lambda."
+    }
+  }
+}

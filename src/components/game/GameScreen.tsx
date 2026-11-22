@@ -1,6 +1,6 @@
 'use client';
 
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { AppMenu } from '@/components/AppMenu';
 import { BackLink } from '@/components/BackLink';
@@ -11,7 +11,6 @@ import type { Round } from '@/game/rounds';
 import { simulate, TICKS } from '@/game/simulate';
 import type { Board, ComponentType, NodeConfig, Scenario, SimResult } from '@/game/types';
 import { useRouter } from '@/libs/I18nNavigation';
-import { inLocale } from '@/libs/Localize';
 import { loadBoard, saveBoard, updateProgress } from '@/libs/Progress';
 import type { Selection, View } from './BoardCanvas';
 import { BoardCanvas } from './BoardCanvas';
@@ -80,7 +79,7 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
   const ti = useTranslations('Issues');
   const tt = useTranslations('Twists');
   const router = useRouter();
-  const locale = useLocale();
+  const tr = useTranslations('Rounds');
   const play = props.mode === 'play' ? props : undefined;
   const round = play?.round;
   const slot = round?.id ?? 'sandbox';
@@ -445,7 +444,7 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
           💡 {t('hint')}
         </button>
       )}
-      {hintLevel >= 1 && <p>💡 {inLocale(round.text, locale).nudge}</p>}
+      {hintLevel >= 1 && <p>💡 {tr(`${round.id}.nudge`)}</p>}
       {hintLevel === 1 && (
         <button
           type="button"

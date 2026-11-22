@@ -20,8 +20,8 @@ export default async function ComparePage(props: { params: Promise<{ locale: str
   setRequestLocale(locale);
   const t = await getTranslations('ComparePage');
   const td = await getTranslations('Domains');
-  const comparisons = getComparisons(locale);
-  const lessonTitles = new Map(getLessons(locale).map((lesson) => [lesson.slug, lesson.title]));
+  const comparisons = await getComparisons(locale);
+  const lessonTitles = new Map((await getLessons(locale)).map((lesson) => [lesson.slug, lesson.title]));
 
   return (
     <PageShell title={t('title')}>

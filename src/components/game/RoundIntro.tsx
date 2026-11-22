@@ -1,9 +1,8 @@
 'use client';
 
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import type { Round } from '@/game/rounds';
 import { Link } from '@/libs/I18nNavigation';
-import { inLocale } from '@/libs/Localize';
 
 /**
  * Briefs the player on a round: the story, the goals and the twist.
@@ -11,11 +10,10 @@ import { inLocale } from '@/libs/Localize';
  */
 export const RoundIntro = (props: { round: Round; number: number; heading: string; onStart: () => void }) => {
   const t = useTranslations('Intro');
-  const locale = useLocale();
-  const text = inLocale(props.round.text, locale);
+  const tr = useTranslations('Rounds');
   const tt = useTranslations('Twists');
   const tq = useTranslations('Requirements');
-  const tl = useTranslations('LessonTitles');
+  const tl = useTranslations('Lessons');
   const tg = useTranslations('Game');
   const { round } = props;
   const s = round.scenario;
@@ -29,8 +27,8 @@ export const RoundIntro = (props: { round: Round; number: number; heading: strin
         <p className="font-mono text-xs tracking-widest text-accent uppercase">
           {props.heading} · {t('round', { number: props.number })}
         </p>
-        <h2 className="mt-1 text-2xl font-bold">{text.title}</h2>
-        <p className="mt-3 text-chalk/90">{text.story}</p>
+        <h2 className="mt-1 text-2xl font-bold">{tr(`${props.round.id}.title`)}</h2>
+        <p className="mt-3 text-chalk/90">{tr(`${props.round.id}.story`)}</p>
         <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
           <div className="rounded-lg bg-panel-2 p-2">
             <dt className="text-[10px] font-bold tracking-wider text-muted uppercase">{t('traffic')}</dt>
@@ -69,12 +67,12 @@ export const RoundIntro = (props: { round: Round; number: number; heading: strin
         )}
         <p className="mt-4 text-sm">
           <span className="font-bold text-accent">{t('concept')} </span>
-          {text.concept}
+          {tr(`${props.round.id}.concept`)}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {round.lessons.map((slug) => (
             <Link key={slug} href={`/lessons/${slug}`} className="rounded-full border border-line px-3 py-1 text-xs hover:border-accent">
-              📖 {tl(slug)}
+              📖 {tl(`${slug}.title`)}
             </Link>
           ))}
         </div>

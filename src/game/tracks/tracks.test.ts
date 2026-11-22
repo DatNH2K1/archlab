@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import en from '@/locales/en/game.json';
+import vi from '@/locales/vi/game.json';
 import { simulate } from '../simulate';
 import { ALL_ROUNDS, TRACKS } from '.';
 
@@ -26,7 +28,7 @@ describe('Design problems', () => {
       expect(track.rounds.length).toBeLessThanOrEqual(6);
 
       for (const round of track.rounds) {
-        for (const text of [round.text.vi, round.text.en]) {
+        for (const text of [vi.Rounds[round.id], en.Rounds[round.id]]) {
           expect(text.title && text.story && text.concept && text.nudge).toBeTruthy();
         }
       }

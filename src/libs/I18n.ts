@@ -12,14 +12,17 @@ import { routing } from './I18nRouting';
 // 2. Run manually the workflow on GitHub Actions
 // 3. Every 24 hours at 5am, the workflow will run automatically
 
+/** Message files of each locale folder, merged into one set of namespaces. */
+const MESSAGE_FILES = ['ui', 'game', 'lessons', 'questions', 'flashcards', 'comparisons'];
+
 export default getRequestConfig(async ({ requestLocale }) => {
   // Typically corresponds to the `[locale]` segment
   const requested = await requestLocale;
   const locale = hasLocale(routing.locales, requested) ? requested : routing.defaultLocale;
 
-  return {
-    locale,
-    // oxlint-disable-next-line unicorn/no-await-expression-member
-    messages: (await import(`../locales/${locale}.json`)).default,
-  };
+  const files = await Promise.all(
+    MESSAGE_FILES.map(async (file) => (await import(`../locales/${locale}/${file}.json`)).default),
+  );
+
+  return { locale, messages: Object.assign({}, ...files) };
 });

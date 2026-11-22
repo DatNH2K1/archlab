@@ -1,22 +1,21 @@
 'use client';
 
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { CHAPTERS, ROUNDS } from '@/game/rounds';
 import type { Round } from '@/game/rounds';
 import { ALL_ROUNDS, roundHref, TRACKS } from '@/game/tracks';
 import { Link } from '@/libs/I18nNavigation';
-import { inLocale } from '@/libs/Localize';
 import { useProgress } from '@/libs/Progress';
 import { Stars } from './Stars';
 
 const RoundRow = (props: { round: Round; number: number; stars: number; playLabel: string }) => {
-  const locale = useLocale();
+  const tr = useTranslations('Rounds');
 
   return (
     <li className="flex items-center justify-between gap-3 rounded-xl border border-line bg-panel px-4 py-3">
       <span>
         <span className="mr-2 font-mono text-muted">{props.number}</span>
-        {inLocale(props.round.text, locale).title}
+        {tr(`${props.round.id}.title`)}
       </span>
       <span className="flex shrink-0 items-center gap-3">
         <Stars count={props.stars} />
@@ -35,7 +34,7 @@ const RoundRow = (props: { round: Round; number: number; stars: number; playLabe
 export const ProgressClient = (props: { lessonCount: number; questionCount: number; cardCount: number }) => {
   const t = useTranslations('ProgressPage');
   const tc = useTranslations('Chapters');
-  const locale = useLocale();
+  const tt = useTranslations('Tracks');
   const progress = useProgress();
   const stars = ALL_ROUNDS.reduce((acc, round) => acc + (progress.stars[round.id] ?? 0), 0);
   const passed = ALL_ROUNDS.filter((round) => progress.stars[round.id]).length;
@@ -77,7 +76,7 @@ export const ProgressClient = (props: { lessonCount: number; questionCount: numb
       {TRACKS.length > 0 && <h2 className="mt-12 text-2xl font-bold">{t('tracks_title')}</h2>}
       {TRACKS.map((track) => (
         <section key={track.id} className="mt-6">
-          <h3 className="font-bold">{inLocale(track.text, locale).title}</h3>
+          <h3 className="font-bold">{tt(`${track.id}.title`)}</h3>
           <ul className="mt-3 space-y-2">
             {track.rounds.map((round, i) => (
               <RoundRow key={round.id} round={round} number={i + 1} stars={progress.stars[round.id] ?? 0} playLabel={t('play')} />

@@ -40,6 +40,6 @@ npx playwright install && npm run test:e2e
 | `src/game/rounds.test.ts` | Mọi lời giải mẫu phải pass, các thiết kế ngây thơ phải fail |
 | `src/components/game/` | Board, node, inspector, palette, kết quả, đề bài |
 | `src/content/` | Bài học, câu hỏi, flashcard (`en/` là bản tiếng Anh) |
-| `src/locales/{vi,en}.json` | Toàn bộ chuỗi giao diện và nội dung round |
+| `src/locales/{vi,en}/*.json` | Toàn bộ chuỗi giao diện và nội dung (round, bài học, câu hỏi, flashcard, so sánh) |
 
 Khi đổi số liệu trong `catalog.ts` hoặc `simulate.ts`, chạy `npm test` để chắc mọi round vẫn giải được.

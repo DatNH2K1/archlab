@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
-import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { notFound } from 'next/navigation';
+import { pickClientMessages } from '@/libs/I18nMessages';
 import { routing } from '@/libs/I18nRouting';
 import '@/styles/global.css';
 
@@ -39,12 +40,13 @@ export default async function RootLayout(props: {
   }
 
   setRequestLocale(locale);
+  const messages = pickClientMessages(await getMessages());
 
   return (
     <html lang={locale} className={`${inter.variable} ${mono.variable}`}>
       {/* Browser extensions (e.g. ColorZilla) add attributes to body before React hydrates. */}
       <body className="min-h-dvh font-sans antialiased" suppressHydrationWarning>
-        <NextIntlClientProvider>{props.children}</NextIntlClientProvider>
+        <NextIntlClientProvider messages={messages}>{props.children}</NextIntlClientProvider>
       </body>
     </html>
   );

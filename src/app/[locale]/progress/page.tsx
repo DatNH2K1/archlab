@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { PageShell } from '@/components/PageShell';
 import { ProgressClient } from '@/components/ProgressClient';
-import { getFlashcards, getLessons, getQuestions } from '@/content';
+import { CONTENT_COUNTS } from '@/content';
 
 export async function generateMetadata(props: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await props.params;
@@ -20,9 +20,9 @@ export default async function ProgressPage(props: { params: Promise<{ locale: st
     <PageShell title={t('title')}>
       <h1 className="mb-6 text-3xl font-bold">{t('title')}</h1>
       <ProgressClient
-        lessonCount={getLessons(locale).length}
-        questionCount={getQuestions(locale).length}
-        cardCount={getFlashcards(locale).length}
+        lessonCount={CONTENT_COUNTS.lessons}
+        questionCount={CONTENT_COUNTS.questions}
+        cardCount={CONTENT_COUNTS.flashcards}
       />
     </PageShell>
   );

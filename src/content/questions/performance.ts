@@ -1,6 +1,6 @@
-import type { Question } from '@/content/types';
+import type { QuestionData } from '@/content/types';
 
-export const performanceQuestions: Question[] = [
+export const performanceQuestions: QuestionData[] = [
   {
     id: 'perf-001',
     domain: 'performance',
@@ -13,8 +13,6 @@ export const performanceQuestions: Question[] = [
       'Launch the instances in an Auto Scaling group across multiple Availability Zones behind a Network Load Balancer.',
     ],
     answer: [2],
-    explanation:
-      'Cluster placement group đặt các instance sát nhau trong 1 AZ để có latency thấp nhất và băng thông cao nhất; EFA cung cấp OS-bypass cho ứng dụng MPI, đúng với HPC tightly coupled. Spread placement group trải instance qua rack/AZ khác nhau nên tăng latency và tối đa 7 instance mỗi AZ. Partition placement group dành cho workload phân tán rack-aware (Hadoop, Cassandra), thêm ENI không tăng băng thông. NLB và Auto Scaling đa AZ không phục vụ giao tiếp node-to-node trong HPC.',
   },
   {
     id: 'perf-002',
@@ -28,8 +26,6 @@ export const performanceQuestions: Question[] = [
       'Dedicated Hosts with host affinity enabled',
     ],
     answer: [0],
-    explanation:
-      'Spread placement group đặt mỗi instance trên phần cứng (rack) riêng, phù hợp số lượng nhỏ instance quan trọng (tối đa 7 instance đang chạy mỗi AZ). Cluster gom instance gần nhau nên một lỗi phần cứng có thể ảnh hưởng nhiều instance. Partition với một partition nghĩa là tất cả instance chung một nhóm rack. Dedicated Host phục vụ yêu cầu license/compliance, host affinity còn gắn instance vào cùng host, ngược với yêu cầu.',
   },
   {
     id: 'perf-003',
@@ -43,8 +39,6 @@ export const performanceQuestions: Question[] = [
       'Enable EC2 hibernation on instances with an encrypted EBS root volume large enough to hold the instance memory, and hibernate the instances instead of stopping them.',
     ],
     answer: [3],
-    explanation:
-      'EC2 Hibernate lưu nội dung RAM xuống EBS root (bắt buộc mã hóa) và khôi phục khi start, nên ứng dụng không phải load lại dữ liệu vào memory. Instance store mất dữ liệu khi stop. AMI chỉ chứa dữ liệu đĩa, không chứa trạng thái RAM nên vẫn phải load lại. Instance lớn hơn tốn chi phí và vẫn phải load lại dữ liệu.',
   },
   {
     id: 'perf-004',
@@ -58,8 +52,6 @@ export const performanceQuestions: Question[] = [
       'Replace the Auto Scaling group with a fixed number of instances sized for peak traffic.',
     ],
     answer: [1],
-    explanation:
-      'Golden AMI cài sẵn phần mềm giúp instance khởi động nhanh; EC2 Image Builder tự động build, test, patch AMI theo lịch nên ít vận hành nhất. Tăng grace period chỉ tránh instance bị đánh dấu unhealthy, không làm khởi động nhanh hơn. Tải script từ S3 không giảm thời gian cài đặt. Chạy cố định theo peak tốn chi phí và không xử lý yêu cầu patch.',
   },
   {
     id: 'perf-005',
@@ -74,8 +66,6 @@ export const performanceQuestions: Question[] = [
       'Use a partition placement group and map Cassandra racks to partitions.',
     ],
     answer: [1, 4],
-    explanation:
-      'Storage optimized (I family) với NVMe instance store cho IOPS ngẫu nhiên rất cao, latency thấp và không tốn phí EBS; vì Cassandra đã replicate dữ liệu nên việc instance store là ephemeral chấp nhận được. Partition placement group đặt mỗi partition trên nhóm rack riêng, giúp Cassandra nhận biết topology và giảm lỗi đồng thời. io2 đắt hơn nhiều cho cùng mức IOPS. Cluster placement group tăng rủi ro lỗi rack. EFS là file system qua mạng, không phù hợp cho data file Cassandra cần latency thấp.',
   },
   {
     id: 'perf-006',
@@ -89,8 +79,6 @@ export const performanceQuestions: Question[] = [
       'Deploy the containers on Amazon ECS using the EC2 launch type with a capacity provider.',
     ],
     answer: [2],
-    explanation:
-      'ECS trên Fargate là serverless: không quản lý EC2, AWS lo hạ tầng; ECS đơn giản hơn EKS khi không cần Kubernetes. EKS self-managed node group phải quản lý node và học thêm Kubernetes. Docker trên EC2 tự quản lý là overhead cao nhất. ECS EC2 launch type vẫn phải patch và quản lý EC2 dù capacity provider giúp scale.',
   },
   {
     id: 'perf-007',
@@ -104,8 +92,6 @@ export const performanceQuestions: Question[] = [
       'Launch an EC2 instance each night with a cron job and terminate it manually after the job finishes.',
     ],
     answer: [0],
-    explanation:
-      'Fargate chạy container không giới hạn thời gian, không cần quản lý server; EventBridge Scheduler/rule kích hoạt task hằng đêm. Lambda giới hạn tối đa 15 phút nên không thể đặt 60 phút. Dùng EC2 để gọi Lambda tuần tự phức tạp và vẫn có EC2 cần quản lý. EC2 với cron và tắt thủ công tốn công vận hành.',
   },
   {
     id: 'perf-008',
@@ -119,8 +105,6 @@ export const performanceQuestions: Question[] = [
       'Migrate the services to Amazon EKS with managed node groups.',
     ],
     answer: [3],
-    explanation:
-      'EKS là Kubernetes chuẩn với control plane được AWS quản lý, giữ nguyên Helm chart và operator; managed node group giảm công quản lý node. ECS và Elastic Beanstalk yêu cầu chuyển đổi manifest. Viết lại sang Lambda là thay đổi lớn, trái yêu cầu không rewrite.',
   },
   {
     id: 'perf-009',
@@ -134,8 +118,6 @@ export const performanceQuestions: Question[] = [
       'Move the functions into a VPC to reduce network latency.',
     ],
     answer: [1],
-    explanation:
-      'Provisioned concurrency giữ sẵn môi trường đã khởi tạo nên loại bỏ cold start; tải dự đoán được nên có thể lên lịch bằng Application Auto Scaling. Reserved concurrency chỉ giới hạn/đảm bảo số concurrency, không khởi tạo trước môi trường. Tăng timeout và retry không giảm latency. Đưa function vào VPC không giảm cold start, còn có thể thêm phức tạp.',
   },
   {
     id: 'perf-010',
@@ -149,8 +131,6 @@ export const performanceQuestions: Question[] = [
       'AWS Batch with Fargate compute environments',
     ],
     answer: [2],
-    explanation:
-      'App Runner nhận source code hoặc container image, tự build, deploy, cấp HTTPS endpoint, load balancing và auto scaling, không cần kiến thức hạ tầng. EKS và EC2 + ALB đòi hỏi quản lý nhiều thành phần. AWS Batch dành cho batch job, không phải API phục vụ request.',
   },
   {
     id: 'perf-011',
@@ -164,8 +144,6 @@ export const performanceQuestions: Question[] = [
       'Provisioned IOPS SSD (io2 Block Express)',
     ],
     answer: [3],
-    explanation:
-      'io2 Block Express hỗ trợ tới 256,000 IOPS, latency dưới mili giây, durability 99.999%, phù hợp database quan trọng cần 120,000 IOPS. gp3 không đạt mức IOPS này trên một volume. st1 là HDD cho đọc tuần tự, IOPS thấp. io1 tối đa 64,000 IOPS và durability thấp hơn io2.',
   },
   {
     id: 'perf-012',
@@ -179,8 +157,6 @@ export const performanceQuestions: Question[] = [
       'Create a RAID 0 array of four gp2 volumes of 500 GiB each.',
     ],
     answer: [0],
-    explanation:
-      'gp3 cho phép chỉnh IOPS độc lập với dung lượng (baseline 3,000, tăng tới 16,000) và rẻ hơn gp2, nên đổi sang gp3 và đặt 6,000 IOPS là rẻ nhất (có thể làm online bằng Elastic Volumes). gp2 cần 2,000 GiB (3 IOPS/GiB) để đạt 6,000 IOPS, trả tiền cho dung lượng không dùng. io2 đắt hơn nhiều cho mức IOPS này. RAID 0 bốn volume cũng phải trả cho 2,000 GiB và phức tạp hơn.',
   },
   {
     id: 'perf-013',
@@ -194,14 +170,12 @@ export const performanceQuestions: Question[] = [
       'An S3 bucket mounted on each instance with a custom synchronization script',
     ],
     answer: [1],
-    explanation:
-      'EFS là NFS managed cho Linux, nhiều instance ở nhiều AZ mount đồng thời; Elastic throughput tự scale theo tải khó dự đoán và trả theo lượng dùng. EBS Multi-Attach chỉ trong 1 AZ và cần file system cluster-aware. FSx for Windows dùng SMB, phù hợp Windows chứ không phải lựa chọn tự nhiên cho Linux. Đồng bộ S3 bằng script tốn công và không đảm bảo ngữ nghĩa file system.',
   },
   {
     id: 'perf-014',
     domain: 'performance',
     lesson: 'block-file-storage',
-    stem: 'A company is migrating Windows-based file servers to AWS. Users access shares through SMB, and permissions are managed with the company\'s Microsoft Active Directory. The solution must remain available if an Availability Zone fails. Which solution should a solutions architect recommend?',
+    stem: "A company is migrating Windows-based file servers to AWS. Users access shares through SMB, and permissions are managed with the company's Microsoft Active Directory. The solution must remain available if an Availability Zone fails. Which solution should a solutions architect recommend?",
     options: [
       'Amazon EFS with One Zone storage and a backup policy',
       'Amazon S3 with an S3 File Gateway deployed on an EC2 instance',
@@ -209,8 +183,6 @@ export const performanceQuestions: Question[] = [
       'Amazon FSx for Lustre with a persistent deployment type',
     ],
     answer: [2],
-    explanation:
-      'FSx for Windows File Server hỗ trợ SMB, NTFS ACL, tích hợp Active Directory và có Multi-AZ để chịu lỗi AZ. EFS không hỗ trợ Windows/SMB và One Zone không chịu lỗi AZ. S3 File Gateway trên một EC2 tạo điểm lỗi đơn và không phải file server Windows thực thụ. FSx for Lustre dành cho HPC trên Linux.',
   },
   {
     id: 'perf-015',
@@ -224,8 +196,6 @@ export const performanceQuestions: Question[] = [
       'Create an Amazon FSx for Lustre scratch file system linked to the S3 bucket, and export results back to S3.',
     ],
     answer: [3],
-    explanation:
-      'FSx for Lustre cho throughput hàng trăm GB/s; tích hợp S3 cho phép lazy load dữ liệu và export kết quả về S3; deployment scratch rẻ, phù hợp xử lý ngắn hạn không cần replicate. EFS không đạt mức throughput này và tốn chi phí copy. Copy dataset vào nhiều io2 rất đắt và chậm. SnapMirror dùng giữa hệ thống ONTAP, không replicate từ S3.',
   },
   {
     id: 'perf-016',
@@ -240,8 +210,6 @@ export const performanceQuestions: Question[] = [
       'Use a Throughput Optimized HDD (st1) volume shared across Availability Zones.',
     ],
     answer: [0, 3],
-    explanation:
-      'EBS Multi-Attach chỉ hỗ trợ io1/io2 và chỉ cho instance Nitro trong cùng AZ với volume (tối đa 16 instance). gp3 không hỗ trợ Multi-Attach. EFS là file storage, không phải shared block storage như yêu cầu. st1 không hỗ trợ Multi-Attach và EBS không thể chia sẻ qua nhiều AZ.',
   },
   {
     id: 'perf-017',
@@ -255,8 +223,6 @@ export const performanceQuestions: Question[] = [
       'Move the objects to the S3 Standard-Infrequent Access storage class.',
     ],
     answer: [1],
-    explanation:
-      'S3 hỗ trợ ít nhất 5,500 GET/s mỗi prefix; chia object qua nhiều prefix giúp S3 scale song song, đạt 20,000 GET/s. Transfer Acceleration tối ưu khoảng cách địa lý, không tăng request rate mỗi prefix. Versioning không tăng throughput. Standard-IA còn tính phí truy xuất và không tăng hiệu năng.',
   },
   {
     id: 'perf-018',
@@ -270,8 +236,6 @@ export const performanceQuestions: Question[] = [
       'Enable Cross-Region Replication to buckets in each continent and use single PUT requests.',
     ],
     answer: [0],
-    explanation:
-      'Transfer Acceleration đưa upload vào edge location gần người dùng rồi đi trên backbone AWS; multipart upload chia file thành phần upload song song, phần lỗi chỉ cần gửi lại (và bắt buộc với file trên 5 GB). CloudFront không cache PUT. Byte-range fetch và S3 Select dùng cho đọc dữ liệu. Single PUT không thể vượt 5 GB, và CRR không giúp upload ban đầu.',
   },
   {
     id: 'perf-019',
@@ -285,8 +249,6 @@ export const performanceQuestions: Question[] = [
       'S3 One Zone-Infrequent Access',
     ],
     answer: [2],
-    explanation:
-      'S3 Express One Zone cho latency một chữ số mili giây, request rate rất cao, đặt cùng AZ với compute; dữ liệu tạo lại được nên chấp nhận lưu ở 1 AZ. Transfer Acceleration chỉ tối ưu truyền đường dài. Intelligent-Tiering tối ưu chi phí, không phải latency. One Zone-IA dành cho dữ liệu ít truy cập, có phí truy xuất và không nhanh hơn Standard.',
   },
   {
     id: 'perf-020',
@@ -300,8 +262,6 @@ export const performanceQuestions: Question[] = [
       'Configure an S3 event notification for ObjectCreated events that invokes an AWS Lambda function to create the thumbnails.',
     ],
     answer: [3],
-    explanation:
-      'S3 Event Notification gọi Lambda ngay khi object được tạo, serverless và xử lý trong vài giây. Cron trên EC2 phải quản lý server và LIST liên tục kém hiệu quả. Lifecycle rule chỉ chuyển storage class hoặc xóa object, không xử lý ảnh. Batch mỗi giờ không đáp ứng yêu cầu vài giây.',
   },
   {
     id: 'perf-021',
@@ -316,8 +276,6 @@ export const performanceQuestions: Question[] = [
       'Configure Origin Access Control (OAC) and update the bucket policy to allow access only from the CloudFront distribution.',
     ],
     answer: [2, 4],
-    explanation:
-      'CloudFront phân phối nội dung toàn cầu qua HTTPS với chứng chỉ ACM; OAC cho phép bucket giữ private và chỉ CloudFront đọc được. Bucket policy public vi phạm yêu cầu không public, và website endpoint không hỗ trợ HTTPS. ALB không dùng S3 bucket làm target. Transfer Acceleration dành cho upload/download đường dài, không phục vụ website HTTPS.',
   },
   {
     id: 'perf-022',
@@ -331,8 +289,6 @@ export const performanceQuestions: Question[] = [
       'Increase the backup retention period and run reports from automated backups.',
     ],
     answer: [0],
-    explanation:
-      'Read replica (replicate bất đồng bộ) nhận truy vấn đọc, giảm tải cho primary. Standby của Multi-AZ instance deployment không phục vụ đọc, chỉ dùng cho failover. Storage autoscaling chỉ tăng dung lượng, không giảm CPU. Backup không phải nơi chạy truy vấn trực tiếp.',
   },
   {
     id: 'perf-023',
@@ -346,8 +302,6 @@ export const performanceQuestions: Question[] = [
       'Configure reserved concurrency of 1 for the Lambda functions.',
     ],
     answer: [1],
-    explanation:
-      'RDS Proxy gom và tái sử dụng kết nối (connection pooling), xử lý tốt mô hình nhiều kết nối ngắn từ Lambda; chỉ cần đổi endpoint. Tăng instance tốn kém và vẫn có thể cạn kết nối khi spike. Reader endpoint không xử lý được truy vấn ghi và vẫn mở nhiều kết nối. Reserved concurrency 1 làm application chậm nghiêm trọng.',
   },
   {
     id: 'perf-024',
@@ -361,8 +315,6 @@ export const performanceQuestions: Question[] = [
       'Create a custom endpoint that includes the two large replicas for analytics, and a second custom endpoint for the other three replicas for application reads.',
     ],
     answer: [3],
-    explanation:
-      'Custom endpoint cho phép nhóm một tập instance cụ thể, tách workload analytics khỏi workload ứng dụng. Cluster endpoint trỏ tới writer, chạy analytics trên đó làm chậm ghi. Tạo cluster thứ hai tốn chi phí và vận hành. Reader endpoint cân bằng qua tất cả replica, failover priority không điều khiển việc phân phối truy vấn.',
   },
   {
     id: 'perf-025',
@@ -376,8 +328,6 @@ export const performanceQuestions: Question[] = [
       'Amazon Redshift Serverless',
     ],
     answer: [2],
-    explanation:
-      'Aurora Serverless v2 tự scale compute (ACU) gần như tức thời và chi tiết theo tải, phù hợp workload thất thường. Storage autoscaling chỉ tăng dung lượng, không tăng compute. Đổi instance class theo lịch không xử lý được burst không dự đoán và gây gián đoạn. Redshift không tương thích MySQL và là data warehouse.',
   },
   {
     id: 'perf-026',
@@ -391,8 +341,6 @@ export const performanceQuestions: Question[] = [
       'Take hourly snapshots and copy them to Europe and Asia.',
     ],
     answer: [0],
-    explanation:
-      'Aurora Global Database replicate storage-level sang Region khác thường dưới 1 giây, cho phép đọc latency thấp ở Region phụ và DR với RPO khoảng 1 giây, RTO dưới 1 phút. Logical replication tự quản lý trên EC2 tốn công vận hành. Replica trong cùng Region không giảm latency cho người dùng ở xa và không DR liên Region. Snapshot hằng giờ có RPO tới 1 giờ.',
   },
   {
     id: 'perf-027',
@@ -407,8 +355,6 @@ export const performanceQuestions: Question[] = [
       'Enable Multi-AZ on the cluster to eliminate I/O charges.',
     ],
     answer: [1, 3],
-    explanation:
-      'Babelfish cho phép Aurora PostgreSQL hiểu T-SQL và giao thức SQL Server, giảm thay đổi code. Aurora I/O-Optimized không tính phí I/O, tiết kiệm khi I/O chiếm hơn khoảng 25% chi phí. Aurora MySQL không hỗ trợ T-SQL. Redshift là data warehouse, không phải đích OLTP cho app. Multi-AZ không ảnh hưởng phí I/O.',
   },
   {
     id: 'perf-028',
@@ -422,8 +368,6 @@ export const performanceQuestions: Question[] = [
       'Deploy DynamoDB Accelerator (DAX) and point the application to the DAX cluster endpoint.',
     ],
     answer: [3],
-    explanation:
-      'DAX là cache in-memory tương thích API DynamoDB, giảm latency đọc từ mili giây xuống micro giây và chỉ cần đổi client/endpoint. On-demand giúp chịu tải nhưng latency vẫn ở mức mili giây. GSI phục vụ mẫu truy vấn mới, không giảm latency. ElastiCache cần viết lại logic cache trong code nên thay đổi nhiều hơn.',
   },
   {
     id: 'perf-029',
@@ -437,8 +381,6 @@ export const performanceQuestions: Question[] = [
       'Enable TTL so that old orders are deleted automatically.',
     ],
     answer: [2],
-    explanation:
-      'Partition key chỉ có 3 giá trị nên ghi dồn vào vài partition (hot partition); dùng key có cardinality cao như order_id phân tán đều tải. Streams chỉ ghi lại thay đổi. LSI dùng cùng partition key nên không giải quyết, và chỉ tạo được khi tạo bảng. TTL xóa dữ liệu cũ, không phân tán ghi.',
   },
   {
     id: 'perf-030',
@@ -452,8 +394,6 @@ export const performanceQuestions: Question[] = [
       'Create a new table and copy all items with product_id as the sort key.',
     ],
     answer: [1],
-    explanation:
-      'GSI có thể tạo bất kỳ lúc nào với partition key khác bảng, cho phép query theo product_id hiệu quả. LSI chỉ tạo được lúc tạo bảng và vẫn phải dùng customer_id làm partition key. Scan đọc toàn bộ bảng, tốn RCU và chậm. Tạo bảng mới phức tạp và không cần thiết.',
   },
   {
     id: 'perf-031',
@@ -467,8 +407,6 @@ export const performanceQuestions: Question[] = [
       'Store session data on an EBS volume attached to each instance.',
     ],
     answer: [0],
-    explanation:
-      'ElastiCache Redis OSS/Valkey hỗ trợ replication, Multi-AZ, auto failover và latency dưới mili giây, phù hợp session store HA. Memcached không có replication nên mất session khi node lỗi. Sticky session vẫn mất session khi instance bị terminate và web tier không stateless. EBS gắn với từng instance, không chia sẻ được.',
   },
   {
     id: 'perf-032',
@@ -482,8 +420,6 @@ export const performanceQuestions: Question[] = [
       'Amazon Neptune',
     ],
     answer: [3],
-    explanation:
-      'Neptune là graph database, tối ưu cho truy vấn duyệt quan hệ nhiều cấp như phát hiện fraud ring, mạng xã hội. DynamoDB không hiệu quả khi duyệt quan hệ nhiều tầng. Timestream dành cho dữ liệu time series. Redshift phục vụ phân tích tổng hợp, không phải duyệt graph latency thấp.',
   },
   {
     id: 'perf-033',
@@ -492,14 +428,12 @@ export const performanceQuestions: Question[] = [
     stem: 'An application needs to perform 20 strongly consistent reads per second on a DynamoDB table using provisioned capacity. Each item is 6 KB. How many read capacity units (RCUs) must be provisioned?',
     options: ['20 RCUs', '30 RCUs', '40 RCUs', '60 RCUs'],
     answer: [2],
-    explanation:
-      '1 RCU = 1 strongly consistent read/giây cho item tới 4 KB. Item 6 KB làm tròn lên 8 KB nên cần 2 RCU mỗi lần đọc; 20 lần đọc x 2 = 40 RCU. 20 RCU là số cho item tới 4 KB. 30 RCU là tính theo tỷ lệ 6/4 mà không làm tròn lên. 60 RCU là cách tính sai (ví dụ nhân 3).',
   },
   {
     id: 'perf-034',
     domain: 'performance',
     lesson: 'edge-networking',
-    stem: 'A gaming company runs a multiplayer game server on EC2 instances behind Network Load Balancers in two AWS Regions. The game uses UDP. Players worldwide need low latency, and the company\'s partners require a fixed set of IP addresses to allowlist. If one Region fails, traffic must fail over within seconds. Which solution meets these requirements?',
+    stem: "A gaming company runs a multiplayer game server on EC2 instances behind Network Load Balancers in two AWS Regions. The game uses UDP. Players worldwide need low latency, and the company's partners require a fixed set of IP addresses to allowlist. If one Region fails, traffic must fail over within seconds. Which solution meets these requirements?",
     options: [
       'Amazon CloudFront with both NLBs configured as an origin group',
       'AWS Global Accelerator with endpoint groups for the NLBs in both Regions',
@@ -507,8 +441,6 @@ export const performanceQuestions: Question[] = [
       'Elastic IP addresses attached to each EC2 instance with a DNS round-robin record',
     ],
     answer: [1],
-    explanation:
-      'Global Accelerator cung cấp 2 static anycast IP, hỗ trợ UDP, đưa traffic vào backbone AWS từ edge gần nhất và failover giữa Region trong vài giây nhờ health check, không phụ thuộc DNS cache. CloudFront không hỗ trợ UDP. Route 53 phụ thuộc DNS TTL/cache của client và không cho IP cố định. Elastic IP trên từng instance không HA và không tối ưu latency.',
   },
   {
     id: 'perf-035',
@@ -522,8 +454,6 @@ export const performanceQuestions: Question[] = [
       'Create an Amazon CloudFront distribution in front of the ALB and cache static content at edge locations.',
     ],
     answer: [3],
-    explanation:
-      'CloudFront cache nội dung tĩnh tại edge gần người dùng, giảm latency và giảm tải cho ALB/EC2. Thêm EC2 giảm tải nhưng không giải quyết latency địa lý. Triển khai Region thứ hai tốn kém và weighted routing không dựa trên vị trí người dùng. Cross-zone load balancing không ảnh hưởng latency cho người dùng ở xa.',
   },
   {
     id: 'perf-036',
@@ -537,8 +467,6 @@ export const performanceQuestions: Question[] = [
       'Enable S3 Transfer Acceleration on both buckets.',
     ],
     answer: [0],
-    explanation:
-      'CloudFront origin group hỗ trợ origin failover: khi primary trả mã lỗi đã cấu hình (5xx), CloudFront tự gửi request sang secondary origin; kết hợp S3 Cross-Region Replication để có dữ liệu ở bucket phụ. Route 53 failover với S3 REST endpoint không phải cách chuẩn. Global Accelerator không dùng CloudFront làm endpoint. Transfer Acceleration không cung cấp failover.',
   },
   {
     id: 'perf-037',
@@ -552,8 +480,6 @@ export const performanceQuestions: Question[] = [
       'CloudFront signed cookies',
     ],
     answer: [2],
-    explanation:
-      'Field-level encryption mã hóa các trường cụ thể trong POST tại edge bằng public key; dữ liệu vẫn mã hóa khi đi qua các tầng trung gian, chỉ dịch vụ có private key giải mã được. OAC giới hạn truy cập S3 origin. HTTPS chỉ bảo vệ trên đường truyền, web server vẫn thấy plaintext. Signed cookies kiểm soát quyền truy cập nội dung, không mã hóa dữ liệu.',
   },
   {
     id: 'perf-038',
@@ -567,8 +493,6 @@ export const performanceQuestions: Question[] = [
       'Replace CloudFront with AWS Global Accelerator.',
     ],
     answer: [1],
-    explanation:
-      'Cache key càng ít thành phần thì hit ratio càng cao. Cache policy chỉ giữ các giá trị làm thay đổi response; origin request policy gửi thêm cookie tới origin mà không đưa vào cache key. Invalidation làm giảm hit ratio và tốn phí. Tăng TTL không giúp khi mỗi request có cache key khác nhau. Global Accelerator không cache.',
   },
   {
     id: 'perf-039',
@@ -582,8 +506,6 @@ export const performanceQuestions: Question[] = [
       'Amazon SNS standard topic with three subscriptions',
     ],
     answer: [0],
-    explanation:
-      'Kinesis Data Streams cho phép nhiều consumer đọc cùng dữ liệu real-time và replay trong thời gian retention (tăng được tới 365 ngày). Firehose là near real-time, chỉ giao tới đích, không hỗ trợ nhiều consumer tùy biến hay replay. SQS xóa message sau khi xử lý, một message chỉ một consumer xử lý. SNS không lưu trữ để replay.',
   },
   {
     id: 'perf-040',
@@ -597,8 +519,6 @@ export const performanceQuestions: Question[] = [
       'Send the logs to Amazon Data Firehose with record format conversion to Parquet and Amazon S3 as the destination.',
     ],
     answer: [3],
-    explanation:
-      'Amazon Data Firehose fully managed, tự buffer, chuyển đổi định dạng sang Parquet/ORC (dùng schema trong Glue Data Catalog) và ghi vào S3; độ trễ vài phút chấp nhận được. Consumer tự viết trên EC2, cluster EMR, hay Lambda tự batch đều tăng công vận hành.',
   },
   {
     id: 'perf-041',
@@ -612,8 +532,6 @@ export const performanceQuestions: Question[] = [
       'Load the data into Amazon RDS for PostgreSQL and run the queries there.',
     ],
     answer: [2],
-    explanation:
-      'Athena tính tiền theo dữ liệu quét. Parquet là định dạng cột (chỉ đọc cột cần) và nén tốt; partition theo ngày cho phép bỏ qua partition không liên quan. Glacier Instant Retrieval không giảm dữ liệu quét và có phí truy xuất. Tăng timeout không cải thiện hiệu năng. RDS không phù hợp để phân tích nhiều TB log.',
   },
   {
     id: 'perf-042',
@@ -627,8 +545,6 @@ export const performanceQuestions: Question[] = [
       'Encrypt the personal data columns with a separate AWS KMS key.',
     ],
     answer: [1],
-    explanation:
-      'Lake Formation quản lý quyền tập trung trên Data Catalog, hỗ trợ fine-grained access tới cột, hàng, cell, áp dụng cho Athena, Redshift Spectrum, EMR. Copy dữ liệu theo team tốn công và trùng lặp. Bucket policy chỉ hoạt động ở mức object, không hiểu cột. Mã hóa bằng KMS không phải cơ chế phân quyền theo cột cho truy vấn.',
   },
   {
     id: 'perf-043',
@@ -643,8 +559,6 @@ export const performanceQuestions: Question[] = [
       'Store the historical data in Amazon EMR with Apache HBase.',
     ],
     answer: [0, 2],
-    explanation:
-      'Redshift Spectrum truy vấn dữ liệu trực tiếp trên S3 qua external table và join được với bảng trong Redshift; Glue crawler tạo schema trong Data Catalog để làm external schema. COPY nghĩa là load vào cluster, trái yêu cầu. Kinesis là dịch vụ streaming, không dùng cho dữ liệu lịch sử. EMR HBase thêm hạ tầng không cần thiết và không join trực tiếp với Redshift.',
   },
   {
     id: 'perf-044',
@@ -658,8 +572,6 @@ export const performanceQuestions: Question[] = [
       'Deploy an AWS DataSync agent on premises and create a scheduled DataSync task with an EFS location.',
     ],
     answer: [3],
-    explanation:
-      'DataSync tự động truyền dữ liệu NFS/SMB tới EFS, S3, FSx, có kiểm tra toàn vẹn, giữ metadata, lập lịch, chạy qua Direct Connect. rsync và cron phải tự quản lý, tự kiểm tra lỗi. File Gateway rồi copy hai bước phức tạp. Snowball không phù hợp khi đã có Direct Connect và cần đồng bộ định kỳ tới lúc cutover.',
   },
   {
     id: 'perf-045',
@@ -673,8 +585,6 @@ export const performanceQuestions: Question[] = [
       'Use AWS Application Migration Service to replicate the database server to EC2, then promote it to Aurora.',
     ],
     answer: [0],
-    explanation:
-      'Chuyển engine khác loại (heterogeneous) cần SCT/DMS Schema Conversion để chuyển schema và code; DMS full load + CDC giữ nguồn online và đồng bộ liên tục, downtime chỉ lúc cutover. Data Pump không import được vào PostgreSQL. DMS không tự chuyển schema giữa engine khác nhau, và full load không có CDC gây downtime dài. Application Migration Service rehost server lên EC2, không chuyển sang Aurora.',
   },
   {
     id: 'perf-046',
@@ -688,8 +598,6 @@ export const performanceQuestions: Question[] = [
       'Deploy a Volume Gateway in stored mode and back up the volumes with EBS snapshots.',
     ],
     answer: [2],
-    explanation:
-      'Tape Gateway giả lập thư viện tape (VTL qua iSCSI) nên phần mềm backup không đổi; virtual tape lưu trên S3 và có thể archive sang Glacier Flexible Retrieval/Deep Archive. File Gateway đòi đổi đích backup sang file share. DataSync không đọc tape vật lý. Volume Gateway là block storage, không phải giao diện tape.',
   },
   {
     id: 'perf-047',
@@ -703,8 +611,6 @@ export const performanceQuestions: Question[] = [
       'Deploy an S3 File Gateway and expose it to partners over the internet.',
     ],
     answer: [1],
-    explanation:
-      'AWS Transfer Family cung cấp endpoint SFTP fully managed lưu thẳng vào S3, đối tác giữ nguyên client. SFTP trên EC2 phải tự quản lý, patch, HA. Presigned URL buộc đối tác đổi quy trình. File Gateway dùng NFS/SMB, không phải SFTP và không thiết kế để mở cho bên ngoài qua internet.',
   },
   {
     id: 'perf-048',
@@ -718,8 +624,6 @@ export const performanceQuestions: Question[] = [
       'Wait until the data center bandwidth is upgraded to 10 Gbps and then use the AWS CLI.',
     ],
     answer: [1],
-    explanation:
-      '1 Gbps khoảng 125 MB/s, tức khoảng 10.8 TB/ngày; dùng 80% còn khoảng 8.6 TB/ngày, nên 40 TB mất khoảng 5 ngày, kịp deadline 10 ngày. DataSync tự động, tối ưu băng thông và kiểm tra toàn vẹn. Direct Connect mới thường mất nhiều tuần để thiết lập. Script tự viết với single PUT bị giới hạn 5 GB mỗi object và tốn công. Chờ nâng cấp băng thông không đảm bảo deadline.',
   },
   {
     id: 'perf-049',
@@ -733,8 +637,6 @@ export const performanceQuestions: Question[] = [
       'Use Amazon Comprehend to detect entities in the PDF files and write the entities to DynamoDB.',
     ],
     answer: [2],
-    explanation:
-      'Textract trích xuất text, form (key-value) và table từ tài liệu scan, là dịch vụ có sẵn nên không cần chuyên gia ML; S3 event + Lambda tạo pipeline serverless. Rekognition text detection chỉ phát hiện đoạn text ngắn trong ảnh, không hiểu cấu trúc form/table. SageMaker cần tự huấn luyện và vận hành endpoint, tốn công hơn nhiều. Comprehend phân tích text thuần, không đọc được PDF scan và không trích xuất table.',
   },
   {
     id: 'perf-050',
@@ -748,23 +650,14 @@ export const performanceQuestions: Question[] = [
       'A custom computer vision model trained with Amazon SageMaker AI',
     ],
     answer: [0],
-    explanation:
-      'Rekognition content moderation phát hiện nội dung không phù hợp (khiêu dâm, bạo lực...) trong ảnh và video qua API có sẵn, tự scale. Comprehend chỉ phân tích text. Textract trích xuất text từ tài liệu. Model tự huấn luyện trên SageMaker tốn nhiều công phát triển và vận hành, trái yêu cầu.',
   },
   {
     id: 'perf-051',
     domain: 'performance',
     lesson: 'ai-ml-services',
     stem: 'A company stores thousands of internal documents, including policies, manuals, and FAQs, in Amazon S3 and Microsoft SharePoint. Employees want to ask questions in natural language, such as "How many vacation days do new employees get?", and receive precise answers from the documents. Which service meets these requirements?',
-    options: [
-      'Amazon Comprehend',
-      'Amazon Lex',
-      'Amazon Athena',
-      'Amazon Kendra',
-    ],
+    options: ['Amazon Comprehend', 'Amazon Lex', 'Amazon Athena', 'Amazon Kendra'],
     answer: [3],
-    explanation:
-      'Kendra là dịch vụ intelligent enterprise search: nhận câu hỏi ngôn ngữ tự nhiên và trả về câu trả lời từ tài liệu, có connector cho S3 và SharePoint. Comprehend phân tích sentiment/entity, không tìm kiếm tài liệu. Lex xây chatbot nhưng tự nó không index và tìm kiếm tài liệu. Athena truy vấn SQL trên dữ liệu có cấu trúc trong S3, không hiểu câu hỏi tự nhiên trên văn bản.',
   },
   {
     id: 'perf-052',
@@ -778,8 +671,6 @@ export const performanceQuestions: Question[] = [
       'Deploy an open source text-to-speech model on Amazon EC2 instances in an Auto Scaling group.',
     ],
     answer: [1],
-    explanation:
-      'Polly chuyển text sang giọng nói tự nhiên (neural voices), có thể lưu kết quả vào S3. Transcribe làm chiều ngược lại (speech sang text). Lex dùng để xây chatbot, không phải dịch vụ đọc bài viết. Tự host model trên EC2 tăng gánh nặng vận hành.',
   },
   {
     id: 'perf-053',
@@ -794,8 +685,6 @@ export const performanceQuestions: Question[] = [
       'Amazon Translate to classify the sentiment of the transcripts',
     ],
     answer: [0, 3],
-    explanation:
-      'Transcribe chuyển ghi âm thành text và có tính năng ẩn PII trong transcript; Comprehend phân tích sentiment (positive/negative/neutral/mixed) của transcript. Polly chuyển text sang speech, ngược chiều. Rekognition phân tích ảnh/video, không xử lý audio. Translate chỉ dịch ngôn ngữ, không phân tích sentiment.',
   },
   {
     id: 'perf-054',
@@ -809,23 +698,14 @@ export const performanceQuestions: Question[] = [
       'Deploy an open source large language model on Amazon EC2 GPU instances behind an Application Load Balancer.',
     ],
     answer: [2],
-    explanation:
-      'Bedrock cung cấp foundation model qua API serverless; Knowledge Bases thực hiện RAG trên tài liệu S3 nên câu trả lời dựa trên dữ liệu công ty, không cần quản lý hạ tầng hay huấn luyện model. Tự huấn luyện LLM trên SageMaker tốn kém và phức tạp. Comprehend custom classification chỉ phân loại text, không tạo câu trả lời. Tự host LLM trên EC2 phải quản lý hạ tầng.',
   },
   {
     id: 'perf-055',
     domain: 'performance',
     lesson: 'ai-ml-services',
-    stem: 'An e-commerce company wants to show each user a personalized list of recommended products based on the user\'s browsing and purchase history. Recommendations must update in real time as users interact with the website. The company has no data scientists. Which AWS service should the company use?',
-    options: [
-      'Amazon Kendra',
-      'Amazon Personalize',
-      'Amazon SageMaker AI',
-      'Amazon Comprehend',
-    ],
+    stem: "An e-commerce company wants to show each user a personalized list of recommended products based on the user's browsing and purchase history. Recommendations must update in real time as users interact with the website. The company has no data scientists. Which AWS service should the company use?",
+    options: ['Amazon Kendra', 'Amazon Personalize', 'Amazon SageMaker AI', 'Amazon Comprehend'],
     answer: [1],
-    explanation:
-      'Personalize là dịch vụ recommendation được quản lý, nhận dữ liệu tương tác (xem, mua) và cập nhật gợi ý real-time, không cần kinh nghiệm ML. Kendra là tìm kiếm tài liệu. SageMaker AI làm được nhưng cần data scientist tự xây model. Comprehend phân tích text.',
   },
   {
     id: 'perf-056',
@@ -839,7 +719,5 @@ export const performanceQuestions: Question[] = [
       'Use Amazon SageMaker AI notebooks for experimentation, SageMaker AI training jobs on GPU instances, and a SageMaker AI real-time endpoint for inference.',
     ],
     answer: [3],
-    explanation:
-      'SageMaker AI phủ toàn bộ vòng đời ML: notebook được quản lý, training job trên GPU đọc dữ liệu từ S3, và real-time endpoint cho inference latency thấp; hỗ trợ thuật toán riêng qua custom container/script. Rekognition Custom Labels chỉ dành cho nhãn ảnh. Bedrock dùng foundation model có sẵn, không phải để huấn luyện thuật toán riêng. Tự dựng trên EC2 tăng gánh nặng vận hành, không phải fully managed.',
   },
 ];

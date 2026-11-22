@@ -19,7 +19,7 @@ export default async function LessonsPage(props: { params: Promise<{ locale: str
   setRequestLocale(locale);
   const t = await getTranslations('LessonsPage');
   const td = await getTranslations('Domains');
-  const lessons = getLessons(locale);
+  const lessons = await getLessons(locale);
 
   return (
     <PageShell title={t('title')}>

@@ -1,0 +1,804 @@
+{
+  "Flashcards": {
+    "sec-fc-01": {
+      "front": "What takes precedence in IAM when both an Allow and an explicit Deny apply?",
+      "back": "Explicit Deny always wins. If there is no Allow at all, the default is implicit deny."
+    },
+    "sec-fc-02": {
+      "front": "Permission boundary",
+      "back": "Sets the maximum permissions an IAM user/role can have. It does not grant permissions on its own; effective permissions are the intersection with the identity policy."
+    },
+    "sec-fc-03": {
+      "front": "An application on EC2 needs to call AWS APIs: what to use instead of access keys?",
+      "back": "An IAM role attached via an instance profile; the application gets temporary credentials from instance metadata (IMDSv2 recommended)."
+    },
+    "sec-fc-04": {
+      "front": "Best practices for the root user?",
+      "back": "Enable MFA, do not create access keys (delete any that exist), use root only for tasks that require it; use a separate admin for daily work."
+    },
+    "sec-fc-05": {
+      "front": "IAM Access Advisor vs IAM Credential Report",
+      "back": "Access Advisor: which services a user/role last used and when. Credential Report: password, MFA and access key status of every user in the account."
+    },
+    "sec-fc-06": {
+      "front": "Do SCPs apply to the management account?",
+      "back": "No. SCPs apply to every principal in member accounts (including the member account root user) but do not affect the management account."
+    },
+    "sec-fc-07": {
+      "front": "Do SCPs grant permissions?",
+      "back": "No. An SCP only sets a maximum limit; an IAM policy Allow is still required to have permissions."
+    },
+    "sec-fc-08": {
+      "front": "What is aws:PrincipalOrgID used for?",
+      "back": "A condition in resource-based policies (e.g., bucket policy) to allow only principals in your organization, automatically covering new accounts."
+    },
+    "sec-fc-09": {
+      "front": "AWS Control Tower",
+      "back": "Builds a best-practice multi-account landing zone on Organizations: Log Archive/Audit accounts, Identity Center, preventive (SCP) and detective (Config) controls, Account Factory."
+    },
+    "sec-fc-10": {
+      "front": "External ID in a trust policy",
+      "back": "A secret string the third party must pass when calling AssumeRole, used to prevent the confused deputy problem when granting cross-account access to a vendor."
+    },
+    "sec-fc-11": {
+      "front": "What can AWS RAM share (exam examples)?",
+      "back": "VPC subnets (VPC sharing), Transit Gateway, Route 53 Resolver rules, License Manager configurations... across accounts, without copying resources."
+    },
+    "sec-fc-12": {
+      "front": "Cognito User Pool vs Identity Pool",
+      "back": "User Pool: sign-up/sign-in, returns JWTs. Identity Pool: exchanges tokens for temporary AWS credentials, supports guest access."
+    },
+    "sec-fc-13": {
+      "front": "AD Connector",
+      "back": "A proxy that forwards authentication requests to on-premises AD, does not store or cache directory data in AWS; requires VPN or Direct Connect."
+    },
+    "sec-fc-14": {
+      "front": "When to choose AWS Managed Microsoft AD?",
+      "back": "When you need a real Active Directory on AWS for AD-aware applications (SQL Server, SharePoint) and/or a trust with on-premises AD."
+    },
+    "sec-fc-15": {
+      "front": "Simple AD",
+      "back": "Samba-based AD-compatible directory, low cost, basic features, does not support trust with other ADs."
+    },
+    "sec-fc-16": {
+      "front": "Security Group: stateful or stateless? Does it have Deny?",
+      "back": "Stateful, Allow rules only, applied at the ENI/instance level, can reference other Security Groups."
+    },
+    "sec-fc-17": {
+      "front": "Network ACL: key characteristics?",
+      "back": "Stateless, has Allow and Deny, applied at the subnet level, evaluated by rule number; ephemeral ports must be opened for return traffic."
+    },
+    "sec-fc-18": {
+      "front": "How to place NAT Gateways for HA?",
+      "back": "One NAT Gateway in the public subnet of each AZ, with private subnet route tables pointing to the NAT Gateway in the same AZ."
+    },
+    "sec-fc-19": {
+      "front": "What special configuration does a NAT instance need?",
+      "back": "Disable source/destination check, place it in a public subnet with a public IP; you manage HA and patching yourself."
+    },
+    "sec-fc-20": {
+      "front": "How does Session Manager replace a bastion host?",
+      "back": "Shell access via SSM Agent, no inbound ports, no SSH keys; permissions via IAM, session logs to S3/CloudWatch Logs."
+    },
+    "sec-fc-21": {
+      "front": "Do VPC Flow Logs record packet contents?",
+      "back": "No, only metadata (IP, port, protocol, ACCEPT/REJECT). To capture packet contents use Traffic Mirroring."
+    },
+    "sec-fc-22": {
+      "front": "Which services does a gateway endpoint support?",
+      "back": "Only Amazon S3 and DynamoDB. Free, works through route tables, not accessible from on-premises."
+    },
+    "sec-fc-23": {
+      "front": "Interface endpoint (PrivateLink)",
+      "back": "An ENI with a private IP in your subnet to reach most AWS services or third-party services; charged per hour and per GB, accessible from on-premises."
+    },
+    "sec-fc-24": {
+      "front": "Is VPC Peering transitive?",
+      "back": "No. Also, the CIDRs of the two VPCs must not overlap. Use Transit Gateway when you need transitive routing."
+    },
+    "sec-fc-25": {
+      "front": "Is Direct Connect encrypted by default?",
+      "back": "No. Use IPsec VPN over DX or MACsec on supported connections to encrypt."
+    },
+    "sec-fc-26": {
+      "front": "Direct Connect Gateway",
+      "back": "Lets a single Direct Connect connection reach VPCs in multiple Regions (and multiple accounts)."
+    },
+    "sec-fc-27": {
+      "front": "AWS VPN CloudHub",
+      "back": "Multiple branch offices (customer gateways) connect by VPN to the same virtual private gateway and communicate with each other in a hub-and-spoke model."
+    },
+    "sec-fc-28": {
+      "front": "AWS managed key vs customer managed key in KMS",
+      "back": "AWS managed: managed by AWS, rotates automatically every year, key policy not editable, cannot be shared cross-account. Customer managed: you control key policy, rotation, cross-account access, disable/delete."
+    },
+    "sec-fc-29": {
+      "front": "Envelope encryption",
+      "back": "Use a data key (from GenerateDataKey) to encrypt large data locally, then store the data key encrypted by the KMS key alongside the data. KMS Encrypt directly handles only up to 4 KB."
+    },
+    "sec-fc-30": {
+      "front": "CloudHSM vs KMS",
+      "back": "CloudHSM: single-tenant HSM, customer has full control of keys, AWS cannot access them. KMS: managed multi-tenant service, deeply integrated with AWS services."
+    },
+    "sec-fc-31": {
+      "front": "What is the current default encryption for S3?",
+      "back": "Since January 2023, all new objects are encrypted by default with SSE-S3. Choose SSE-KMS for key auditing/control."
+    },
+    "sec-fc-32": {
+      "front": "How to encrypt a running RDS database that is not encrypted?",
+      "back": "Create a snapshot, copy the snapshot with encryption enabled, restore a new DB from the encrypted snapshot, and switch the application to the new DB."
+    },
+    "sec-fc-33": {
+      "front": "Object Lock: governance vs compliance mode",
+      "back": "Governance: users with special permission can bypass. Compliance: no one, including root, can delete or shorten retention."
+    },
+    "sec-fc-34": {
+      "front": "SSE-C",
+      "back": "The customer sends the key with every request; S3 encrypts/decrypts but does not store the key; HTTPS is required."
+    },
+    "sec-fc-35": {
+      "front": "Secrets Manager vs Parameter Store",
+      "back": "Secrets Manager: built-in automatic rotation (RDS, Aurora, Redshift), cross-Region replication, paid. Parameter Store: stores configuration, SecureString, free standard tier, no built-in rotation."
+    },
+    "sec-fc-36": {
+      "front": "Which Region must an ACM certificate for CloudFront be in?",
+      "back": "us-east-1 (N. Virginia). A certificate for an ALB must be in the same Region as the ALB."
+    },
+    "sec-fc-37": {
+      "front": "CloudFront OAC",
+      "back": "Origin Access Control: lets only CloudFront read a private S3 bucket via bucket policy; replaces OAI and supports SSE-KMS."
+    },
+    "sec-fc-38": {
+      "front": "Signed URL vs signed cookie",
+      "back": "Signed URL: access to a single file. Signed cookie: access to multiple files without changing URLs."
+    },
+    "sec-fc-39": {
+      "front": "GuardDuty vs Inspector vs Macie",
+      "back": "GuardDuty: detects threats/anomalous behavior. Inspector: scans EC2/ECR/Lambda for software vulnerabilities. Macie: finds sensitive data (PII) in S3."
+    },
+    "sec-fc-40": {
+      "front": "Shield Standard vs Shield Advanced",
+      "back": "Standard: free, automatic, layer 3/4 DDoS protection. Advanced: paid, 24/7 Shield Response Team, cost protection, enhanced protection."
+    },
+    "res-fc-01": {
+      "front": "RDS Multi-AZ DB instance: does the standby serve reads?",
+      "back": "No. The standby is only for automatic failover (synchronous replication). To serve reads, use a Read Replica or a Multi-AZ DB cluster (2 readable standbys)."
+    },
+    "res-fc-02": {
+      "front": "How does Multi-AZ differ from a Read Replica?",
+      "back": "Multi-AZ: high availability, synchronous replication, automatic failover, a single endpoint. Read Replica: read scaling, asynchronous replication, its own endpoint, can be cross-Region and must be promoted manually."
+    },
+    "res-fc-03": {
+      "front": "How do you keep a web application stateless when scaling horizontally?",
+      "back": "Store sessions outside the instance, for example in ElastiCache (Redis/Valkey) or DynamoDB, and store uploaded files in S3 or EFS."
+    },
+    "res-fc-04": {
+      "front": "Is a NAT Gateway automatically Multi-AZ?",
+      "back": "No. A NAT Gateway is a per-AZ resource; for HA you need one NAT Gateway per AZ, with each AZ route table pointing to the NAT in the same AZ."
+    },
+    "res-fc-05": {
+      "front": "How do Local Zones, Wavelength, and Outposts differ?",
+      "back": "Local Zones: AWS infrastructure close to major cities for low latency. Wavelength: AWS inside carrier 5G networks. Outposts: AWS racks placed in your own data center."
+    },
+    "res-fc-06": {
+      "front": "How many copies of data does Aurora keep?",
+      "back": "6 copies across 3 AZs at the storage layer; up to 15 Aurora Replicas that both serve reads and act as failover targets."
+    },
+    "res-fc-07": {
+      "front": "At which layer do ALB, NLB, and GWLB operate?",
+      "back": "ALB: layer 7 (HTTP/HTTPS, gRPC, WebSocket). NLB: layer 4 (TCP/UDP/TLS). GWLB: layer 3, uses GENEVE to insert security appliances."
+    },
+    "res-fc-08": {
+      "front": "What do you choose when a load balancer needs a static IP?",
+      "back": "NLB (one static IP/Elastic IP per AZ, and an ALB can be placed as its target) or Global Accelerator (2 static anycast IPs). ALB has no static IP."
+    },
+    "res-fc-09": {
+      "front": "SNI (Server Name Indication)",
+      "back": "Lets one HTTPS/TLS listener hold multiple certificates and pick one based on the hostname the client requests. Supported on ALB and NLB, not on CLB."
+    },
+    "res-fc-10": {
+      "front": "What is the default deregistration delay?",
+      "back": "300 seconds (configurable 0-3,600 seconds). The LB stops sending new requests to a target being removed but lets in-flight requests finish."
+    },
+    "res-fc-11": {
+      "front": "Default cross-zone load balancing on ALB and NLB?",
+      "back": "ALB: on by default, no inter-AZ charge. NLB and GWLB: off by default; enabling it incurs inter-AZ data transfer charges."
+    },
+    "res-fc-12": {
+      "front": "Can an ALB use Lambda as a target?",
+      "back": "Yes. The ALB converts the HTTP request into an event for Lambda; rules let you combine Lambda and EC2 targets on the same ALB."
+    },
+    "res-fc-13": {
+      "front": "The ASG does not replace an instance when the application hangs. How do you fix it?",
+      "back": "Enable ELB health checks on the Auto Scaling group; by default the ASG only uses EC2 status checks, so it cannot detect application-layer failures."
+    },
+    "res-fc-14": {
+      "front": "Target tracking scaling",
+      "back": "Keeps a metric (CPU, RequestCountPerTarget...) around a target value; the ASG creates alarms and adjusts automatically. The lowest-operations option."
+    },
+    "res-fc-15": {
+      "front": "When do you use scheduled scaling and predictive scaling?",
+      "back": "Scheduled: load increases at a known time (cron). Predictive: uses ML on historical data to launch capacity ahead of load with a recurring cycle."
+    },
+    "res-fc-16": {
+      "front": "What are lifecycle hooks in an ASG used for?",
+      "back": "Pause an instance at Pending:Wait or Terminating:Wait to configure it before it receives traffic, or to collect logs/data before it is terminated."
+    },
+    "res-fc-17": {
+      "front": "Warm pool",
+      "back": "A pool of pre-initialized instances in the Stopped, Running, or Hibernated state, enabling fast scale out for applications with long startup times."
+    },
+    "res-fc-18": {
+      "front": "Which metric do you scale SQS workers on?",
+      "back": "Backlog per instance = visible messages / InService instances; use target tracking with a target = acceptable latency / processing time per message."
+    },
+    "res-fc-19": {
+      "front": "How do SQS Standard and FIFO differ?",
+      "back": "Standard: nearly unlimited throughput, at-least-once, best-effort ordering. FIFO: ordering per message group, exactly-once processing, name ends with .fifo."
+    },
+    "res-fc-20": {
+      "front": "SQS visibility timeout",
+      "back": "How long a message stays hidden after a consumer receives it (default 30 seconds, max 12 hours). If processing takes longer than the timeout, the message reappears and is processed again."
+    },
+    "res-fc-21": {
+      "front": "SQS message retention",
+      "back": "Default 4 days, configurable from 1 minute up to a maximum of 14 days."
+    },
+    "res-fc-22": {
+      "front": "Long polling in SQS",
+      "back": "Set WaitTimeSeconds up to 20 seconds so ReceiveMessage waits for messages, reducing empty calls, cost, and latency."
+    },
+    "res-fc-23": {
+      "front": "Dead-letter queue (DLQ)",
+      "back": "A queue that receives messages that were received more than maxReceiveCount times without being processed successfully, for analysis and later redrive."
+    },
+    "res-fc-24": {
+      "front": "Fan-out pattern",
+      "back": "Publish once to an SNS topic and have multiple SQS queues subscribe, so each system gets its own copy and processes it independently."
+    },
+    "res-fc-25": {
+      "front": "When do you choose Amazon MQ instead of SQS/SNS?",
+      "back": "When migrating an existing application that uses an ActiveMQ/RabbitMQ broker with standard protocols such as AMQP, MQTT, STOMP, JMS and you do not want to change code."
+    },
+    "res-fc-26": {
+      "front": "How does Kinesis Data Streams differ from SQS?",
+      "back": "Kinesis lets multiple consumers read the same data, real-time, with replay within retention (24 hours to 365 days). SQS deletes messages after processing and does not support replay."
+    },
+    "res-fc-27": {
+      "front": "Lambda time and memory limits?",
+      "back": "Maximum 15 minutes per invocation; memory from 128 MB to 10,240 MB (10 GB), with CPU scaling with memory."
+    },
+    "res-fc-28": {
+      "front": "How do reserved concurrency and provisioned concurrency differ?",
+      "back": "Reserved: dedicates and caps concurrency for a function. Provisioned: keeps initialized environments ready to eliminate cold starts (extra cost)."
+    },
+    "res-fc-29": {
+      "front": "Step Functions Standard vs Express?",
+      "back": "Standard: runs up to 1 year, exactly-once, has execution history. Express: up to 5 minutes, high volume, cheaper for short workloads."
+    },
+    "res-fc-30": {
+      "front": "CloudFront Functions vs Lambda@Edge?",
+      "back": "CloudFront Functions: lightweight JavaScript, viewer request/response only, under 1 ms, cheap. Lambda@Edge: Node.js/Python, also origin request/response, has network access, runs longer."
+    },
+    "res-fc-31": {
+      "front": "API Gateway usage plan",
+      "back": "Associates API keys with throttling (rate, burst) and quota per customer; available in REST API."
+    },
+    "res-fc-32": {
+      "front": "Alias record vs CNAME?",
+      "back": "Alias works at the zone apex, points to AWS resources (ELB, CloudFront, S3 website...), and queries are free. CNAME cannot be used at the zone apex."
+    },
+    "res-fc-33": {
+      "front": "How do Geolocation and Latency routing differ?",
+      "back": "Geolocation routes by user location (country, continent) for legal/content requirements. Latency routes to the Region with the lowest network latency."
+    },
+    "res-fc-34": {
+      "front": "Route 53 health check for a private resource?",
+      "back": "The health checkers are outside the VPC and cannot reach it; create a CloudWatch alarm on a metric, then create a health check based on that alarm."
+    },
+    "res-fc-35": {
+      "front": "Route 53 Resolver inbound and outbound endpoints?",
+      "back": "Inbound: on-premises resolves names in AWS (private hosted zone). Outbound + forwarding rule: the VPC resolves on-premises domain names."
+    },
+    "res-fc-36": {
+      "front": "RPO and RTO",
+      "back": "RPO: the maximum acceptable data loss (measured in time). RTO: the maximum time to restore service after an incident."
+    },
+    "res-fc-37": {
+      "front": "How do pilot light and warm standby differ?",
+      "back": "Pilot light: only data is replicated; app servers are off or not yet created. Warm standby: the full stack runs at small scale, with shorter RTO and higher cost."
+    },
+    "res-fc-38": {
+      "front": "AWS Elastic Disaster Recovery (DRS)",
+      "back": "Continuously replicates at block level from on-premises/other clouds/EC2 into a low-cost staging area; RPO in seconds, RTO in minutes, supports drills and failback."
+    },
+    "res-fc-39": {
+      "front": "AWS Backup Vault Lock compliance mode",
+      "back": "Makes a backup vault WORM: after the grace period, no one (including the root user) can delete backups or remove the lock before retention expires."
+    },
+    "res-fc-40": {
+      "front": "S3 Replication Time Control (RTC)",
+      "back": "An S3 replication option with an SLA of replicating 99.99% of objects within 15 minutes, with metrics and notifications when delayed. Replication requires versioning on both buckets."
+    },
+    "res-fc-41": {
+      "front": "CloudFormation change set",
+      "back": "A preview of the resources that will be added, modified, or replaced before a stack update; execute only after review."
+    },
+    "res-fc-42": {
+      "front": "CloudFormation drift detection",
+      "back": "Detects stack resources that were changed manually outside CloudFormation and no longer match the template configuration."
+    },
+    "res-fc-43": {
+      "front": "CloudFormation StackSets",
+      "back": "Deploys the same template to many accounts and Regions; with Organizations (service-managed permissions) it supports automatic deployment to new accounts."
+    },
+    "res-fc-44": {
+      "front": "DeletionPolicy: Retain and Snapshot",
+      "back": "Retain keeps the resource when the stack is deleted; Snapshot takes a final snapshot (EBS, RDS, ElastiCache, Redshift...) and then deletes. The default for most resources is Delete."
+    },
+    "res-fc-45": {
+      "front": "CreationPolicy + cfn-signal",
+      "back": "The stack reaches CREATE_COMPLETE only when the EC2 instance signals success after cfn-init finishes; on timeout it rolls back."
+    },
+    "res-fc-46": {
+      "front": "Beanstalk: Rolling with additional batch vs Immutable",
+      "back": "Both keep full capacity. Rolling with additional batch updates existing instances gradually; Immutable builds new instances in a temporary ASG and has the fastest rollback."
+    },
+    "res-fc-47": {
+      "front": "SSM Run Command, Patch Manager, State Manager",
+      "back": "Run Command: run commands on many nodes without SSH. Patch Manager: patch by baseline in a Maintenance Window. State Manager: keep nodes in a desired state."
+    },
+    "res-fc-48": {
+      "front": "Monitoring EC2 memory",
+      "back": "Not available by default; install the CloudWatch agent to publish memory/disk metrics, then create a CloudWatch alarm. Detailed monitoring does not add a memory metric."
+    },
+    "res-fc-49": {
+      "front": "CloudWatch metric filter vs subscription filter",
+      "back": "A metric filter turns log patterns into a metric for alarms; a subscription filter streams logs in real time to Lambda, Kinesis, Firehose."
+    },
+    "res-fc-50": {
+      "front": "AWS X-Ray",
+      "back": "Distributed tracing with a service map that shows the time and errors in each service to find bottlenecks in microservices."
+    },
+    "res-fc-51": {
+      "front": "AWS Service Catalog",
+      "back": "Admins create a portfolio of approved products (CloudFormation templates); a launch constraint lets users self-launch with the product IAM role, without broad permissions."
+    },
+    "res-fc-52": {
+      "front": "EventBridge cross-account",
+      "back": "A rule in the source account sends events to the event bus of a central account; the target bus needs a resource-based policy allowing the account or organization to send."
+    },
+    "res-fc-53": {
+      "front": "EventBridge Pipes",
+      "back": "Point-to-point connection source (SQS, Kinesis, DynamoDB Streams, MSK, Amazon MQ) → filter → enrichment → target, reducing glue Lambda code."
+    },
+    "res-fc-54": {
+      "front": "Step Functions .waitForTaskToken",
+      "back": "The task pauses until an external system calls SendTaskSuccess or SendTaskFailure with the task token; available only in Standard workflows."
+    },
+    "res-fc-55": {
+      "front": "Step Functions Distributed Map",
+      "back": "Runs up to 10,000 parallel child executions, reading items directly from S3 to process millions of objects."
+    },
+    "res-fc-56": {
+      "front": "Amazon AppFlow",
+      "back": "Bidirectional no-code data transfer between SaaS (Salesforce, SAP, ServiceNow, Zendesk...) and AWS (S3, Redshift), on a schedule or on events, with filtering and field masking."
+    },
+    "perf-fc-01": {
+      "front": "Cluster placement group",
+      "back": "Packs instances close together in 1 AZ for the lowest latency and highest bandwidth between nodes (HPC). The trade-off is a higher risk of correlated failure."
+    },
+    "perf-fc-02": {
+      "front": "How many instances does a spread placement group allow?",
+      "back": "At most 7 running instances per AZ per group; each instance is on its own rack to reduce correlated failures."
+    },
+    "perf-fc-03": {
+      "front": "What is a partition placement group used for?",
+      "back": "Distributed rack-aware workloads such as HDFS, HBase, Cassandra, Kafka; at most 7 partitions per AZ, each partition is a separate set of racks."
+    },
+    "perf-fc-04": {
+      "front": "ENA vs EFA",
+      "back": "ENA is the regular enhanced networking (high bandwidth, high PPS). EFA adds OS-bypass for HPC/ML using MPI or NCCL, and supports Linux only."
+    },
+    "perf-fc-05": {
+      "front": "What does EC2 Hibernate require?",
+      "back": "An encrypted EBS root volume large enough to hold RAM; RAM is saved to EBS and restored on start, giving a fast startup."
+    },
+    "perf-fc-06": {
+      "front": "When does instance store lose data?",
+      "back": "When the instance is stopped, hibernated, or terminated, or the host fails. Data is kept on reboot."
+    },
+    "perf-fc-07": {
+      "front": "EC2 Image Builder",
+      "back": "A service that automatically builds, tests, patches, and distributes AMIs (and container images) through a pipeline, and can share them across Regions/accounts."
+    },
+    "perf-fc-08": {
+      "front": "What are the Lambda time and memory limits?",
+      "back": "Up to 15 minutes per invocation, up to 10,240 MB of memory (CPU scales with memory), /tmp up to 10 GB."
+    },
+    "perf-fc-09": {
+      "front": "Provisioned Concurrency",
+      "back": "Keeps pre-initialized Lambda environments ready to eliminate cold starts, for predictable load or low-latency requirements."
+    },
+    "perf-fc-10": {
+      "front": "ECS or EKS?",
+      "back": "ECS when you want simple orchestration with deep AWS integration. EKS when you already use Kubernetes, need Helm/operators, or portability."
+    },
+    "perf-fc-11": {
+      "front": "AWS Fargate",
+      "back": "Serverless compute for containers (ECS and EKS): you only declare vCPU/RAM and do not manage EC2. Does not support GPU."
+    },
+    "perf-fc-12": {
+      "front": "AWS Batch",
+      "back": "Manages queues and scheduling of large-scale batch jobs on EC2, Spot, or Fargate; no 15-minute limit like Lambda."
+    },
+    "perf-fc-13": {
+      "front": "gp3 baseline",
+      "back": "3,000 IOPS and 125 MiB/s regardless of size; IOPS and throughput can be increased independently of size, about 20% cheaper than gp2."
+    },
+    "perf-fc-14": {
+      "front": "How does gp2 calculate IOPS?",
+      "back": "3 IOPS per GiB (minimum 100, maximum 16,000); small volumes burst up to 3,000 IOPS. To get more IOPS you must increase size."
+    },
+    "perf-fc-15": {
+      "front": "io2 Block Express maximums",
+      "back": "Up to 256,000 IOPS, 4,000 MiB/s, 64 TiB per volume, sub-millisecond latency, 99.999% durability."
+    },
+    "perf-fc-16": {
+      "front": "EBS Multi-Attach",
+      "back": "io1/io2 only, attaches one volume to up to 16 Nitro instances in the same AZ; needs a cluster-aware file system."
+    },
+    "perf-fc-17": {
+      "front": "When to use st1 and sc1?",
+      "back": "HDDs for sequential reads: st1 (up to 500 MiB/s) for big data and logs; sc1 (up to 250 MiB/s) for cold data, the cheapest. Cannot be boot volumes."
+    },
+    "perf-fc-18": {
+      "front": "EFS throughput modes",
+      "back": "Elastic (scales automatically, pay for use, recommended), Provisioned (reserve throughput up front), Bursting (based on size, uses credits)."
+    },
+    "perf-fc-19": {
+      "front": "FSx for Lustre scratch vs persistent",
+      "back": "Scratch: temporary, not replicated, cheap, high burst. Persistent: replicated within the AZ, for durable data and long-term processing."
+    },
+    "perf-fc-20": {
+      "front": "FSx for NetApp ONTAP",
+      "back": "Multi-protocol file system (NFS, SMB, iSCSI) with snapshots, clones, dedup, SnapMirror; suited to migrating on-prem NetApp."
+    },
+    "perf-fc-21": {
+      "front": "S3 request rate per prefix",
+      "back": "At least 3,500 PUT/COPY/POST/DELETE and 5,500 GET/HEAD per second per prefix; add prefixes to increase total throughput."
+    },
+    "perf-fc-22": {
+      "front": "When is multipart upload mandatory?",
+      "back": "For files over 5 GB (the single PUT limit). Recommended for files over 100 MB to upload in parallel and retry individual parts."
+    },
+    "perf-fc-23": {
+      "front": "S3 Transfer Acceleration",
+      "back": "Uploads/downloads through an edge location, then over the AWS backbone to a distant bucket; useful when users are far from the bucket Region."
+    },
+    "perf-fc-24": {
+      "front": "S3 Express One Zone",
+      "back": "Single-digit millisecond latency storage class, uses a directory bucket in 1 AZ, placed in the same AZ as compute for ML/analytics."
+    },
+    "perf-fc-25": {
+      "front": "S3 consistency model",
+      "back": "Strong read-after-write consistency for all PUT, DELETE, and LIST operations, at no extra charge."
+    },
+    "perf-fc-26": {
+      "front": "Read replica vs Multi-AZ standby",
+      "back": "Read replica: async, readable, used to scale reads. Multi-AZ instance standby: sync, not readable, used only for HA failover."
+    },
+    "perf-fc-27": {
+      "front": "What problem does RDS Proxy solve?",
+      "back": "Connection pooling for RDS/Aurora, prevents connection exhaustion (especially from Lambda), reduces failover time, supports IAM auth and Secrets Manager."
+    },
+    "perf-fc-28": {
+      "front": "How many copies does Aurora store?",
+      "back": "6 copies across 3 AZs; writes need 4/6, reads need 3/6; up to 15 Aurora Replicas share the same storage."
+    },
+    "perf-fc-29": {
+      "front": "Aurora custom endpoint",
+      "back": "An endpoint pointing to a hand-picked group of instances, for example separating large analytics replicas from the replicas serving the app."
+    },
+    "perf-fc-30": {
+      "front": "When should you use Aurora I/O-Optimized?",
+      "back": "When I/O charges are more than about 25% of the Aurora cost; no I/O charges, in exchange for higher instance and storage prices."
+    },
+    "perf-fc-31": {
+      "front": "DynamoDB RCU and WCU",
+      "back": "1 RCU = 1 strongly consistent read/s (or 2 eventually consistent) for an item up to 4 KB. 1 WCU = 1 write/s for an item up to 1 KB. Transactions cost double."
+    },
+    "perf-fc-32": {
+      "front": "GSI vs LSI",
+      "back": "GSI: different partition key, can be created any time, eventually consistent only. LSI: same partition key, only created at table creation, supports strongly consistent reads."
+    },
+    "perf-fc-33": {
+      "front": "DAX",
+      "back": "In-memory cache for DynamoDB, reads go from milliseconds down to microseconds, API-compatible; does not speed up writes."
+    },
+    "perf-fc-34": {
+      "front": "Lazy loading vs write-through",
+      "back": "Lazy loading: caches only on a miss, data can be stale. Write-through: writes to the cache at the same time as the DB, data is always fresh but uses more memory and slows writes. Combine with TTL."
+    },
+    "perf-fc-35": {
+      "front": "ElastiCache Redis OSS/Valkey vs Memcached",
+      "back": "Redis OSS/Valkey: replication, Multi-AZ, persistence, sorted sets, pub/sub. Memcached: simple, multi-threaded, no replication, no persistence."
+    },
+    "perf-fc-36": {
+      "front": "CloudFront vs Global Accelerator",
+      "back": "CloudFront caches HTTP/HTTPS content at the edge. Global Accelerator provides 2 static anycast IPs, supports TCP/UDP, does not cache, and offers fast multi-Region failover."
+    },
+    "perf-fc-37": {
+      "front": "CloudFront origin group",
+      "back": "A primary/secondary origin pair; when the primary returns a configured error code (for example 5xx) or times out, CloudFront switches to the secondary for GET/HEAD/OPTIONS."
+    },
+    "perf-fc-38": {
+      "front": "Kinesis Data Streams shard capacity",
+      "back": "Each shard: writes 1 MB/s or 1,000 records/s, reads 2 MB/s (shared); enhanced fan-out gives each consumer its own 2 MB/s."
+    },
+    "perf-fc-39": {
+      "front": "Amazon Data Firehose",
+      "back": "The new name of Kinesis Data Firehose: delivers streaming data near real-time to S3, Redshift, OpenSearch, Splunk, HTTP; transform with Lambda, convert to Parquet/ORC."
+    },
+    "perf-fc-40": {
+      "front": "How much data can 1 Gbps transfer per day?",
+      "back": "About 125 MB/s, or about 10.8 TB/day at 100% bandwidth utilization; 100 TB takes about 9-10 days."
+    },
+    "perf-fc-41": {
+      "front": "SageMaker AI vs ready-made AI services",
+      "back": "SageMaker AI: build/train/deploy your own model (notebooks, training jobs, endpoints). AI services (Rekognition, Textract...): call an API, no ML experts needed, least operational overhead."
+    },
+    "perf-fc-42": {
+      "front": "Amazon Bedrock",
+      "back": "Serverless API access to foundation models; Knowledge Bases (RAG over documents), Agents, Guardrails, fine-tuning. Customer data is not used to train the base models."
+    },
+    "perf-fc-43": {
+      "front": "Textract vs Rekognition text detection",
+      "back": "Textract: extracts text, forms (key-value), and tables from scanned documents/PDFs, invoices, ID documents. Rekognition: short text in natural images such as signs and license plates."
+    },
+    "perf-fc-44": {
+      "front": "Amazon Rekognition",
+      "back": "Image/video analysis: objects, scenes, faces (comparison, search), celebrities, content moderation, PPE; Custom Labels for your own labels."
+    },
+    "perf-fc-45": {
+      "front": "Amazon Comprehend",
+      "back": "NLP: sentiment, entities, key phrases, language detection, PII detection/redaction, custom classification. Comprehend Medical for medical information and PHI."
+    },
+    "perf-fc-46": {
+      "front": "Transcribe vs Polly",
+      "back": "Transcribe: speech to text (call recordings, subtitles, PII redaction). Polly: text to speech (read articles aloud, neural voices, SSML)."
+    },
+    "perf-fc-47": {
+      "front": "Lex vs Amazon Connect",
+      "back": "Lex: voice/text chatbot engine (intents, slots, Lambda). Connect: cloud contact center that can integrate Lex as a self-service bot."
+    },
+    "perf-fc-48": {
+      "front": "Kendra, Personalize, Amazon Q",
+      "back": "Kendra: natural-language search over internal documents. Personalize: real-time product recommendations. Q Business: AI assistant over enterprise data; Q Developer: coding assistant."
+    },
+    "cost-fc-01": {
+      "front": "How much cheaper is a Spot Instance, and how much warning do you get before it is reclaimed?",
+      "back": "Up to about 90% cheaper than On-Demand; AWS gives a 2-minute warning via instance metadata and EventBridge before reclaiming."
+    },
+    "cost-fc-02": {
+      "front": "What do Compute Savings Plans apply to?",
+      "back": "EC2 in any family, size, OS, tenancy, and Region, plus AWS Fargate and AWS Lambda. Most flexible, discount up to about 66%."
+    },
+    "cost-fc-03": {
+      "front": "How do EC2 Instance Savings Plans differ from Compute Savings Plans?",
+      "back": "EC2 Instance SP is tied to one instance family in one Region, with a deeper discount (up to about 72%), but does not apply to Fargate/Lambda and cannot change Region."
+    },
+    "cost-fc-04": {
+      "front": "Standard RI vs Convertible RI",
+      "back": "Standard RI has a deeper discount and can be sold on the RI Marketplace, but cannot change family/OS. Convertible RI has a smaller discount but can change family, OS, and tenancy."
+    },
+    "cost-fc-05": {
+      "front": "Does a Regional RI reserve capacity?",
+      "back": "No. A Regional RI only discounts usage in every AZ in the Region. To reserve capacity you need a Zonal RI or an On-Demand Capacity Reservation."
+    },
+    "cost-fc-06": {
+      "front": "On-Demand Capacity Reservation",
+      "back": "Reserves EC2 capacity in one specific AZ, no term commitment, billed even when no instance is running. Combine with Savings Plans/Regional RI to get a discount."
+    },
+    "cost-fc-07": {
+      "front": "License per socket/core (BYOL) → what to choose?",
+      "back": "Dedicated Hosts: they expose sockets, cores, and host ID and support host affinity. Dedicated Instances do not qualify because they do not expose the physical hardware."
+    },
+    "cost-fc-08": {
+      "front": "Baseline must always run but spikes must be cheap → which architecture?",
+      "back": "An Auto Scaling group with a mixed instances policy: On-Demand base capacity (covered by Savings Plans) and Spot for capacity above the base."
+    },
+    "cost-fc-09": {
+      "front": "Recommended Spot allocation strategy",
+      "back": "priceCapacityOptimized: picks the pools least likely to be interrupted while still low in price; combine multiple instance types to diversify."
+    },
+    "cost-fc-10": {
+      "front": "AWS Compute Optimizer",
+      "back": "Uses ML on CloudWatch metrics to recommend right-sizing for EC2, ASG, EBS, Lambda, ECS Fargate, RDS. Memory metrics require the CloudWatch agent."
+    },
+    "cost-fc-11": {
+      "front": "Minimum storage duration of Standard-IA, Glacier IR, Glacier Flexible, Deep Archive",
+      "back": "Standard-IA and One Zone-IA: 30 days; Glacier Instant Retrieval and Flexible Retrieval: 90 days; Deep Archive: 180 days."
+    },
+    "cost-fc-12": {
+      "front": "Glacier Flexible Retrieval: retrieval options",
+      "back": "Expedited 1–5 minutes, Standard 3–5 hours, Bulk 5–12 hours (Bulk retrieval is free)."
+    },
+    "cost-fc-13": {
+      "front": "How long does Glacier Deep Archive retrieval take?",
+      "back": "Standard within 12 hours, Bulk within 48 hours. No Expedited. Cheapest for 7–10 year archives."
+    },
+    "cost-fc-14": {
+      "front": "\"Unknown or changing access patterns\" on S3",
+      "back": "S3 Intelligent-Tiering: moves tiers automatically, no retrieval fee, only a small per-object monitoring fee."
+    },
+    "cost-fc-15": {
+      "front": "When to use S3 One Zone-IA?",
+      "back": "Infrequently accessed data that can be re-created (thumbnails, secondary copies). Only 1 AZ, about 20% cheaper than Standard-IA."
+    },
+    "cost-fc-16": {
+      "front": "When is S3 Glacier Instant Retrieval a good fit?",
+      "back": "Archive data accessed about once a quarter but needed in milliseconds; cheaper storage than Standard-IA, 90-day minimum."
+    },
+    "cost-fc-17": {
+      "front": "S3 Requester Pays",
+      "back": "The (authenticated) requester pays for requests and data transfer; the bucket owner pays only for storage."
+    },
+    "cost-fc-18": {
+      "front": "S3 Storage Lens vs S3 Inventory",
+      "back": "Storage Lens: organization-level usage/activity dashboard and cost recommendations. Inventory: periodic file listing of objects and metadata (CSV/ORC/Parquet)."
+    },
+    "cost-fc-19": {
+      "front": "Bucket with Versioning enabled has bloated costs → what to do?",
+      "back": "Add lifecycle rules to expire noncurrent versions and AbortIncompleteMultipartUpload."
+    },
+    "cost-fc-20": {
+      "front": "What can AWS Budgets actions do?",
+      "back": "When a threshold is exceeded: apply an IAM policy, apply an SCP, or stop EC2/RDS instances; run automatically or wait for approval."
+    },
+    "cost-fc-21": {
+      "front": "What are Cost and Usage Report / Data Exports used for?",
+      "back": "Export the most detailed billing data (hourly, per resource, with tags) to S3 as CUR 2.0 or FOCUS; analyze with Athena/QuickSight."
+    },
+    "cost-fc-22": {
+      "front": "Tag applied but not visible in Cost Explorer?",
+      "back": "You must activate the tag as a cost allocation tag in the Billing console of the management account; it is not retroactive."
+    },
+    "cost-fc-23": {
+      "front": "AWS Cost Anomaly Detection vs AWS Budgets",
+      "back": "Anomaly Detection uses ML to detect unusual spend, no threshold needed. Budgets alert on fixed thresholds you set."
+    },
+    "cost-fc-24": {
+      "front": "Cost benefits of consolidated billing",
+      "back": "One bill, combined usage to reach lower pricing tiers, RIs and Savings Plans shared across accounts; no extra charge."
+    },
+    "cost-fc-25": {
+      "front": "Which support plan is needed for the full Trusted Advisor cost optimization checks?",
+      "back": "Business Support or higher (Business, Enterprise On-Ramp, Enterprise). Basic/Developer get only the core checks."
+    },
+    "cost-fc-26": {
+      "front": "AWS Billing Conductor",
+      "back": "Creates a pro forma bill with custom pricing for showback/chargeback or resellers; does not change the real AWS bill."
+    },
+    "cost-fc-27": {
+      "front": "Which data transfer is free?",
+      "back": "Inbound from the internet, traffic within the same AZ over private IP, and from an AWS origin (S3, EC2, ALB) to CloudFront."
+    },
+    "cost-fc-28": {
+      "front": "Private EC2 reads S3 heavily, NAT Gateway charges are high → solution?",
+      "back": "Gateway VPC endpoint for S3 (and DynamoDB): free, you only add a route to the route table."
+    },
+    "cost-fc-29": {
+      "front": "Is an Interface VPC endpoint free?",
+      "back": "No. Charged per hour per AZ and per GB processed. Only Gateway endpoints (S3, DynamoDB) are free."
+    },
+    "cost-fc-30": {
+      "front": "What changed with public IPv4 charges in Feb 2024?",
+      "back": "Every public IPv4 address is charged hourly, including attached Elastic IPs. Reduce by dropping public IPs, using IPv6, endpoints, Session Manager."
+    },
+    "cost-fc-31": {
+      "front": "gp2 → gp3: benefits?",
+      "back": "gp3 is about 20% cheaper per GB, with a baseline of 3,000 IOPS and 125 MB/s regardless of size; convert with Elastic Volumes without downtime."
+    },
+    "cost-fc-32": {
+      "front": "DynamoDB on-demand vs provisioned",
+      "back": "On-demand: pay per request, for unpredictable load/lots of idle time. Provisioned + Auto Scaling (+ reserved capacity): cheaper for steady load."
+    },
+    "cost-fc-33": {
+      "front": "When is Aurora Serverless v2 a good fit?",
+      "back": "Variable or intermittent database load, dev/test; scales by ACU, can be configured with min 0 ACU to auto-pause when idle."
+    },
+    "cost-fc-34": {
+      "front": "Instance Scheduler on AWS",
+      "back": "An AWS solution that automatically starts/stops EC2 and RDS on a schedule based on tags, cutting off-hours dev/test environment costs."
+    },
+    "cost-fc-35": {
+      "front": "Does increasing Lambda memory always increase cost?",
+      "back": "No. CPU is proportional to memory, so a shorter run time can lower the total cost; use Lambda Power Tuning to find the optimum."
+    },
+    "cost-fc-36": {
+      "front": "Reducing Amazon Athena cost",
+      "back": "Reduce data scanned: partition data, use compressed columnar formats Parquet/ORC, combine small files."
+    },
+    "cost-fc-37": {
+      "front": "Redshift Serverless vs provisioned",
+      "back": "Serverless is billed per RPU-hour while queries run, for sporadic load. Provisioned + reserved nodes is cheaper for always-on warehouses."
+    },
+    "cost-fc-38": {
+      "front": "FSx for Lustre scratch vs persistent",
+      "back": "Scratch is cheap, no replication, for short-term temporary processing; persistent is for long-term storage with replication. Both can link to S3."
+    },
+    "cost-fc-39": {
+      "front": "When to choose Snowball Edge over network transfer?",
+      "back": "When a network transfer would take too long (several weeks or more) or saturate bandwidth, for many TB to PB of data moved once."
+    },
+    "cost-fc-40": {
+      "front": "EBS vs EFS: how is capacity billed?",
+      "back": "EBS is billed on provisioned capacity whether used or not; EFS is billed on actual used capacity but at a higher price per GB, reduced with lifecycle to IA/Archive."
+    },
+    "cost-fc-41": {
+      "front": "When is Lambda cheaper than EC2/ECS, and when is it the opposite?",
+      "back": "Lambda is cheap for sparse, spiky load with lots of idle time because idle costs nothing. For high, steady 24/7 load, EC2 or ECS on EC2 with Savings Plans is usually cheaper."
+    },
+    "cost-fc-42": {
+      "front": "Fargate Spot",
+      "back": "Runs Fargate tasks on spare capacity at up to about 70% off; reclaimed with a 2-minute warning (SIGTERM). Does not support Windows or ARM64 tasks."
+    },
+    "cost-fc-43": {
+      "front": "Capacity provider strategy: base and weight",
+      "back": "base is the minimum number of tasks always placed on one provider (e.g. FARGATE base 2); weight splits the rest between providers (e.g. FARGATE:FARGATE_SPOT = 1:3)."
+    },
+    "cost-fc-44": {
+      "front": "Reducing Spot interruptions",
+      "back": "Diversify across many instance types and AZs (or attribute-based selection) and use the price-capacity-optimized/capacity-optimized allocation strategy. Raising the max price does not help."
+    },
+    "cost-fc-45": {
+      "front": "Spot workers that do not lose work when reclaimed",
+      "back": "Pull work from SQS and delete the message only after processing (it reappears after the visibility timeout); checkpoint progress to S3/DynamoDB to resume."
+    },
+    "cost-fc-46": {
+      "front": "Where can Graviton be used?",
+      "back": "EC2 (families with a g), Lambda arm64, Fargate ARM64, RDS/Aurora, ElastiCache, OpenSearch. Better price/performance than x86; needs ARM64-compatible code/images."
+    },
+    "cost-fc-47": {
+      "front": "Lambda billed while waiting for an external API: solution?",
+      "back": "Move the waiting to Step Functions (Wait state or callback task token); Standard workflows are billed per state transition, not for waiting time."
+    },
+    "cost-fc-48": {
+      "front": "AWS Batch with Spot",
+      "back": "Batch has no extra charge; use a Spot compute environment with SPOT_PRICE_CAPACITY_OPTIMIZED, many instance types, and a retry strategy for interrupted jobs."
+    },
+    "cost-fc-49": {
+      "front": "Which data transfer flows are free?",
+      "back": "Inbound from the internet; within the same AZ over private IP; EC2 ↔ S3/DynamoDB in the same Region (not via NAT); AWS origin → CloudFront; RDS/Aurora Multi-AZ replication."
+    },
+    "cost-fc-50": {
+      "front": "Gateway endpoint vs interface endpoint: cost",
+      "back": "Gateway endpoints (S3, DynamoDB only) are free. Interface endpoints charge hourly per AZ + per GB, but the processing fee is lower than a NAT Gateway."
+    },
+    "cost-fc-51": {
+      "front": "One NAT per AZ or one shared NAT?",
+      "back": "One NAT per AZ: HA, no cross-AZ fees, but more hourly fees (for production). One shared NAT: lower hourly cost but cross-AZ fees and a single point of failure (acceptable for dev/test)."
+    },
+    "cost-fc-52": {
+      "front": "CloudFront price class",
+      "back": "All, 200, 100. Price Class 100 uses only edges in the cheapest areas (North America, Europe): cheaper but higher latency for users elsewhere."
+    },
+    "cost-fc-53": {
+      "front": "VPC peering vs Transit Gateway: cost",
+      "back": "Peering has no hourly or processing fee and same-AZ traffic is free, but it is not transitive. TGW charges per attachment-hour + per GB processed, in exchange for easy hub-and-spoke management."
+    },
+    "cost-fc-54": {
+      "front": "Direct Connect vs Site-to-Site VPN: cost",
+      "back": "VPN: hourly fee per connection + egress at internet rates, cheap for low volume, quick to set up. Direct Connect: fixed port fee + cheaper egress, worthwhile for large steady volumes."
+    },
+    "cost-fc-55": {
+      "front": "Cross-zone load balancing and inter-AZ fees",
+      "back": "NLB/GWLB have cross-zone off by default; turning it on incurs inter-AZ fees. ALB always has cross-zone on and does not charge inter-AZ for it."
+    },
+    "cost-fc-56": {
+      "front": "Finding data transfer cost sources",
+      "back": "Cost Explorer grouped by usage type (DataTransfer-Regional-Bytes, NatGateway-Bytes, DataTransfer-Out-Bytes); CUR + Athena per resource; VPC Flow Logs for source/destination pairs."
+    }
+  }
+}

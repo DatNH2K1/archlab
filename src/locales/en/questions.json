@@ -1,0 +1,724 @@
+{
+  "Questions": {
+    "sec-001": {
+      "explanation": "An IAM role attached through an instance profile provides automatically rotated temporary credentials, so no long-term credentials are stored on the machine. Encrypting the config file still means storing a long-term access key. Storing the access key in Parameter Store is better than a file but is still a long-term credential, less secure than a role. Making the bucket public based on IP is a flawed design and easily exposes data."
+    },
+    "sec-002": {
+      "explanation": "A permission boundary sets the maximum permissions for a role; the iam:PermissionsBoundary condition forces developers to attach the boundary when creating roles, so privilege escalation is impossible. AdministratorAccess with periodic review only detects after the fact, it does not prevent. An SCP denying iam:CreateRole stops developers from creating roles at all, contrary to the requirement. An inline policy on the group only controls the developers' own permissions, not the permissions of the roles they create."
+    },
+    "sec-003": {
+      "explanation": "In IAM policy evaluation logic, an explicit Deny always beats any Allow, regardless of which policy contains the Deny. There is no rule that groups take precedence over users. The bucket policy does not need a Deny because an explicit Deny in the identity policy is enough to deny the request."
+    },
+    "sec-004": {
+      "explanation": "Best practice: enable MFA for root, delete root access keys and use a separate administrative identity (IAM Identity Center or IAM) for daily work. Rotating root access keys still keeps a high-risk credential. The root user cannot be renamed. A permission boundary cannot be attached to the root user."
+    },
+    "sec-005": {
+      "explanation": "IAM Access Advisor (last accessed information) shows which services a role last used and when, which supports cleaning up excess permissions. AWS Config records configuration changes of the role, not permission usage. GuardDuty detects threats, it does not list services used. Inspector scans for software vulnerabilities, it does not analyze IAM."
+    },
+    "sec-006": {
+      "explanation": "The aws:MultiFactorAuthPresent condition in a policy allows the action only when the session was authenticated with MFA. Termination protection is unrelated to MFA and does not block stop. A Config rule only checks whether the user has MFA enabled, it does not enforce it at API call time. The password policy has no option to require MFA."
+    },
+    "sec-007": {
+      "explanation": "A task role grants permissions to code running in the container; a policy limited to the specific table to be written is least privilege. The task execution role is used by ECS to pull images and write logs, not for the application. Fargate has no container instances you manage, and attaching permissions at the instance level would give every task those permissions. Passing an access key through environment variables is a long-term credential and is not secure."
+    },
+    "sec-008": {
+      "explanation": "Using roles with temporary credentials and using IAM Access Analyzer to detect resources shared externally are best practices. Sharing one IAM user removes the ability to trace individual people. Granting full access to every developer violates least privilege. Creating access keys for root is something AWS strongly advises against."
+    },
+    "sec-009": {
+      "explanation": "An SCP attached at the organization root limits the permissions of every principal in member accounts, including the root user, so it blocks this action. An IAM policy does not apply to the root user and new users are easily missed. AWS Config only detects after the event. Permission sets apply only to Identity Center users and do not affect root or other IAM users."
+    },
+    "sec-010": {
+      "explanation": "The aws:PrincipalOrgID condition in a bucket policy automatically covers all current and future accounts of the organization, with no updates needed. Listing account IDs requires editing the policy every time an account is added. A cross-account role works but every application must assume the role, which is more complex to operate. RAM does not support sharing S3 buckets."
+    },
+    "sec-011": {
+      "explanation": "Control Tower builds a best-practice landing zone: creates the Log Archive and Audit accounts, configures IAM Identity Center, and applies preventive (SCP) and detective (Config) controls to new accounts through Account Factory. Organizations with manual SCPs takes a lot of effort. Conformance packs are just sets of Config rules. Security Hub aggregates findings, it does not build multi-account environments."
+    },
+    "sec-012": {
+      "explanation": "A cross-account role with an External ID in the trust policy is the AWS-recommended approach for third parties, using temporary credentials and preventing the confused deputy problem. Sharing an IAM user access key is a long-term credential. Bringing the vendor account into your organization is inappropriate and does not grant access. Not every resource supports resource-based policies, and this approach is hard to manage."
+    },
+    "sec-013": {
+      "explanation": "An SCP with the aws:RequestedRegion condition (with NotAction exceptions for global services such as IAM, CloudFront, Route 53) is the standard way to restrict Regions across the organization. Default Regions cannot be disabled through account settings. A Config rule that deletes resources only remediates after the fact and is risky. A permission boundary must be attached to each role and does not apply to the root user."
+    },
+    "sec-014": {
+      "explanation": "IAM Identity Center connects an external IdP through SAML 2.0 and SCIM and assigns permission sets to groups across multiple accounts from one place, with the least operational effort. Creating IAM users in each account is both laborious and less secure. Configuring SAML separately for 40 accounts works but is operationally heavy. Managed Microsoft AD does not create a trust with AWS accounts; trusts are between AD domains."
+    },
+    "sec-015": {
+      "explanation": "VPC sharing through RAM lets other accounts create resources in a shared subnet, while the VPC-owning account keeps control of route tables and NACLs. Peering and Transit Gateway require each account to have its own VPC and do not satisfy launching into a central subnet. Launching directly in the networking account loses the billing boundary and the teams' ownership of their resources."
+    },
+    "sec-016": {
+      "explanation": "A Cognito User Pool handles sign-up/sign-in with email and Google; a Cognito Identity Pool exchanges tokens for temporary credentials, using policy variables to limit each user to their own S3 prefix. Creating IAM users for end users does not scale. IAM Identity Center is for employees (workforce), not for customers of a mobile app. Simple AD is a directory for enterprises and does not serve mobile app sign-in."
+    },
+    "sec-017": {
+      "explanation": "AD Connector is a proxy that forwards authentication requests to on-prem AD and does not store or cache directory data in the cloud. Managed Microsoft AD is a directory running on AWS and stores directory data in the cloud. Simple AD also stores data on AWS and does not synchronize with on-prem AD. Cognito is not used for WorkSpaces sign-in with AD, and moving users to the cloud violates policy."
+    },
+    "sec-018": {
+      "explanation": "AWS Managed Microsoft AD is a real Active Directory managed by AWS, supports AD-aware applications such as SharePoint and SQL Server, and creates a trust with on-prem AD. Simple AD does not support trusts and lacks many AD features. AD Connector is only a proxy and cannot serve as the directory for workloads on AWS when there is no on-prem. Cognito is not Active Directory."
+    },
+    "sec-019": {
+      "explanation": "ALB supports the authenticate-cognito or authenticate-oidc action right on the listener rule, authenticating users before forwarding requests to targets, with no code changes. WAF only checks whether a header exists, it does not authenticate identity. A Security Group filters by IP/port and does not know whether a user is authenticated. An identity pool issues AWS credentials and is not attached to a target group."
+    },
+    "sec-020": {
+      "explanation": "Creating a SAML identity provider in IAM and a role trusting that provider lets employees sign in to the console with their corporate accounts through AssumeRoleWithSAML. A Cognito user pool is for application users and is not used for console sign-in. Creating an IAM user for each employee contradicts the requirement. Simple AD does not support trusts."
+    },
+    "sec-021": {
+      "explanation": "A Cognito Identity Pool supports guest (unauthenticated) identities with a separate read-only IAM role, issuing temporary credentials. Embedding IAM user credentials in the app leaks long-term credentials. A user pool does not issue AWS credentials and has no concept of anonymous sign-in. A VPC endpoint is not public and does not replace authentication."
+    },
+    "sec-022": {
+      "explanation": "API Gateway has a built-in Cognito user pool authorizer that validates JWTs automatically without writing code. A Lambda authorizer that checks passwords itself is laborious and less secure. API keys are for identification/throttling, not a user authentication mechanism. Creating IAM users for each web user does not scale."
+    },
+    "sec-023": {
+      "explanation": "A NACL works at the subnet level and supports Deny rules, so it can block a specific IP. A Security Group only has Allow rules and cannot Deny. Removing the route to the IGW would take down the whole application. Flow Logs only record traffic, they do not block it."
+    },
+    "sec-024": {
+      "explanation": "Security Group referencing: the app tier SG allows traffic only from the ALB SG, and the DB SG allows port 3306 only from the app tier SG; this updates automatically when Auto Scaling adds instances. A NACL opening 3306 to 0.0.0.0/0 loosens security. Placing RDS in a public subnet is a flawed design. A NAT Gateway is for outbound Internet access and is unrelated to internal DB access."
+    },
+    "sec-025": {
+      "explanation": "A NAT Gateway is a managed service; placing one NAT Gateway in the public subnet of each AZ avoids a single point of failure and cross-AZ charges. A NAT instance must be self-managed and a single instance is a single point of failure. A NAT Gateway must be in a public subnet, and a single NAT is not HA when its AZ fails. An egress-only IGW is for IPv6 only."
+    },
+    "sec-026": {
+      "explanation": "Session Manager provides shell access without opening inbound ports, without a bastion or SSH keys, with access controlled by IAM and session logs written to S3/CloudWatch Logs. Client VPN still requires opening port 22 on the SG and managing keys. Moving instances to a public subnet increases the attack surface. An NLB forwarding SSH still requires an open port and has no session audit."
+    },
+    "sec-027": {
+      "explanation": "A NACL is stateless, so responses going out to the client on ephemeral ports (1024-65535) must be allowed separately in outbound. A Security Group is stateful and responses are automatically allowed. An IGW does not filter protocols. NACLs evaluate by rule number, not Deny before Allow."
+    },
+    "sec-028": {
+      "explanation": "AWS Network Firewall is a managed VPC-level firewall that filters by domain (FQDN) and supports IPS with Suricata-compatible rules. WAF filters HTTP layer 7 for ALB/CloudFront/API Gateway and does not filter VPC egress. A Security Group only filters by IP/port, not by domain. GuardDuty detects threats but does not block traffic."
+    },
+    "sec-029": {
+      "explanation": "VPC Flow Logs record traffic metadata at the ENI level with ACCEPT/REJECT status, exactly what is needed to diagnose SGs/NACLs. CloudTrail records API calls, not network traffic. Traffic Mirroring captures packet contents, which exceeds the requirement and is more complex. Inspector assesses network reachability based on configuration and does not show actual rejected traffic."
+    },
+    "sec-030": {
+      "explanation": "A NAT instance must have source/destination check disabled because it forwards traffic whose source/destination is not itself. Assigning an Elastic IP to a private instance does not provide Internet access because there is no route to the IGW. A NAT instance must be in a public subnet. Adding an IGW route to a private subnet turns it into a public subnet, contrary to the design."
+    },
+    "sec-031": {
+      "explanation": "A gateway endpoint for S3 is free, traffic stays within the AWS network, and it eliminates NAT Gateway data processing charges. An interface endpoint is also private but is charged per hour and per GB, so it is not the cheapest. A NAT instance still goes through the Internet and requires management effort. Transfer Acceleration speeds up transfers through the edge, costs extra and still goes over the Internet."
+    },
+    "sec-032": {
+      "explanation": "Direct Connect is not encrypted by default; running an IPsec VPN over DX meets the encryption requirement. Site-to-Site VPN over the Internet is a cheap backup path for DX. There is no \"default encryption\" option in the console for DX. VPC peering only connects VPCs to VPCs. Adding another DX at the same location increases resiliency but does not encrypt and costs more than a VPN."
+    },
+    "sec-033": {
+      "explanation": "Transit Gateway uses a hub-and-spoke model, supports transitive routing for thousands of VPCs and VPNs, and is shared cross-account through RAM. PrivateLink offers one-directional service access and cannot replace full network connectivity. VPN CloudHub is for branches connecting to one VGW and does not route between 150 VPCs. A self-built router on EC2 requires a lot of operational effort."
+    },
+    "sec-034": {
+      "explanation": "PrivateLink lets the provider put the service behind an NLB and customers access it privately through interface endpoints, regardless of overlapping CIDRs and without exposing the whole VPC. VPC peering does not allow overlapping CIDRs and does not scale to hundreds of customers. Transit Gateway also has the overlapping CIDR problem and exposes the network. A public ALB goes over the Internet and is not private."
+    },
+    "sec-035": {
+      "explanation": "Site-to-Site VPN uses IPsec encryption and sets up quickly within hours. Direct Connect usually takes more than a month to provision and is not encrypted by default. VPC peering is not used for on-prem networks. Client VPN is for individual users, not a site-to-site connection for a whole data center."
+    },
+    "sec-036": {
+      "explanation": "Direct Connect Gateway lets one DX connection reach VPCs in multiple Regions without adding more links. Ordering a new DX in each Region is costly and slow. VPC peering is not transitive, so traffic from on-prem does not continue on to the peered VPC. A VPN over the Internet is not a dedicated connection as required."
+    },
+    "sec-037": {
+      "explanation": "A bucket policy Deny with the aws:SourceVpce condition not equal to the specified endpoint ensures the bucket is accessible only through that endpoint. A gateway endpoint cannot have a Security Group attached. Block Public Access prevents public access but does not restrict by VPC. A NACL controls subnet traffic and does not prevent others from accessing the bucket from elsewhere."
+    },
+    "sec-038": {
+      "explanation": "An interface endpoint creates an ENI with a private IP in the VPC, accessible from on-prem over Direct Connect/VPN. A gateway endpoint supports only S3 and DynamoDB and cannot be accessed from on-prem. A NAT Gateway sends traffic to public endpoints over the Internet. You cannot peer with an AWS service."
+    },
+    "sec-039": {
+      "explanation": "You cannot enable encryption on a running RDS instance; the standard approach is to snapshot, copy the snapshot with encryption enabled, restore a new DB and switch the application. Modify DB does not allow enabling encryption on an unencrypted instance. A read replica must have the same encryption state as the primary, so you cannot create an encrypted replica from an unencrypted DB. EBS encryption by default does not affect existing RDS."
+    },
+    "sec-040": {
+      "explanation": "Object Lock compliance mode prevents everyone, including root, from deleting or overwriting objects until retention expires. SSE-KMS with a customer managed key records every key use in CloudTrail. Governance mode lets users with bypass permission delete objects. SSE-C has no key usage audit in KMS. MFA Delete only adds an authentication step; whoever has the MFA device can still delete."
+    },
+    "sec-041": {
+      "explanation": "CloudHSM provides a single-tenant HSM, the customer has full control of keys and users, AWS cannot access the keys, and it supports Oracle TDE. KMS (both AWS managed and customer managed) is a multi-tenant service where AWS operates the HSMs. Secrets Manager stores secrets and is not an HSM."
+    },
+    "sec-042": {
+      "explanation": "A snapshot encrypted with an AWS managed key cannot be shared; it must be copied and re-encrypted with a customer managed key, key access granted to the partner account, and then the snapshot shared. You cannot edit the key policy of aws/ebs. An encrypted snapshot cannot be made public, and making sensitive data public is wrong. KMS key material cannot be exported."
+    },
+    "sec-043": {
+      "explanation": "S3 Bucket Keys create a bucket-level key to sharply reduce requests to KMS, reducing both throttling and cost, by enabling a single option. Client-side encryption requires changing the application. Raising the quota reduces throttling but not cost. Using more keys does not reduce requests because quotas are per account/Region."
+    },
+    "sec-044": {
+      "explanation": "Default encryption SSE-KMS with the specified key, combined with a bucket policy that Denies when aws:SecureTransport is false and Denies PutObject using another key, ensures both requirements. SSE-S3 does not use the specified KMS key, and Block Public Access does not enforce TLS. Object Lock and MFA Delete protect against deletion and are unrelated to encryption. Lifecycle does not re-encrypt objects."
+    },
+    "sec-045": {
+      "explanation": "Multi-Region keys have the same key ID and key material in each Region, so data encrypted in one Region can be decrypted in another using the local replica key. Separate keys in each Region have different key material and cannot decrypt across Regions. AWS managed keys in each Region are different keys and are used for server-side encryption. Storing the key yourself in Secrets Manager is manual key management, without the control and auditing of KMS."
+    },
+    "sec-046": {
+      "explanation": "A presigned URL lets a user download a private object for a limited time using the permissions of the URL creator, without giving credentials to the user. Static website hosting requires public objects. Creating an IAM user and sharing keys is a long-term credential. Turning off Block Public Access exposes data."
+    },
+    "sec-047": {
+      "explanation": "An existing volume cannot be encrypted directly; you must copy a snapshot with encryption and create a new volume. Enabling EBS encryption by default ensures new volumes in the Region are always encrypted. There is no option to enable encryption on an existing volume, and tag policies do not enforce encryption. AWS Backup does not encrypt the original volume. A policy on the instance profile does not affect volume creation."
+    },
+    "sec-048": {
+      "explanation": "Secrets Manager supports built-in automatic rotation for Aurora; Lambda reads the secret at runtime using permissions in its execution role. Parameter Store String is not encrypted and has no built-in rotation. Environment variables do not solve rotation. A cron job on EC2 adds operational effort and cannot stay in sync with the application."
+    },
+    "sec-049": {
+      "explanation": "OAC is the current mechanism replacing OAI and supports SSE-KMS; the bucket policy allows only cloudfront.amazonaws.com with AWS:SourceArn set to the distribution, and the bucket stays private. OAI is the legacy mechanism, does not support SSE-KMS, and the S3 website endpoint cannot be used with OAI/OAC. Transfer Acceleration does not block access. Signed URLs control viewers through CloudFront but do not block direct S3 access."
+    },
+    "sec-050": {
+      "explanation": "CloudFront only uses ACM certificates created or imported in us-east-1; ACM issues free public certificates and renews them automatically. A certificate in eu-west-1 cannot be attached to CloudFront. Private CA issues private certificates, is paid, and browsers do not trust them. Self-signed certificates are not trusted by browsers and do not renew automatically."
+    },
+    "sec-051": {
+      "explanation": "Signed cookies grant access to multiple files without changing URLs, suitable for premium content made up of many segments. Signed URLs must be created per file and change the URL. S3 presigned URLs bypass CloudFront and also change the URL. Geo match only filters by country and does not identify subscribers."
+    },
+    "sec-052": {
+      "explanation": "Parameter Store standard tier is free, supports hierarchical structure and SecureString encrypted with KMS, enough for secrets that do not need rotation. Secrets Manager charges per secret, which costs more when rotation is not needed. DynamoDB and S3 require building your own configuration management, and SSE-C requires you to manage keys yourself."
+    },
+    "sec-053": {
+      "explanation": "An ACM public certificate attached to the ALB HTTPS listener both offloads TLS from EC2 and renews automatically. Installing certs on each EC2 instance does not offload TLS and must be renewed manually. ACM does not auto-renew imported certificates. Storing the cert in Secrets Manager still leaves EC2 handling TLS and renewal must be managed manually."
+    },
+    "sec-054": {
+      "explanation": "WAF attached to the ALB with a managed rule against SQL injection and a rate-based rule blocking IPs that send too many requests solves both problems. Shield Standard is already on and only protects against layer 3/4 DDoS, it does not block SQLi. A NACL does not block SQLi and must be updated manually when IPs change. GuardDuty detects and Inspector scans for vulnerabilities; neither blocks requests."
+    },
+    "sec-055": {
+      "explanation": "Shield Advanced provides enhanced DDoS protection for CloudFront, Route 53, ELB, Global Accelerator, EC2, with a 24/7 Shield Response Team and cost protection. Shield Standard is free but has no SRT or cost protection. WAF filters layer 7 but has no response team or cost protection. GuardDuty detects threats in the account and does not defend against DDoS."
+    },
+    "sec-056": {
+      "explanation": "GuardDuty detects crypto mining based on Flow Logs, DNS logs and threat intelligence; EventBridge captures the finding and invokes Lambda to change the Security Group to isolate the instance. Macie finds sensitive data in S3. Trusted Advisor gives best practice recommendations and does not detect real-time threats. Inspector scans for software vulnerabilities and does not monitor traffic."
+    },
+    "sec-057": {
+      "explanation": "Macie uses machine learning and pattern matching to discover sensitive data (PII) in S3. GuardDuty S3 Protection detects suspicious access activity and does not classify content. AWS Config evaluates bucket configuration and does not scan content. Detective is used to investigate the root cause of findings."
+    },
+    "sec-058": {
+      "explanation": "Firewall Manager centrally manages WAF policies across all accounts in Organizations and automatically applies them to new resources. A StackSet only deploys the web ACL, and attaching remains manual. A Config rule only detects and notifies. A self-written Lambda in each account takes development and maintenance effort."
+    },
+    "sec-059": {
+      "explanation": "CloudTrail records every API call including the caller identity, time and source IP address, so it answers the question \"who deleted it\". AWS Config shows how the configuration changed but the questions \"who\" and \"from which IP\" belong to CloudTrail. Flow Logs record network traffic, not API calls. CloudWatch metrics are performance data."
+    },
+    "sec-060": {
+      "explanation": "AWS Config rules continuously evaluate resource configuration and support automatic remediation with SSM Automation. GuardDuty detects threats and does not check configuration compliance. Inspector scans for software vulnerabilities on EC2/ECR/Lambda and does not evaluate S3 or SGs against rules. Querying CloudTrail with Athena is manual and does not remediate automatically."
+    },
+    "res-001": {
+      "explanation": "Correct answer: moving sessions out to ElastiCache makes the application stateless, so an ASG spanning multiple AZs behind an ALB can scale horizontally and replace instances without losing sessions. Scaling up + auto recovery is still one instance in one AZ (a SPOF). Sticky sessions still keep sessions in RAM, so if the instance dies the sessions are lost. An EBS volume lives in only one AZ and (except io1/io2 Multi-Attach within the same AZ) cannot be attached to multiple instances."
+    },
+    "res-002": {
+      "explanation": "A Multi-AZ DB cluster has 1 writer + 2 standbys across 3 AZs, the standbys can serve reads, and failover is typically under 35 seconds, meeting both requirements. The standby of a Multi-AZ DB instance does not serve reads. Read replicas must be promoted manually, so they are not automatic failover. Restoring from a snapshot takes a long time and does not meet an RTO under 1 minute."
+    },
+    "res-003": {
+      "explanation": "A NAT gateway is a per-AZ resource; the best practice is one NAT gateway per AZ with each AZ's route table pointing to the NAT in the same AZ. A NAT instance is self-managed, needs more operations, and is still in a single AZ. A VPC can attach only one internet gateway. Assigning Elastic IPs to private instances has no effect if the subnet does not route to an internet gateway, and it breaks the private subnet design."
+    },
+    "res-004": {
+      "explanation": "EFS Standard stores data redundantly across multiple AZs, has a mount target in each AZ, supports POSIX, and allows concurrent access from many instances. EBS Multi-Attach works only within the same AZ. EFS One Zone does not survive an AZ failure. Instance store is ephemeral and loses data when the instance stops; syncing with cron is complex and inconsistent."
+    },
+    "res-005": {
+      "explanation": "Local Zones place compute and storage close to major cities to achieve single-digit millisecond latency for users there. CloudFront only caches HTTP content and does not run game servers. Outposts is placed in the company's data center, not close to the players. Global Accelerator optimizes the network path but the servers would still be in a distant Region."
+    },
+    "res-006": {
+      "explanation": "A read replica receives asynchronous replication and has its own endpoint, making it suitable for separating the read load of reports. The standby of a Multi-AZ DB instance does not serve reads. Scaling up does not isolate the workload and is costly. A nightly export to S3 makes data stale and adds operations."
+    },
+    "res-007": {
+      "explanation": "An ASG spanning multiple AZs behind an ALB lets the app tier survive an AZ failure; RDS Multi-AZ replicates synchronously so no committed transactions are lost, and it fails over automatically. A single instance with an Elastic IP is a SPOF. A cross-Region read replica is asynchronous and must be promoted manually. Hourly snapshots can lose up to 1 hour of data and do not fail over automatically."
+    },
+    "res-008": {
+      "explanation": "An ALB operates at layer 7 and supports path-based rules (/orders, /users) that forward to different target groups on the same load balancer. An NLB at layer 4 cannot read the URL path. GWLB is used to insert security appliances, not for HTTP routing. Route 53 works at the DNS level and does not see the URL path."
+    },
+    "res-009": {
+      "explanation": "An NLB has one static IP/Elastic IP per AZ and supports an ALB as a target, so you get both fixed IPs and layer 7 routing (Global Accelerator is another option). You cannot attach an Elastic IP to an ALB. Running your own NGINX on EC2 adds operations and creates a SPOF. ALB IPs can change at any time, so updating them weekly is not reliable."
+    },
+    "res-010": {
+      "explanation": "ALB supports SNI: one HTTPS listener holds multiple certificates from ACM and automatically picks the certificate based on the hostname the client requests. Creating 20 ALBs costs more and adds operations. CLB does not support SNI and cannot have multiple listeners on the same port 443. Terminating TLS on each instance increases CPU load and certificate management effort."
+    },
+    "res-011": {
+      "explanation": "Gateway Load Balancer operates at layer 3 and uses GENEVE to transparently pass traffic through a fleet of third-party appliances, with health checks and scaling. ALB only handles HTTP/HTTPS. NLB balances TCP/UDP but is not designed to insert appliances into the path (bump-in-the-wire). Global Accelerator optimizes the global network path and does not inspect traffic."
+    },
+    "res-012": {
+      "explanation": "Deregistration delay (connection draining) lets in-flight requests complete before a target is removed; the default is 300 seconds and can be set up to 3,600 seconds, so increase it to more than 10 minutes. Cross-zone only affects load distribution. Sticky sessions do not prevent an instance from being removed. Reducing the health check interval is unrelated to scale-in."
+    },
+    "res-013": {
+      "explanation": "NLB operates at layer 4, supports UDP, has ultra-low latency, and handles millions of requests per second. ALB supports only HTTP/HTTPS/gRPC. CLB is legacy and does not support UDP. GWLB is for security appliances, not for load balancing a game application."
+    },
+    "res-014": {
+      "explanation": "AWS WAF attached to the ALB with managed rules blocks SQL injection and XSS. The EC2 security group referencing the ALB's security group ensures only the ALB can send traffic. Shield Advanced mainly protects against DDoS and does not replace WAF. Network ACLs use CIDRs, not DNS names. Cross-zone load balancing is unrelated to security."
+    },
+    "res-015": {
+      "explanation": "By default the ASG only uses EC2 status checks, so it does not know the application is hung. With ELB health checks enabled, an instance marked unhealthy by the ALB is terminated and replaced by the ASG. Detailed monitoring only increases metric frequency. Replacing instances on a schedule does not address the actual cause. A CPU alarm does not reflect an application hang."
+    },
+    "res-016": {
+      "explanation": "Scheduled scaling increases capacity before the known peak, while target tracking handles unpredictable fluctuations; combining the two policies is appropriate (predictive scaling is also a reasonable choice for a recurring load pattern). Simple scaling reacts after the load has increased and is blocked by cooldown. Increasing max capacity does not make instances launch earlier. Manual scaling adds operations."
+    },
+    "res-017": {
+      "explanation": "AWS recommends calculating backlog per instance (visible messages divided by InService instances) and using target tracking with a target value = acceptable latency / processing time per message. CPU does not reflect queue length. Step scaling with one large step easily overshoots or is slow. Scheduled scaling does not react to actual load."
+    },
+    "res-018": {
+      "explanation": "A Terminating:Wait lifecycle hook pauses the instance before it is deleted so a script (via EventBridge/Lambda or SSM) can push logs to S3, and then calls complete-lifecycle-action. Termination protection does not prevent the ASG from scaling in. Cooldown only delays the next scaling activity. User data only runs at startup, not at termination."
+    },
+    "res-019": {
+      "explanation": "A warm pool keeps pre-initialized instances ready; in the Stopped state you only pay for EBS, and on scale out instances move to InService much faster. Increasing the grace period only postpones health checks. A larger instance does not necessarily shorten data load time. Always running at max capacity is very expensive."
+    },
+    "res-020": {
+      "explanation": "Target tracking automatically creates and manages CloudWatch alarms and adjusts capacity to keep the metric around the target value, so it has the least operations. Simple and step scaling require you to create alarms and configure steps yourself. Scheduled scaling does not react to actual CPU."
+    },
+    "res-021": {
+      "explanation": "Instance refresh gradually replaces instances according to the new launch template, respecting the minimum healthy percentage, with no manual work. Manually terminating instances one by one is laborious and error-prone. Creating a new ASG and switching the target group is a manual blue/green with more operations. Detaching/attaching instances does not update the AMI automatically."
+    },
+    "res-022": {
+      "explanation": "SQS stores messages durably (up to 14 days), absorbs spikes, and lets the backend process at its own pace; this is the standard decoupling pattern. Scaling up does not guarantee no lost orders when load exceeds capacity. SNS pushes to an HTTP endpoint, and an overloaded backend can still fail after retries are exhausted. ALB only distributes load and does not buffer requests."
+    },
+    "res-023": {
+      "explanation": "SQS FIFO guarantees ordering within each message group (set group ID = account ID to still process different accounts in parallel) and exactly-once processing through deduplication. SQS standard can deliver duplicates and out of order. SNS standard does not guarantee ordering. Firehose is used to load data into storage destinations, not to process transactions in order."
+    },
+    "res-024": {
+      "explanation": "SNS fan-out to multiple SQS queues: each system has its own queue, receives a full copy, and processes and retries independently. A single shared SQS queue means each message is processed by only one consumer. Periodically listing an S3 bucket is inefficient and easy to miss objects. Calling Lambda synchronously tightly couples the systems to the order service."
+    },
+    "res-025": {
+      "explanation": "Amazon MQ is a managed broker for ActiveMQ and RabbitMQ, supporting JMS, AMQP, MQTT, STOMP, and OpenWire, so migration needs almost no code changes. SQS, Kinesis, and EventBridge use AWS-specific APIs, so the messaging code must be rewritten."
+    },
+    "res-026": {
+      "explanation": "The default visibility timeout is 30 seconds; if processing takes longer, the message reappears and another consumer receives it. Increasing the visibility timeout beyond the maximum processing time (or calling ChangeMessageVisibility) fixes this. Long polling only reduces empty receives. A delay queue delays the message before it first becomes visible and does not help after it has been received. Retention is unrelated to duplicate processing."
+    },
+    "res-027": {
+      "explanation": "Kinesis Data Streams lets multiple consumers read the same data, process in real time, and replay within the retention period (default 24 hours, extendable up to 365 days). SQS deletes messages after processing and has no replay. SNS does not store messages. Amazon MQ is a broker for traditional applications and is not designed for clickstream and replay."
+    },
+    "res-028": {
+      "explanation": "A DLQ with maxReceiveCount sets aside messages that fail repeatedly for analysis. Long polling (WaitTimeSeconds up to 20) reduces ReceiveMessage calls that return empty, lowering cost. Switching to FIFO does not solve failing messages. A 1-minute retention loses valid data. Delivery delay only slows down all messages."
+    },
+    "res-029": {
+      "explanation": "Fargate is serverless compute for containers and has no 15-minute limit like Lambda; EventBridge Scheduler triggers it on a schedule. Lambda is limited to 15 minutes. Lambda@Edge is used with CloudFront and has even shorter run times. Step Functions Express is limited to 5 minutes, and a Lambda task is still limited to 15 minutes."
+    },
+    "res-030": {
+      "explanation": "RDS Proxy pools and reuses database connections for concurrent Lambda functions. Reserved concurrency caps the number of concurrent executions, protecting the database behind it. Increasing the timeout does not reduce connections. Taking Lambda out of the VPC means it cannot reach a private RDS. Caching does not apply to write requests (POST)."
+    },
+    "res-031": {
+      "explanation": "Usage plans + API keys in API Gateway REST API let you set throttling (rate, burst) and quota per customer/plan. Reserved concurrency applies to the whole function and does not distinguish customers. A WAF rate-based rule blocks by IP and is not tied to subscription plans. Caching does not limit requests."
+    },
+    "res-032": {
+      "explanation": "Step Functions Standard runs up to 1 year, is exactly-once, and keeps execution history for auditing; callbacks with a task token allow waiting for manual approval. Express is limited to 5 minutes. Lambdas chained together are hard to monitor, hard to handle errors for, and have no centralized history. SQS FIFO between steps provides neither orchestration nor auditing."
+    },
+    "res-033": {
+      "explanation": "CloudFront Functions run lightweight JavaScript at the edge on viewer request/response, in under 1 ms, scale massively, and are cheaper than Lambda@Edge; suitable for URL rewrites and adding headers. Lambda@Edge is for more complex logic and costs more. Processing at the origin with ALB/Lambda or API Gateway increases latency and cost."
+    },
+    "res-034": {
+      "explanation": "A Lambda attached to a VPC has no public IP; to reach the internet it must go through a NAT gateway in a public subnet. You cannot attach an Elastic IP directly to Lambda. Placing Lambda in a public subnet also gives no internet because Lambda's ENI has no public IP. A gateway endpoint supports only S3 and DynamoDB and is not for third-party APIs."
+    },
+    "res-035": {
+      "explanation": "An Alias record works at the zone apex, points to an ALB, updates automatically when IPs change, and has no query charge. CNAME is not allowed at the zone apex. ALB IPs change, so an A record with fixed IPs would break. MX is for mail servers."
+    },
+    "res-036": {
+      "explanation": "Latency-based routing returns the Region with the lowest latency; attach health checks (or Evaluate Target Health) to remove unhealthy Regions. Geolocation is based on user location, not latency. Simple routing does not support health checks. Weighted does not optimize latency, and without health checks it does not fail over."
+    },
+    "res-037": {
+      "explanation": "Geolocation routes by user location (country), suitable for copyright/legal constraints; a Default record serves the remaining countries. Latency might send German users to another Region if its latency is lower. Geoproximity is based on distance and bias and does not guarantee country boundaries. Weighted splits by ratio, not by location."
+    },
+    "res-038": {
+      "explanation": "Weighted routing splits traffic by weight (for example 95/5) and can be changed gradually, suitable for canary. Failover only has primary/secondary. Multivalue returns several records randomly and does not control the ratio. IP-based routes by the client's CIDR."
+    },
+    "res-039": {
+      "explanation": "An outbound endpoint + forwarding rule lets queries from the VPC to the on-premises domain be forwarded to the on-premises DNS server. An inbound endpoint is for the opposite direction (on-premises resolving names in AWS). A public hosted zone exposes internal names and does not contain on-premises records. The VPC +2 resolver is not reachable from outside the VPC."
+    },
+    "res-040": {
+      "explanation": "Global Accelerator provides 2 static anycast IPs, supports UDP, goes over the AWS backbone network, and fails over quickly independent of DNS caching. Route 53 solutions still depend on TTL and client-side caching. CloudFront is for HTTP/HTTPS and does not support UDP for games."
+    },
+    "res-041": {
+      "explanation": "An RPO of 24 hours and RTO of 12 hours are loose enough for backup & restore: copy backups to another Region, and during an incident rebuild with CloudFormation and restore. This is the cheapest strategy. Active/active, warm standby, and pilot light all meet the requirements but cost more."
+    },
+    "res-042": {
+      "explanation": "Warm standby continuously runs a scaled-down copy of the full stack with continuously replicated data; during an incident you only scale up and switch DNS, meeting a 10-minute RTO. Backup & restore does not meet an RPO of a few seconds. Pilot light must launch app servers, so RTO is usually longer and riskier. Full-capacity active/active costs more than necessary."
+    },
+    "res-043": {
+      "explanation": "AWS Elastic Disaster Recovery replicates continuously at block level into a low-cost staging area, with RPO in seconds and RTO in minutes, and only launches full instances on failover or drill. Application Migration Service is for migration, not continuous DR. Daily backups to Deep Archive have a 24-hour RPO and restores take many hours. Running all 200 servers continuously is very expensive."
+    },
+    "res-044": {
+      "explanation": "This is pilot light: the database is replicated continuously via a cross-Region read replica (promoted during an incident), while the app servers only have an AMI and launch template/ASG with capacity 0 ready to scale. A full-size ASG serving 50% of traffic is active/active. Multi-AZ only tolerates an AZ failure within the same Region. A dump on EBS in us-east-1 is lost if that Region fails."
+    },
+    "res-045": {
+      "explanation": "Active/active: every Region serves traffic (latency routing to the nearest Region), DynamoDB global tables provide multi-Region writes with replication typically under 1 second, and RTO is near 0. Pilot light and backup & restore have long RTO. Warm standby with the database in only one Region cannot survive that Region's failure."
+    },
+    "res-046": {
+      "explanation": "Data Lifecycle Manager (or AWS Backup) automatically creates snapshots on a schedule and copies them cross-Region, re-encrypting with a KMS key in the destination Region, without managing servers. A cron job on EC2 adds operations and is a SPOF. EBS snapshots are stored in AWS-managed S3, so users cannot access the bucket to enable CRR. Multi-Attach works only within the same AZ."
+    },
+    "res-047": {
+      "explanation": "AWS Backup manages centrally through Organizations, supports many services, and cross-account copy; Vault Lock compliance mode makes backups immutable, and even the root user cannot delete them. A custom Lambda adds operations and is not immutable. RDS backups and DynamoDB PITR are not centralized, not cross-account, and do not protect against deletion. DLM only covers EBS snapshots/AMIs and has no compliance lock as described."
+    },
+    "res-048": {
+      "explanation": "Aurora Global Database replicates at the storage layer to secondary Regions with latency typically under 1 second, allows local reads, and fails over to another Region with an RPO of about 1 second and RTO under 1 minute. Aurora Replicas in the same Region do not protect against a Region failure. Hourly snapshots have a 1-hour RPO. DMS adds operations and does not meet the required RTO."
+    },
+    "res-049": {
+      "explanation": "PITR uses automated backups + transaction logs to restore to any point within retention, and always creates a new DB instance with a new endpoint. A manual snapshot may be much older, and a restore also does not overwrite the existing instance. The Multi-AZ standby replicates synchronously, so it has also lost the data. Recycle Bin applies to EBS snapshots and AMIs and does not recover RDS data."
+    },
+    "res-050": {
+      "explanation": "CRR requires versioning on both buckets; Replication Time Control has an SLA of replicating 99.99% of objects within 15 minutes, with metrics and notifications when delayed. SRR is only within the same Region. Scheduled DataSync has no 15-minute SLA per object. Lifecycle rules only transition storage classes or delete, and do not copy to another bucket."
+    },
+    "res-051": {
+      "explanation": "Fast Snapshot Restore makes a volume created from a snapshot fully initialized immediately, with no latency when reading blocks for the first time; enabled per AZ. Snapshot Archive is cheaper but restores take 24-72 hours. Multi-Attach is unrelated to initialization performance. Recycle Bin is for recovering accidentally deleted snapshots."
+    },
+    "res-052": {
+      "explanation": "Versioning keeps all versions so you can recover from overwrites or accidental deletes, and it is also a mandatory prerequisite of replication. CRR replicates new objects to another Region, while S3 Batch Replication handles objects that existed before. Transfer Acceleration only speeds up uploads. Deleting noncurrent versions after 1 day reduces recoverability. Intelligent-Tiering only optimizes storage cost."
+    },
+    "res-053": {
+      "explanation": "A change set previews which resources will be added, modified, or replaced before execution; if the database would be replaced, you simply do not execute it. A direct update only rolls back on failure, and a successful replacement has already lost the data. Drift detection compares actual resources with the current template, it does not preview changes from a new template. Termination protection only blocks stack deletion, not updates."
+    },
+    "res-054": {
+      "explanation": "StackSets deploy one template to many accounts and many Regions in a single operation; with service-managed permissions (Organizations) and automatic deployment, new accounts added to an OU are deployed automatically. Nested stacks only reuse templates within one stack in one account. A custom script is operationally heavy and does not handle new accounts on its own. Sharing the template and asking account owners to deploy it is manual and does not guarantee consistency."
+    },
+    "res-055": {
+      "explanation": "DeletionPolicy: Snapshot makes CloudFormation take a final snapshot of the DB before deleting the resource, fully automatically. Termination protection blocks stack deletion but does not create a backup. A stack policy applies only during stack updates, not stack deletion. RDS automated backups are deleted with the DB instance (unless you choose to retain them), so they do not meet the requirement."
+    },
+    "res-056": {
+      "explanation": "Immutable deploys the new version to new instances in a temporary ASG; the existing instances are untouched, and if the new version fails you just terminate the new instances, so rollback is the fastest. All at once causes downtime. Rolling reduces capacity during the deploy. Rolling with additional batch keeps full capacity but updates existing instances in place, so rollback requires redeploying the old version."
+    },
+    "res-057": {
+      "explanation": "Systems Manager manages both EC2 and on-premises servers (through hybrid activations) that run the SSM Agent; Patch Manager applies a patch baseline in a Maintenance Window and reports compliance. A Lambda function using SSH to each server is laborious and requires open ports and key management. Inspector only scans for vulnerabilities, it does not install patches. Rebuilding servers from an AMI with Config remediation does not work for on-premises servers and is very complex."
+    },
+    "res-058": {
+      "explanation": "EC2 does not send memory metrics by default; the CloudWatch agent collects memory and publishes it as a metric, then a CloudWatch alarm with an SNS action sends a notification above 85%. Detailed monitoring only increases the frequency of existing metrics to 1 minute and adds no memory metric. X-Ray traces requests and does not measure OS memory. CloudTrail records API calls, not performance metrics."
+    },
+    "res-059": {
+      "explanation": "X-Ray follows a request through API Gateway and Lambda to DynamoDB and shows a service map with the time spent in each segment, so it reveals the slow service. CloudTrail data events record who called an API, not per-step latency. A metric filter counts errors, but slow requests are not necessarily errors. Trusted Advisor gives general best practice recommendations and does not trace requests."
+    },
+    "res-060": {
+      "explanation": "Service Catalog lets admins publish a portfolio of approved products; a launch constraint specifies the IAM role used to create resources, so developers self-launch without direct permissions on the underlying services. AdministratorAccess plus Config only detects problems after the fact and violates least privilege. Deploying templates with their own credentials requires broad developer permissions and allows editing templates. A shared IAM user breaks best practices and does not restrict templates."
+    },
+    "res-061": {
+      "explanation": "A partner event source pushes SaaS events directly into a partner event bus; a rule with an event pattern filters high-priority tickets and invokes Lambda, with no code to receive webhooks or poll. API Gateway plus a webhook requires building and securing an endpoint yourself. Hourly AppFlow runs are not near real time. Polling every minute costs money, requires code, and still adds latency."
+    },
+    "res-062": {
+      "explanation": "The standard EventBridge cross-account pattern: a rule in each source account sends events to the central event bus; the central bus needs a resource-based policy that allows the accounts (or the whole organization) to PutEvents, and a rule there invokes Lambda. Many SNS topics create many management points and need cross-account permissions per topic. CloudTrail log files in S3 arrive with delay and are not an event-driven mechanism. Pipes connect sources such as SQS/Kinesis to a target and cannot take an account as a source."
+    },
+    "res-063": {
+      "explanation": "An archive stores the event bus events with a retention period; replay re-sends events from a chosen time window so the fixed consumer can reprocess them. A DLQ only holds events that failed delivery to the target, while these events were delivered successfully. Logs plus a custom script are laborious and error-prone. A retry policy applies only to failed deliveries (up to 24 hours) and does not help reprocess events that were delivered."
+    },
+    "res-064": {
+      "explanation": "EventBridge Pipes connect source → filter → enrichment → target point-to-point: SQS as the source, a filter keeping only status NEW, an enrichment that calls the API (API destination, API Gateway, or Lambda), then starting Step Functions, with almost no glue code. A custom Lambda function works but needs more code. Step Functions cannot subscribe directly to an SQS queue. SNS filtering applies to topic subscriptions and does not filter messages inside an SQS queue."
+    },
+    "res-065": {
+      "explanation": "Distributed Map reads items directly from S3 and runs up to 10,000 parallel child executions, tracks failed items, and supports a tolerated failure threshold, which fits millions of objects. Inline Map has limited concurrency (up to 40) and the execution input cannot hold 5 million keys. A single Lambda function looping sequentially is limited to 15 minutes. An SQS FIFO queue with one consumer is not parallel."
+    },
+    "res-066": {
+      "explanation": "AppFlow is a no-code service that moves data between SaaS applications such as Salesforce and AWS (S3, Redshift), runs on a schedule, and supports filtering, mapping, and field masking. DataSync moves data from storage systems (NFS, SMB, HDFS, object storage) and does not call Salesforce APIs. Firehose receives streams pushed by producers and does not pull data from Salesforce. Transfer Family provides SFTP/FTPS/FTP endpoints for files."
+    },
+    "res-067": {
+      "explanation": "IoT Core is a managed MQTT broker that authenticates devices with X.509 certificates; its rules engine uses SQL-like statements to write readings above the threshold to DynamoDB and send all readings through Firehose to S3, with no servers. An MQTT broker on EC2 must be self-managed. Amazon MQ runs on broker instances, is not serverless, has no rules engine, and still needs consumer code. Sensors typically speak MQTT; calling SQS over HTTP requires SigV4-signed requests and custom routing logic."
+    },
+    "res-068": {
+      "explanation": "Retry with a BackoffRate greater than 1 performs exponential backoff for transient errors; Catch moves to a compensating state that releases the reservation once retries are exhausted, which is the saga pattern. Express does not make retries faster and is not required. Increasing the Lambda timeout does not address transient errors or compensation. A state machine has no SQS DLQ of this kind; error handling inside the workflow uses Retry/Catch."
+    },
+    "perf-001": {
+      "explanation": "A cluster placement group places instances close together in 1 AZ for the lowest latency and highest bandwidth; EFA provides OS-bypass for MPI applications, which fits tightly coupled HPC. A spread placement group spreads instances across different racks/AZs, which increases latency and allows at most 7 instances per AZ. A partition placement group is for distributed rack-aware workloads (Hadoop, Cassandra), and adding an ENI does not increase bandwidth. NLB and a multi-AZ Auto Scaling group do not serve node-to-node communication in HPC."
+    },
+    "perf-002": {
+      "explanation": "A spread placement group puts each instance on its own hardware (rack), which suits a small number of critical instances (at most 7 running instances per AZ). A cluster group packs instances together, so one hardware failure can affect several instances. A partition group with one partition means all instances share the same set of racks. Dedicated Hosts serve licensing/compliance needs, and host affinity ties instances to the same host, the opposite of the requirement."
+    },
+    "perf-003": {
+      "explanation": "EC2 Hibernate saves RAM contents to the EBS root volume (encryption required) and restores them on start, so the application does not have to reload data into memory. Instance store loses data on stop. An AMI contains only disk data, not RAM state, so the data would still need to be reloaded. Larger instances cost more and still have to reload the data."
+    },
+    "perf-004": {
+      "explanation": "A golden AMI with pre-installed software makes instances start fast; EC2 Image Builder automatically builds, tests, and patches AMIs on a schedule, so it has the least operational overhead. Increasing the grace period only prevents instances from being marked unhealthy; it does not speed up startup. Downloading the script from S3 does not reduce installation time. Running a fixed fleet sized for peak costs more and does not address the patching requirement."
+    },
+    "perf-005": {
+      "explanation": "Storage optimized (I family) with NVMe instance store gives very high random IOPS, low latency, and no EBS charges; because Cassandra already replicates data, the ephemeral nature of instance store is acceptable. A partition placement group puts each partition on its own set of racks, letting Cassandra be topology-aware and reducing correlated failures. io2 is much more expensive for the same IOPS. A cluster placement group increases the risk of rack failure. EFS is a network file system, not suitable for Cassandra data files that need low latency."
+    },
+    "perf-006": {
+      "explanation": "ECS on Fargate is serverless: you do not manage EC2 and AWS handles the infrastructure; ECS is simpler than EKS when Kubernetes is not needed. An EKS self-managed node group requires managing nodes and learning Kubernetes. Self-managed Docker on EC2 is the highest overhead. The ECS EC2 launch type still requires patching and managing EC2 even though a capacity provider helps with scaling."
+    },
+    "perf-007": {
+      "explanation": "Fargate runs containers with no time limit and no server management; an EventBridge Scheduler/rule triggers the task every night. Lambda is limited to 15 minutes, so it cannot be set to 60 minutes. Using EC2 to invoke Lambda sequentially is complex and still leaves EC2 to manage. EC2 with cron and manual shutdown costs operational effort."
+    },
+    "perf-008": {
+      "explanation": "EKS is standard Kubernetes with an AWS-managed control plane, preserving Helm charts and operators; a managed node group reduces node management effort. ECS and Elastic Beanstalk require converting manifests. Rewriting for Lambda is a major change, contradicting the no-rewrite requirement."
+    },
+    "perf-009": {
+      "explanation": "Provisioned concurrency keeps initialized environments ready, eliminating cold starts; because the load is predictable, it can be scheduled with Application Auto Scaling. Reserved concurrency only caps/guarantees concurrency and does not pre-initialize environments. Increasing the timeout and retries does not reduce latency. Putting the function in a VPC does not reduce cold starts and may add complexity."
+    },
+    "perf-010": {
+      "explanation": "App Runner takes source code or a container image and automatically builds, deploys, provides an HTTPS endpoint, load balancing, and auto scaling, with no infrastructure knowledge needed. EKS and EC2 + ALB require managing many components. AWS Batch is for batch jobs, not an API serving requests."
+    },
+    "perf-011": {
+      "explanation": "io2 Block Express supports up to 256,000 IOPS, sub-millisecond latency, and 99.999% durability, which suits a critical database needing 120,000 IOPS. gp3 cannot reach this IOPS level on a single volume. st1 is an HDD for sequential reads with low IOPS. io1 maxes out at 64,000 IOPS and has lower durability than io2."
+    },
+    "perf-012": {
+      "explanation": "gp3 lets you tune IOPS independently of size (baseline 3,000, up to 16,000) and is cheaper than gp2, so switching to gp3 and setting 6,000 IOPS is the cheapest option (it can be done online with Elastic Volumes). gp2 would need 2,000 GiB (3 IOPS/GiB) to reach 6,000 IOPS, paying for unused capacity. io2 is much more expensive for this IOPS level. RAID 0 across four volumes still pays for 2,000 GiB and is more complex."
+    },
+    "perf-013": {
+      "explanation": "EFS is managed NFS for Linux, mounted concurrently by many instances across multiple AZs; Elastic throughput scales automatically with hard-to-predict load and charges by usage. EBS Multi-Attach works only in 1 AZ and needs a cluster-aware file system. FSx for Windows uses SMB, which suits Windows and is not a natural choice for Linux. Syncing S3 with scripts costs effort and does not guarantee file system semantics."
+    },
+    "perf-014": {
+      "explanation": "FSx for Windows File Server supports SMB, NTFS ACLs, Active Directory integration, and has Multi-AZ to survive an AZ failure. EFS does not support Windows/SMB, and One Zone does not survive an AZ failure. S3 File Gateway on a single EC2 creates a single point of failure and is not a true Windows file server. FSx for Lustre is for HPC on Linux."
+    },
+    "perf-015": {
+      "explanation": "FSx for Lustre delivers hundreds of GB/s of throughput; S3 integration lets it lazy-load data and export results back to S3; the scratch deployment is cheap and suits short-term processing that does not need replication. EFS does not reach this throughput and incurs copy costs. Copying the dataset onto many io2 volumes is very expensive and slow. SnapMirror is used between ONTAP systems and does not replicate from S3."
+    },
+    "perf-016": {
+      "explanation": "EBS Multi-Attach supports only io1/io2 and only Nitro instances in the same AZ as the volume (up to 16 instances). gp3 does not support Multi-Attach. EFS is file storage, not shared block storage as required. st1 does not support Multi-Attach, and EBS cannot be shared across multiple AZs."
+    },
+    "perf-017": {
+      "explanation": "S3 supports at least 5,500 GET/s per prefix; spreading objects across multiple prefixes lets S3 scale in parallel, reaching 20,000 GET/s. Transfer Acceleration optimizes geographic distance and does not raise the per-prefix request rate. Versioning does not increase throughput. Standard-IA also charges retrieval fees and does not improve performance."
+    },
+    "perf-018": {
+      "explanation": "Transfer Acceleration brings uploads into an edge location near the user and then over the AWS backbone; multipart upload splits the file into parts uploaded in parallel, and a failed part only needs to be resent (and it is required for files over 5 GB). CloudFront does not cache PUT. Byte-range fetch and S3 Select are for reading data. A single PUT cannot exceed 5 GB, and CRR does not help the initial upload."
+    },
+    "perf-019": {
+      "explanation": "S3 Express One Zone gives single-digit millisecond latency and a very high request rate, placed in the same AZ as compute; the data can be recreated, so storing it in 1 AZ is acceptable. Transfer Acceleration only optimizes long-distance transfer. Intelligent-Tiering optimizes cost, not latency. One Zone-IA is for infrequently accessed data, has retrieval fees, and is not faster than Standard."
+    },
+    "perf-020": {
+      "explanation": "An S3 Event Notification invokes Lambda as soon as the object is created, serverless and processing within seconds. Cron on EC2 means managing servers, and continuous LISTs are inefficient. A lifecycle rule only transitions storage classes or deletes objects and does not process images. An hourly batch does not meet the within-seconds requirement."
+    },
+    "perf-021": {
+      "explanation": "CloudFront delivers content globally over HTTPS with an ACM certificate; OAC lets the bucket stay private and readable only by CloudFront. A public bucket policy violates the no-public requirement, and the website endpoint does not support HTTPS. ALB does not use an S3 bucket as a target. Transfer Acceleration is for long-distance upload/download and does not serve an HTTPS website."
+    },
+    "perf-022": {
+      "explanation": "A read replica (asynchronous replication) accepts read queries, offloading the primary. The standby of a Multi-AZ instance deployment does not serve reads and is used only for failover. Storage autoscaling only increases storage and does not reduce CPU. A backup is not a place to run queries directly."
+    },
+    "perf-023": {
+      "explanation": "RDS Proxy pools and reuses connections (connection pooling), handling the many short-lived connections from Lambda well; you only need to change the endpoint. A larger instance is costly and can still run out of connections during spikes. The reader endpoint cannot handle write queries and still opens many connections. Reserved concurrency of 1 slows the application severely."
+    },
+    "perf-024": {
+      "explanation": "A custom endpoint lets you group a specific set of instances, separating the analytics workload from the application workload. The cluster endpoint points to the writer, and running analytics on it slows writes. Creating a second cluster adds cost and operations. The reader endpoint balances across all replicas, and failover priority does not control how queries are distributed."
+    },
+    "perf-025": {
+      "explanation": "Aurora Serverless v2 scales compute (ACUs) almost instantly and at fine granularity with load, which suits erratic workloads. Storage autoscaling only increases storage, not compute. Changing the instance class on a schedule cannot handle unpredictable bursts and causes disruption. Redshift is not MySQL-compatible and is a data warehouse."
+    },
+    "perf-026": {
+      "explanation": "Aurora Global Database replicates at the storage level to another Region, usually in under 1 second, enabling low-latency reads in the secondary Region and DR with an RPO of about 1 second and an RTO under 1 minute. Self-managed logical replication on EC2 costs operational effort. A replica in the same Region does not reduce latency for distant users and gives no cross-Region DR. Hourly snapshots have an RPO of up to 1 hour."
+    },
+    "perf-027": {
+      "explanation": "Babelfish lets Aurora PostgreSQL understand T-SQL and the SQL Server protocol, reducing code changes. Aurora I/O-Optimized has no I/O charges, saving money when I/O is more than about 25% of the cost. Aurora MySQL does not support T-SQL. Redshift is a data warehouse, not an OLTP target for the app. Multi-AZ does not affect I/O charges."
+    },
+    "perf-028": {
+      "explanation": "DAX is an in-memory cache compatible with the DynamoDB API, reducing read latency from milliseconds to microseconds and requiring only a client/endpoint change. On-demand helps handle load, but latency stays in the millisecond range. A GSI serves new query patterns and does not reduce latency. ElastiCache requires rewriting cache logic in code, so it means more change."
+    },
+    "perf-029": {
+      "explanation": "The partition key has only 3 values, so writes concentrate on a few partitions (a hot partition); using a high-cardinality key such as order_id spreads the load evenly. Streams only record changes. An LSI uses the same partition key, so it does not solve this, and it can only be created at table creation. TTL deletes old data and does not spread writes."
+    },
+    "perf-030": {
+      "explanation": "A GSI can be created at any time with a partition key different from the table, enabling efficient queries by product_id. An LSI can only be created at table creation and must still use customer_id as the partition key. A Scan reads the whole table, consuming RCU and slow. Creating a new table is complex and unnecessary."
+    },
+    "perf-031": {
+      "explanation": "ElastiCache Redis OSS/Valkey supports replication, Multi-AZ, auto failover, and sub-millisecond latency, which suits an HA session store. Memcached has no replication, so sessions are lost when a node fails. Sticky sessions still lose the session when the instance is terminated and the web tier is not stateless. EBS is attached to individual instances and cannot be shared."
+    },
+    "perf-032": {
+      "explanation": "Neptune is a graph database, optimized for queries traversing multi-level relationships such as fraud ring detection and social networks. DynamoDB is not efficient at traversing multi-hop relationships. Timestream is for time series data. Redshift serves aggregate analytics, not low-latency graph traversal."
+    },
+    "perf-033": {
+      "explanation": "1 RCU = 1 strongly consistent read/second for an item up to 4 KB. A 6 KB item rounds up to 8 KB, so each read needs 2 RCU; 20 reads x 2 = 40 RCU. 20 RCU is the figure for items up to 4 KB. 30 RCU comes from the 6/4 ratio without rounding up. 60 RCU is an incorrect calculation (for example multiplying by 3)."
+    },
+    "perf-034": {
+      "explanation": "Global Accelerator provides 2 static anycast IPs, supports UDP, brings traffic onto the AWS backbone from the nearest edge, and fails over between Regions within seconds thanks to health checks, independent of DNS caching. CloudFront does not support UDP. Route 53 depends on DNS TTL/client caching and does not provide fixed IPs. An Elastic IP on each instance is not HA and does not optimize latency."
+    },
+    "perf-035": {
+      "explanation": "CloudFront caches static content at the edge near users, reducing latency and offloading the ALB/EC2. Adding EC2 reduces load but does not solve geographic latency. Deploying a second Region is costly, and weighted routing is not based on user location. Cross-zone load balancing does not affect latency for distant users."
+    },
+    "perf-036": {
+      "explanation": "A CloudFront origin group supports origin failover: when the primary returns a configured error code (5xx), CloudFront automatically sends the request to the secondary origin; combine with S3 Cross-Region Replication to have the data in the secondary bucket. Route 53 failover with an S3 REST endpoint is not the standard approach. Global Accelerator does not use CloudFront as an endpoint. Transfer Acceleration does not provide failover."
+    },
+    "perf-037": {
+      "explanation": "Field-level encryption encrypts specific fields in a POST at the edge with a public key; the data stays encrypted as it passes through intermediate tiers, and only the service holding the private key can decrypt it. OAC restricts access to the S3 origin. HTTPS only protects data in transit, and the web server still sees plaintext. Signed cookies control access to content and do not encrypt data."
+    },
+    "perf-038": {
+      "explanation": "The fewer components in the cache key, the higher the hit ratio. A cache policy should include only values that change the response; an origin request policy sends additional cookies to the origin without putting them in the cache key. Invalidation lowers the hit ratio and costs money. Increasing the TTL does not help when every request has a different cache key. Global Accelerator does not cache."
+    },
+    "perf-039": {
+      "explanation": "Kinesis Data Streams lets multiple consumers read the same data in real time and replay within the retention period (extendable up to 365 days). Firehose is near real-time, only delivers to destinations, and does not support multiple custom consumers or replay. SQS deletes messages after processing, and a message is handled by only one consumer. SNS does not store data for replay."
+    },
+    "perf-040": {
+      "explanation": "Amazon Data Firehose is fully managed, buffers automatically, converts the format to Parquet/ORC (using the schema in the Glue Data Catalog), and writes to S3; a delay of a few minutes is acceptable. A self-written consumer on EC2, an EMR cluster, or Lambda that batches on its own all add operational effort."
+    },
+    "perf-041": {
+      "explanation": "Athena charges by data scanned. Parquet is a columnar format (reads only the needed columns) and compresses well; partitioning by day lets it skip irrelevant partitions. Glacier Instant Retrieval does not reduce data scanned and has retrieval fees. Increasing the timeout does not improve performance. RDS is not suited to analyzing many TB of logs."
+    },
+    "perf-042": {
+      "explanation": "Lake Formation manages permissions centrally on the Data Catalog, supports fine-grained access down to columns, rows, and cells, and applies to Athena, Redshift Spectrum, and EMR. Copying data per team costs effort and creates duplication. A bucket policy works only at the object level and does not understand columns. KMS encryption is not a column-level permission mechanism for queries."
+    },
+    "perf-043": {
+      "explanation": "Redshift Spectrum queries data directly on S3 through external tables and can join with tables in Redshift; a Glue crawler creates the schema in the Data Catalog to serve as the external schema. COPY means loading into the cluster, contrary to the requirement. Kinesis is a streaming service, not for historical data. EMR HBase adds unnecessary infrastructure and cannot join directly with Redshift."
+    },
+    "perf-044": {
+      "explanation": "DataSync automatically transfers NFS/SMB data to EFS, S3, FSx, with integrity checks, metadata preservation, scheduling, and runs over Direct Connect. rsync and cron must be managed and error-checked by yourself. A File Gateway followed by a copy is a complex two-step process. Snowball is not suitable when Direct Connect is already in place and periodic sync is needed until cutover."
+    },
+    "perf-045": {
+      "explanation": "A heterogeneous migration (different engine types) needs SCT/DMS Schema Conversion to convert the schema and code; DMS full load + CDC keeps the source online and syncs continuously, with downtime only at cutover. Data Pump cannot import into PostgreSQL. DMS does not convert schemas between different engines on its own, and a full load without CDC causes long downtime. Application Migration Service rehosts servers to EC2 and does not migrate to Aurora."
+    },
+    "perf-046": {
+      "explanation": "Tape Gateway emulates a tape library (VTL over iSCSI), so the backup software stays unchanged; virtual tapes are stored in S3 and can be archived to Glacier Flexible Retrieval/Deep Archive. File Gateway requires changing the backup target to a file share. DataSync does not read physical tapes. Volume Gateway is block storage, not a tape interface."
+    },
+    "perf-047": {
+      "explanation": "AWS Transfer Family provides a fully managed SFTP endpoint that stores directly into S3, and partners keep their existing clients. SFTP on EC2 requires self-managed operation, patching, and HA. Presigned URLs force partners to change their process. File Gateway uses NFS/SMB, not SFTP, and is not designed to be exposed to outsiders over the internet."
+    },
+    "perf-048": {
+      "explanation": "1 Gbps is about 125 MB/s, or about 10.8 TB/day; at 80% utilization it is about 8.6 TB/day, so 40 TB takes about 5 days, meeting the 10-day deadline. DataSync is automated, optimizes bandwidth, and verifies integrity. A new Direct Connect usually takes several weeks to set up. A self-written script with a single PUT is limited to 5 GB per object and costs effort. Waiting for a bandwidth upgrade does not guarantee the deadline."
+    },
+    "perf-049": {
+      "explanation": "Textract extracts text, forms (key-value pairs), and tables from scanned documents, and it is a ready-made service, so no ML expertise is needed; S3 events + Lambda create a serverless pipeline. Rekognition text detection only finds short text in images and does not understand form/table structure. SageMaker requires training and operating your own endpoint, which is much more effort. Comprehend analyzes plain text, cannot read scanned PDFs, and does not extract tables."
+    },
+    "perf-050": {
+      "explanation": "Rekognition content moderation detects inappropriate content (explicit, violent...) in images and video through a ready-made API that scales automatically. Comprehend only analyzes text. Textract extracts text from documents. A custom model trained on SageMaker requires significant development and operational effort, which contradicts the requirement."
+    },
+    "perf-051": {
+      "explanation": "Kendra is an intelligent enterprise search service: it accepts natural-language questions and returns answers from documents, with connectors for S3 and SharePoint. Comprehend analyzes sentiment/entities and does not search documents. Lex builds chatbots but does not index and search documents by itself. Athena runs SQL queries on structured data in S3 and does not understand natural-language questions over text."
+    },
+    "perf-052": {
+      "explanation": "Polly converts text into natural-sounding speech (neural voices) and can store the output in S3. Transcribe does the opposite (speech to text). Lex is for building chatbots, not for reading articles aloud. Self-hosting a model on EC2 increases operational overhead."
+    },
+    "perf-053": {
+      "explanation": "Transcribe converts recordings to text and can redact PII in the transcript; Comprehend analyzes the sentiment (positive/negative/neutral/mixed) of the transcript. Polly converts text to speech, the opposite direction. Rekognition analyzes images/video and does not process audio. Translate only translates languages and does not analyze sentiment."
+    },
+    "perf-054": {
+      "explanation": "Bedrock provides foundation models through a serverless API; Knowledge Bases perform RAG over the S3 documents so answers are grounded in company data, with no infrastructure to manage and no model training. Training an LLM on SageMaker is expensive and complex. Comprehend custom classification only classifies text and does not generate answers. Self-hosting an LLM on EC2 requires managing infrastructure."
+    },
+    "perf-055": {
+      "explanation": "Personalize is a managed recommendation service that ingests interaction data (views, purchases) and updates recommendations in real time, with no ML experience required. Kendra is document search. SageMaker AI could do it but requires data scientists to build the model. Comprehend analyzes text."
+    },
+    "perf-056": {
+      "explanation": "SageMaker AI covers the whole ML lifecycle: managed notebooks, GPU training jobs that read data from S3, and real-time endpoints for low-latency inference; it supports proprietary algorithms through custom containers/scripts. Rekognition Custom Labels is only for image labels. Bedrock uses existing foundation models and is not for training a proprietary algorithm. A do-it-yourself EC2 setup increases operational overhead and is not fully managed."
+    },
+    "cost-001": {
+      "explanation": "Compute Savings Plans apply to EC2 in any family, Region, and OS, as well as Fargate and Lambda, so they fit when the workload will move to serverless or change Region while still getting a 3-year committed discount. Standard RIs are tied to a family/Region and do not apply to Fargate/Lambda. EC2 Instance Savings Plans apply only to one family in one Region. On-Demand is expensive, and Spot is unsuitable for a web app that runs continuously and needs stability."
+    },
+    "cost-002": {
+      "explanation": "Jobs that checkpoint, can restart, and have flexible timing are the classic Spot Instances case (up to 90% cheaper); diversifying instance types reduces the risk of interruption. On-Demand works but costs much more. Dedicated Instances are more expensive and unnecessary. Reserved Instances require a commitment to run continuously, which wastes money for jobs that run only at night."
+    },
+    "cost-003": {
+      "explanation": "Dedicated Hosts expose sockets and physical cores, support BYOL for per-core/per-socket licenses, and allow license tracking. Dedicated Instances run on dedicated hardware but do not expose sockets/cores, so they do not meet the license tracking requirement. Default tenancy uses shared hardware. Spot with license-included AMIs means buying a new license from AWS instead of using existing ones, and can be interrupted."
+    },
+    "cost-004": {
+      "explanation": "An On-Demand Capacity Reservation holds capacity in a specific AZ, requires no term commitment, and can be canceled after the event. A zonal RI does reserve capacity but requires a commitment of at least 1 year. Savings Plans only discount prices and do not guarantee capacity. Spot does not guarantee capacity and can be reclaimed."
+    },
+    "cost-005": {
+      "explanation": "A mixed instances policy lets you set an On-Demand base capacity (4 instances, covered by a Savings Plan for a discount) and use Spot for the extra load, giving both stability and low cost. Using only Spot does not guarantee the baseline. Buying RIs for 20 instances wastes money because most of the time only 4 are needed. Dedicated Instances are more expensive and do not save money."
+    },
+    "cost-006": {
+      "explanation": "Convertible RIs allow exchanging for a different instance family, OS, or tenancy (of equal or higher value). Standard RIs, whether zonal or regional, cannot change the instance family (regional is flexible only on size and AZ). A Capacity Reservation is not a discounted commitment."
+    },
+    "cost-007": {
+      "explanation": "AWS Compute Optimizer uses ML on CloudWatch metrics to recommend right-sizing; memory metrics require the CloudWatch agent. Pricing Calculator only estimates prices and does not analyze utilization. Budgets only tracks spend. A custom script adds operational effort and would only see CPU because EC2 does not send memory metrics by default."
+    },
+    "cost-008": {
+      "explanation": "The Spot interruption notice (2 minutes ahead) can be obtained through instance metadata (spot/instance-action) and through the EventBridge event \"EC2 Spot Instance Interruption Warning\". Trusted Advisor, Cost Anomaly Detection, and Budgets are cost/best-practice tools and do not signal Spot reclamation."
+    },
+    "cost-009": {
+      "explanation": "S3 Intelligent-Tiering automatically moves objects between tiers based on access patterns, has no retrieval fee, and fits unpredictable access patterns. Standard-IA and Glacier Instant Retrieval have retrieval fees, which are costly for frequently accessed files. One Zone-IA has retrieval fees and stores data in only 1 AZ."
+    },
+    "cost-010": {
+      "explanation": "Glacier Instant Retrieval is for long-lived, infrequently accessed data that must be retrieved in milliseconds, with cheaper storage than Standard-IA. Deep Archive takes 12–48 hours and Flexible Retrieval takes minutes to hours, so neither meets the millisecond requirement. One Zone-IA is in only 1 AZ, risking loss of important medical data, and costs more than Glacier IR for long-term storage."
+    },
+    "cost-011": {
+      "explanation": "Infrequently accessed, re-creatable data is the classic One Zone-IA case: cheaper than Standard-IA, millisecond access, and the risk of losing one AZ is acceptable. S3 Standard costs more for infrequently accessed data. Deep Archive and Flexible Retrieval do not provide millisecond access."
+    },
+    "cost-012": {
+      "explanation": "Glacier Deep Archive is the cheapest class, suited to 7–10 year compliance archives, with retrieval within 12 hours (Standard) or 48 hours (Bulk). Glacier Instant Retrieval and Standard-IA cost more because they support millisecond access that is not needed. Intelligent-Tiering with only the Frequent/Infrequent tiers cannot reach storage prices as low as Deep Archive."
+    },
+    "cost-013": {
+      "explanation": "Glacier Flexible Retrieval Expedited retrieval returns data in about 1–5 minutes. Standard takes 3–5 hours and Bulk takes 5–12 hours. Deep Archive is even slower (within 12–48 hours) and has no Expedited option."
+    },
+    "cost-014": {
+      "explanation": "The lifecycle rules NoncurrentVersionExpiration and AbortIncompleteMultipartUpload automatically clean up old versions and unfinished upload parts, with no code. Disabling versioning does not delete existing versions and removes data protection. A custom Lambda adds operational effort. Intelligent-Tiering only lowers storage price; it does not delete excess versions or incomplete multipart uploads."
+    },
+    "cost-015": {
+      "explanation": "Requester Pays makes the requester (who must be an authenticated AWS principal) pay for requests and data transfer, and the bucket owner pays only for storage. Transfer Acceleration speeds things up but adds cost for the bucket owner. CloudFront with signed URLs controls access but the owner still pays egress. Anonymous access cannot be used with Requester Pays, and the bucket owner would pay everything."
+    },
+    "cost-016": {
+      "explanation": "S3 Storage Lens provides an organization-level dashboard of usage, activity, and cost optimization recommendations. S3 Inventory exports a daily/weekly list of objects with their storage class. Trusted Advisor service limit checks relate only to quotas. Transfer Acceleration speeds up uploads. Object Lock is for WORM/compliance, not cost analysis."
+    },
+    "cost-017": {
+      "explanation": "Transition progressively by access pattern: Standard for 30 days (frequent queries), Standard-IA until day 90 (occasional), then Glacier Flexible Retrieval (retrieval within hours), then expire after 365 days. Keeping Standard for the whole year costs more. One Zone-IA after 1 day violates the lifecycle constraint (objects must stay in Standard at least 30 days before moving to IA) and still incurs retrieval fees for heavy querying. Deep Archive after 1 day would make the logs unqueryable during the first 30 days."
+    },
+    "cost-018": {
+      "explanation": "AWS Budgets supports alerts on forecasted cost and Budget actions that automatically apply an IAM policy/SCP or stop EC2/RDS when a threshold is exceeded, with no code. Cost Explorer requires manual review. Cost Anomaly Detection detects anomalies, does not use fixed thresholds, and does not apply policies. A CloudWatch billing alarm + Lambda works but must be written by hand and takes more operational effort."
+    },
+    "cost-019": {
+      "explanation": "CUR 2.0 via AWS Data Exports provides the most detailed billing data (hourly, per resource, with tags) into S3, queried with Athena and visualized with QuickSight. Cost Explorer does not provide detailed resource-level data for SQL, and daily manual downloads take effort. Trusted Advisor is a best-practice check. Pricing Calculator only estimates."
+    },
+    "cost-020": {
+      "explanation": "A tag appears in Cost Explorer/CUR only after it is activated as a cost allocation tag in the Billing console of the management account (data counts from the activation time). AWS Config checks tag compliance but does not make tags appear in cost reports. Recreating resources is unnecessary. A budget does not help group costs by tag while the tag is not activated."
+    },
+    "cost-021": {
+      "explanation": "Cost Anomaly Detection uses machine learning to detect unusual spend and analyze root causes, needs no thresholds, and sends alerts via SNS or email. Budgets requires fixed thresholds. Trusted Advisor checks best practices and does not track cost fluctuations. Compute Optimizer only recommends right-sizing."
+    },
+    "cost-022": {
+      "explanation": "Consolidated billing in AWS Organizations combines bills, combines usage to reach lower pricing tiers, and shares RIs/Savings Plans across accounts. Buying RIs separately in each account cannot be shared unless the accounts are in the same organization. Billing Conductor creates pro forma bills for showback/chargeback and does not replace consolidated billing. Control Tower sets up a landing zone; there is no need to recreate the accounts."
+    },
+    "cost-023": {
+      "explanation": "Trusted Advisor has cost optimization checks such as unassociated Elastic IPs, idle load balancers, and underutilized EBS; the Enterprise Support plan includes the full set of checks. Pricing Calculator only estimates. Inspector scans for security vulnerabilities. CloudTrail records API calls."
+    },
+    "cost-024": {
+      "explanation": "Cost Explorer has coverage reports (how much usage is covered) and utilization reports (how much of the commitment was used), plus Savings Plans purchase recommendations based on past usage. CloudWatch Logs Insights analyzes application logs. Config conformance packs check configuration compliance. Service Catalog manages approved IT products."
+    },
+    "cost-025": {
+      "explanation": "AWS Billing Conductor creates pro forma bills with custom billing groups and pricing rules, suited to resellers or showback/chargeback, without affecting the real bill. Cost Anomaly Detection detects unusual spend. Budgets tracks thresholds. Cost Explorer forecasting predicts actual cost and does not create bills with custom prices."
+    },
+    "cost-026": {
+      "explanation": "A gateway VPC endpoint for S3 is free, and traffic to S3 goes through the endpoint instead of NAT, so NAT processing charges disappear. An interface endpoint has hourly and per-GB charges, so it is not as cheap. A NAT instance adds operational effort and has bandwidth limits. Moving to public subnets reduces security and incurs public IPv4 charges."
+    },
+    "cost-027": {
+      "explanation": "CloudFront caches content at the edge, transfer from S3 to CloudFront is free, and CloudFront egress pricing is usually lower than direct egress from S3, while also reducing latency. Transfer Acceleration optimizes uploads and costs extra. Global Accelerator does not cache and has additional charges. Cross-Region Replication incurs replication costs and stores multiple copies."
+    },
+    "cost-028": {
+      "explanation": "Instance Scheduler on AWS automatically starts/stops EC2 and RDS on a tag-based schedule, cutting most of the off-hours compute cost with no manual work. RIs are billed 24/7, which wastes money for resources that run only about 50 hours/week. Spot does not apply to RDS and can be interrupted. Manual stopping is easy to forget and takes effort."
+    },
+    "cost-029": {
+      "explanation": "gp3 is cheaper per GB than gp2 and has a baseline of 3,000 IOPS and 125 MB/s regardless of size; a 100 GB gp2 volume has only about 300 IOPS baseline. Elastic Volumes changes the volume type with no downtime. st1 is HDD, unsuitable for random IOPS, and cannot be used as a boot volume. io2 is much more expensive. EFS costs more per GB and requires application changes."
+    },
+    "cost-030": {
+      "explanation": "DynamoDB on-demand is billed per request, needs no capacity planning, and fits unpredictable load with long idle periods. Reserved capacity requires a long-term commitment for steady load. Auto Scaling with a high minimum still pays when idle and reacts slowly to sudden spikes. The Standard-IA table class lowers storage price and does not address the capacity problem."
+    },
+    "cost-031": {
+      "explanation": "Aurora Serverless v2 scales ACUs automatically with load and charges only for the capacity actually used, which suits load concentrated in a few hours each month; changes are minimal since it is still Aurora PostgreSQL. RIs suit steady 24/7 load; here you would still pay for idle time. Adding replicas increases cost. Moving to DynamoDB requires redesigning the application."
+    },
+    "cost-032": {
+      "explanation": "SQS decouples the web and processing tiers, letting workers process at their own pace instead of being provisioned for peak. Scaling on backlog per instance and using Spot for idempotent workers cuts compute cost sharply. Increasing instance size raises cost. Dedicated Hosts are more expensive. An ALB with sticky sessions does not solve provisioning for peak."
+    },
+    "cost-033": {
+      "explanation": "Since February 2024 AWS charges for every public IPv4 address, including attached Elastic IPs. Moving instances to private subnets, administering through Session Manager (no public IP or bastion needed), and accessing S3 through a free gateway endpoint eliminates the public IPs. In-use Elastic IPs are still charged. An NLB with a public IP per instance does not reduce the number of public IPs. Global Accelerator has its own charges and is unnecessary."
+    },
+    "cost-034": {
+      "explanation": "Lambda allocates CPU in proportion to memory; raising memory for a CPU-intensive task usually cuts run time sharply and can lower the total cost. Lambda Power Tuning helps find the optimal configuration. Moving to EC2 adds operational effort and is not necessarily cheaper. Increasing the timeout only extends billed time. Provisioned concurrency reduces cold starts but increases cost."
+    },
+    "cost-035": {
+      "explanation": "Athena is billed by data scanned. Compressed columnar Parquet reads only the needed columns, and partitioning by date skips irrelevant data; both sharply reduce data scanned. Athena cannot query objects in Glacier Flexible Retrieval directly. RDS for several TB of logs costs more and takes more operational effort. Transfer Acceleration is unrelated to queries."
+    },
+    "cost-036": {
+      "explanation": "Redshift Serverless scales automatically and charges for compute only while queries run, which suits sporadic load and requires no cluster management. A provisioned cluster with reserved nodes is billed continuously, even when idle. RDS MySQL is not a data warehouse. EMR running continuously costs more and takes much operational effort."
+    },
+    "cost-037": {
+      "explanation": "ElastiCache caches repeated read query results, reducing CPU load on RDS and often allowing a smaller, cheaper DB instead of scaling the DB up very large. Scaling the instance class costs much more. Multi-AZ increases availability but does not reduce read load (the standby does not serve reads). Migrating to Aurora takes effort and does not solve the repeated-query problem."
+    },
+    "cost-038": {
+      "explanation": "500 TB over a 100 Mbps link takes more than a year even using the full bandwidth, so it must be moved offline with Snowball Edge. Direct Connect takes several weeks to set up, has fixed fees, and still could not finish in 1 month. DataSync or Transfer Acceleration over the existing link is limited by bandwidth."
+    },
+    "cost-039": {
+      "explanation": "FSx for Lustre scratch is cheap and high-performance for temporary processing, links to S3 as a data repository, and can be created/deleted for each run so you pay only while in use. Persistent running all week charges continuously for 50 TB. EFS does not reach Lustre's HPC performance and costs more per GB. EBS io2 is very expensive and is not a shared file system."
+    },
+    "cost-040": {
+      "explanation": "FSx for Windows File Server HDD storage is cheaper than SSD for infrequently accessed file shares, and data deduplication reduces stored capacity when there are many duplicate files; SMB and Active Directory integration are preserved. EFS is NFS and does not support SMB for Windows. Self-managing EBS on EC2 adds operational effort and loses managed features. FSx for Lustre is for HPC on Linux, not SMB."
+    },
+    "cost-041": {
+      "explanation": "Sparse, bursty traffic that is idle most of the time with short requests is the textbook case for Lambda + API Gateway: you pay only per request and duration, nothing while idle. EC2 On-Demand and an always-on Fargate service both pay during idle time. A 1-year Reserved Instance commits to an instance that is barely used, which is wasteful."
+    },
+    "cost-042": {
+      "explanation": "Compute Savings Plans apply automatically to Fargate, Lambda and EC2, so the discount stays as workloads move between compute types. EC2 Instance Savings Plans and Reserved Instances apply only to EC2 and do not discount Fargate/Lambda. Fargate Spot can be reclaimed with a 2-minute warning, which is not acceptable for an application that must not be interrupted."
+    },
+    "cost-043": {
+      "explanation": "A capacity provider strategy lets you keep a base of 2 tasks on FARGATE (never reclaimed) and split the rest by weight, mostly onto the much cheaper FARGATE_SPOT. Running everything on Fargate Spot could lose both required tasks during reclamation. Dedicated Instances cost more and are unnecessary. EC2 Instance Savings Plans do not apply to Fargate."
+    },
+    "cost-044": {
+      "explanation": "AWS Batch supports a Spot compute environment with the SPOT_PRICE_CAPACITY_OPTIMIZED allocation strategy, multiple instance types for pool diversity, and a retry strategy to rerun interrupted jobs, so it is cheap with little operations work. Reserved Instances do not fit weekly fluctuating batch load. A self-built scheduler adds operational overhead. Lambda is limited to 15 minutes and does not suit long simulations."
+    },
+    "cost-045": {
+      "explanation": "Pulling work from SQS and deleting the message only on completion lets the message reappear after the visibility timeout for another worker if the instance is reclaimed; checkpointing to S3 lets the job resume from the latest point instead of restarting. Reserved Instances give up the Spot price benefit. Instance store data is lost when the instance terminates. Raising the max price does not prevent interruptions, which happen mainly because AWS needs the capacity back."
+    },
+    "cost-046": {
+      "explanation": "Lambda CPU scales with memory, so a CPU-bound function at 128 MB runs long; more memory can cut duration enough to lower total cost, and Lambda Power Tuning finds the cheapest setting. arm64 (Graviton) has a lower price per GB-second than x86. A shorter timeout makes the function fail midway. Provisioned concurrency adds cost and only reduces cold starts. Moving to EC2 adds operations and is not necessarily cheaper."
+    },
+    "cost-047": {
+      "explanation": "Lambda bills duration even while just waiting. A Step Functions Standard workflow is billed per state transition and a Wait state uses no compute, so you pay only for short Lambda invocations that check the status. More memory costs more when the time is mostly waiting. Provisioned concurrency adds a fee. arm64 lowers the unit price but still pays for all the waiting time."
+    },
+    "cost-048": {
+      "explanation": "The environments are used about 50 of 168 hours a week, so turning them off after hours (scheduled actions setting the ASG and ECS service to 0) saves the most. Reserved Instances and Savings Plans commit you to paying for hours that are not used. Dedicated Instances cost more."
+    },
+    "cost-049": {
+      "explanation": "A gateway VPC endpoint for S3 is free and only needs a route table entry, so S3 traffic no longer goes through NAT. An interface endpoint for S3 also avoids NAT but has hourly per-AZ and per-GB fees. A NAT instance adds operational work and still costs money. Transfer Acceleration improves speed and adds a fee; it does not reduce cost."
+    },
+    "cost-050": {
+      "explanation": "One NAT gateway per AZ, with each subnet routed to the NAT in its own AZ, removes cross-AZ charges and the single point of failure. Moving everything into one AZ loses high availability. Assigning public IPv4 addresses to every instance adds public IPv4 charges and exposes the instances. A second NAT in the same AZ solves neither problem."
+    },
+    "cost-051": {
+      "explanation": "With CloudFront, data from the S3 origin to CloudFront is free, caching reduces origin requests, and Price Class 100 uses only edges in the cheapest areas (North America, Europe), which fits where the users are. Transfer Acceleration and Global Accelerator improve speed but add fees. Cross-Region Replication adds inter-Region and duplicate storage charges and still pays egress."
+    },
+    "cost-052": {
+      "explanation": "Direct Connect has an hourly port fee but a lower data transfer out rate than the internet, so for large, steady volumes the total cost is lower, with consistent bandwidth. VPN egress is billed at internet rates; more tunnels do not lower the rate. Transfer Acceleration adds a fee. Transit Gateway adds attachment and processing fees without reducing egress."
+    },
+    "cost-053": {
+      "explanation": "ECR images involve the API (ecr.api), the registry (ecr.dkr) and layers stored in S3: interface endpoints for ECR and CloudWatch Logs plus a free S3 gateway endpoint take the traffic off NAT; interface endpoint processing costs less than NAT. Public subnets with public IPs add public IPv4 charges and weaken security. Transfer Acceleration is irrelevant. More NAT gateways do not lower the per-GB processing fee."
+    },
+    "cost-054": {
+      "explanation": "VPC peering has no hourly fee and no per-GB processing fee (same-AZ traffic is free), so adding a dedicated peering for the high-volume pair cuts transit gateway charges while other VPCs stay on the TGW. A VPN between VPCs costs money and adds complexity. A second transit gateway still has attachment and processing fees. Going over the internet adds public IPv4 and egress charges and is less secure."
+    },
+    "cost-055": {
+      "explanation": "VPC Flow Logs record source/destination IP pairs and bytes; querying them with Athena shows which instances send traffic to other AZs, and Cost Explorer by usage type (DataTransfer-Regional-Bytes) confirms the inter-AZ cost. Trusted Advisor and Compute Optimizer do not analyze network flows. S3 Storage Lens is only for S3."
+    },
+    "cost-056": {
+      "explanation": "With an NLB, enabling cross-zone load balancing means traffic to targets in other AZs is billed as inter-AZ transfer. Since targets are already evenly spread per AZ, turning cross-zone off keeps traffic within the AZ while staying balanced and multi-AZ. Global Accelerator adds cost. Putting all targets in one AZ loses HA. More targets do not reduce cross-AZ charges."
+    }
+  }
+}

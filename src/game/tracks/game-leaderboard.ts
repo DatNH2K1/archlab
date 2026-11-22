@@ -161,43 +161,9 @@ const finals = makeBoard(
 export const gameLeaderboard: Track = {
   id: 'game-leaderboard',
   difficulty: 'hard',
-  text: {
-    vi: {
-      title: 'Bảng xếp hạng game',
-      pitch:
-        'Backend cho một game mobile toàn cầu: bảng xếp hạng nóng, người chơi khắp thế giới, bot tấn công và cả một Region sập.',
-      tags: ['ElastiCache', 'Toàn cầu', 'WAF', 'Multi-Region', 'Auto Scaling'],
-    },
-    en: {
-      title: 'Game leaderboard',
-      pitch:
-        'Backend for a global mobile game: hot leaderboards, players everywhere, bot attacks and a whole Region going down.',
-      tags: ['ElastiCache', 'Global', 'WAF', 'Multi-Region', 'Auto Scaling'],
-    },
-  },
   rounds: [
     {
       id: 'lb-hot',
-      text: {
-        vi: {
-          title: 'Bảng xếp hạng nóng',
-          story:
-            'Game vừa ra mắt: 2.500 yêu cầu/giây, 92% là mở bảng xếp hạng, 8% là gửi điểm. Ai cũng xem cùng một top 100. Ngân sách $260.',
-          concept:
-            'Dữ liệu được đọc liên tục như bảng xếp hạng nên nằm trong ElastiCache (Redis sorted set). Cache trả phần lớn lượt đọc, DynamoDB chỉ cần nhận lượt ghi và cache miss.',
-          nudge:
-            'Thêm ElastiCache giữa EC2 và dữ liệu, rồi bật provisioned cho DynamoDB (kích cỡ Vừa) thay vì trả theo yêu cầu.',
-        },
-        en: {
-          title: 'Hot leaderboard',
-          story:
-            'The game just launched: 2,500 requests/s, 92% opening the leaderboard and 8% posting scores. Everyone looks at the same top 100. Budget: $260.',
-          concept:
-            'Constantly read data like a leaderboard belongs in ElastiCache (Redis sorted sets). The cache serves most reads, so DynamoDB only takes writes and cache misses.',
-          nudge:
-            'Add ElastiCache next to EC2, then switch DynamoDB to provisioned (medium) instead of paying per request.',
-        },
-      },
       scenario: {
         traffic: 2500,
         mix: { read: 0.92, write: 0.08 },
@@ -225,26 +191,6 @@ export const gameLeaderboard: Track = {
     },
     {
       id: 'lb-global',
-      text: {
-        vi: {
-          title: 'Người chơi khắp thế giới',
-          story:
-            'Game lên top ở châu Âu: 60% người chơi ở xa us-east-1. Game thủ chê lag, mục tiêu giờ là dưới 80 ms.',
-          concept:
-            'CloudFront cache phản hồi API (bảng xếp hạng đổi theo giây, cache ngắn là đủ) ngay ở edge. Phần còn lại, như gửi điểm, đi qua Global Accelerator trên mạng backbone AWS.',
-          nudge:
-            'Người dùng → CloudFront (bật "Cache cả phản hồi API") → Global Accelerator → ALB. Edge gánh bớt lượt đọc nên 2 EC2 là đủ.',
-        },
-        en: {
-          title: 'Players everywhere',
-          story:
-            'The game tops the charts in Europe: 60% of players are far from us-east-1. Gamers complain about lag; the target is now under 80 ms.',
-          concept:
-            'CloudFront caches API responses (a leaderboard that changes every second still caches well for a moment) at the edge. The rest, like score posts, rides the AWS backbone through Global Accelerator.',
-          nudge:
-            'Users → CloudFront ("Cache API responses" on) → Global Accelerator → ALB. The edge takes reads off the servers, so 2 EC2 instances are enough.',
-        },
-      },
       scenario: {
         traffic: 2500,
         mix: { read: 0.92, write: 0.08 },
@@ -260,24 +206,6 @@ export const gameLeaderboard: Track = {
     },
     {
       id: 'lb-ddos',
-      text: {
-        vi: {
-          title: 'Bot phá giải đấu',
-          story:
-            'Giữa giải đấu, một botnet bơm yêu cầu rác gấp 6 lần lưu lượng thật để đánh sập máy chủ game. CloudFront tính tiền cả lưu lượng rác.',
-          concept:
-            'AWS WAF với rate-based rule chặn bot ở edge, trước khi chúng tới CloudFront và EC2. Shield Standard đã có sẵn cho tấn công tầng mạng; WAF lo tầng ứng dụng.',
-          nudge: 'Đặt WAF ngay sau Người dùng, trước CloudFront.',
-        },
-        en: {
-          title: 'Bots crash the tournament',
-          story:
-            'Mid-tournament, a botnet floods junk requests at 6× real traffic to take the game servers down. CloudFront bills the junk too.',
-          concept:
-            'AWS WAF with rate-based rules blocks bots at the edge, before they reach CloudFront and EC2. Shield Standard already covers network-layer floods; WAF handles the application layer.',
-          nudge: 'Put WAF right after Users, in front of CloudFront.',
-        },
-      },
       scenario: {
         traffic: 2500,
         mix: { read: 0.92, write: 0.08 },
@@ -294,24 +222,6 @@ export const gameLeaderboard: Track = {
     },
     {
       id: 'lb-cachecrash',
-      text: {
-        vi: {
-          title: 'Cache sập giữa mùa giải',
-          story:
-            'Mùa giải mới: 3.600 yêu cầu/giây. Giữa trận, node ElastiCache duy nhất chết. Mọi lượt đọc dồn xuống DynamoDB và bảng quá tải.',
-          concept:
-            'ElastiCache Multi-AZ có replica ở AZ khác và tự động failover, nên cache không biến mất. Rẻ hơn nhiều so với nâng DynamoDB chỉ để chịu lúc cache sập.',
-          nudge: 'Bật Multi-AZ cho ElastiCache và tăng EC2 lên 3 máy kích cỡ Lớn cho lưu lượng mới.',
-        },
-        en: {
-          title: 'Cache dies mid-season',
-          story:
-            'New season: 3,600 requests/s. Mid-match, the only ElastiCache node dies. Every read falls through to DynamoDB and the table is overloaded.',
-          concept:
-            'ElastiCache Multi-AZ keeps a replica in another AZ and fails over automatically, so the cache never disappears. Much cheaper than sizing DynamoDB for a cache outage.',
-          nudge: 'Turn on Multi-AZ for ElastiCache and raise EC2 to 3 large instances for the new traffic.',
-        },
-      },
       scenario: {
         traffic: 3600,
         mix: { read: 0.92, write: 0.08 },
@@ -328,26 +238,6 @@ export const gameLeaderboard: Track = {
     },
     {
       id: 'lb-region',
-      text: {
-        vi: {
-          title: 'Cả Region sập',
-          story:
-            'Một sự cố lớn làm cả us-east-1 ngừng hoạt động nhiều giờ. Người chơi ở xa vẫn chiếm 60%, nên một Region thứ hai gần họ còn giúp giảm độ trễ.',
-          concept:
-            'Multi-Region active-active: một bộ ALB + EC2 + ElastiCache ở mỗi Region, dùng chung một bảng DynamoDB Global Tables có bản sao ở cả hai Region và Region nào cũng ghi được. Route 53 gửi người chơi tới Region gần nhất và chuyển hết sang Region còn sống khi một Region sập.',
-          nudge:
-            'Thêm Route 53 sau Global Accelerator, dựng bộ thứ hai ở eu-west-1 (2 EC2 kích cỡ Lớn mỗi bên là đủ) và nối Route 53 tới cả hai ALB. Bật Global Tables cho DynamoDB và nối EC2 ở cả hai Region tới nó.',
-        },
-        en: {
-          title: 'A whole Region fails',
-          story:
-            'A major incident takes us-east-1 down for hours. 60% of players are still far away, so a second Region near them also cuts latency.',
-          concept:
-            'Multi-Region active-active: one ALB + EC2 + ElastiCache stack per Region, sharing one DynamoDB global table that has a copy in both Regions and takes writes in either. Route 53 sends players to the nearest Region and moves everyone to the surviving one when a Region fails.',
-          nudge:
-            'Add Route 53 after Global Accelerator, build a second stack in eu-west-1 (2 large EC2 per side is enough) and point Route 53 at both ALBs. Turn on Global Tables for DynamoDB and link the EC2 in both Regions to it.',
-        },
-      },
       scenario: {
         traffic: 3600,
         mix: { read: 0.92, write: 0.08 },
@@ -365,26 +255,6 @@ export const gameLeaderboard: Track = {
     },
     {
       id: 'lb-finals',
-      text: {
-        vi: {
-          title: 'Chung kết thế giới',
-          story:
-            'Đêm chung kết được livestream: lưu lượng tăng gấp ba trong vài giờ rồi trở lại 3.600 yêu cầu/giây. Ngân sách $650, không đủ để chạy cả đêm với số máy của giờ cao điểm.',
-          concept:
-            'Auto Scaling ở mỗi Region thêm máy khi tải tăng và bớt máy khi hết đỉnh. eu-west-1 phục vụ 60% người chơi nên được phép mở rộng nhiều hơn.',
-          nudge:
-            'Bật Auto Scaling cho EC2 ở cả hai Region (tối đa 5 và 6).',
-        },
-        en: {
-          title: 'World finals',
-          story:
-            'The final is livestreamed: traffic triples for a few hours, then drops back to 3,600 requests/s. The $650 budget cannot run peak capacity all night.',
-          concept:
-            'Auto Scaling in each Region adds instances as load rises and removes them after the peak. eu-west-1 serves 60% of players, so it gets more room to grow.',
-          nudge:
-            'Turn on Auto Scaling for EC2 in both Regions (max 5 and 6).',
-        },
-      },
       scenario: {
         traffic: 3600,
         mix: { read: 0.92, write: 0.08 },

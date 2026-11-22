@@ -1,0 +1,2751 @@
+{
+  "Comparisons": {
+    "sg-vs-nacl": {
+      "title": "Security Group vs Network ACL",
+      "summary": "Cả hai đều là firewall trong VPC với rule inbound/outbound, nhưng áp dụng ở cấp khác nhau và xử lý traffic phản hồi khác nhau.",
+      "pick": [
+        "Chọn Security Group cho truy cập least privilege thông thường giữa instance và các tầng.",
+        "Chọn Network ACL khi cần chặn rõ ràng một IP hoặc dải CIDR ở cấp subnet."
+      ],
+      "rows": [
+        {
+          "aspect": "Áp dụng cho",
+          "values": [
+            "ENI / instance",
+            "Cả subnet"
+          ]
+        },
+        {
+          "aspect": "Trạng thái",
+          "values": [
+            "Stateful: traffic phản hồi tự được cho phép",
+            "Stateless: traffic phản hồi cần rule riêng"
+          ]
+        },
+        {
+          "aspect": "Loại rule",
+          "values": [
+            "Chỉ Allow",
+            "Allow và Deny"
+          ]
+        },
+        {
+          "aspect": "Cách đánh giá",
+          "values": [
+            "Xét tất cả rule cùng lúc",
+            "Theo số thứ tự, nhỏ trước, khớp đầu tiên thắng"
+          ]
+        },
+        {
+          "aspect": "Mặc định",
+          "values": [
+            "SG mới: chặn mọi inbound, cho mọi outbound",
+            "Default NACL cho tất cả; custom NACL chặn tất cả"
+          ]
+        },
+        {
+          "aspect": "Tham chiếu được",
+          "values": [
+            "CIDR, prefix list, security group khác",
+            "Chỉ CIDR"
+          ]
+        },
+        {
+          "aspect": "Ghi chú thi",
+          "values": [
+            "Nối các tầng bằng cách tham chiếu SG ID",
+            "Nhớ mở ephemeral port 1024-65535 cho phản hồi"
+          ]
+        }
+      ],
+      "diagram": "~~~flow\n# Request đi qua NACL rồi tới SG; phản hồi tự qua SG nhưng phải được NACL cho phép\nClient -> NACL inbound (subnet) -> Security Group inbound (ENI) -> EC2\nEC2 -[phản hồi]-> Security Group (stateful, tự cho qua) -> NACL outbound (mở 1024-65535) -> Client\n~~~\n\n~~~ladder\n# NACL xét rule theo số thứ tự, rule khớp đầu tiên thắng\nRule 100 | Deny 203.0.113.5/32 | Khớp trước\nRule 200 | Allow 0.0.0.0/0 port 443 | Allow\nRule * | Chặn mọi traffic không khớp rule nào | Mặc định\n~~~",
+      "keywords": [
+        {
+          "trigger": "Chặn một địa chỉ IP độc hại cụ thể",
+          "answer": "Network ACL rule Deny (hoặc AWS WAF cho HTTP)"
+        },
+        {
+          "trigger": "Stateful, chỉ có allow",
+          "answer": "Security Group"
+        },
+        {
+          "trigger": "Chỉ cho phép traffic từ các instance tầng web",
+          "answer": "Security Group tham chiếu SG của tầng web"
+        },
+        {
+          "trigger": "Traffic phản hồi outbound bị chặn ở subnet",
+          "answer": "NACL thiếu rule ephemeral port"
+        }
+      ]
+    },
+    "iam-policy-types": {
+      "title": "Các loại IAM policy",
+      "summary": "Tất cả đều là JSON policy, nhưng chỉ một số loại cấp quyền; permissions boundary và SCP chỉ đặt giới hạn tối đa.",
+      "pick": [
+        "Chọn identity-based policy để cấp quyền cho user, group hoặc role.",
+        "Chọn resource-based policy để cho account hoặc service khác truy cập trực tiếp vào tài nguyên.",
+        "Chọn permissions boundary khi developer được tự tạo role nhưng không được vượt một giới hạn.",
+        "Chọn SCP để giới hạn những gì cả account hoặc OU được phép làm, ví dụ Region hay service."
+      ],
+      "rows": [
+        {
+          "aspect": "Gắn vào",
+          "values": [
+            "User, group hoặc role",
+            "Tài nguyên (S3 bucket, SQS, KMS key...)",
+            "User hoặc role",
+            "Root, OU hoặc account trong Organizations"
+          ]
+        },
+        {
+          "aspect": "Có cấp quyền?",
+          "values": [
+            "Có",
+            "Có",
+            "Không, chỉ đặt giới hạn tối đa",
+            "Không, chỉ đặt giới hạn tối đa"
+          ]
+        },
+        {
+          "aspect": "Trường Principal",
+          "values": [
+            "Không (ngầm là identity)",
+            "Có",
+            "Không",
+            "Không"
+          ]
+        },
+        {
+          "aspect": "Cross-account",
+          "values": [
+            "Chỉ phía account gọi",
+            "Có, cấp quyền trực tiếp cho account khác",
+            "Không áp dụng",
+            "Không áp dụng"
+          ]
+        },
+        {
+          "aspect": "Phạm vi",
+          "values": [
+            "Một identity",
+            "Một tài nguyên",
+            "Một identity",
+            "Mọi identity trong member account, kể cả root user"
+          ]
+        },
+        {
+          "aspect": "Ghi chú thi",
+          "values": [
+            "Ưu tiên customer managed để tái sử dụng",
+            "Cần cho truy cập S3/KMS cross-account",
+            "Chống privilege escalation khi giao quyền tạo role",
+            "Không ảnh hưởng management account"
+          ]
+        }
+      ],
+      "diagram": "~~~groups\n# Chỉ hai loại cấp quyền; các loại còn lại chỉ đặt giới hạn tối đa\n[Quyền hiệu lực = Allow giao với mọi giới hạn]\nCấp quyền: *Identity-based policy, *Resource-based policy\nChỉ giới hạn: Permissions boundary, SCP, Session policy\n~~~\n\n~~~decide\n# Cần làm gì thì dùng policy nào\nCấp quyền cho role của Lambda => Identity-based policy\nCho account khác đọc bucket mà không assume role => Resource-based policy (bucket policy)\nDeveloper tự tạo role nhưng không được leo thang quyền => Permissions boundary\nCấm cả account dùng Region ngoài danh sách => SCP\n~~~",
+      "keywords": [
+        {
+          "trigger": "Ngăn mọi account dùng một Region",
+          "answer": "SCP với Deny"
+        },
+        {
+          "trigger": "Developer tự tạo IAM role mà không leo thang quyền",
+          "answer": "Permissions boundary"
+        },
+        {
+          "trigger": "Cho account khác đọc bucket",
+          "answer": "Resource-based policy (bucket policy)"
+        },
+        {
+          "trigger": "Explicit Deny và Allow cùng áp dụng",
+          "answer": "Explicit Deny luôn thắng"
+        },
+        {
+          "trigger": "Giới hạn cả root user của member account",
+          "answer": "SCP"
+        }
+      ]
+    },
+    "cognito-pools": {
+      "title": "Cognito User Pool vs Identity Pool vs IAM Identity Center",
+      "summary": "Cả ba đều liên quan đến đăng nhập, nhưng một cái xác thực người dùng app, một cái cấp AWS credentials, một cái là SSO cho nhân viên.",
+      "pick": [
+        "Chọn User Pool để thêm sign-up/sign-in cho app và nhận JWT.",
+        "Chọn Identity Pool khi người dùng app cần gọi trực tiếp AWS service bằng credentials tạm thời.",
+        "Chọn IAM Identity Center để nhân viên đăng nhập một lần vào nhiều AWS account."
+      ],
+      "rows": [
+        {
+          "aspect": "Nhiệm vụ chính",
+          "values": [
+            "Thư mục người dùng: sign-up, sign-in",
+            "Đổi token lấy AWS credentials tạm thời",
+            "SSO cho nhân viên vào nhiều account và app"
+          ]
+        },
+        {
+          "aspect": "Người dùng",
+          "values": [
+            "Khách hàng của app web/mobile",
+            "Người dùng app (kể cả guest)",
+            "Nhân viên"
+          ]
+        },
+        {
+          "aspect": "Đầu ra",
+          "values": [
+            "JWT token (ID, access, refresh)",
+            "STS credentials theo IAM role",
+            "Phiên vào account qua permission set"
+          ]
+        },
+        {
+          "aspect": "Federation",
+          "values": [
+            "Social, SAML, OIDC",
+            "User Pool, social, SAML, OIDC",
+            "IdP ngoài qua SAML, đồng bộ SCIM"
+          ]
+        },
+        {
+          "aspect": "Tích hợp",
+          "values": [
+            "Xác thực trên ALB, API Gateway authorizer",
+            "Gọi trực tiếp S3, DynamoDB",
+            "AWS Organizations, AWS access portal"
+          ]
+        },
+        {
+          "aspect": "Truy cập không xác thực",
+          "values": [
+            "Không",
+            "Có, guest role",
+            "Không"
+          ]
+        }
+      ],
+      "diagram": "~~~flow\n# Khách hàng đi qua Cognito, nhân viên đi qua IAM Identity Center\nUsers -> Cognito User Pool -[JWT]-> Cognito Identity Pool -[credentials STS]-> S3\nNhân viên -> IdP (Entra ID, Okta) -[SAML + SCIM]-> IAM Identity Center -[permission set]-> Nhiều AWS account\n~~~\n\n~~~decide\n# Từ khóa trong đề và lựa chọn\nApp cần sign-up, sign-in và nhận JWT => Cognito User Pool\nNgười dùng app upload thẳng lên S3 => Cognito Identity Pool\nKhách chưa đăng nhập vẫn gọi AWS với quyền hạn chế => Identity Pool (guest role)\nNhân viên đăng nhập một lần vào nhiều account => IAM Identity Center\n~~~",
+      "keywords": [
+        {
+          "trigger": "Người dùng mobile app upload trực tiếp lên S3",
+          "answer": "Cognito Identity Pool"
+        },
+        {
+          "trigger": "Sign-up/sign-in cho hàng triệu người dùng app",
+          "answer": "Cognito User Pool"
+        },
+        {
+          "trigger": "Nhân viên dùng Microsoft Entra ID vào nhiều account",
+          "answer": "IAM Identity Center"
+        },
+        {
+          "trigger": "Guest user với quyền AWS hạn chế",
+          "answer": "Identity Pool unauthenticated role"
+        }
+      ]
+    },
+    "kms-cloudhsm": {
+      "title": "KMS AWS managed key vs customer managed key vs CloudHSM",
+      "summary": "Cả ba đều bảo vệ khóa mã hóa; khác nhau ở mức kiểm soát key policy, rotation và chính phần cứng.",
+      "pick": [
+        "Chọn AWS managed key cho mã hóa mặc định, không cần quản lý gì.",
+        "Chọn customer managed key khi cần kiểm soát key policy, chia sẻ cross-account hoặc disable/xóa key.",
+        "Chọn CloudHSM khi compliance yêu cầu HSM single-tenant do bạn kiểm soát độc quyền."
+      ],
+      "rows": [
+        {
+          "aspect": "Ai tạo",
+          "values": [
+            "AWS service (aws/s3, aws/ebs...)",
+            "Bạn",
+            "Bạn, trong HSM cluster riêng"
+          ]
+        },
+        {
+          "aspect": "Key policy",
+          "values": [
+            "Không sửa được",
+            "Toàn quyền, có grants",
+            "Bạn tự quản lý user và key trong HSM"
+          ]
+        },
+        {
+          "aspect": "Rotation",
+          "values": [
+            "Tự động hằng năm, không đổi được",
+            "Tùy chọn tự động, chỉnh được chu kỳ",
+            "Bạn tự quản lý"
+          ]
+        },
+        {
+          "aspect": "Dùng cross-account",
+          "values": [
+            "Không",
+            "Có, qua key policy",
+            "Ứng dụng của bạn tự kiểm soát"
+          ]
+        },
+        {
+          "aspect": "Tenancy",
+          "values": [
+            "Multi-tenant, AWS quản lý",
+            "Multi-tenant, AWS quản lý",
+            "HSM single-tenant riêng"
+          ]
+        },
+        {
+          "aspect": "Tích hợp",
+          "values": [
+            "Native với AWS service",
+            "Native với AWS service, audit qua CloudTrail",
+            "PKCS#11, JCE, CNG; KMS custom key store"
+          ]
+        },
+        {
+          "aspect": "Vận hành",
+          "values": [
+            "Không có",
+            "Thấp",
+            "Cao: tự lo HA trên nhiều AZ"
+          ]
+        }
+      ],
+      "diagram": "~~~ladder\n# Kiểm soát càng nhiều, vận hành càng nặng\nAWS managed key | AWS tạo và xoay vòng, không sửa key policy | Không vận hành\nCustomer managed key | Bạn quản key policy, grants, chia sẻ cross-account | Thấp\nCloudHSM | HSM single-tenant, bạn giữ key và tự lo HA | Cao\n~~~\n\n~~~decide\n# Yêu cầu trong đề và lựa chọn key\nMã hóa mặc định, không muốn quản lý gì => AWS managed key\nChia sẻ snapshot mã hóa với account khác => Customer managed key\nTự sửa key policy, disable hoặc xóa key => Customer managed key\nHSM single-tenant do công ty kiểm soát độc quyền => CloudHSM\n~~~",
+      "keywords": [
+        {
+          "trigger": "Hardware security module riêng, single-tenant",
+          "answer": "CloudHSM"
+        },
+        {
+          "trigger": "Chia sẻ snapshot mã hóa cho account khác",
+          "answer": "Customer managed KMS key"
+        },
+        {
+          "trigger": "Kiểm soát key policy và audit việc dùng key",
+          "answer": "Customer managed KMS key + CloudTrail"
+        },
+        {
+          "trigger": "Mã hóa với ít vận hành nhất",
+          "answer": "AWS managed key hoặc SSE-S3"
+        },
+        {
+          "trigger": "Dùng cùng key ở nhiều Region",
+          "answer": "KMS multi-Region keys"
+        }
+      ]
+    },
+    "s3-encryption": {
+      "title": "Các lựa chọn mã hóa S3",
+      "summary": "Năm cách mã hóa object S3, khác nhau ở ai giữ key, ai thực hiện mã hóa và mức audit.",
+      "pick": [
+        "Chọn SSE-S3 cho mã hóa at rest đơn giản, không quản lý key.",
+        "Chọn SSE-KMS khi cần kiểm soát key policy và có audit trail việc dùng key.",
+        "Chọn DSSE-KMS khi tiêu chuẩn yêu cầu hai lớp mã hóa độc lập.",
+        "Chọn SSE-C khi phải tự quản lý key nhưng vẫn để S3 mã hóa.",
+        "Chọn client-side encryption khi AWS tuyệt đối không được thấy plaintext."
+      ],
+      "rows": [
+        {
+          "aspect": "Ai mã hóa",
+          "values": [
+            "S3",
+            "S3",
+            "S3 (hai lớp)",
+            "S3",
+            "Ứng dụng của bạn"
+          ]
+        },
+        {
+          "aspect": "Ai giữ key",
+          "values": [
+            "S3",
+            "KMS",
+            "KMS",
+            "Bạn, gửi kèm mỗi request",
+            "Bạn"
+          ]
+        },
+        {
+          "aspect": "Audit việc dùng key",
+          "values": [
+            "Không",
+            "Có, CloudTrail",
+            "Có, CloudTrail",
+            "Không",
+            "Bạn tự lo"
+          ]
+        },
+        {
+          "aspect": "Mặc định?",
+          "values": [
+            "Có, cho mọi object mới",
+            "Không",
+            "Không",
+            "Không",
+            "Không"
+          ]
+        },
+        {
+          "aspect": "Ghi chú thi",
+          "values": [
+            "Không cần quản lý, AES-256",
+            "Bị KMS request quota; S3 Bucket Keys giảm số call",
+            "Mã hóa server-side hai lớp cho compliance",
+            "Bắt buộc HTTPS; AWS không lưu key",
+            "Dữ liệu được mã hóa trước khi rời app"
+          ]
+        }
+      ],
+      "diagram": "~~~ladder\n# Key chuyển dần từ AWS sang tay bạn\nSSE-S3 | S3 quản lý key, mặc định cho mọi object mới | Mặc định\nSSE-KMS | Key trong KMS, audit qua CloudTrail | Audit\nDSSE-KMS | Key trong KMS, mã hóa hai lớp | 2 lớp\nSSE-C | Bạn gửi key mỗi request, S3 mã hóa | HTTPS\nClient-side | App mã hóa trước khi upload | Tự làm\n~~~\n\n~~~flow\n# S3 Bucket Key giảm số lần gọi KMS với SSE-KMS\nPutObject -[SSE-KMS]-> S3 -[gọi KMS cho mỗi object]-> KMS (dễ bị throttling)\nPutObject -[SSE-KMS + Bucket Key]-> S3 (key cấp bucket tạm thời) -[ít call hơn]-> KMS\n~~~",
+      "keywords": [
+        {
+          "trigger": "Audit ai đã dùng key",
+          "answer": "SSE-KMS"
+        },
+        {
+          "trigger": "KMS throttling khi request rate cao",
+          "answer": "Bật S3 Bucket Keys"
+        },
+        {
+          "trigger": "Yêu cầu dual-layer encryption",
+          "answer": "DSSE-KMS"
+        },
+        {
+          "trigger": "Công ty tự cung cấp key, không lưu trên AWS",
+          "answer": "SSE-C"
+        },
+        {
+          "trigger": "Mã hóa trước khi upload",
+          "answer": "Client-side encryption"
+        }
+      ]
+    },
+    "secrets-vs-parameters": {
+      "title": "Secrets Manager vs SSM Parameter Store",
+      "summary": "Cả hai đều lưu giá trị cấu hình được mã hóa; đề thi phân biệt bằng automatic rotation và chi phí.",
+      "pick": [
+        "Chọn Secrets Manager khi credentials phải tự động rotate hoặc replicate sang Region khác.",
+        "Chọn Parameter Store cho giá trị cấu hình và secret rẻ, không cần rotation."
+      ],
+      "rows": [
+        {
+          "aspect": "Mục đích",
+          "values": [
+            "Secret: mật khẩu DB, API key",
+            "Giá trị cấu hình và secret (SecureString)"
+          ]
+        },
+        {
+          "aspect": "Automatic rotation",
+          "values": [
+            "Có sẵn (Lambda hoặc managed rotation cho RDS, Aurora...)",
+            "Không có rotation native"
+          ]
+        },
+        {
+          "aspect": "Mã hóa",
+          "values": [
+            "Luôn dùng KMS",
+            "Tùy chọn, SecureString dùng KMS"
+          ]
+        },
+        {
+          "aspect": "Replicate sang Region khác",
+          "values": [
+            "Có, replica secret",
+            "Không"
+          ]
+        },
+        {
+          "aspect": "Chi phí",
+          "values": [
+            "Tính phí theo secret và API call",
+            "Standard tier miễn phí; Advanced tier tính phí"
+          ]
+        },
+        {
+          "aspect": "Tính năng thêm",
+          "values": [
+            "Sinh mật khẩu ngẫu nhiên",
+            "Đường dẫn phân cấp, parameter policy (Advanced)"
+          ]
+        }
+      ],
+      "diagram": "~~~decide\n# Chọn nơi lưu secret\nMật khẩu DB phải tự động rotate => Secrets Manager\nSecret cần có sẵn ở Region DR => Secrets Manager (replica secret)\nCấu hình phân cấp với chi phí thấp nhất => Parameter Store Standard\nSecret đơn giản, không cần rotation => Parameter Store SecureString\n~~~\n\n~~~flow\n# Ứng dụng đọc giá trị lúc chạy\nApp -[GetParameter kèm WithDecryption]-> Parameter Store (SecureString) -[Decrypt]-> KMS\nApp -[GetSecretValue]-> Secrets Manager -[replicate]-> Replica secret ở Region DR\n~~~",
+      "keywords": [
+        {
+          "trigger": "Tự động rotate credentials của RDS",
+          "answer": "Secrets Manager"
+        },
+        {
+          "trigger": "Lưu cấu hình với chi phí thấp nhất",
+          "answer": "Parameter Store Standard tier"
+        },
+        {
+          "trigger": "Cần secret ở Region DR",
+          "answer": "Secrets Manager replication"
+        },
+        {
+          "trigger": "Cấu hình phân cấp như /prod/app/db-url",
+          "answer": "Parameter Store"
+        }
+      ]
+    },
+    "security-detection": {
+      "title": "GuardDuty vs Inspector vs Macie vs Security Hub vs Detective",
+      "summary": "Năm dịch vụ bảo mật tên na ná nhau; mỗi cái trả lời một câu hỏi: mối đe dọa, lỗ hổng, dữ liệu nhạy cảm, tổng quan posture hay nguyên nhân gốc.",
+      "pick": [
+        "Chọn GuardDuty để phát hiện mối đe dọa liên tục, managed, không cần agent.",
+        "Chọn Inspector để tự động quét lỗ hổng EC2, container image và Lambda.",
+        "Chọn Macie để tìm và bảo vệ PII trong S3.",
+        "Chọn Security Hub để tập trung finding và kiểm tra theo security standard trên nhiều account.",
+        "Chọn Detective để điều tra nguyên nhân gốc của một finding."
+      ],
+      "rows": [
+        {
+          "aspect": "Câu hỏi trả lời",
+          "values": [
+            "Có hoạt động độc hại không?",
+            "Workload có lỗ hổng không?",
+            "Dữ liệu nhạy cảm nằm đâu trong S3?",
+            "Posture tổng thể ra sao?",
+            "Vì sao chuyện đó xảy ra?"
+          ]
+        },
+        {
+          "aspect": "Nguồn dữ liệu",
+          "values": [
+            "CloudTrail, VPC Flow Logs, DNS logs, và hơn nữa",
+            "EC2, ECR image, Lambda",
+            "Object trong S3",
+            "Finding từ service khác, Config",
+            "Finding GuardDuty, log"
+          ]
+        },
+        {
+          "aspect": "Đầu ra",
+          "values": [
+            "Finding về mối đe dọa",
+            "Finding CVE và network exposure",
+            "Finding PII / dữ liệu nhạy cảm",
+            "Finding tổng hợp, điểm compliance",
+            "Điều tra dạng đồ thị"
+          ]
+        },
+        {
+          "aspect": "Cần agent",
+          "values": [
+            "Không",
+            "SSM agent hoặc quét agentless",
+            "Không",
+            "Không",
+            "Không"
+          ]
+        },
+        {
+          "aspect": "Ví dụ",
+          "values": [
+            "Đào coin, credentials bị lộ",
+            "Package chưa vá trên EC2",
+            "Số thẻ tín dụng trong bucket",
+            "Kiểm tra CIS / FSBP trên nhiều account",
+            "Lần theo một IP đáng ngờ theo thời gian"
+          ]
+        }
+      ],
+      "diagram": "~~~flow\n# Phát hiện, tổng hợp rồi điều tra\nGuardDuty (mối đe dọa) -> Security Hub (tổng hợp findings)\nInspector (lỗ hổng) -> Security Hub (tổng hợp findings)\nMacie (PII trong S3) -> Security Hub (tổng hợp findings)\nGuardDuty (finding) -> Detective (nguyên nhân gốc)\n~~~\n\n~~~groups\n# Mỗi service nhìn vào một nguồn khác nhau\nLog và hoạt động trong account: *GuardDuty, Detective\nPhần mềm trên workload: *Inspector\nDữ liệu trong S3: *Macie\nFindings của các service khác: *Security Hub\n~~~",
+      "keywords": [
+        {
+          "trigger": "Phát hiện API call bất thường hoặc đào coin",
+          "answer": "GuardDuty"
+        },
+        {
+          "trigger": "Quét CVE cho ECR image",
+          "answer": "Inspector"
+        },
+        {
+          "trigger": "Tìm PII trong S3 bucket",
+          "answer": "Macie"
+        },
+        {
+          "trigger": "Một dashboard finding cho nhiều account",
+          "answer": "Security Hub"
+        },
+        {
+          "trigger": "Điều tra nguyên nhân gốc của finding GuardDuty",
+          "answer": "Detective"
+        }
+      ]
+    },
+    "audit-tools": {
+      "title": "CloudTrail vs AWS Config vs CloudWatch Logs",
+      "summary": "Cả ba đều ghi lại \"chuyện gì đã xảy ra\"; đề thi phân biệt API call, cấu hình tài nguyên và log ứng dụng.",
+      "pick": [
+        "Chọn CloudTrail để audit ai đã làm gì qua AWS API.",
+        "Chọn AWS Config để theo dõi lịch sử cấu hình và áp compliance rule.",
+        "Chọn CloudWatch Logs để thu thập, tìm kiếm và cảnh báo trên log ứng dụng và hệ thống."
+      ],
+      "rows": [
+        {
+          "aspect": "Ghi lại",
+          "values": [
+            "API call: ai, làm gì, khi nào, từ đâu",
+            "Cấu hình tài nguyên và các thay đổi",
+            "Dòng log từ app, OS, service"
+          ]
+        },
+        {
+          "aspect": "Câu hỏi",
+          "values": [
+            "Ai đã xóa bucket này?",
+            "SG này tuần trước thế nào? Có compliant không?",
+            "App đã log lỗi gì?"
+          ]
+        },
+        {
+          "aspect": "Mặc định",
+          "values": [
+            "Event history: 90 ngày management event",
+            "Tắt cho tới khi bật recorder",
+            "Retention chỉnh được, mặc định không hết hạn"
+          ]
+        },
+        {
+          "aspect": "Rule / cảnh báo",
+          "values": [
+            "CloudTrail Insights, EventBridge",
+            "Config rules, auto-remediation qua SSM",
+            "Metric filter tới alarm, Logs Insights"
+          ]
+        },
+        {
+          "aspect": "Lưu dài hạn",
+          "values": [
+            "Trail vào S3 (hoặc CloudTrail Lake)",
+            "Gửi snapshot vào S3",
+            "Export hoặc stream sang S3, Firehose"
+          ]
+        }
+      ],
+      "diagram": "~~~groups\n# Mỗi công cụ ghi lại một thứ khác nhau\nCloudTrail: Ai gọi API nào, Khi nào và từ đâu\nAWS Config: Cấu hình tài nguyên theo thời gian, *Config rules và remediation\nCloudWatch Logs: Log app và OS, *Metric filter tới alarm\n~~~\n\n~~~flow\n# Một sự việc để lại dấu vết ở từng công cụ\nAdmin xóa rule SG -[API call]-> CloudTrail (ai, khi nào, từ đâu)\nAdmin xóa rule SG -[cấu hình thay đổi]-> AWS Config (trước và sau, có compliant?)\nApp gặp lỗi -[ghi log]-> CloudWatch Logs -[metric filter]-> CloudWatch alarm\n~~~",
+      "keywords": [
+        {
+          "trigger": "Ai đã thực hiện API call",
+          "answer": "CloudTrail"
+        },
+        {
+          "trigger": "Phát hiện và tự sửa tài nguyên non-compliant",
+          "answer": "AWS Config rules + remediation"
+        },
+        {
+          "trigger": "Cấu hình tại một thời điểm trong quá khứ",
+          "answer": "AWS Config"
+        },
+        {
+          "trigger": "Cảnh báo khi log có chuỗi lỗi",
+          "answer": "CloudWatch Logs metric filter"
+        },
+        {
+          "trigger": "Log file không được bị sửa đổi",
+          "answer": "CloudTrail log file integrity validation"
+        }
+      ]
+    },
+    "vpc-connectivity-options": {
+      "title": "VPC peering vs Transit Gateway vs PrivateLink vs Gateway endpoint",
+      "summary": "Tất cả đều giữ traffic private, nhưng kết nối những thứ khác nhau: cả mạng, nhiều mạng, một service, hoặc S3/DynamoDB.",
+      "pick": [
+        "Chọn VPC peering để nối vài VPC đơn giản, không cần hub.",
+        "Chọn Transit Gateway để nối nhiều VPC và mạng on-premises theo kiểu transitive.",
+        "Chọn PrivateLink để expose hoặc dùng một service private, kể cả khi CIDR trùng nhau.",
+        "Chọn gateway endpoint để truy cập S3 hoặc DynamoDB private, miễn phí từ trong VPC."
+      ],
+      "rows": [
+        {
+          "aspect": "Kết nối",
+          "values": [
+            "Hai VPC",
+            "Nhiều VPC, VPN, Direct Connect",
+            "VPC consumer tới một service",
+            "VPC tới S3 hoặc DynamoDB"
+          ]
+        },
+        {
+          "aspect": "Topology",
+          "values": [
+            "1:1, non-transitive",
+            "Hub-and-spoke, transitive",
+            "Một chiều, expose service",
+            "Target trong route table"
+          ]
+        },
+        {
+          "aspect": "CIDR trùng nhau",
+          "values": [
+            "Không được",
+            "Không route được",
+            "Được",
+            "Không liên quan"
+          ]
+        },
+        {
+          "aspect": "Cách triển khai",
+          "values": [
+            "Peering connection + route",
+            "Attachment + TGW route table",
+            "ENI có private IP; provider dùng NLB",
+            "Prefix list trong route table"
+          ]
+        },
+        {
+          "aspect": "Service hỗ trợ",
+          "values": [
+            "Bất kỳ",
+            "Bất kỳ",
+            "Hầu hết AWS service, SaaS, service riêng",
+            "Chỉ S3 và DynamoDB"
+          ]
+        },
+        {
+          "aspect": "Chi phí",
+          "values": [
+            "Chỉ data transfer",
+            "Theo attachment-giờ + theo GB",
+            "Theo endpoint-giờ + theo GB",
+            "Miễn phí"
+          ]
+        },
+        {
+          "aspect": "Từ on-premises",
+          "values": [
+            "Không truy cập transitive",
+            "Có",
+            "Có, qua DX/VPN",
+            "Không"
+          ]
+        }
+      ],
+      "diagram": "~~~groups\n# Mỗi lựa chọn nối một thứ khác nhau\nVPC peering: Hai VPC 1:1, Không transitive\nTransit Gateway: *Hub transitive, VPC + VPN + DX\nPrivateLink: Một service sau NLB, CIDR trùng vẫn được\nGateway endpoint: Chỉ S3 và DynamoDB, *Miễn phí\n~~~\n\n~~~decide\n# Từ khóa trong đề và lựa chọn\nVài VPC, nối đơn giản, chi phí thấp => VPC peering\nHàng trăm VPC và on-prem, cần transitive => Transit Gateway\nExpose service cho VPC khách hàng có CIDR trùng => PrivateLink\nPrivate subnet truy cập S3 không tốn phí => Gateway endpoint\nTruy cập S3 private từ on-premises => S3 interface endpoint\n~~~",
+      "keywords": [
+        {
+          "trigger": "Hàng trăm VPC, đơn giản hóa mạng",
+          "answer": "Transit Gateway"
+        },
+        {
+          "trigger": "Expose service cho VPC khác có CIDR trùng",
+          "answer": "PrivateLink (NLB endpoint service)"
+        },
+        {
+          "trigger": "Truy cập S3 private không tốn phí",
+          "answer": "Gateway endpoint"
+        },
+        {
+          "trigger": "Truy cập S3 private từ on-premises",
+          "answer": "S3 interface endpoint"
+        },
+        {
+          "trigger": "A peer với B, B peer với C, A không tới được C",
+          "answer": "Peering là non-transitive"
+        }
+      ]
+    },
+    "hybrid-connectivity": {
+      "title": "Site-to-Site VPN vs Direct Connect vs DX + VPN vs Client VPN",
+      "summary": "Tất cả đều nối mạng bên ngoài vào AWS; đánh đổi giữa tốc độ triển khai, hiệu năng ổn định, mã hóa và đối tượng kết nối.",
+      "pick": [
+        "Chọn Site-to-Site VPN cho kết nối mã hóa nhanh, rẻ, hoặc làm backup cho DX.",
+        "Chọn Direct Connect khi cần độ trễ ổn định và băng thông cao đều đặn.",
+        "Chọn DX + VPN khi cần cả hiệu năng DX lẫn mã hóa in transit.",
+        "Chọn Client VPN cho nhân viên làm việc từ xa kết nối bằng laptop."
+      ],
+      "rows": [
+        {
+          "aspect": "Kết nối",
+          "values": [
+            "Mạng on-premises",
+            "Mạng on-premises",
+            "Mạng on-premises",
+            "Thiết bị của từng user"
+          ]
+        },
+        {
+          "aspect": "Đường đi",
+          "values": [
+            "Internet công cộng",
+            "Đường riêng chuyên dụng",
+            "IPsec chạy trên Direct Connect",
+            "Internet, TLS (dựa trên OpenVPN)"
+          ]
+        },
+        {
+          "aspect": "Mã hóa",
+          "values": [
+            "Có, IPsec",
+            "Mặc định không",
+            "Có",
+            "Có"
+          ]
+        },
+        {
+          "aspect": "Thời gian triển khai",
+          "values": [
+            "Vài phút đến vài giờ",
+            "Vài tuần trở lên",
+            "Vài tuần (cần DX)",
+            "Vài phút đến vài giờ"
+          ]
+        },
+        {
+          "aspect": "Hiệu năng",
+          "values": [
+            "Biến động, tối đa 1.25 Gbps mỗi tunnel",
+            "Ổn định, băng thông cao",
+            "Ổn định",
+            "Biến động"
+          ]
+        },
+        {
+          "aspect": "Phía AWS",
+          "values": [
+            "Virtual private gateway hoặc TGW",
+            "Virtual interface tới VGW, DX gateway hoặc TGW",
+            "Thường là Transit Gateway",
+            "Client VPN endpoint"
+          ]
+        }
+      ],
+      "diagram": "~~~flow\n# Các đường từ bên ngoài vào AWS\nLaptop nhân viên -[TLS qua Internet]-> Client VPN endpoint -> VPC\nCustomer gateway -[IPsec qua Internet]-> VGW hoặc Transit Gateway -> VPC\nData center -[đường riêng]-> DX location -[VIF]-> VPC\nData center -[IPsec chạy trên DX]-> Transit Gateway -> VPC\n~~~\n\n~~~ladder\n# Độ bền kết nối on-prem, từ thấp tới cao\nMột DX connection | Một điểm lỗi đơn | Không dự phòng\nDX + Site-to-Site VPN | VPN qua Internet gánh khi DX lỗi | Tiết kiệm\nHai DX ở hai location | Chịu được lỗi một location | High\nHai DX ở mỗi trong hai location | Chịu lỗi cả thiết bị lẫn location | Maximum\n~~~",
+      "keywords": [
+        {
+          "trigger": "Kết nối nhanh, có mã hóa, chi phí thấp",
+          "answer": "Site-to-Site VPN"
+        },
+        {
+          "trigger": "Hiệu năng mạng ổn định, truyền dữ liệu lớn",
+          "answer": "Direct Connect"
+        },
+        {
+          "trigger": "Đường riêng chuyên dụng nhưng phải mã hóa",
+          "answer": "IPsec VPN over Direct Connect"
+        },
+        {
+          "trigger": "Backup tiết kiệm cho Direct Connect",
+          "answer": "Site-to-Site VPN"
+        },
+        {
+          "trigger": "Nhân viên remote truy cập tài nguyên trong VPC",
+          "answer": "Client VPN"
+        },
+        {
+          "trigger": "Độ bền tối đa cho DX",
+          "answer": "Hai DX connection ở hai location khác nhau"
+        }
+      ]
+    },
+    "multi-az-vs-replica": {
+      "title": "RDS Multi-AZ vs Read Replica vs Aurora Replica vs Aurora Global Database",
+      "summary": "Tất cả đều tạo bản sao database, nhưng có cái để HA, có cái để scale đọc, và một cái cho DR cross-Region.",
+      "pick": [
+        "Chọn RDS Multi-AZ để chịu được lỗi AZ với failover tự động.",
+        "Chọn RDS Read Replica để giảm tải đọc hoặc báo cáo khỏi primary.",
+        "Chọn Aurora Replica cho cả scale đọc và failover nhanh trong một Region.",
+        "Chọn Aurora Global Database cho DR cross-Region với RPO và RTO rất thấp."
+      ],
+      "rows": [
+        {
+          "aspect": "Mục tiêu chính",
+          "values": [
+            "High availability",
+            "Scale đọc",
+            "Scale đọc + HA",
+            "DR cross-Region, đọc toàn cầu"
+          ]
+        },
+        {
+          "aspect": "Replication",
+          "values": [
+            "Đồng bộ (synchronous)",
+            "Bất đồng bộ (asynchronous)",
+            "Dùng chung cluster storage",
+            "Ở tầng storage, thường dưới 1 giây"
+          ]
+        },
+        {
+          "aspect": "Đọc được",
+          "values": [
+            "Không (bản instance)",
+            "Có",
+            "Có, qua reader endpoint",
+            "Có, ở secondary Region"
+          ]
+        },
+        {
+          "aspect": "Failover",
+          "values": [
+            "Tự động, giữ endpoint",
+            "Promote thủ công",
+            "Tự động, theo priority tier",
+            "Promote secondary Region"
+          ]
+        },
+        {
+          "aspect": "Phạm vi",
+          "values": [
+            "Cùng Region, AZ khác",
+            "Cùng hoặc khác Region",
+            "Cùng Region, tối đa 15",
+            "Nhiều Region"
+          ]
+        },
+        {
+          "aspect": "Ghi chú thi",
+          "values": [
+            "Multi-AZ DB cluster có standby đọc được",
+            "Bản thân replica có thể Multi-AZ",
+            "Failover thường nhanh hơn RDS",
+            "RPO khoảng 1 giây, RTO dưới 1 phút"
+          ]
+        }
+      ],
+      "diagram": "~~~flow\n# Mỗi loại bản sao phục vụ một mục tiêu\nRDS primary -[sync]-> Multi-AZ standby (AZ khác, không đọc được)\nRDS primary -[async]-> Read Replica (đọc được, promote thủ công)\nAurora writer -[cluster storage dùng chung]-> Aurora Replica (đọc được, failover tự động)\nAurora primary Region -[replication dưới 1 giây]-> Secondary Region (Global Database)\n~~~\n\n~~~ladder\n# Phạm vi sự cố mỗi lựa chọn chịu được\nRead Replica cùng Region | Giảm tải đọc, promote thủ công | Không tự failover\nRDS Multi-AZ | Lỗi instance hoặc AZ, failover tự động | AZ\nAurora Replica | Failover tự động theo priority tier, thường nhanh hơn RDS | AZ\nAurora Global Database | Sự cố cả Region, RPO khoảng 1 giây | Region\n~~~",
+      "keywords": [
+        {
+          "trigger": "Failover tự động khi một AZ lỗi",
+          "answer": "RDS Multi-AZ"
+        },
+        {
+          "trigger": "Query báo cáo làm chậm production",
+          "answer": "Read Replica"
+        },
+        {
+          "trigger": "Sự cố Region, RPO vài giây, RTO dưới một phút",
+          "answer": "Aurora Global Database"
+        },
+        {
+          "trigger": "Đọc độ trễ thấp cho user ở Region khác",
+          "answer": "Aurora Global Database hoặc cross-Region replica"
+        },
+        {
+          "trigger": "Standby có dùng để đọc được không?",
+          "answer": "Không, standby của Multi-AZ instance không đọc được"
+        }
+      ]
+    },
+    "messaging": {
+      "title": "SQS vs SNS vs EventBridge vs Kinesis Data Streams",
+      "summary": "Tất cả đều chuyển message giữa các thành phần; đề thi phân biệt queue, fan-out, định tuyến event và stream có thể replay.",
+      "pick": [
+        "Chọn SQS Standard để đệm và decouple công việc ở mọi quy mô.",
+        "Chọn SQS FIFO khi thứ tự và không trùng lặp là quan trọng.",
+        "Chọn SNS để push một message tới nhiều subscriber (thường là fan-out SNS + SQS).",
+        "Chọn EventBridge để định tuyến event theo nội dung từ AWS service, SaaS hoặc lịch.",
+        "Chọn Kinesis Data Streams cho streaming real-time mà nhiều consumer có thể replay."
+      ],
+      "rows": [
+        {
+          "aspect": "Mô hình",
+          "values": [
+            "Queue, consumer poll",
+            "Queue, consumer poll",
+            "Pub/sub push",
+            "Event bus với rule",
+            "Stream, consumer đọc theo shard"
+          ]
+        },
+        {
+          "aspect": "Thứ tự",
+          "values": [
+            "Best effort",
+            "Theo message group ID",
+            "Không đảm bảo (có FIFO topic)",
+            "Không đảm bảo",
+            "Theo shard (partition key)"
+          ]
+        },
+        {
+          "aspect": "Delivery",
+          "values": [
+            "At least once, có thể trùng",
+            "Exactly-once processing",
+            "Push tới mọi subscriber",
+            "Tới target của rule khớp",
+            "Nhiều consumer đọc cùng dữ liệu"
+          ]
+        },
+        {
+          "aspect": "Lưu giữ / replay",
+          "values": [
+            "Tối đa 14 ngày, không replay",
+            "Tối đa 14 ngày, không replay",
+            "Không lưu",
+            "Archive và replay",
+            "Tối đa 365 ngày, replay được"
+          ]
+        },
+        {
+          "aspect": "Throughput",
+          "values": [
+            "Gần như không giới hạn",
+            "Có giới hạn, cao hơn với high-throughput mode",
+            "Rất cao",
+            "Cao",
+            "Scale theo shard hoặc on-demand"
+          ]
+        },
+        {
+          "aspect": "Lọc",
+          "values": [
+            "Không",
+            "Không",
+            "Subscription filter policy",
+            "Pattern theo nội dung rất linh hoạt",
+            "Không"
+          ]
+        },
+        {
+          "aspect": "Use case",
+          "values": [
+            "Decouple, đệm công việc",
+            "Đơn hàng, giao dịch tài chính",
+            "Fan-out, thông báo",
+            "Event từ SaaS và AWS, lịch chạy",
+            "Analytics real-time, clickstream"
+          ]
+        }
+      ],
+      "diagram": "~~~flow\n# Queue, fan-out, event bus và stream\nProducer -> SQS -[consumer poll]-> Consumer\nProducer -> SNS -[push fan-out]-> Nhiều SQS queue\nEvent từ AWS hoặc SaaS -> EventBridge -[rule theo nội dung]-> Target\nProducer -> Kinesis Data Streams -[đọc và replay]-> Nhiều consumer\n~~~\n\n~~~decide\n# Từ khóa trong đề và lựa chọn\nĐệm công việc, decouple các tầng => SQS Standard\nĐúng thứ tự, không trùng lặp => SQS FIFO\nMột message tới nhiều subscriber => SNS\nĐịnh tuyến event từ SaaS theo nội dung => EventBridge\nNhiều consumer đọc lại dữ liệu real-time => Kinesis Data Streams\n~~~",
+      "keywords": [
+        {
+          "trigger": "Xử lý đơn hàng theo thứ tự, không trùng",
+          "answer": "SQS FIFO"
+        },
+        {
+          "trigger": "Một event tới nhiều queue",
+          "answer": "SNS fan-out tới SQS"
+        },
+        {
+          "trigger": "Phản ứng với event từ SaaS partner",
+          "answer": "EventBridge"
+        },
+        {
+          "trigger": "Dữ liệu real-time, nhiều app đọc và replay",
+          "answer": "Kinesis Data Streams"
+        },
+        {
+          "trigger": "Hấp thụ traffic tăng đột biến, decouple các tầng",
+          "answer": "SQS Standard"
+        },
+        {
+          "trigger": "Message xử lý lỗi liên tục",
+          "answer": "Dead-letter queue"
+        }
+      ]
+    },
+    "dr-strategies": {
+      "title": "Các chiến lược disaster recovery",
+      "summary": "Bốn chiến lược đánh đổi chi phí với RTO/RPO; đề cho RTO/RPO mục tiêu và ngân sách, cần chọn phương án rẻ nhất vẫn đáp ứng.",
+      "pick": [
+        "Chọn backup & restore khi chấp nhận downtime vài giờ và cần chi phí thấp nhất.",
+        "Chọn pilot light khi dữ liệu phải luôn mới nhưng app server có thể khởi động sau sự cố.",
+        "Chọn warm standby khi phải phục hồi trong vài phút và chấp nhận chạy sẵn một bản nhỏ.",
+        "Chọn multi-site active/active khi downtime phải gần bằng 0 bất kể chi phí."
+      ],
+      "rows": [
+        {
+          "aspect": "Chạy ở Region DR",
+          "values": [
+            "Không gì cả, chỉ có backup",
+            "Dữ liệu lõi được replicate, app tắt",
+            "Toàn bộ stack ở quy mô nhỏ",
+            "Stack đầy đủ đang phục vụ traffic"
+          ]
+        },
+        {
+          "aspect": "RPO",
+          "values": [
+            "Vài giờ",
+            "Vài phút",
+            "Vài giây đến vài phút",
+            "Gần bằng 0"
+          ]
+        },
+        {
+          "aspect": "RTO",
+          "values": [
+            "Vài giờ",
+            "Hàng chục phút",
+            "Vài phút",
+            "Gần bằng 0"
+          ]
+        },
+        {
+          "aspect": "Chi phí",
+          "values": [
+            "Thấp nhất",
+            "Thấp",
+            "Trung bình-cao",
+            "Cao nhất"
+          ]
+        },
+        {
+          "aspect": "Khi có sự cố",
+          "values": [
+            "Restore rồi deploy mọi thứ",
+            "Bật/scale app server",
+            "Scale lên quy mô production",
+            "Chuyển traffic (thường tự động)"
+          ]
+        },
+        {
+          "aspect": "Công cụ thường dùng",
+          "values": [
+            "AWS Backup, S3 CRR, snapshot",
+            "DB replicate, AMI, IaC",
+            "ASG nhỏ, replica DB",
+            "Route 53, Aurora Global, DynamoDB global tables"
+          ]
+        }
+      ],
+      "diagram": "~~~ladder\n# Từ rẻ nhất tới đắt nhất, RTO ngắn dần\nBackup & restore | Chỉ có backup ở Region DR | Vài giờ\nPilot light | Dữ liệu được replicate, app tắt | Hàng chục phút\nWarm standby | Stack thu nhỏ đang chạy | Vài phút\nMulti-site active/active | Stack đầy đủ đang phục vụ traffic | Gần 0\n~~~\n\n~~~groups\n# Những gì đang chạy ở Region DR\nBackup & restore: Snapshot và backup, Chưa chạy gì\nPilot light: *Database replica, AMI và IaC sẵn sàng\nWarm standby: *Database replica, *ASG thu nhỏ, ALB\nMulti-site active/active: *Database đầy đủ, *Stack production, Route 53 chia traffic\n~~~",
+      "keywords": [
+        {
+          "trigger": "Chi phí thấp nhất, RTO vài giờ chấp nhận được",
+          "answer": "Backup & restore"
+        },
+        {
+          "trigger": "Chỉ database chạy ở Region DR",
+          "answer": "Pilot light"
+        },
+        {
+          "trigger": "Bản sao thu nhỏ nhưng chạy được",
+          "answer": "Warm standby"
+        },
+        {
+          "trigger": "Không downtime, cả hai Region cùng phục vụ",
+          "answer": "Multi-site active/active"
+        }
+      ]
+    },
+    "route53-policies": {
+      "title": "Các routing policy của Route 53",
+      "summary": "Bảy policy đều trả về bản ghi DNS; từ khóa trong đề thường nói về vị trí, độ trễ, tỷ lệ phần trăm hoặc health.",
+      "pick": [
+        "Chọn Simple cho một tài nguyên, không cần health check.",
+        "Chọn Weighted để chia traffic theo phần trăm.",
+        "Chọn Latency để đưa user tới Region nhanh nhất.",
+        "Chọn Failover cho DR active-passive có health check.",
+        "Chọn Geolocation để phục vụ nội dung theo vị trí của user.",
+        "Chọn Geoproximity để định tuyến theo khoảng cách và dịch traffic bằng bias.",
+        "Chọn Multivalue để trả về nhiều IP healthy."
+      ],
+      "rows": [
+        {
+          "aspect": "Định tuyến theo",
+          "values": [
+            "Không gì, một bản ghi",
+            "Trọng số tương đối",
+            "Độ trễ mạng thấp nhất",
+            "Health của primary",
+            "Quốc gia/châu lục của user",
+            "Khoảng cách kèm bias",
+            "Ngẫu nhiên các bản ghi healthy"
+          ]
+        },
+        {
+          "aspect": "Bản ghi cần có",
+          "values": [
+            "Một bản ghi (chứa được nhiều giá trị)",
+            "Nhiều bản ghi cùng tên, mỗi cái có weight",
+            "Một bản ghi mỗi Region",
+            "Bản ghi primary + secondary",
+            "Bản ghi theo châu lục/quốc gia + default",
+            "Bản ghi kèm Region hoặc tọa độ",
+            "Nhiều bản ghi, mỗi cái có health check riêng"
+          ]
+        },
+        {
+          "aspect": "Health check",
+          "values": [
+            "Không",
+            "Có",
+            "Có",
+            "Có, bắt buộc cho primary",
+            "Có",
+            "Có",
+            "Có"
+          ]
+        },
+        {
+          "aspect": "Use case",
+          "values": [
+            "Một tài nguyên",
+            "A/B test, canary, migration",
+            "App toàn cầu, nhanh nhất",
+            "DR active-passive",
+            "Compliance, bản địa hóa",
+            "Dịch chuyển traffic giữa Region",
+            "Chia tải đơn giản phía client"
+          ]
+        },
+        {
+          "aspect": "Ghi chú thi",
+          "values": [
+            "Nhiều giá trị trả về theo thứ tự ngẫu nhiên",
+            "Weight 0 thì ngừng gửi traffic",
+            "Latency không phải khoảng cách",
+            "Secondary chỉ dùng khi primary unhealthy",
+            "Nên thêm bản ghi default",
+            "Chỉnh bias để mở rộng/thu hẹp vùng",
+            "Tối đa 8 bản ghi healthy; không thay ELB"
+          ]
+        }
+      ],
+      "diagram": "~~~decide\n# Từ khóa trong đề và routing policy cần chọn\nChia phần trăm traffic, canary => Weighted\nĐưa user tới Region phản hồi nhanh nhất => Latency\nActive-passive dựa trên health check => Failover\nPhục vụ theo quốc gia của user, compliance => Geolocation\nDịch traffic giữa các Region bằng bias => Geoproximity\nTrả về nhiều IP healthy => Multivalue\n~~~\n\n~~~flow\n# Route 53 trả bản ghi khác nhau theo health và trọng số\nUsers -> Route 53 -[failover, primary healthy]-> ALB Region chính\nUsers -> Route 53 -[failover, primary unhealthy]-> ALB Region DR\nUsers -> Route 53 -[weighted 90/10]-> Phiên bản cũ và phiên bản mới\n~~~",
+      "keywords": [
+        {
+          "trigger": "Gửi 10% traffic sang phiên bản mới",
+          "answer": "Weighted"
+        },
+        {
+          "trigger": "Độ trễ thấp nhất cho user toàn cầu",
+          "answer": "Latency"
+        },
+        {
+          "trigger": "User ở Đức phải vào server EU",
+          "answer": "Geolocation"
+        },
+        {
+          "trigger": "Active-passive có health check",
+          "answer": "Failover"
+        },
+        {
+          "trigger": "Mở rộng traffic về một Region bằng bias",
+          "answer": "Geoproximity"
+        }
+      ]
+    },
+    "load-balancers": {
+      "title": "ALB vs NLB vs GWLB",
+      "summary": "Đều thuộc Elastic Load Balancing, nhưng hoạt động ở các layer khác nhau và giải quyết bài toán khác nhau.",
+      "pick": [
+        "Chọn ALB cho app HTTP/HTTPS cần routing theo nội dung.",
+        "Chọn NLB cho TCP/UDP, hiệu năng cực cao, IP tĩnh hoặc PrivateLink.",
+        "Chọn GWLB để chèn network appliance bên thứ ba một cách trong suốt."
+      ],
+      "rows": [
+        {
+          "aspect": "Layer",
+          "values": [
+            "7: HTTP, HTTPS, gRPC, WebSocket",
+            "4: TCP, UDP, TLS",
+            "3: IP packet (GENEVE 6081)"
+          ]
+        },
+        {
+          "aspect": "Routing",
+          "values": [
+            "Path, host, header, query string",
+            "Port và protocol",
+            "Qua fleet appliance"
+          ]
+        },
+        {
+          "aspect": "Target",
+          "values": [
+            "Instance, IP, Lambda",
+            "Instance, IP, ALB",
+            "Instance, IP của appliance"
+          ]
+        },
+        {
+          "aspect": "IP tĩnh",
+          "values": [
+            "Không, chỉ DNS name",
+            "Có, mỗi AZ một IP (gắn được Elastic IP)",
+            "Không"
+          ]
+        },
+        {
+          "aspect": "Hiệu năng",
+          "values": [
+            "Tốt cho web traffic",
+            "Hàng triệu request/giây, độ trễ cực thấp",
+            "Trong suốt với traffic"
+          ]
+        },
+        {
+          "aspect": "Ghi chú thi",
+          "values": [
+            "Xác thực Cognito/OIDC, gắn WAF",
+            "PrivateLink endpoint service",
+            "Firewall, IDS/IPS bên thứ ba"
+          ]
+        }
+      ],
+      "diagram": "~~~flow\n# Mỗi load balancer làm việc ở một layer\nUsers -[HTTP/HTTPS, layer 7]-> ALB -[path, host, header]-> EC2 / Lambda\nClient -[TCP/UDP, layer 4]-> NLB (IP tĩnh mỗi AZ) -> EC2\nTraffic -[GENEVE, layer 3]-> GWLB -> Firewall appliance -> Đích ban đầu\n~~~\n\n~~~decide\n# Yêu cầu trong đề và load balancer\nRoute theo path, host hoặc header => ALB\nXác thực Cognito/OIDC hoặc gắn WAF => ALB\nIP tĩnh, UDP, hàng triệu request mỗi giây => NLB\nExpose service qua PrivateLink => NLB\nChèn firewall appliance bên thứ ba trong suốt => GWLB\n~~~",
+      "keywords": [
+        {
+          "trigger": "Route /api và /images tới target khác nhau",
+          "answer": "ALB"
+        },
+        {
+          "trigger": "IP tĩnh để allow-list",
+          "answer": "NLB (hoặc Global Accelerator)"
+        },
+        {
+          "trigger": "UDP hoặc hàng triệu request mỗi giây",
+          "answer": "NLB"
+        },
+        {
+          "trigger": "Kiểm tra traffic bằng virtual appliance bên thứ ba",
+          "answer": "GWLB"
+        },
+        {
+          "trigger": "Gọi Lambda qua HTTP",
+          "answer": "ALB"
+        }
+      ]
+    },
+    "block-file-object": {
+      "title": "Block vs file vs object storage",
+      "summary": "Cả năm đều \"lưu dữ liệu cho EC2\", nhưng khác nhau về giao thức truy cập, số instance dùng chung được, và dữ liệu có còn sau khi stop hay không.",
+      "pick": [
+        "EBS: boot volume và database trên một EC2 cần block storage bền vững.",
+        "Instance store: dữ liệu tạm, cache, buffer hoặc dữ liệu đã được replicate, cần IOPS cao nhất.",
+        "EFS: file system Linux dùng chung cho nhiều instance, nhiều AZ, tự tăng dung lượng.",
+        "FSx: file share Windows SMB, HPC (Lustre), hoặc chuyển file server NetApp/ZFS lên AWS.",
+        "S3: object, file tĩnh, backup, data lake, dung lượng không giới hạn truy cập qua API."
+      ],
+      "rows": [
+        {
+          "aspect": "Loại storage",
+          "values": [
+            "Block",
+            "Block (tạm thời)",
+            "File (NFS)",
+            "File (SMB, NFS, Lustre, iSCSI)",
+            "Object (HTTPS API)"
+          ]
+        },
+        {
+          "aspect": "Độ bền dữ liệu",
+          "values": [
+            "Bền vững, độc lập với instance",
+            "Mất khi stop, terminate hoặc hỏng host",
+            "Bền vững",
+            "Bền vững",
+            "Bền vững"
+          ]
+        },
+        {
+          "aspect": "Phạm vi",
+          "values": [
+            "Một AZ",
+            "Host vật lý của instance",
+            "Regional (Multi-AZ) hoặc One Zone",
+            "Single-AZ hoặc Multi-AZ (tùy loại)",
+            "Regional, ít nhất 3 AZ (trừ One Zone-IA)"
+          ]
+        },
+        {
+          "aspect": "Dùng chung",
+          "values": [
+            "Một instance (Multi-Attach io1/io2, cùng AZ)",
+            "Chỉ instance trên host đó",
+            "Hàng nghìn client Linux cùng lúc",
+            "Nhiều client qua SMB/NFS",
+            "Không giới hạn client qua API"
+          ]
+        },
+        {
+          "aspect": "OS / giao thức",
+          "values": [
+            "Mọi OS, gắn như ổ đĩa",
+            "Mọi OS, ổ đĩa local",
+            "Linux, NFS, POSIX",
+            "Windows, Linux, macOS tùy loại",
+            "Mọi client qua HTTP(S)"
+          ]
+        },
+        {
+          "aspect": "Hiệu năng",
+          "values": [
+            "Tùy volume type (gp3, io2...)",
+            "IOPS cao nhất, latency thấp nhất",
+            "Throughput co giãn, scale theo client",
+            "Rất cao (Lustre cho HPC)",
+            "Throughput song song cực lớn, scale theo prefix"
+          ]
+        },
+        {
+          "aspect": "Dung lượng",
+          "values": [
+            "Provision theo volume",
+            "Cố định theo instance type",
+            "Co giãn, dùng bao nhiêu trả bấy nhiêu",
+            "Provision (đa số)",
+            "Không giới hạn"
+          ]
+        }
+      ],
+      "diagram": "~~~groups\n# Ba kiểu truy cập storage\nBlock (gắn vào instance): *EBS (bền), Instance store (tạm)\nFile (nhiều client mount): *EFS (Linux NFS), FSx (SMB/Lustre/ONTAP/ZFS)\nObject (qua HTTPS API): *S3 (không giới hạn)\n~~~\n\n~~~decide\n# Đề nói gì thì chọn storage nào\nDữ liệu tạm, IOPS cao nhất, mất cũng được => Instance store\nDatabase trên một EC2, cần bền => EBS\nNhiều instance Linux chia sẻ file qua nhiều AZ => EFS\nWindows SMB hoặc HPC Lustre => FSx\nDung lượng không giới hạn, truy cập qua API => S3\n~~~",
+      "keywords": [
+        {
+          "trigger": "temporary data, highest IOPS, data loss acceptable",
+          "answer": "Instance store"
+        },
+        {
+          "trigger": "shared file system for Linux instances across AZs",
+          "answer": "Amazon EFS"
+        },
+        {
+          "trigger": "Windows file share, SMB, Active Directory",
+          "answer": "FSx for Windows File Server"
+        },
+        {
+          "trigger": "persistent block storage for a database on one EC2 instance",
+          "answer": "Amazon EBS"
+        },
+        {
+          "trigger": "unlimited storage, static content, data lake",
+          "answer": "Amazon S3"
+        }
+      ]
+    },
+    "fsx-family": {
+      "title": "Bốn loại FSx",
+      "summary": "Cả bốn đều là \"FSx managed\", nên câu hỏi phân biệt bằng giao thức, OS của client và hệ thống nguồn cần migrate.",
+      "pick": [
+        "FSx for Windows File Server: ứng dụng Windows cần SMB, tích hợp AD và Windows ACL.",
+        "FSx for Lustre: HPC, ML training, render video cần throughput cực cao, thường xử lý dữ liệu từ S3.",
+        "FSx for NetApp ONTAP: cần truy cập multi-protocol hoặc chuyển workload NetApp mà không đổi công cụ.",
+        "FSx for OpenZFS: chuyển file server ZFS hoặc Linux NFS, cần snapshot và clone."
+      ],
+      "rows": [
+        {
+          "aspect": "Giao thức",
+          "values": [
+            "SMB",
+            "Lustre (POSIX client)",
+            "NFS, SMB, iSCSI (multi-protocol)",
+            "NFS"
+          ]
+        },
+        {
+          "aspect": "Client chính",
+          "values": [
+            "Windows (và SMB trên Linux)",
+            "Cụm compute Linux",
+            "Windows, Linux, macOS",
+            "Linux, macOS (NFS client)"
+          ]
+        },
+        {
+          "aspect": "Điểm mạnh",
+          "values": [
+            "Active Directory, NTFS ACL, DFS",
+            "Hàng trăm GB/s, latency dưới ms",
+            "Tính năng NetApp: SnapMirror, FlexClone, dedup",
+            "Snapshot và clone ZFS, latency thấp"
+          ]
+        },
+        {
+          "aspect": "Tích hợp S3",
+          "values": [
+            "Không (backup qua AWS Backup)",
+            "Liên kết S3 bucket, lazy load và export",
+            "Tự tiering sang capacity pool",
+            "Không trực tiếp"
+          ]
+        },
+        {
+          "aspect": "Triển khai",
+          "values": [
+            "Single-AZ hoặc Multi-AZ",
+            "Scratch (tạm thời) hoặc Persistent",
+            "Single-AZ hoặc Multi-AZ",
+            "Single-AZ hoặc Multi-AZ"
+          ]
+        },
+        {
+          "aspect": "Nguồn migrate điển hình",
+          "values": [
+            "Windows file server",
+            "File system HPC on-prem",
+            "NetApp ONTAP on-prem",
+            "ZFS hoặc Linux NFS server on-prem"
+          ]
+        }
+      ],
+      "diagram": "~~~decide\n# Đề nhắc giao thức hay workload nào\nWindows, SMB, Active Directory => FSx for Windows File Server\nHPC, ML training, dữ liệu ở S3 => FSx for Lustre\nNFS + SMB + iSCSI hoặc đang dùng NetApp => FSx for NetApp ONTAP\nChuyển ZFS hoặc Linux NFS, cần snapshot và clone => FSx for OpenZFS\n~~~\n\n~~~groups\n# Kiểu triển khai và tích hợp\nWindows File Server: Single-AZ, *Multi-AZ, backup qua AWS Backup\nLustre: Scratch, Persistent, *liên kết S3 bucket\nNetApp ONTAP: Single-AZ, *Multi-AZ, tiering sang capacity pool\nOpenZFS: Single-AZ, *Multi-AZ, snapshot và clone\n~~~",
+      "keywords": [
+        {
+          "trigger": "HPC, ML training, process data from S3 at high speed",
+          "answer": "FSx for Lustre"
+        },
+        {
+          "trigger": "SMB, Active Directory, Windows ACLs",
+          "answer": "FSx for Windows File Server"
+        },
+        {
+          "trigger": "NFS and SMB and iSCSI on the same data",
+          "answer": "FSx for NetApp ONTAP"
+        },
+        {
+          "trigger": "migrate on-premises ZFS file servers",
+          "answer": "FSx for OpenZFS"
+        },
+        {
+          "trigger": "temporary short-term processing, lowest cost Lustre",
+          "answer": "FSx for Lustre Scratch deployment"
+        }
+      ]
+    },
+    "ebs-volume-types": {
+      "title": "Các loại EBS volume",
+      "summary": "Hai loại SSD và hai loại HDD: đề hỏi IOPS hay throughput, giới hạn boot volume và lựa chọn rẻ nhất phù hợp.",
+      "pick": [
+        "gp3: mặc định cho hầu hết trường hợp; tăng IOPS mà không cần tăng dung lượng.",
+        "io2 Block Express: database tối quan trọng cần IOPS rất cao ổn định hoặc Multi-Attach.",
+        "st1: đọc ghi tuần tự lớn như xử lý log hoặc big data.",
+        "sc1: dữ liệu tuần tự hiếm khi truy cập, giá EBS thấp nhất."
+      ],
+      "rows": [
+        {
+          "aspect": "Loại ổ",
+          "values": [
+            "SSD",
+            "SSD",
+            "HDD",
+            "HDD"
+          ]
+        },
+        {
+          "aspect": "Tối ưu cho",
+          "values": [
+            "Cân bằng giá và hiệu năng",
+            "IOPS cao nhất, latency dưới ms",
+            "Throughput tuần tự",
+            "Giá mỗi GB thấp nhất"
+          ]
+        },
+        {
+          "aspect": "Mô hình hiệu năng",
+          "values": [
+            "Baseline 3,000 IOPS, 125 MiB/s; tăng độc lập với dung lượng",
+            "Provisioned IOPS, tới 256,000 IOPS",
+            "Theo throughput, burst theo dung lượng",
+            "Throughput thấp hơn st1"
+          ]
+        },
+        {
+          "aspect": "Làm boot volume",
+          "values": [
+            "Có",
+            "Có",
+            "Không",
+            "Không"
+          ]
+        },
+        {
+          "aspect": "Multi-Attach",
+          "values": [
+            "Không",
+            "Có (cùng AZ)",
+            "Không",
+            "Không"
+          ]
+        },
+        {
+          "aspect": "Durability",
+          "values": [
+            "99.8-99.9%",
+            "99.999%",
+            "99.8-99.9%",
+            "99.8-99.9%"
+          ]
+        },
+        {
+          "aspect": "Workload",
+          "values": [
+            "Boot, dev/test, đa số app và DB",
+            "OLTP quan trọng (Oracle, SQL Server)",
+            "Big data, log, data warehouse, Kafka",
+            "Dữ liệu lạnh, đọc tuần tự ít"
+          ]
+        }
+      ],
+      "diagram": "~~~ladder\n# Từ nhanh nhất tới rẻ nhất\nio2 Block Express | SSD provisioned IOPS, Multi-Attach | 256k IOPS\ngp3 | SSD mặc định, IOPS chỉnh độc lập dung lượng | 3k IOPS base\nst1 | HDD throughput tuần tự, không làm boot | 500 MiB/s\nsc1 | HDD lạnh, giá mỗi GB thấp nhất | 250 MiB/s\n~~~\n\n~~~decide\n# Đề nhắc gì thì chọn volume nào\nTăng IOPS mà không tăng dung lượng => gp3\nIOPS rất cao ổn định cho OLTP quan trọng hoặc Multi-Attach => io2 Block Express\nLog, big data đọc tuần tự, giá thấp => st1\nDữ liệu lạnh ít truy cập, rẻ nhất => sc1\nBoot volume => SSD: gp3 hoặc io2 (không HDD)\n~~~",
+      "keywords": [
+        {
+          "trigger": "increase IOPS without increasing volume size",
+          "answer": "gp3"
+        },
+        {
+          "trigger": "more than 64,000 IOPS, sub-millisecond latency, critical database",
+          "answer": "io2 Block Express"
+        },
+        {
+          "trigger": "big data, log processing, high throughput, low cost",
+          "answer": "st1"
+        },
+        {
+          "trigger": "infrequently accessed data, lowest cost EBS",
+          "answer": "sc1"
+        },
+        {
+          "trigger": "HDD volume as boot volume",
+          "answer": "Không được: boot cần SSD (gp2/gp3/io1/io2)"
+        }
+      ]
+    },
+    "compute-options": {
+      "title": "Chạy code ở đâu",
+      "summary": "Đánh đổi giữa quyền kiểm soát và công vận hành: càng ít phải quản lý thì càng chịu nhiều giới hạn (thời gian chạy, quyền truy cập OS).",
+      "pick": [
+        "EC2: cần toàn quyền OS, license, GPU, hoặc app legacy không container hóa được.",
+        "ECS on EC2: container cần GPU, instance cụ thể, hoặc capacity ổn định rẻ hơn với RI/Spot.",
+        "Fargate: chạy container mà không quản lý server hay cluster (dùng với ECS và EKS).",
+        "Lambda: tác vụ ngắn, event-driven, traffic thất thường hoặc khó dự đoán.",
+        "App Runner: cách đơn giản nhất để chạy web app hoặc API từ source code hoặc container image."
+      ],
+      "rows": [
+        {
+          "aspect": "Đơn vị",
+          "values": [
+            "Máy ảo",
+            "Container trên EC2 của bạn",
+            "Container, không quản lý server",
+            "Function",
+            "Web service từ code hoặc image"
+          ]
+        },
+        {
+          "aspect": "Bạn quản lý",
+          "values": [
+            "OS, patch, scaling, capacity",
+            "Instance của cluster và capacity",
+            "Chỉ task definition",
+            "Chỉ code",
+            "Chỉ code hoặc image"
+          ]
+        },
+        {
+          "aspect": "Thời gian chạy",
+          "values": [
+            "Không giới hạn",
+            "Không giới hạn",
+            "Không giới hạn",
+            "Tối đa 15 phút",
+            "Service chạy liên tục"
+          ]
+        },
+        {
+          "aspect": "Scaling",
+          "values": [
+            "Auto Scaling group",
+            "Service auto scaling + capacity provider",
+            "Service auto scaling theo task",
+            "Tự động theo request",
+            "Tự động theo concurrency"
+          ]
+        },
+        {
+          "aspect": "Tính tiền",
+          "values": [
+            "Theo giây/giờ của instance",
+            "Theo EC2 bên dưới",
+            "vCPU và memory mỗi task",
+            "Số request và thời gian (GB-s)",
+            "vCPU và memory của instance đang chạy"
+          ]
+        },
+        {
+          "aspect": "Phần cứng đặc biệt",
+          "values": [
+            "GPU, mọi instance type",
+            "GPU, custom AMI",
+            "Không GPU",
+            "Không GPU, memory tới 10 GB",
+            "Không GPU"
+          ]
+        }
+      ],
+      "diagram": "~~~ladder\n# Từ nhiều quyền kiểm soát tới ít vận hành nhất\nEC2 | bạn quản lý OS, patch và scale | nhiều nhất\nECS on EC2 | bạn quản lý cluster EC2 bên dưới | nhiều\nFargate | chỉ khai báo vCPU và RAM cho task | ít\nApp Runner | từ source hoặc image ra URL HTTPS | rất ít\nLambda | chỉ viết function, tối đa 15 phút | ít nhất\n~~~\n\n~~~decide\n# Giới hạn quyết định lựa chọn\nCần GPU hoặc toàn quyền OS => EC2 (hoặc ECS on EC2)\nContainer, không quản lý server => Fargate\nEvent-driven, mỗi lần chạy dưới 15 phút => Lambda\nJob dài hơn 15 phút, serverless => Fargate\nWeb app từ source code, ít cấu hình nhất => App Runner\n~~~",
+      "keywords": [
+        {
+          "trigger": "serverless containers, no EC2 management",
+          "answer": "AWS Fargate"
+        },
+        {
+          "trigger": "event-driven, runs under 15 minutes, pay per request",
+          "answer": "AWS Lambda"
+        },
+        {
+          "trigger": "job runs longer than 15 minutes, serverless",
+          "answer": "Fargate (không phải Lambda)"
+        },
+        {
+          "trigger": "deploy web app from source code, no infrastructure knowledge",
+          "answer": "AWS App Runner"
+        },
+        {
+          "trigger": "needs GPU or full OS access",
+          "answer": "Amazon EC2 (hoặc ECS on EC2)"
+        }
+      ]
+    },
+    "databases": {
+      "title": "Chọn database",
+      "summary": "Cả năm đều lưu dữ liệu nhưng nhắm tới access pattern khác nhau: OLTP quan hệ, key-value quy mô lớn, phân tích, hay cache in-memory.",
+      "pick": [
+        "RDS: engine quan hệ chuẩn (kể cả Oracle/SQL Server) với backup và Multi-AZ được quản lý.",
+        "Aurora: app MySQL/PostgreSQL cần hiệu năng cao hơn, failover nhanh hoặc replicate toàn cầu.",
+        "DynamoDB: truy cập key-value ở mọi quy mô, latency thấp ổn định, không quản lý server.",
+        "Redshift: SQL phân tích và dashboard BI trên hàng TB tới PB dữ liệu.",
+        "ElastiCache: giảm tải đọc lặp lại hoặc lưu session với latency dưới mili giây."
+      ],
+      "rows": [
+        {
+          "aspect": "Mô hình",
+          "values": [
+            "Quan hệ (OLTP)",
+            "Quan hệ (OLTP), cloud-native",
+            "Key-value và document (NoSQL)",
+            "Data warehouse dạng cột (OLAP)",
+            "Key-value in-memory"
+          ]
+        },
+        {
+          "aspect": "Engine",
+          "values": [
+            "MySQL, PostgreSQL, MariaDB, Oracle, SQL Server, Db2",
+            "Tương thích MySQL và PostgreSQL",
+            "Riêng của AWS, NoSQL API",
+            "SQL nền PostgreSQL",
+            "Valkey, Redis OSS, Memcached"
+          ]
+        },
+        {
+          "aspect": "Latency",
+          "values": [
+            "Mili giây",
+            "Mili giây",
+            "Vài ms (micro giây với DAX)",
+            "Vài giây cho query phức tạp",
+            "Dưới mili giây"
+          ]
+        },
+        {
+          "aspect": "Scale đọc",
+          "values": [
+            "Read replica",
+            "Tới 15 replica, dùng chung storage",
+            "Tự động, gần như không giới hạn",
+            "Thêm node hoặc Serverless, concurrency scaling",
+            "Replica và shard"
+          ]
+        },
+        {
+          "aspect": "HA / đa Region",
+          "values": [
+            "Multi-AZ; cross-Region read replica",
+            "6 bản sao trên 3 AZ; Global Database",
+            "Multi-AZ sẵn; Global Tables",
+            "Tùy chọn Multi-AZ (RA3); snapshot",
+            "Multi-AZ với replica (Valkey/Redis)"
+          ]
+        },
+        {
+          "aspect": "Serverless",
+          "values": [
+            "Không",
+            "Aurora Serverless v2",
+            "Có, chế độ on-demand",
+            "Redshift Serverless",
+            "ElastiCache Serverless"
+          ]
+        },
+        {
+          "aspect": "Dùng điển hình",
+          "values": [
+            "Lift-and-shift app quan hệ",
+            "Quan hệ hiệu năng cao, app toàn cầu",
+            "Quy mô cực lớn, truy cập theo key",
+            "BI, báo cáo trên dữ liệu lớn",
+            "Cache, session, leaderboard"
+          ]
+        }
+      ],
+      "diagram": "~~~decide\n# Chọn database theo kiểu truy cập\nQuan hệ chuẩn, cần Oracle hoặc SQL Server => RDS\nMySQL/PostgreSQL cần nhanh hơn, failover nhanh => Aurora\nKey-value ở mọi quy mô, latency ổn định => DynamoDB\nSQL phân tích trên TB tới PB => Redshift\nĐọc lặp lại hoặc session dưới mili giây => ElastiCache\n~~~\n\n~~~ladder\n# Latency điển hình, nhanh nhất trước\nDynamoDB + DAX | đọc qua cache in-memory | micro giây\nElastiCache | key-value in-memory | dưới ms\nDynamoDB | key-value ở mọi quy mô | vài ms\nRDS / Aurora | OLTP quan hệ | ms\nRedshift | query phân tích phức tạp | giây\n~~~",
+      "keywords": [
+        {
+          "trigger": "complex joins, transactions, existing MySQL app",
+          "answer": "Amazon RDS hoặc Aurora"
+        },
+        {
+          "trigger": "global relational database, Region failover under a minute",
+          "answer": "Aurora Global Database"
+        },
+        {
+          "trigger": "millions of requests per second, key-value, serverless",
+          "answer": "Amazon DynamoDB"
+        },
+        {
+          "trigger": "data warehouse, OLAP, BI reporting",
+          "answer": "Amazon Redshift"
+        },
+        {
+          "trigger": "sub-millisecond latency, session store",
+          "answer": "Amazon ElastiCache"
+        }
+      ]
+    },
+    "caching": {
+      "title": "Các lựa chọn caching",
+      "summary": "Mỗi loại cache nằm ở một lớp khác nhau: trước mọi database, chỉ trước DynamoDB, hay ở edge gần người dùng.",
+      "pick": [
+        "ElastiCache Redis/Valkey: cache hoặc session cần HA, persistence, leaderboard hay pub/sub.",
+        "ElastiCache Memcached: cache đơn giản, đa luồng, chấp nhận mất dữ liệu.",
+        "DAX: bảng DynamoDB đọc nhiều cần đọc micro giây mà gần như không sửa code.",
+        "CloudFront: cache nội dung web tĩnh và động gần người dùng toàn cầu."
+      ],
+      "rows": [
+        {
+          "aspect": "Cache gì",
+          "values": [
+            "Mọi dữ liệu app đưa vào",
+            "Mọi dữ liệu app đưa vào",
+            "Chỉ lượt đọc DynamoDB",
+            "Nội dung HTTP(S) tại edge location"
+          ]
+        },
+        {
+          "aspect": "Sửa app",
+          "values": [
+            "Có, logic cache trong code",
+            "Có, logic cache trong code",
+            "Rất ít, API tương thích DynamoDB",
+            "Không, đặt trước origin"
+          ]
+        },
+        {
+          "aspect": "Replication / HA",
+          "values": [
+            "Replica, Multi-AZ tự failover",
+            "Không replication",
+            "Cluster nhiều node trên nhiều AZ",
+            "Mạng edge toàn cầu"
+          ]
+        },
+        {
+          "aspect": "Persistence",
+          "values": [
+            "Snapshot và backup",
+            "Không",
+            "Không (chỉ cache)",
+            "Không (cache theo TTL)"
+          ]
+        },
+        {
+          "aspect": "Cấu trúc dữ liệu",
+          "values": [
+            "Phong phú: sorted set, list, pub/sub",
+            "Key-value string đơn giản",
+            "Item và query DynamoDB",
+            "File và response"
+          ]
+        },
+        {
+          "aspect": "Latency",
+          "values": [
+            "Dưới mili giây",
+            "Dưới mili giây",
+            "Micro giây",
+            "Thấp, gần người dùng"
+          ]
+        }
+      ],
+      "diagram": "~~~flow\n# Mỗi lớp cache đứng ở đâu\nUsers -> CloudFront (edge) -> ALB -> EC2 -> ElastiCache (Redis/Valkey hoặc Memcached)\nEC2 -> DAX (micro giây) -> DynamoDB\n~~~\n\n~~~decide\n# Chọn lớp cache\nBảng DynamoDB đọc nhiều, gần như không sửa code => DAX\nLeaderboard hoặc session cần HA và persistence => ElastiCache Redis/Valkey\nCache key-value đơn giản, đa luồng => ElastiCache Memcached\nNội dung web gần người dùng toàn cầu => CloudFront\n~~~",
+      "keywords": [
+        {
+          "trigger": "DynamoDB microsecond read latency",
+          "answer": "DynamoDB Accelerator (DAX)"
+        },
+        {
+          "trigger": "leaderboard, sorted sets, pub/sub",
+          "answer": "ElastiCache for Redis/Valkey"
+        },
+        {
+          "trigger": "simple cache, multithreaded, no persistence needed",
+          "answer": "ElastiCache for Memcached"
+        },
+        {
+          "trigger": "reduce RDS read load for repeated queries",
+          "answer": "ElastiCache (hoặc read replica)"
+        },
+        {
+          "trigger": "cache static content for global users",
+          "answer": "Amazon CloudFront"
+        }
+      ]
+    },
+    "cloudfront-vs-ga": {
+      "title": "CloudFront vs Global Accelerator vs S3 Transfer Acceleration",
+      "summary": "Cả ba dùng mạng edge của AWS để tăng tốc traffic toàn cầu, nhưng chỉ CloudFront cache, và chỉ Global Accelerator xử lý traffic không phải HTTP với IP tĩnh.",
+      "pick": [
+        "CloudFront: cache website, API, video và file tĩnh gần người dùng.",
+        "Global Accelerator: game, IoT, VoIP hoặc app cần IP tĩnh và failover đa Region nhanh.",
+        "S3 Transfer Acceleration: người dùng ở xa bucket upload file lớn vào S3."
+      ],
+      "rows": [
+        {
+          "aspect": "Mục đích",
+          "values": [
+            "CDN: cache và phân phối nội dung",
+            "Định tuyến traffic qua backbone AWS",
+            "Upload đường xa vào S3 nhanh hơn"
+          ]
+        },
+        {
+          "aspect": "Giao thức",
+          "values": [
+            "HTTP, HTTPS, WebSocket",
+            "TCP và UDP",
+            "HTTPS tới S3 bucket"
+          ]
+        },
+        {
+          "aspect": "Caching",
+          "values": [
+            "Có",
+            "Không",
+            "Không"
+          ]
+        },
+        {
+          "aspect": "Điểm vào",
+          "values": [
+            "DNS name (IP thay đổi)",
+            "Hai anycast IP tĩnh",
+            "Accelerate endpoint của bucket"
+          ]
+        },
+        {
+          "aspect": "Failover",
+          "values": [
+            "Origin failover qua origin group",
+            "Failover giữa Region nhanh nhờ health check",
+            "Không áp dụng"
+          ]
+        },
+        {
+          "aspect": "Endpoint / origin",
+          "values": [
+            "S3, ALB, EC2, mọi HTTP origin",
+            "ALB, NLB, EC2, Elastic IP",
+            "Chỉ S3 bucket"
+          ]
+        },
+        {
+          "aspect": "Bảo mật đi kèm",
+          "values": [
+            "AWS WAF, Shield, OAC, signed URL",
+            "Shield, giữ client IP",
+            "Bucket policy"
+          ]
+        }
+      ],
+      "diagram": "~~~flow\n# Cùng vào edge gần nhất, khác ở việc làm gì sau đó\nUsers -[HTTP/HTTPS]-> CloudFront (cache tại edge) -> ALB\nUsers -[TCP/UDP]-> Global Accelerator (2 static IP, không cache) -> NLB\nUsers -[upload]-> Edge location (Transfer Acceleration) -[backbone AWS]-> S3\n~~~\n\n~~~decide\n# Từ khóa trong đề\nCache nội dung tĩnh, giảm tải origin => CloudFront\nUDP, game, IoT, VoIP => Global Accelerator\nCần 2 IP tĩnh để whitelist => Global Accelerator\nNgười dùng ở xa upload file lớn vào S3 => S3 Transfer Acceleration\n~~~",
+      "keywords": [
+        {
+          "trigger": "static IP addresses, allowlist, TCP/UDP",
+          "answer": "AWS Global Accelerator"
+        },
+        {
+          "trigger": "non-HTTP traffic, gaming, VoIP, global users",
+          "answer": "AWS Global Accelerator"
+        },
+        {
+          "trigger": "cache content at edge, reduce origin load",
+          "answer": "Amazon CloudFront"
+        },
+        {
+          "trigger": "global users upload large files to one S3 bucket",
+          "answer": "S3 Transfer Acceleration"
+        },
+        {
+          "trigger": "restrict S3 access to CloudFront only",
+          "answer": "Origin Access Control (OAC)"
+        }
+      ]
+    },
+    "streaming": {
+      "title": "Các dịch vụ streaming",
+      "summary": "Đều nhận dữ liệu stream, nhưng khác ở chỗ có phải tự viết consumer không, dữ liệu có được lưu và replay không, và có cần Kafka không.",
+      "pick": [
+        "Kinesis Data Streams: nhận dữ liệu real-time với consumer tự viết, cần thứ tự và replay.",
+        "Amazon Data Firehose: đổ dữ liệu stream vào S3, Redshift, OpenSearch... không cần code.",
+        "Managed Service for Apache Flink: phân tích và tổng hợp real-time trên stream.",
+        "MSK: ứng dụng Kafka sẵn có hoặc cần tính năng riêng của Kafka mà không quản lý broker."
+      ],
+      "rows": [
+        {
+          "aspect": "Vai trò",
+          "values": [
+            "Nhận và lưu stream",
+            "Đổ stream vào đích",
+            "Xử lý và phân tích stream",
+            "Apache Kafka managed"
+          ]
+        },
+        {
+          "aspect": "Latency",
+          "values": [
+            "Real-time (mili giây)",
+            "Near real-time (có buffer)",
+            "Real-time",
+            "Real-time"
+          ]
+        },
+        {
+          "aspect": "Lưu trữ / replay",
+          "values": [
+            "Mặc định 24 giờ, tới 365 ngày; replay được",
+            "Không lưu, không replay",
+            "Đọc từ stream nguồn",
+            "Retention tùy chỉnh; replay được"
+          ]
+        },
+        {
+          "aspect": "Consumer",
+          "values": [
+            "Code của bạn: Lambda, KCL app, Flink",
+            "Không cần viết: S3, Redshift, OpenSearch, Splunk, HTTP",
+            "Flink app (SQL, Java, Python)",
+            "Kafka client và connector"
+          ]
+        },
+        {
+          "aspect": "Scaling",
+          "values": [
+            "Shard (provisioned) hoặc on-demand",
+            "Hoàn toàn tự động",
+            "Tự động (KPU)",
+            "Broker, hoặc MSK Serverless"
+          ]
+        },
+        {
+          "aspect": "Biến đổi dữ liệu",
+          "values": [
+            "Trong consumer",
+            "Lambda transform, đổi format",
+            "Windowing, aggregation, join",
+            "Trong consumer hoặc Kafka Streams"
+          ]
+        }
+      ],
+      "diagram": "~~~flow\n# Vị trí của từng dịch vụ trong pipeline\nProducers -> Kinesis Data Streams (real-time, replay) -> Managed Service for Apache Flink (phân tích)\nKinesis Data Streams -> Data Firehose (near real-time, buffer) -> S3 / Redshift / OpenSearch\nKafka clients -> MSK (Kafka API) -> Consumers\n~~~\n\n~~~groups\n# Có lưu và replay được không\nLưu và replay: *Kinesis Data Streams (24 giờ tới 365 ngày), *MSK (retention tùy chỉnh)\nKhông lưu: Data Firehose (buffer rồi ghi), Managed Service for Apache Flink (đọc từ stream nguồn)\n~~~",
+      "keywords": [
+        {
+          "trigger": "real-time, multiple consumers, replay data",
+          "answer": "Kinesis Data Streams"
+        },
+        {
+          "trigger": "load streaming data into S3/Redshift, least operational overhead",
+          "answer": "Amazon Data Firehose"
+        },
+        {
+          "trigger": "real-time analytics with SQL on a stream",
+          "answer": "Managed Service for Apache Flink"
+        },
+        {
+          "trigger": "migrate existing Apache Kafka",
+          "answer": "Amazon MSK"
+        },
+        {
+          "trigger": "near real-time is acceptable, no custom code",
+          "answer": "Amazon Data Firehose"
+        }
+      ]
+    },
+    "analytics": {
+      "title": "Các dịch vụ analytics",
+      "summary": "Đều \"phân tích dữ liệu\", nhưng khác ở serverless hay cluster, ad hoc hay warehouse, và SQL hay search hay ETL.",
+      "pick": [
+        "Athena: SQL thỉnh thoảng hoặc ad hoc trên dữ liệu đã có trong S3, không hạ tầng.",
+        "Redshift (+Spectrum): query BI phức tạp thường xuyên; Spectrum join dữ liệu warehouse với S3.",
+        "EMR: job Spark/Hadoop/Hive lớn hoặc migrate cụm Hadoop on-prem.",
+        "Glue: ETL serverless và Data Catalog trung tâm cho data lake.",
+        "OpenSearch Service: full-text search, phân tích log và dashboard gần real-time."
+      ],
+      "rows": [
+        {
+          "aspect": "Mục đích",
+          "values": [
+            "SQL ad hoc trên S3",
+            "Data warehouse; Spectrum query S3",
+            "Framework big data (Spark, Hadoop)",
+            "ETL serverless và Data Catalog",
+            "Search và phân tích log"
+          ]
+        },
+        {
+          "aspect": "Hạ tầng",
+          "values": [
+            "Serverless",
+            "Cluster provisioned hoặc Serverless",
+            "Cluster (có EMR Serverless)",
+            "Serverless",
+            "Cluster managed hoặc Serverless"
+          ]
+        },
+        {
+          "aspect": "Tính tiền",
+          "values": [
+            "Theo dữ liệu được scan",
+            "Theo node hoặc RPU-giờ",
+            "EC2 instance cộng phí EMR",
+            "DPU-giờ",
+            "Instance và storage"
+          ]
+        },
+        {
+          "aspect": "Vị trí dữ liệu",
+          "values": [
+            "Nằm nguyên trong S3",
+            "Load vào Redshift (hoặc S3 qua Spectrum)",
+            "S3 (EMRFS) hoặc HDFS",
+            "Đọc ghi nhiều nguồn",
+            "Được index vào OpenSearch"
+          ]
+        },
+        {
+          "aspect": "Điểm mạnh",
+          "values": [
+            "Không setup, trả theo query",
+            "Join phức tạp nhanh, BI quy mô lớn",
+            "Toàn quyền với framework",
+            "Crawler, tự nhận schema, job",
+            "Full-text search, dashboard"
+          ]
+        },
+        {
+          "aspect": "Mẹo tiết kiệm",
+          "values": [
+            "Parquet/ORC, partition, nén",
+            "RA3, reserved node, Serverless",
+            "Spot cho task node",
+            "Chọn đúng số DPU, job bookmark",
+            "UltraWarm/cold storage cho log cũ"
+          ]
+        }
+      ],
+      "diagram": "~~~flow\n# Data lake trên S3 và các engine truy vấn\nS3 (data lake) -> Glue (crawler, ETL) -> Glue Data Catalog -> Athena (SQL ad hoc)\nGlue Data Catalog -> Redshift Spectrum (join với warehouse)\nS3 (data lake) -> EMR (Spark, Hadoop)\nLogs -> OpenSearch Service (search, dashboard)\n~~~\n\n~~~decide\n# Từ khóa trong đề\nSQL ad hoc trên S3, không hạ tầng => Athena\nDashboard BI phức tạp, nhiều join => Redshift\nJoin warehouse với dữ liệu trên S3 => Redshift Spectrum\nJob Spark hoặc Hadoop lớn => EMR\nETL serverless, tự nhận schema => Glue\nFull-text search, phân tích log => OpenSearch Service\n~~~",
+      "keywords": [
+        {
+          "trigger": "query data in S3 with SQL, serverless, ad hoc",
+          "answer": "Amazon Athena"
+        },
+        {
+          "trigger": "query S3 data from the data warehouse without loading",
+          "answer": "Redshift Spectrum"
+        },
+        {
+          "trigger": "migrate on-premises Hadoop/Spark cluster",
+          "answer": "Amazon EMR"
+        },
+        {
+          "trigger": "serverless ETL, discover schema, data catalog",
+          "answer": "AWS Glue"
+        },
+        {
+          "trigger": "full-text search, log analytics",
+          "answer": "Amazon OpenSearch Service"
+        }
+      ]
+    },
+    "migration-transfer": {
+      "title": "Các dịch vụ migration và transfer",
+      "summary": "Đều đưa dữ liệu vào AWS, nhưng khác ở một lần hay hybrid lâu dài, online hay offline, file hay database, và giao thức đối tác đang dùng.",
+      "pick": [
+        "DataSync: chuyển hoặc đồng bộ tập file lớn sang S3/EFS/FSx qua mạng.",
+        "Storage Gateway: app on-prem vẫn dùng giao thức local trong khi dữ liệu nằm trên AWS.",
+        "Transfer Family: đối tác buộc phải tiếp tục dùng SFTP/FTPS/FTP/AS2 vào S3 hoặc EFS.",
+        "Snowball Edge: dữ liệu rất lớn, băng thông thấp, nếu tài khoản vẫn còn được dùng dịch vụ.",
+        "DMS: migrate database với replicate liên tục (CDC) và downtime tối thiểu."
+      ],
+      "rows": [
+        {
+          "aspect": "Mô hình",
+          "values": [
+            "Copy hoặc sync online (một lần hoặc theo lịch)",
+            "Truy cập hybrid lâu dài từ on-prem",
+            "Endpoint SFTP/FTPS/FTP/AS2 managed",
+            "Thiết bị vật lý offline",
+            "Migrate và replicate database"
+          ]
+        },
+        {
+          "aspect": "Nguồn",
+          "values": [
+            "NFS, SMB, HDFS, object storage, storage AWS",
+            "App on-prem qua NFS, SMB, iSCSI, tape",
+            "Đối tác và client bên ngoài",
+            "Dữ liệu local chép vào thiết bị",
+            "DB quan hệ, NoSQL, warehouse"
+          ]
+        },
+        {
+          "aspect": "Đích",
+          "values": [
+            "S3, EFS, FSx",
+            "S3, EBS snapshot, Glacier (tape)",
+            "S3 hoặc EFS",
+            "S3 (sau khi gửi trả thiết bị)",
+            "RDS, Aurora, DynamoDB, Redshift, S3..."
+          ]
+        },
+        {
+          "aspect": "Cần mạng?",
+          "values": [
+            "Có (agent cho on-prem)",
+            "Có, cache local on-prem",
+            "Có (internet)",
+            "Không: gửi thiết bị",
+            "Có"
+          ]
+        },
+        {
+          "aspect": "Tính năng chính",
+          "values": [
+            "Kiểm tra toàn vẹn, giới hạn băng thông, lịch",
+            "Cache local cho truy cập latency thấp",
+            "Giữ nguyên quy trình truyền file cũ",
+            "Edge compute; dữ liệu lớn, mạng chậm",
+            "CDC để downtime tối thiểu"
+          ]
+        },
+        {
+          "aspect": "Lưu ý",
+          "values": [
+            "Truyền online số lượng lớn nhanh nhất",
+            "FSx File Gateway đã ngừng nhận khách mới",
+            "Hỗ trợ custom identity provider",
+            "Không còn mở cho khách hàng mới",
+            "Dùng Schema Conversion khi khác engine"
+          ]
+        }
+      ],
+      "diagram": "~~~decide\n# Chọn theo việc cần làm\nChuyển hoặc đồng bộ file qua mạng => DataSync\nApp on-prem vẫn dùng NFS, SMB hoặc iSCSI, dữ liệu ở AWS => Storage Gateway\nĐối tác gửi file qua SFTP => Transfer Family\nHàng trăm TB, băng thông thấp, deadline gấp => Snowball Edge\nMigrate database ít downtime => DMS\n~~~\n\n~~~groups\n# Online, hybrid hay offline\nOnline một lần hoặc theo lịch: *DataSync (file), *DMS (database)\nHybrid lâu dài: *Storage Gateway, Transfer Family (đối tác SFTP)\nOffline: *Snowball Edge (gửi thiết bị)\n~~~",
+      "keywords": [
+        {
+          "trigger": "migrate NFS/SMB data to EFS/S3 online, automate and verify",
+          "answer": "AWS DataSync"
+        },
+        {
+          "trigger": "on-prem apps keep accessing files, backed by S3",
+          "answer": "S3 File Gateway (Storage Gateway)"
+        },
+        {
+          "trigger": "replace tape backup infrastructure",
+          "answer": "Tape Gateway (Storage Gateway)"
+        },
+        {
+          "trigger": "partners upload via SFTP",
+          "answer": "AWS Transfer Family"
+        },
+        {
+          "trigger": "migrate database with minimal downtime",
+          "answer": "AWS DMS với CDC"
+        },
+        {
+          "trigger": "hundreds of TB, limited bandwidth, one-time",
+          "answer": "Thiết bị offline (Snowball Edge, khách hàng hiện hữu)"
+        }
+      ]
+    },
+    "placement-groups": {
+      "title": "EC2 placement group",
+      "summary": "Cả ba đều quyết định instance nằm ở đâu trên phần cứng; đánh đổi giữa hiệu năng mạng và cô lập lỗi.",
+      "pick": [
+        "Cluster: HPC hoặc workload liên kết chặt cần latency thấp giữa các node.",
+        "Spread: vài instance quan trọng không được dùng chung phần cứng.",
+        "Partition: hệ phân tán lớn có replicate và nhận biết rack."
+      ],
+      "rows": [
+        {
+          "aspect": "Cách đặt",
+          "values": [
+            "Gom sát nhau trong một AZ",
+            "Mỗi instance trên phần cứng riêng",
+            "Nhóm instance trên các rack tách biệt"
+          ]
+        },
+        {
+          "aspect": "Phạm vi AZ",
+          "values": [
+            "Một AZ",
+            "Có thể trải nhiều AZ",
+            "Có thể trải nhiều AZ"
+          ]
+        },
+        {
+          "aspect": "Mạng",
+          "values": [
+            "Latency thấp nhất, throughput cao nhất",
+            "Bình thường",
+            "Bình thường"
+          ]
+        },
+        {
+          "aspect": "Rủi ro lỗi",
+          "values": [
+            "Cao: hỏng rack ảnh hưởng tất cả",
+            "Thấp nhất: một lỗi chỉ ảnh hưởng một instance",
+            "Hỏng rack chỉ ảnh hưởng một partition"
+          ]
+        },
+        {
+          "aspect": "Giới hạn",
+          "values": [
+            "Theo capacity của AZ",
+            "7 instance đang chạy mỗi AZ mỗi group",
+            "Tối đa 7 partition mỗi AZ, nhiều instance"
+          ]
+        },
+        {
+          "aspect": "Workload",
+          "values": [
+            "HPC, job liên kết chặt",
+            "Ít instance quan trọng",
+            "HDFS, HBase, Cassandra, Kafka"
+          ]
+        }
+      ],
+      "diagram": "~~~groups\n# Cách bố trí instance trên phần cứng\nCluster: *gom sát nhau trong 1 AZ, latency thấp nhất\nSpread: *mỗi instance một rack, tối đa 7 mỗi AZ\nPartition: *mỗi partition một nhóm rack, tối đa 7 partition mỗi AZ\n~~~\n\n~~~decide\n# Từ khóa trong đề\nLatency thấp nhất giữa các node, HPC => Cluster\nVài instance quan trọng không dùng chung phần cứng => Spread\nHDFS, Cassandra, Kafka nhận biết rack => Partition\nCần chịu lỗi qua nhiều AZ => Spread hoặc Partition (không Cluster)\n~~~",
+      "keywords": [
+        {
+          "trigger": "low latency, high network throughput between nodes, HPC",
+          "answer": "Cluster placement group"
+        },
+        {
+          "trigger": "critical instances, avoid simultaneous failure, small number",
+          "answer": "Spread placement group"
+        },
+        {
+          "trigger": "HDFS, Cassandra, Kafka, rack awareness",
+          "answer": "Partition placement group"
+        },
+        {
+          "trigger": "more than 7 instances per AZ isolated",
+          "answer": "Partition (Spread giới hạn 7)"
+        }
+      ]
+    },
+    "ec2-purchase": {
+      "title": "Các lựa chọn mua EC2",
+      "summary": "Tất cả chạy cùng loại instance; đề kiểm tra mức cam kết, độ linh hoạt, khả năng chịu gián đoạn và license.",
+      "pick": [
+        "On-Demand: workload ngắn hạn hoặc khó dự đoán, không được gián đoạn.",
+        "Reserved Instances: workload ổn định trên instance type đã biết; cũng có cho RDS và dịch vụ khác.",
+        "Savings Plans: chi tiêu ổn định nhưng cần linh hoạt giữa family, Region, Fargate và Lambda.",
+        "Spot: job chịu lỗi, linh hoạt, chấp nhận bị gián đoạn.",
+        "Dedicated Hosts: license theo socket/core hoặc compliance cần server riêng."
+      ],
+      "rows": [
+        {
+          "aspect": "Cam kết",
+          "values": [
+            "Không",
+            "1 hoặc 3 năm, thuộc tính instance cụ thể",
+            "1 hoặc 3 năm, mức chi theo giờ",
+            "Không",
+            "On-Demand hoặc reserved (1/3 năm)"
+          ]
+        },
+        {
+          "aspect": "Giảm so với On-Demand",
+          "values": [
+            "Không",
+            "Tới khoảng 72%",
+            "Tới khoảng 72% (EC2 Instance SP)",
+            "Tới khoảng 90%",
+            "Tùy; đắt hơn hạ tầng dùng chung"
+          ]
+        },
+        {
+          "aspect": "Linh hoạt",
+          "values": [
+            "Hoàn toàn",
+            "Standard: thấp; Convertible: đổi family/OS",
+            "Compute SP: mọi family, Region, Fargate, Lambda",
+            "Hoàn toàn, nhưng không đảm bảo capacity",
+            "Gắn với một server vật lý"
+          ]
+        },
+        {
+          "aspect": "Bị gián đoạn",
+          "values": [
+            "Không",
+            "Không",
+            "Không",
+            "Có, báo trước 2 phút",
+            "Không"
+          ]
+        },
+        {
+          "aspect": "Giữ capacity",
+          "values": [
+            "Không (dùng On-Demand Capacity Reservations)",
+            "Chỉ Zonal RI",
+            "Không",
+            "Không",
+            "Có, cả host"
+          ]
+        },
+        {
+          "aspect": "Dùng điển hình",
+          "values": [
+            "Ngắn hạn, khó dự đoán, thử nghiệm",
+            "Ổn định, biết rõ instance type",
+            "Chi tiêu ổn định, instance thay đổi",
+            "Batch, CI, stateless, chịu lỗi",
+            "BYOL theo socket/core, compliance"
+          ]
+        }
+      ],
+      "diagram": "~~~ladder\n# Giảm giá tối đa so với On-Demand\nSpot | có thể bị thu hồi, báo trước 2 phút | tới 90%\nReserved Instances | cam kết 1 hoặc 3 năm, instance cụ thể | tới 72%\nSavings Plans | cam kết mức chi theo giờ 1 hoặc 3 năm | tới 72%\nOn-Demand | không cam kết, không gián đoạn | 0%\nDedicated Hosts | cả server vật lý cho BYOL | đắt hơn\n~~~\n\n~~~decide\n# Từ khóa trong đề\nBatch chịu gián đoạn, rẻ nhất => Spot\nỔn định 1-3 năm, instance type cố định => Reserved Instances\nCam kết mức chi, đổi family hoặc dùng Fargate và Lambda => Compute Savings Plans\nNgắn hạn, không được gián đoạn => On-Demand\nLicense theo socket hoặc core => Dedicated Hosts\nGiữ capacity trong 1 AZ mà không cam kết dài hạn => On-Demand Capacity Reservations\n~~~",
+      "keywords": [
+        {
+          "trigger": "steady 24/7 for 3 years, lowest cost",
+          "answer": "Reserved Instances hoặc Savings Plans (3 năm)"
+        },
+        {
+          "trigger": "flexibility across instance families, Regions, Fargate, Lambda",
+          "answer": "Compute Savings Plans"
+        },
+        {
+          "trigger": "can be interrupted, batch, lowest cost",
+          "answer": "Spot Instances"
+        },
+        {
+          "trigger": "BYOL per-socket or per-core licensing",
+          "answer": "Dedicated Hosts"
+        },
+        {
+          "trigger": "guarantee capacity in an AZ without long-term commitment",
+          "answer": "On-Demand Capacity Reservations"
+        }
+      ]
+    },
+    "s3-classes": {
+      "title": "Các S3 storage class",
+      "summary": "Bảy class đánh đổi giá lưu trữ với tốc độ truy cập, phí retrieval, thời gian lưu tối thiểu và mức chịu lỗi.",
+      "pick": [
+        "Standard: dữ liệu truy cập thường xuyên, không phí retrieval.",
+        "Intelligent-Tiering: pattern không rõ hoặc thay đổi, tự tiết kiệm mà không phí retrieval.",
+        "Standard-IA: dữ liệu ít đọc nhưng cần có ngay và chịu được mất một AZ.",
+        "One Zone-IA: dữ liệu ít truy cập, dễ tạo lại, chấp nhận chỉ nằm ở một AZ.",
+        "Glacier Instant Retrieval: archive truy cập khoảng mỗi quý nhưng vẫn cần đọc mili giây.",
+        "Glacier Flexible Retrieval: archive chấp nhận restore trong vài phút tới vài giờ.",
+        "Glacier Deep Archive: lưu dài hạn rẻ nhất, restore trong 12-48 giờ."
+      ],
+      "rows": [
+        {
+          "aspect": "Kiểu truy cập",
+          "values": [
+            "Thường xuyên",
+            "Không rõ hoặc thay đổi",
+            "Ít, nhưng cần nhanh",
+            "Ít, dữ liệu tạo lại được",
+            "Khoảng một lần mỗi quý",
+            "Một hai lần mỗi năm",
+            "Hiếm, lưu dài hạn"
+          ]
+        },
+        {
+          "aspect": "Latency byte đầu",
+          "values": [
+            "Mili giây",
+            "Mili giây (tier archive tùy chọn)",
+            "Mili giây",
+            "Mili giây",
+            "Mili giây",
+            "Vài phút tới vài giờ",
+            "Trong 12 giờ (bulk tới 48 giờ)"
+          ]
+        },
+        {
+          "aspect": "Số AZ",
+          "values": [
+            "Từ 3 trở lên",
+            "Từ 3 trở lên",
+            "Từ 3 trở lên",
+            "1",
+            "Từ 3 trở lên",
+            "Từ 3 trở lên",
+            "Từ 3 trở lên"
+          ]
+        },
+        {
+          "aspect": "Thời gian lưu tối thiểu",
+          "values": [
+            "Không",
+            "Không",
+            "30 ngày",
+            "30 ngày",
+            "90 ngày",
+            "90 ngày",
+            "180 ngày"
+          ]
+        },
+        {
+          "aspect": "Phí retrieval",
+          "values": [
+            "Không",
+            "Không (phí monitoring nhỏ mỗi object)",
+            "Có, theo GB",
+            "Có, theo GB",
+            "Có, theo GB",
+            "Có, theo tốc độ",
+            "Có, theo tốc độ"
+          ]
+        },
+        {
+          "aspect": "Kích thước tính phí tối thiểu",
+          "values": [
+            "Không",
+            "Object dưới 128 KB không tự chuyển tier",
+            "128 KB",
+            "128 KB",
+            "128 KB",
+            "Không (cộng overhead mỗi object)",
+            "Không (cộng overhead mỗi object)"
+          ]
+        },
+        {
+          "aspect": "Dùng điển hình",
+          "values": [
+            "Nội dung đang dùng, website",
+            "Data lake không rõ pattern",
+            "Backup, bản DR",
+            "Bản sao phụ, thumbnail",
+            "Ảnh y tế, kho tin tức",
+            "Archive, restore trong vài giờ",
+            "Archive compliance 7-10 năm"
+          ]
+        }
+      ],
+      "diagram": "~~~ladder\n# Từ nóng tới lạnh: giá lưu giảm, phí và thời gian lấy tăng\nStandard | truy cập thường xuyên | ms\nIntelligent-Tiering | tự chuyển tier theo pattern | ms\nStandard-IA | ít đọc, lưu tối thiểu 30 ngày | ms\nOne Zone-IA | 1 AZ, tạo lại được, tối thiểu 30 ngày | ms\nGlacier Instant Retrieval | khoảng mỗi quý, tối thiểu 90 ngày | ms\nGlacier Flexible Retrieval | 1-2 lần mỗi năm, tối thiểu 90 ngày | phút tới giờ\nGlacier Deep Archive | rẻ nhất, tối thiểu 180 ngày | 12-48 giờ\n~~~\n\n~~~decide\n# Từ khóa trong đề\nPattern truy cập không rõ hoặc thay đổi => Intelligent-Tiering\nÍt đọc nhưng cần ngay, chịu được mất 1 AZ => Standard-IA\nÍt đọc, tạo lại được => One Zone-IA\nArchive đọc khoảng mỗi quý, cần mili giây => Glacier Instant Retrieval\nArchive chấp nhận restore vài phút tới vài giờ => Glacier Flexible Retrieval\nLưu compliance 7-10 năm, rẻ nhất => Glacier Deep Archive\n~~~",
+      "keywords": [
+        {
+          "trigger": "unknown or unpredictable access patterns",
+          "answer": "S3 Intelligent-Tiering"
+        },
+        {
+          "trigger": "infrequent access, data can be re-created, lowest cost",
+          "answer": "S3 One Zone-IA"
+        },
+        {
+          "trigger": "archive, accessed quarterly, millisecond retrieval",
+          "answer": "S3 Glacier Instant Retrieval"
+        },
+        {
+          "trigger": "retain 7-10 years for compliance, rarely accessed, cheapest",
+          "answer": "S3 Glacier Deep Archive"
+        },
+        {
+          "trigger": "archive, retrieval in minutes (expedited)",
+          "answer": "S3 Glacier Flexible Retrieval"
+        },
+        {
+          "trigger": "move objects to cheaper class after N days",
+          "answer": "S3 Lifecycle rules"
+        }
+      ]
+    },
+    "cost-tools": {
+      "title": "Công cụ quản lý chi phí",
+      "summary": "Đều liên quan tới \"chi phí\", nhưng một cái để xem biểu đồ, một cái để cảnh báo, một cái xuất dữ liệu thô, và hai cái đưa khuyến nghị với phạm vi khác nhau.",
+      "pick": [
+        "Cost Explorer: xem tiền đi đâu, xu hướng, dự báo, và khuyến nghị RI/Savings Plans.",
+        "AWS Budgets: nhận cảnh báo hoặc tự động hành động khi chi tiêu/usage vượt ngưỡng.",
+        "Cost and Usage Report (Data Exports): dữ liệu billing chi tiết để tự phân tích bằng Athena/QuickSight.",
+        "Trusted Advisor: kiểm tra tổng quát như resource nhàn rỗi, port mở, service limit.",
+        "Compute Optimizer: right-size instance, volume, function dựa trên mức sử dụng thực tế."
+      ],
+      "rows": [
+        {
+          "aspect": "Việc chính",
+          "values": [
+            "Trực quan hóa và phân tích chi tiêu",
+            "Cảnh báo khi vượt ngưỡng",
+            "Dữ liệu billing chi tiết nhất",
+            "Kiểm tra best practice",
+            "Khuyến nghị right-sizing"
+          ]
+        },
+        {
+          "aspect": "Xem xét",
+          "values": [
+            "Chi tiêu quá khứ và dự báo",
+            "Cost, usage, RI/SP thực tế hoặc dự báo",
+            "Từng line item theo resource, theo giờ",
+            "Cost, security, resilience, performance, limit",
+            "Metric sử dụng tài nguyên"
+          ]
+        },
+        {
+          "aspect": "Đầu ra",
+          "values": [
+            "Biểu đồ, báo cáo, khuyến nghị RI/SP",
+            "Cảnh báo email/SNS, budget action",
+            "File gửi vào S3",
+            "Kết quả check và khuyến nghị",
+            "Khuyến nghị instance/size/cấu hình"
+          ]
+        },
+        {
+          "aspect": "Kiểm soát chủ động",
+          "values": [
+            "Không",
+            "Có: action áp IAM/SCP hoặc stop EC2/RDS",
+            "Không",
+            "Không",
+            "Không"
+          ]
+        },
+        {
+          "aspect": "Phân tích bằng",
+          "values": [
+            "Console có sẵn",
+            "Console có sẵn",
+            "Athena, QuickSight, Redshift",
+            "Console",
+            "Console"
+          ]
+        },
+        {
+          "aspect": "Lưu ý phạm vi",
+          "values": [
+            "Lọc theo tag, service, account",
+            "Theo account hoặc Organizations",
+            "Hỗ trợ cost allocation tag",
+            "Đủ check cần gói Business trở lên",
+            "EC2, ASG, EBS, Lambda, ECS on Fargate..."
+          ]
+        }
+      ],
+      "diagram": "~~~decide\n# Câu hỏi muốn gì\nXem tiền đi đâu, xu hướng và dự báo => Cost Explorer\nCảnh báo hoặc tự hành động khi vượt ngưỡng => AWS Budgets\nDữ liệu billing chi tiết để query bằng Athena => Cost and Usage Report (Data Exports)\nKiểm tra best practice tổng quát => Trusted Advisor\nRight-size theo mức dùng thực tế => Compute Optimizer\n~~~\n\n~~~groups\n# Nhìn lại, cảnh báo hay khuyến nghị\nXem và phân tích: *Cost Explorer, Cost and Usage Report (Data Exports)\nCảnh báo và hành động: *AWS Budgets\nKhuyến nghị: *Trusted Advisor (best practice), *Compute Optimizer (right-size)\n~~~",
+      "keywords": [
+        {
+          "trigger": "alert when forecasted cost exceeds a threshold",
+          "answer": "AWS Budgets"
+        },
+        {
+          "trigger": "visualize and forecast spending, by service or tag",
+          "answer": "AWS Cost Explorer"
+        },
+        {
+          "trigger": "most granular hourly billing data, query with Athena",
+          "answer": "Cost and Usage Report (Data Exports)"
+        },
+        {
+          "trigger": "right-size EC2 based on utilization (ML)",
+          "answer": "AWS Compute Optimizer"
+        },
+        {
+          "trigger": "detect unusual spend automatically",
+          "answer": "AWS Cost Anomaly Detection"
+        }
+      ]
+    },
+    "dynamodb-capacity": {
+      "title": "Capacity mode của DynamoDB",
+      "summary": "Cùng một bảng có thể tính tiền theo request hoặc theo capacity đã provision; lựa chọn đúng phụ thuộc traffic dự đoán được tới đâu.",
+      "pick": [
+        "On-demand: traffic không rõ hoặc đột biến, app mới, hoặc không muốn quản lý capacity.",
+        "Provisioned: traffic ổn định, dự đoán được, biết rõ throughput cần.",
+        "Provisioned + auto scaling: traffic dự đoán được, lên xuống từ từ trong ngày.",
+        "Reserved capacity: throughput provisioned ổn định dài hạn với giá thấp nhất."
+      ],
+      "rows": [
+        {
+          "aspect": "Tính tiền",
+          "values": [
+            "Theo từng request đọc/ghi",
+            "Theo RCU/WCU provision mỗi giờ",
+            "Theo RCU/WCU provision, tự điều chỉnh",
+            "Trả trước cam kết cộng giá giờ thấp hơn"
+          ]
+        },
+        {
+          "aspect": "Lên kế hoạch capacity",
+          "values": [
+            "Không cần",
+            "Thủ công",
+            "Đặt min, max và target utilization",
+            "Cam kết một mức baseline"
+          ]
+        },
+        {
+          "aspect": "Traffic phù hợp",
+          "values": [
+            "Khó đoán, đột biến, app mới",
+            "Ổn định, biết rõ",
+            "Dự đoán được, thay đổi từ từ",
+            "Baseline ổn định dài hạn"
+          ]
+        },
+        {
+          "aspect": "Spike đột ngột",
+          "values": [
+            "Tự xử lý",
+            "Bị throttle khi vượt capacity (có burst)",
+            "Có thể throttle; scale không tức thì",
+            "Như provisioned"
+          ]
+        },
+        {
+          "aspect": "Cam kết",
+          "values": [
+            "Không",
+            "Không",
+            "Không",
+            "1 hoặc 3 năm"
+          ]
+        },
+        {
+          "aspect": "Chi phí khi dùng cao đều",
+          "values": [
+            "Cao hơn",
+            "Thấp hơn",
+            "Thấp hơn",
+            "Thấp nhất"
+          ]
+        }
+      ],
+      "diagram": "~~~ladder\n# Từ linh hoạt nhất tới rẻ nhất khi dùng đều\nOn-demand | trả theo request, tự xử lý spike | linh hoạt nhất\nProvisioned + auto scaling | đặt min, max và target utilization | cân bằng\nProvisioned | đặt RCU/WCU thủ công | rẻ hơn\nReserved capacity | cam kết 1 hoặc 3 năm | rẻ nhất\n~~~\n\n~~~decide\n# Từ khóa trong đề\nApp mới, traffic không đoán được, spike đột ngột => On-demand\nTraffic lên xuống từ từ trong ngày => Provisioned + auto scaling\nThroughput ổn định, biết rõ => Provisioned\nBaseline ổn định dài hạn, giá thấp nhất => Reserved capacity\n~~~",
+      "keywords": [
+        {
+          "trigger": "unpredictable traffic, no capacity planning",
+          "answer": "DynamoDB on-demand"
+        },
+        {
+          "trigger": "predictable traffic, cost-effective",
+          "answer": "Provisioned với auto scaling"
+        },
+        {
+          "trigger": "steady usage for years, lowest DynamoDB cost",
+          "answer": "Provisioned + reserved capacity"
+        },
+        {
+          "trigger": "ProvisionedThroughputExceededException on sudden spikes",
+          "answer": "On-demand mode (hoặc tăng provisioned capacity)"
+        }
+      ]
+    }
+  }
+}

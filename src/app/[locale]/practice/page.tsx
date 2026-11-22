@@ -16,14 +16,14 @@ export default async function PracticePage(props: { params: Promise<{ locale: st
   const { locale } = await props.params;
   setRequestLocale(locale);
   const t = await getTranslations('PracticePage');
-  const lessonTitles = Object.fromEntries(getLessons(locale).map((item) => [item.slug, item.title]));
+  const lessonTitles = Object.fromEntries((await getLessons(locale)).map((item) => [item.slug, item.title]));
 
   return (
     <PageShell title={t('title')}>
       <h1 className="text-3xl font-bold">{t('title')}</h1>
       <p className="mt-2 mb-6 text-muted">{t('intro')}</p>
       <Suspense>
-        <PracticeClient questions={getQuestions(locale)} lessonTitles={lessonTitles} />
+        <PracticeClient questions={await getQuestions(locale)} lessonTitles={lessonTitles} />
       </Suspense>
     </PageShell>
   );

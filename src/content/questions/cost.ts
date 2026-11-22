@@ -1,6 +1,6 @@
-import type { Question } from '@/content/types';
+import type { QuestionData } from '@/content/types';
 
-export const costQuestions: Question[] = [
+export const costQuestions: QuestionData[] = [
   {
     id: 'cost-001',
     domain: 'cost',
@@ -13,8 +13,6 @@ export const costQuestions: Question[] = [
       'Use On-Demand Instances and migrate to Spot Instances later',
     ],
     answer: [1],
-    explanation:
-      'Compute Savings Plans áp dụng cho EC2 ở mọi family, Region, OS và cả Fargate, Lambda, nên phù hợp khi sẽ chuyển sang serverless hoặc đổi Region mà vẫn có giảm giá cam kết 3 năm. Standard RI gắn với family/Region và không áp dụng cho Fargate/Lambda. EC2 Instance Savings Plans chỉ áp dụng cho một family trong một Region. On-Demand đắt, còn Spot không phù hợp với web app chạy liên tục cần ổn định.',
   },
   {
     id: 'cost-002',
@@ -28,8 +26,6 @@ export const costQuestions: Question[] = [
       'Run the jobs on Spot Instances using a diversified set of instance types',
     ],
     answer: [3],
-    explanation:
-      'Job có checkpoint, khởi động lại được và thời gian linh hoạt là trường hợp chuẩn cho Spot Instances (rẻ tới 90%); đa dạng instance type giúp giảm rủi ro bị thu hồi. On-Demand chạy được nhưng đắt hơn nhiều. Dedicated Instances đắt hơn và không cần thiết. Reserved Instances cần cam kết chạy liên tục, lãng phí cho job chỉ chạy ban đêm.',
   },
   {
     id: 'cost-003',
@@ -43,8 +39,6 @@ export const costQuestions: Question[] = [
       'Spot Instances with license-included AMIs',
     ],
     answer: [0],
-    explanation:
-      'Dedicated Hosts cho thấy socket và physical core, hỗ trợ BYOL cho license tính theo core/socket và theo dõi license. Dedicated Instances chạy trên phần cứng riêng nhưng không cho thấy socket/core nên không đáp ứng yêu cầu theo dõi license. Default tenancy dùng phần cứng chia sẻ. Spot với AMI license-included nghĩa là mua license mới từ AWS, không dùng license sẵn có, và có thể bị gián đoạn.',
   },
   {
     id: 'cost-004',
@@ -58,8 +52,6 @@ export const costQuestions: Question[] = [
       'Request Spot Instances with a maximum price equal to the On-Demand price',
     ],
     answer: [2],
-    explanation:
-      'On-Demand Capacity Reservation giữ capacity trong một AZ cụ thể, không cần cam kết thời hạn và có thể hủy sau sự kiện. Zonal RI có giữ capacity nhưng phải cam kết ít nhất 1 năm. Savings Plans chỉ giảm giá, không đảm bảo capacity. Spot không đảm bảo capacity và có thể bị thu hồi.',
   },
   {
     id: 'cost-005',
@@ -73,8 +65,6 @@ export const costQuestions: Question[] = [
       'Use Dedicated Instances for the baseline and On-Demand Instances for peaks',
     ],
     answer: [1],
-    explanation:
-      'Mixed instances policy cho phép đặt On-Demand base capacity (4 instance, được Savings Plan che phủ để giảm giá) và dùng Spot cho phần tăng tải, vừa ổn định vừa rẻ. Chỉ dùng Spot không đảm bảo baseline. Mua RI cho 20 instance lãng phí vì phần lớn thời gian chỉ cần 4. Dedicated Instances đắt hơn và không giúp tiết kiệm.',
   },
   {
     id: 'cost-006',
@@ -88,8 +78,6 @@ export const costQuestions: Question[] = [
       'Convertible Reserved Instances',
     ],
     answer: [3],
-    explanation:
-      'Convertible RI cho phép đổi sang instance family, OS, tenancy khác (với giá trị bằng hoặc cao hơn). Standard RI, dù zonal hay regional, không đổi được instance family (regional chỉ linh hoạt về size và AZ). Capacity Reservation không phải cam kết giảm giá.',
   },
   {
     id: 'cost-007',
@@ -103,8 +91,6 @@ export const costQuestions: Question[] = [
       'Write a script that queries CloudWatch CPU metrics and resizes instances automatically',
     ],
     answer: [0],
-    explanation:
-      'AWS Compute Optimizer dùng ML trên metric CloudWatch để đề xuất right-size; metric bộ nhớ cần CloudWatch agent. Pricing Calculator chỉ ước tính giá, không phân tích utilization. Budgets chỉ theo dõi chi tiêu. Script tự viết tốn công vận hành và chỉ có CPU vì EC2 mặc định không gửi metric memory.',
   },
   {
     id: 'cost-008',
@@ -119,23 +105,14 @@ export const costQuestions: Question[] = [
       'Configure an AWS Budgets alert for Spot usage',
     ],
     answer: [0, 2],
-    explanation:
-      'Thông báo Spot interruption (trước 2 phút) có thể lấy qua instance metadata (spot/instance-action) và qua sự kiện EventBridge "EC2 Spot Instance Interruption Warning". Trusted Advisor, Cost Anomaly Detection và Budgets là công cụ chi phí/best practice, không phát tín hiệu thu hồi Spot.',
   },
   {
     id: 'cost-009',
     domain: 'cost',
     lesson: 's3-storage-classes',
     stem: 'A company stores user-uploaded files in Amazon S3. Access patterns are unpredictable: some files are accessed frequently for months, while others are never accessed after upload. The company wants to optimize storage costs automatically without retrieval fees or operational overhead. Which storage class should be used?',
-    options: [
-      'S3 Standard-IA',
-      'S3 One Zone-IA',
-      'S3 Intelligent-Tiering',
-      'S3 Glacier Instant Retrieval',
-    ],
+    options: ['S3 Standard-IA', 'S3 One Zone-IA', 'S3 Intelligent-Tiering', 'S3 Glacier Instant Retrieval'],
     answer: [2],
-    explanation:
-      'S3 Intelligent-Tiering tự động chuyển object giữa các tier theo mẫu truy cập, không có phí truy xuất, phù hợp với access pattern không đoán được. Standard-IA và Glacier Instant Retrieval có phí truy xuất, tốn kém với file truy cập thường xuyên. One Zone-IA có phí truy xuất và chỉ lưu ở 1 AZ.',
   },
   {
     id: 'cost-010',
@@ -149,23 +126,14 @@ export const costQuestions: Question[] = [
       'Store the images in S3 Standard and use a lifecycle rule to transition them to S3 Glacier Instant Retrieval after 30 days',
     ],
     answer: [3],
-    explanation:
-      'Glacier Instant Retrieval cho dữ liệu lưu trữ lâu, ít truy cập nhưng cần lấy trong mili giây, giá lưu rẻ hơn Standard-IA. Deep Archive cần tới 12–48 giờ, Flexible Retrieval cần phút đến giờ, không đáp ứng yêu cầu mili giây. One Zone-IA chỉ ở 1 AZ, rủi ro mất dữ liệu y tế quan trọng và đắt hơn Glacier IR khi lưu lâu.',
   },
   {
     id: 'cost-011',
     domain: 'cost',
     lesson: 's3-storage-classes',
     stem: 'A company generates thumbnails from original images stored in S3 Standard. The thumbnails are accessed infrequently and can be regenerated from the originals at any time. Which storage class is MOST cost-effective for the thumbnails while still providing millisecond access?',
-    options: [
-      'S3 One Zone-IA',
-      'S3 Standard',
-      'S3 Glacier Deep Archive',
-      'S3 Glacier Flexible Retrieval',
-    ],
+    options: ['S3 One Zone-IA', 'S3 Standard', 'S3 Glacier Deep Archive', 'S3 Glacier Flexible Retrieval'],
     answer: [0],
-    explanation:
-      'Dữ liệu ít truy cập và tạo lại được là trường hợp chuẩn cho One Zone-IA: rẻ hơn Standard-IA, truy cập mili giây, chấp nhận rủi ro mất 1 AZ. S3 Standard đắt hơn cho dữ liệu ít truy cập. Deep Archive và Flexible Retrieval không cho truy cập mili giây.',
   },
   {
     id: 'cost-012',
@@ -179,8 +147,6 @@ export const costQuestions: Question[] = [
       'S3 Intelligent-Tiering with only the Frequent and Infrequent Access tiers',
     ],
     answer: [1],
-    explanation:
-      'Glacier Deep Archive là class rẻ nhất, phù hợp lưu trữ compliance 7–10 năm, truy xuất trong 12 giờ (Standard) hoặc 48 giờ (Bulk). Glacier Instant Retrieval và Standard-IA đắt hơn vì hỗ trợ truy cập mili giây không cần thiết. Intelligent-Tiering chỉ với tier Frequent/Infrequent không xuống được mức giá lưu trữ sâu như Deep Archive.',
   },
   {
     id: 'cost-013',
@@ -194,8 +160,6 @@ export const costQuestions: Question[] = [
       'Copy the objects to S3 Glacier Deep Archive and retrieve them from there',
     ],
     answer: [2],
-    explanation:
-      'Expedited retrieval của Glacier Flexible Retrieval trả dữ liệu trong khoảng 1–5 phút. Standard mất 3–5 giờ, Bulk mất 5–12 giờ. Deep Archive còn chậm hơn (trong 12–48 giờ) và không có Expedited.',
   },
   {
     id: 'cost-014',
@@ -209,8 +173,6 @@ export const costQuestions: Question[] = [
       'Configure S3 Lifecycle rules to expire noncurrent versions after a set number of days and abort incomplete multipart uploads',
     ],
     answer: [3],
-    explanation:
-      'Lifecycle rule NoncurrentVersionExpiration và AbortIncompleteMultipartUpload tự động dọn version cũ và phần upload dở dang, không cần code. Tắt versioning không xóa version đã có và mất khả năng bảo vệ dữ liệu. Lambda tự viết tăng công vận hành. Intelligent-Tiering chỉ giảm giá lưu, không xóa version thừa hay multipart upload dở dang.',
   },
   {
     id: 'cost-015',
@@ -224,8 +186,6 @@ export const costQuestions: Question[] = [
       'Create a bucket policy that allows anonymous access',
     ],
     answer: [0],
-    explanation:
-      'Requester Pays khiến bên gửi request (phải là AWS principal đã xác thực) trả phí request và data transfer, chủ bucket chỉ trả phí lưu trữ. Transfer Acceleration tăng tốc nhưng tốn thêm phí cho chủ bucket. CloudFront với signed URL kiểm soát truy cập nhưng chủ vẫn trả phí egress. Truy cập anonymous không dùng được với Requester Pays và chủ bucket trả toàn bộ phí.',
   },
   {
     id: 'cost-016',
@@ -240,8 +200,6 @@ export const costQuestions: Question[] = [
       'S3 Object Lock',
     ],
     answer: [0, 2],
-    explanation:
-      'S3 Storage Lens cung cấp dashboard cấp organization về usage, activity và khuyến nghị tối ưu chi phí. S3 Inventory xuất danh sách object kèm storage class hằng ngày/tuần. Trusted Advisor service limit checks chỉ liên quan quota. Transfer Acceleration tăng tốc upload. Object Lock dùng cho WORM/compliance, không phải phân tích chi phí.',
   },
   {
     id: 'cost-017',
@@ -255,8 +213,6 @@ export const costQuestions: Question[] = [
       'Transition logs to S3 Glacier Deep Archive after 1 day and expire them after 365 days',
     ],
     answer: [1],
-    explanation:
-      'Chuyển dần theo mẫu truy cập: Standard 30 ngày (truy vấn thường xuyên), Standard-IA tới ngày 90 (thỉnh thoảng), Glacier Flexible Retrieval (lấy trong vài giờ) rồi expire sau 365 ngày. Giữ Standard cả năm đắt hơn. One Zone-IA sau 1 ngày vi phạm ràng buộc lifecycle (phải ở Standard ít nhất 30 ngày trước khi sang IA) và vẫn bị phí truy xuất khi truy vấn nhiều. Deep Archive sau 1 ngày khiến không truy vấn được trong 30 ngày đầu.',
   },
   {
     id: 'cost-018',
@@ -270,8 +226,6 @@ export const costQuestions: Question[] = [
       'Create a CloudWatch billing alarm that invokes a Lambda function to modify IAM policies',
     ],
     answer: [2],
-    explanation:
-      'AWS Budgets hỗ trợ alert theo chi phí dự báo và Budget actions tự động áp dụng IAM policy/SCP hoặc dừng EC2/RDS khi vượt ngưỡng, không cần code. Cost Explorer cần xem thủ công. Cost Anomaly Detection phát hiện bất thường, không theo ngưỡng cố định và không tự áp policy. CloudWatch billing alarm + Lambda chạy được nhưng phải tự viết, tốn công vận hành hơn.',
   },
   {
     id: 'cost-019',
@@ -285,8 +239,6 @@ export const costQuestions: Question[] = [
       'Use AWS Pricing Calculator to build estimates for each account',
     ],
     answer: [0],
-    explanation:
-      'CUR 2.0 qua AWS Data Exports cung cấp dữ liệu billing chi tiết nhất (theo giờ, theo resource, có tag) vào S3, truy vấn bằng Athena và trực quan bằng QuickSight. Cost Explorer không cung cấp dữ liệu resource-level chi tiết cho SQL và tải thủ công tốn công. Trusted Advisor là kiểm tra best practice. Pricing Calculator chỉ ước tính.',
   },
   {
     id: 'cost-020',
@@ -300,23 +252,14 @@ export const costQuestions: Question[] = [
       'Create an AWS Budgets usage budget filtered by CostCenter',
     ],
     answer: [1],
-    explanation:
-      'Tag chỉ xuất hiện trong Cost Explorer/CUR sau khi được activate làm cost allocation tag trong Billing console của management account (dữ liệu tính từ thời điểm activate). AWS Config kiểm tra tuân thủ tag nhưng không làm tag hiện trong báo cáo chi phí. Tạo lại resource không cần thiết. Budget không giúp nhóm chi phí theo tag khi tag chưa được activate.',
   },
   {
     id: 'cost-021',
     domain: 'cost',
     lesson: 'cost-management-tools',
     stem: 'A company wants to be notified when spending on any AWS service suddenly increases in an unusual way, for example because of a misconfigured resource. The company does not want to define and maintain fixed thresholds for each service. Which AWS service should be used?',
-    options: [
-      'AWS Budgets',
-      'AWS Trusted Advisor',
-      'AWS Compute Optimizer',
-      'AWS Cost Anomaly Detection',
-    ],
+    options: ['AWS Budgets', 'AWS Trusted Advisor', 'AWS Compute Optimizer', 'AWS Cost Anomaly Detection'],
     answer: [3],
-    explanation:
-      'Cost Anomaly Detection dùng machine learning để phát hiện chi tiêu bất thường và phân tích nguyên nhân, không cần đặt ngưỡng, gửi alert qua SNS hoặc email. Budgets cần ngưỡng cố định. Trusted Advisor kiểm tra best practice, không theo dõi biến động chi phí. Compute Optimizer chỉ đề xuất right-size.',
   },
   {
     id: 'cost-022',
@@ -330,23 +273,14 @@ export const costQuestions: Question[] = [
       'Use AWS Control Tower Account Factory to recreate the accounts',
     ],
     answer: [2],
-    explanation:
-      'Consolidated billing trong AWS Organizations gộp hóa đơn, gộp usage để đạt bậc giá thấp hơn và chia sẻ RI/Savings Plans giữa các account. Mua RI riêng từng account không chia sẻ được nếu không cùng organization. Billing Conductor tạo hóa đơn pro forma cho showback/chargeback, không thay thế consolidated billing. Control Tower dựng landing zone, không cần tạo lại account.',
   },
   {
     id: 'cost-023',
     domain: 'cost',
     lesson: 'cost-management-tools',
     stem: 'A company wants to identify unassociated Elastic IP addresses, idle load balancers, and underutilized Amazon EBS volumes across its account. The company has an Enterprise Support plan. Which service provides these checks with the LEAST effort?',
-    options: [
-      'AWS Trusted Advisor',
-      'AWS Pricing Calculator',
-      'Amazon Inspector',
-      'AWS CloudTrail',
-    ],
+    options: ['AWS Trusted Advisor', 'AWS Pricing Calculator', 'Amazon Inspector', 'AWS CloudTrail'],
     answer: [0],
-    explanation:
-      'Trusted Advisor có các check cost optimization như Elastic IP không gắn, load balancer nhàn rỗi, EBS ít dùng; gói Enterprise Support có đầy đủ check. Pricing Calculator chỉ ước tính. Inspector quét lỗ hổng bảo mật. CloudTrail ghi lại API call.',
   },
   {
     id: 'cost-024',
@@ -361,23 +295,14 @@ export const costQuestions: Question[] = [
       'AWS Service Catalog',
     ],
     answer: [0, 2],
-    explanation:
-      'Cost Explorer có báo cáo coverage (bao nhiêu usage được che phủ) và utilization (cam kết đã dùng bao nhiêu), cùng khuyến nghị mua Savings Plans dựa trên lịch sử usage. CloudWatch Logs Insights phân tích log ứng dụng. Config conformance packs kiểm tra tuân thủ cấu hình. Service Catalog quản lý sản phẩm IT được phê duyệt.',
   },
   {
     id: 'cost-025',
     domain: 'cost',
     lesson: 'cost-management-tools',
-    stem: 'An AWS Partner resells AWS to several customers and manages their accounts in one organization. The partner needs to present each customer with a bill that reflects custom pricing rates rather than the partner\'s actual AWS invoice. Which service should the partner use?',
-    options: [
-      'AWS Cost Anomaly Detection',
-      'AWS Billing Conductor',
-      'AWS Budgets',
-      'AWS Cost Explorer forecasting',
-    ],
+    stem: "An AWS Partner resells AWS to several customers and manages their accounts in one organization. The partner needs to present each customer with a bill that reflects custom pricing rates rather than the partner's actual AWS invoice. Which service should the partner use?",
+    options: ['AWS Cost Anomaly Detection', 'AWS Billing Conductor', 'AWS Budgets', 'AWS Cost Explorer forecasting'],
     answer: [1],
-    explanation:
-      'AWS Billing Conductor tạo pro forma bill với billing groups và pricing rules tùy chỉnh, phù hợp cho reseller hoặc showback/chargeback, không ảnh hưởng hóa đơn thật. Cost Anomaly Detection phát hiện chi tiêu bất thường. Budgets theo dõi ngưỡng. Cost Explorer forecasting dự báo chi phí thực, không tạo hóa đơn với giá tùy chỉnh.',
   },
   {
     id: 'cost-026',
@@ -391,8 +316,6 @@ export const costQuestions: Question[] = [
       'Create a gateway VPC endpoint for Amazon S3 and update the private subnet route tables',
     ],
     answer: [3],
-    explanation:
-      'Gateway VPC endpoint cho S3 miễn phí, traffic tới S3 đi qua endpoint thay vì NAT nên không còn phí xử lý NAT. Interface endpoint có phí theo giờ và theo GB nên không rẻ bằng. NAT instance tăng công vận hành và có giới hạn băng thông. Chuyển sang public subnet làm giảm bảo mật và phát sinh phí public IPv4.',
   },
   {
     id: 'cost-027',
@@ -406,8 +329,6 @@ export const costQuestions: Question[] = [
       'Replicate the bucket to multiple Regions with S3 Cross-Region Replication',
     ],
     answer: [2],
-    explanation:
-      'CloudFront cache nội dung tại edge, transfer từ S3 tới CloudFront miễn phí và giá egress của CloudFront thường thấp hơn egress trực tiếp từ S3, đồng thời giảm độ trễ. Transfer Acceleration tối ưu upload và tốn thêm phí. Global Accelerator không cache và có thêm phí. Cross-Region Replication tốn phí replication và lưu trữ nhiều bản.',
   },
   {
     id: 'cost-028',
@@ -421,8 +342,6 @@ export const costQuestions: Question[] = [
       'Ask developers to manually stop resources at the end of each day',
     ],
     answer: [0],
-    explanation:
-      'Instance Scheduler on AWS tự động start/stop EC2 và RDS theo lịch dựa trên tag, giảm phần lớn chi phí compute ngoài giờ mà không cần thao tác thủ công. RI tính phí 24/7 nên lãng phí cho tài nguyên chỉ chạy khoảng 50 giờ/tuần. Spot không áp dụng cho RDS và có thể bị gián đoạn. Dừng thủ công dễ quên và tốn công.',
   },
   {
     id: 'cost-029',
@@ -436,8 +355,6 @@ export const costQuestions: Question[] = [
       'Move the data to Amazon EFS One Zone',
     ],
     answer: [1],
-    explanation:
-      'gp3 rẻ hơn gp2 mỗi GB và có baseline 3,000 IOPS, 125 MB/s bất kể dung lượng; volume gp2 100 GB chỉ có khoảng 300 IOPS baseline. Elastic Volumes đổi loại volume không cần downtime. st1 là HDD, không phù hợp với IOPS ngẫu nhiên và không dùng làm boot volume. io2 đắt hơn nhiều. EFS đắt hơn mỗi GB và cần thay đổi ứng dụng.',
   },
   {
     id: 'cost-030',
@@ -451,8 +368,6 @@ export const costQuestions: Question[] = [
       'On-demand capacity mode',
     ],
     answer: [3],
-    explanation:
-      'DynamoDB on-demand tính theo request, không cần lập kế hoạch capacity, phù hợp với tải không đoán được và có thời gian nhàn rỗi dài. Reserved capacity cần cam kết dài hạn cho tải ổn định. Auto Scaling với minimum cao vẫn trả tiền khi nhàn rỗi và phản ứng chậm với spike đột ngột. Standard-IA table class giảm giá lưu trữ chứ không giải quyết vấn đề capacity.',
   },
   {
     id: 'cost-031',
@@ -466,14 +381,12 @@ export const costQuestions: Question[] = [
       'Migrate the database to Amazon DynamoDB',
     ],
     answer: [0],
-    explanation:
-      'Aurora Serverless v2 tự scale ACU theo tải, chỉ trả cho capacity dùng thực tế, rất phù hợp với tải dồn vào vài giờ mỗi tháng; thay đổi tối thiểu vì vẫn là Aurora PostgreSQL. RI phù hợp với tải ổn định 24/7, ở đây vẫn trả cho thời gian nhàn rỗi. Thêm replica tăng chi phí. Chuyển sang DynamoDB đòi hỏi thiết kế lại ứng dụng.',
   },
   {
     id: 'cost-032',
     domain: 'cost',
     lesson: 'cost-optimized-architectures',
-    stem: 'A company\'s order-processing application uses a fleet of EC2 instances that is sized for peak load, but load is bursty and orders do not need to be processed in real time. The company wants to reduce compute costs. Which actions should a solutions architect take? (Choose TWO.)',
+    stem: "A company's order-processing application uses a fleet of EC2 instances that is sized for peak load, but load is bursty and orders do not need to be processed in real time. The company wants to reduce compute costs. Which actions should a solutions architect take? (Choose TWO.)",
     options: [
       'Place an Amazon SQS queue between the web tier and the processing tier',
       'Increase the instance size of the processing tier to handle peaks faster',
@@ -482,8 +395,6 @@ export const costQuestions: Question[] = [
       'Add an Application Load Balancer in front of the processing tier with sticky sessions',
     ],
     answer: [0, 2],
-    explanation:
-      'SQS tách web tier và processing tier, cho phép worker xử lý theo tốc độ riêng thay vì phải provision theo peak. Scale theo backlog per instance và dùng Spot cho worker idempotent giảm mạnh chi phí compute. Tăng size instance làm tăng chi phí. Dedicated Hosts đắt hơn. ALB với sticky sessions không giải quyết vấn đề provision theo peak.',
   },
   {
     id: 'cost-033',
@@ -497,8 +408,6 @@ export const costQuestions: Question[] = [
       'Use AWS Global Accelerator static IP addresses for each instance',
     ],
     answer: [1],
-    explanation:
-      'Từ tháng 2/2024 AWS tính phí mọi public IPv4, kể cả Elastic IP đang gắn. Chuyển instance vào private subnet, quản trị qua Session Manager (không cần public IP hay bastion) và truy cập S3 qua gateway endpoint miễn phí giúp loại bỏ public IP. Elastic IP đang dùng vẫn bị tính phí. NLB với public IP mỗi instance không giảm số public IP. Global Accelerator có phí riêng và không cần thiết.',
   },
   {
     id: 'cost-034',
@@ -512,8 +421,6 @@ export const costQuestions: Question[] = [
       'Enable provisioned concurrency for the function',
     ],
     answer: [2],
-    explanation:
-      'Lambda cấp CPU tỷ lệ với memory; tăng memory cho tác vụ nặng CPU thường giảm mạnh thời gian chạy và có thể giảm tổng chi phí. Lambda Power Tuning giúp tìm cấu hình tối ưu. Chuyển sang EC2 tốn công vận hành và chưa chắc rẻ hơn. Tăng timeout chỉ kéo dài thời gian tính tiền. Provisioned concurrency giảm cold start nhưng tăng chi phí.',
   },
   {
     id: 'cost-035',
@@ -528,8 +435,6 @@ export const costQuestions: Question[] = [
       'Partition the data by date and include the partition key in query filters',
     ],
     answer: [0, 4],
-    explanation:
-      'Athena tính theo lượng dữ liệu quét. Parquet nén dạng cột chỉ đọc các cột cần thiết, còn partition theo date giúp bỏ qua dữ liệu không liên quan; cả hai giảm mạnh dữ liệu quét. Athena không query trực tiếp object trong Glacier Flexible Retrieval. RDS cho vài TB log tốn chi phí và vận hành hơn. Transfer Acceleration không liên quan tới query.',
   },
   {
     id: 'cost-036',
@@ -543,8 +448,6 @@ export const costQuestions: Question[] = [
       'An Amazon EMR cluster running continuously',
     ],
     answer: [1],
-    explanation:
-      'Redshift Serverless tự scale và chỉ tính phí compute khi có query chạy, phù hợp với tải thất thường và không cần quản lý cluster. Provisioned cluster với reserved nodes tính phí liên tục kể cả khi nhàn rỗi. RDS MySQL không phải data warehouse. EMR chạy liên tục tốn phí và vận hành nhiều.',
   },
   {
     id: 'cost-037',
@@ -558,8 +461,6 @@ export const costQuestions: Question[] = [
       'Add an Amazon ElastiCache cluster to cache frequently read query results',
     ],
     answer: [3],
-    explanation:
-      'ElastiCache cache kết quả truy vấn đọc lặp lại, giảm tải CPU cho RDS và thường cho phép giữ DB nhỏ hơn, rẻ hơn so với scale DB lên rất lớn. Scale instance class tốn kém hơn nhiều. Multi-AZ tăng availability chứ không giảm tải đọc (standby không phục vụ đọc). Migrate sang Aurora tốn công và không giải quyết vấn đề truy vấn lặp.',
   },
   {
     id: 'cost-038',
@@ -573,8 +474,6 @@ export const costQuestions: Question[] = [
       'Use S3 Transfer Acceleration over the existing internet connection',
     ],
     answer: [0],
-    explanation:
-      '500 TB qua đường 100 Mbps mất hơn một năm kể cả khi dùng toàn bộ băng thông, nên phải chuyển offline bằng Snowball Edge. Direct Connect cần nhiều tuần thiết lập, có phí cố định và vẫn khó xong trong 1 tháng. DataSync hay Transfer Acceleration trên đường truyền hiện tại bị giới hạn bởi băng thông.',
   },
   {
     id: 'cost-039',
@@ -588,8 +487,6 @@ export const costQuestions: Question[] = [
       'Amazon EBS io2 volumes attached to each compute instance',
     ],
     answer: [2],
-    explanation:
-      'FSx for Lustre scratch rẻ, hiệu năng cao cho xử lý tạm, liên kết S3 làm data repository và có thể tạo/xóa theo mỗi lần chạy nên chỉ trả trong thời gian dùng. Persistent chạy cả tuần trả phí liên tục cho 50 TB. EFS không đạt hiệu năng HPC như Lustre và đắt mỗi GB. EBS io2 rất đắt và không phải file system dùng chung.',
   },
   {
     id: 'cost-040',
@@ -604,8 +501,6 @@ export const costQuestions: Question[] = [
       'Move the data to FSx for Lustre',
     ],
     answer: [1, 2],
-    explanation:
-      'FSx for Windows File Server HDD storage rẻ hơn SSD cho file share ít truy cập, và data deduplication giảm dung lượng lưu trữ khi có nhiều file trùng; vẫn giữ SMB và tích hợp Active Directory. EFS là NFS, không hỗ trợ SMB cho Windows. Tự quản lý EBS trên EC2 tăng công vận hành và mất tính năng managed. FSx for Lustre dành cho HPC trên Linux, không phải SMB.',
   },
   {
     id: 'cost-041',
@@ -619,8 +514,6 @@ export const costQuestions: Question[] = [
       'Amazon EC2 instances covered by a 1-year Reserved Instance',
     ],
     answer: [1],
-    explanation:
-      'Tải thưa, bùng theo đợt, phần lớn thời gian nhàn rỗi và mỗi request ngắn là trường hợp chuẩn cho Lambda + API Gateway: chỉ trả theo request và thời gian chạy, không tốn tiền khi rảnh. EC2 On-Demand và Fargate luôn chạy đều trả tiền cả lúc nhàn rỗi. Reserved Instance cam kết 1 năm cho một instance gần như không dùng là lãng phí.',
   },
   {
     id: 'cost-042',
@@ -634,8 +527,6 @@ export const costQuestions: Question[] = [
       'Purchase a 1-year Compute Savings Plan',
     ],
     answer: [3],
-    explanation:
-      'Compute Savings Plans áp dụng tự động cho Fargate, Lambda và EC2, nên vẫn giữ giảm giá khi workload chuyển giữa các loại compute. EC2 Instance Savings Plans và Reserved Instances chỉ áp dụng cho EC2, không giảm giá cho Fargate/Lambda. Fargate Spot có thể bị thu hồi với cảnh báo 2 phút, không phù hợp với ứng dụng không được gián đoạn.',
   },
   {
     id: 'cost-043',
@@ -649,8 +540,6 @@ export const costQuestions: Question[] = [
       'Run all tasks on the FARGATE capacity provider and purchase an EC2 Instance Savings Plan',
     ],
     answer: [0],
-    explanation:
-      'Capacity provider strategy cho phép đặt base 2 task luôn chạy trên FARGATE (không bị thu hồi) và chia phần còn lại theo weight, phần lớn sang FARGATE_SPOT rẻ hơn nhiều. Chạy toàn bộ trên Fargate Spot có thể mất cả hai task tối thiểu khi bị thu hồi. Dedicated Instances đắt hơn và không cần thiết. EC2 Instance Savings Plans không áp dụng cho Fargate.',
   },
   {
     id: 'cost-044',
@@ -664,8 +553,6 @@ export const costQuestions: Question[] = [
       'Move the jobs to AWS Lambda functions',
     ],
     answer: [2],
-    explanation:
-      'AWS Batch hỗ trợ Spot compute environment với allocation strategy SPOT_PRICE_CAPACITY_OPTIMIZED, nhiều instance type để đa dạng pool, và retry strategy để tự chạy lại job bị gián đoạn, nên rẻ mà ít vận hành. Reserved Instances không hợp với tải batch dao động theo tuần. Tự dựng scheduler tăng công vận hành. Lambda giới hạn 15 phút và không phù hợp cho simulation dài.',
   },
   {
     id: 'cost-045',
@@ -680,8 +567,6 @@ export const costQuestions: Question[] = [
       'Increase the maximum Spot price to the On-Demand price',
     ],
     answer: [0, 3],
-    explanation:
-      'Lấy việc từ SQS và chỉ xóa message khi xong giúp message hiện lại sau visibility timeout để worker khác xử lý nếu instance bị thu hồi; checkpoint ra S3 cho phép tiếp tục từ điểm gần nhất thay vì chạy lại từ đầu. Reserved Instances bỏ lợi ích giá Spot. Instance store mất dữ liệu khi instance bị terminate. Tăng max price không ngăn bị thu hồi vì gián đoạn chủ yếu do AWS cần lại capacity.',
   },
   {
     id: 'cost-046',
@@ -695,8 +580,6 @@ export const costQuestions: Question[] = [
       'Move the function to an Amazon EC2 On-Demand Instance',
     ],
     answer: [1],
-    explanation:
-      'CPU của Lambda tỷ lệ với memory, nên hàm CPU-bound ở 128 MB thường chạy lâu; tăng memory có thể giảm thời gian đủ để tổng chi phí giảm, và Lambda Power Tuning tìm ra mức rẻ nhất. arm64 (Graviton) có giá GB-giây thấp hơn x86. Giảm timeout làm hàm bị lỗi giữa chừng. Provisioned concurrency thêm phí, chỉ giảm cold start. Chuyển sang EC2 tăng vận hành và không chắc rẻ hơn.',
   },
   {
     id: 'cost-047',
@@ -710,8 +593,6 @@ export const costQuestions: Question[] = [
       'Run the polling loop in a Lambda function that uses the arm64 architecture',
     ],
     answer: [2],
-    explanation:
-      'Lambda bị tính duration cả khi chỉ ngồi chờ. Step Functions Standard workflow tính theo state transition, Wait state không tốn compute, nên chỉ trả cho các lần gọi Lambda ngắn để kiểm tra trạng thái. Tăng memory làm đắt hơn khi thời gian chủ yếu là chờ. Provisioned concurrency thêm phí. arm64 giảm đơn giá nhưng vẫn trả tiền cho toàn bộ thời gian chờ.',
   },
   {
     id: 'cost-048',
@@ -725,8 +606,6 @@ export const costQuestions: Question[] = [
       'Use scheduled actions to set the Auto Scaling groups desired capacity and the ECS services desired count to 0 outside business hours',
     ],
     answer: [3],
-    explanation:
-      'Môi trường chỉ dùng khoảng 50 trên 168 giờ mỗi tuần, nên tắt ngoài giờ (scheduled action đưa ASG và ECS service về 0) tiết kiệm nhiều nhất. Reserved Instances và Savings Plans cam kết trả cho cả những giờ không dùng. Dedicated Instances đắt hơn.',
   },
   {
     id: 'cost-049',
@@ -740,8 +619,6 @@ export const costQuestions: Question[] = [
       'Enable S3 Transfer Acceleration on the bucket',
     ],
     answer: [0],
-    explanation:
-      'Gateway VPC endpoint cho S3 miễn phí, chỉ cần thêm route vào route table, nên traffic S3 không đi qua NAT nữa. Interface endpoint cho S3 cũng tránh NAT nhưng có phí theo giờ mỗi AZ và theo GB. NAT instance tăng công vận hành và vẫn tốn tiền. Transfer Acceleration tăng tốc độ và thêm phí, không giảm chi phí.',
   },
   {
     id: 'cost-050',
@@ -755,8 +632,6 @@ export const costQuestions: Question[] = [
       'Add a second NAT gateway in the same Availability Zone as the first one',
     ],
     answer: [2],
-    explanation:
-      'Một NAT Gateway mỗi AZ, mỗi subnet route tới NAT cùng AZ giúp loại bỏ phí cross-AZ và không còn single point of failure. Dồn tất cả vào một AZ mất high availability. Gán public IPv4 cho mọi instance phát sinh phí public IPv4 và làm lộ instance. Thêm NAT trong cùng AZ không giải quyết cả hai vấn đề.',
   },
   {
     id: 'cost-051',
@@ -770,8 +645,6 @@ export const costQuestions: Question[] = [
       'Use AWS Global Accelerator in front of the S3 bucket',
     ],
     answer: [1],
-    explanation:
-      'CloudFront: data từ origin S3 sang CloudFront miễn phí, cache giảm request về origin, và Price Class 100 chỉ dùng edge ở khu vực rẻ nhất (Bắc Mỹ, châu Âu), phù hợp khi người dùng chủ yếu ở đó. Transfer Acceleration và Global Accelerator tăng tốc nhưng thêm phí. Cross-Region Replication thêm phí inter-Region và lưu trữ nhân bản mà vẫn trả egress.',
   },
   {
     id: 'cost-052',
@@ -785,8 +658,6 @@ export const costQuestions: Question[] = [
       'Set up an AWS Direct Connect connection',
     ],
     answer: [3],
-    explanation:
-      'Direct Connect có phí port theo giờ nhưng đơn giá data transfer out rẻ hơn internet, nên với khối lượng lớn và đều đặn thì tổng chi phí thấp hơn, kèm băng thông ổn định. VPN egress tính theo giá internet; thêm tunnel không giảm đơn giá. Transfer Acceleration thêm phí. Transit Gateway thêm phí attachment và xử lý mà không giảm egress.',
   },
   {
     id: 'cost-053',
@@ -801,8 +672,6 @@ export const costQuestions: Question[] = [
       'Deploy an additional NAT gateway in each Availability Zone',
     ],
     answer: [1, 2],
-    explanation:
-      'Image ECR gồm API (ecr.api), registry (ecr.dkr) và layer lưu trên S3: interface endpoint cho ECR và CloudWatch Logs cộng gateway endpoint S3 (miễn phí) đưa traffic ra khỏi NAT; phí xử lý interface endpoint thấp hơn NAT. Public subnet với public IP phát sinh phí public IPv4 và giảm bảo mật. Transfer Acceleration không liên quan. Thêm NAT không giảm phí xử lý mỗi GB.',
   },
   {
     id: 'cost-054',
@@ -816,8 +685,6 @@ export const costQuestions: Question[] = [
       'Route the traffic between the two VPCs through internet gateways by using public IP addresses',
     ],
     answer: [0],
-    explanation:
-      'VPC peering không có phí giờ và không có phí xử lý mỗi GB (traffic cùng AZ miễn phí), nên thêm peering riêng cho cặp VPC trao đổi nhiều dữ liệu giảm phí Transit Gateway, các VPC khác vẫn dùng TGW. VPN giữa VPC tốn phí và phức tạp. Transit Gateway thứ hai vẫn có phí attachment và xử lý. Đi qua internet tốn phí public IPv4 và egress, kém bảo mật.',
   },
   {
     id: 'cost-055',
@@ -831,8 +698,6 @@ export const costQuestions: Question[] = [
       'Enable VPC Flow Logs and query them with Amazon Athena, together with Cost Explorer filtered by the inter-AZ data transfer usage type',
     ],
     answer: [3],
-    explanation:
-      'VPC Flow Logs ghi lại cặp IP nguồn/đích và lưu lượng, truy vấn bằng Athena cho biết instance nào gửi traffic sang AZ khác; Cost Explorer theo usage type (DataTransfer-Regional-Bytes) xác nhận chi phí inter-AZ. Trusted Advisor và Compute Optimizer không phân tích luồng mạng. S3 Storage Lens chỉ dành cho S3.',
   },
   {
     id: 'cost-056',
@@ -846,7 +711,5 @@ export const costQuestions: Question[] = [
       'Add more targets in each Availability Zone',
     ],
     answer: [2],
-    explanation:
-      'Với NLB, bật cross-zone load balancing làm traffic tới target ở AZ khác bị tính phí inter-AZ. Khi target đã chia đều mỗi AZ, tắt cross-zone giữ traffic trong cùng AZ mà vẫn cân bằng tốt và vẫn multi-AZ. Global Accelerator thêm phí. Dồn target vào một AZ mất HA. Thêm target không giảm phí cross-AZ.',
   },
 ];

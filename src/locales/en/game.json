@@ -1,0 +1,823 @@
+{
+  "Tracks": {
+    "url-shortener": {
+      "title": "URL shortener",
+      "pitch": "A short-link service for marketing campaigns: few links created, a huge number of clicks from everywhere.",
+      "tags": [
+        "Serverless",
+        "Edge caching",
+        "WAF",
+        "Cost"
+      ]
+    },
+    "static-website": {
+      "title": "Marketing website",
+      "pitch": "A marketing site that grows: from a few static files to a contact form, global visitors and bots.",
+      "tags": [
+        "S3 + CloudFront",
+        "Serverless",
+        "WAF",
+        "Encryption",
+        "Cost"
+      ]
+    },
+    "notifications": {
+      "title": "Notification service",
+      "pitch": "Send push, email and SMS to customers without making anyone wait, even on flash sale day.",
+      "tags": [
+        "SQS",
+        "SNS fan-out",
+        "Lambda vs EC2",
+        "Encryption"
+      ]
+    },
+    "startup-api": {
+      "title": "Startup API",
+      "pitch": "Grow one API from launch day to thousands of requests per second, and keep the bill under control.",
+      "tags": [
+        "Serverless",
+        "EC2 + ALB",
+        "Multi-AZ",
+        "Caching",
+        "Reserved"
+      ]
+    },
+    "document-vault": {
+      "title": "Company document vault",
+      "pitch": "Build an internal document sharing service: files are never public, uploads are scanned for viruses, and bots cannot scrape them.",
+      "tags": [
+        "Security",
+        "Private S3",
+        "Serverless",
+        "WAF",
+        "Multi-Region"
+      ]
+    },
+    "photo-sharing": {
+      "title": "Photo sharing",
+      "pitch": "People post photos, friends view them and get notified, until the day one photo goes viral.",
+      "tags": [
+        "S3 + CloudFront",
+        "SQS",
+        "SNS fan-out",
+        "Spot",
+        "Auto Scaling"
+      ]
+    },
+    "ecommerce": {
+      "title": "Online shop",
+      "pitch": "From one server to launch day: grow a 3-tier shop that survives an AZ outage, a flash sale and a flood of orders.",
+      "tags": [
+        "3-tier",
+        "Multi-AZ",
+        "Auto Scaling",
+        "Caching",
+        "SQS"
+      ]
+    },
+    "ticketing": {
+      "title": "Concert tickets",
+      "pitch": "Tens of thousands of fans hit \"Buy\" the second sales open: keep the ticketing system standing.",
+      "tags": [
+        "Flash sale",
+        "SQS",
+        "DynamoDB",
+        "WAF"
+      ]
+    },
+    "news-feed": {
+      "title": "Social news feed",
+      "pitch": "A feed that is read far more than it is written: caches, read replicas and the edge keep scrolling smooth for everyone.",
+      "tags": [
+        "Read-heavy",
+        "Read replicas",
+        "ElastiCache",
+        "CloudFront"
+      ]
+    },
+    "health-records": {
+      "title": "Electronic health records",
+      "pitch": "Build a health records portal for a clinic chain: medical data must stay encrypted, private and safe from attacks.",
+      "tags": [
+        "Security",
+        "KMS",
+        "Private S3",
+        "WAF",
+        "SQS"
+      ]
+    },
+    "video-streaming": {
+      "title": "Course video platform",
+      "pitch": "An e-learning platform: smooth playback on every continent, automatic transcoding of new uploads, and service that continues through a Region failure.",
+      "tags": [
+        "CloudFront",
+        "SQS + Spot",
+        "Route 53",
+        "Multi-Region"
+      ]
+    },
+    "saas-dr": {
+      "title": "SaaS that never goes down",
+      "pitch": "A B2B app that enterprise customers pay to always be up, even when an AZ or a whole Region is lost.",
+      "tags": [
+        "Multi-AZ",
+        "Disaster recovery",
+        "Compliance",
+        "Reserved"
+      ]
+    },
+    "iot-telemetry": {
+      "title": "IoT telemetry",
+      "pitch": "Thousands of sensors report every second; store every reading and power the dashboards without losing data.",
+      "tags": [
+        "DynamoDB",
+        "SQS",
+        "Auto Scaling",
+        "ElastiCache"
+      ]
+    },
+    "game-leaderboard": {
+      "title": "Game leaderboard",
+      "pitch": "Backend for a global mobile game: hot leaderboards, players everywhere, bot attacks and a whole Region going down.",
+      "tags": [
+        "ElastiCache",
+        "Global",
+        "WAF",
+        "Multi-Region",
+        "Auto Scaling"
+      ]
+    },
+    "banking-portal": {
+      "title": "Online banking portal",
+      "pitch": "Build a banking portal that meets strict security rules and survives outages, attacks and payday.",
+      "tags": [
+        "Security",
+        "Multi-AZ",
+        "WAF",
+        "SQS",
+        "Global"
+      ]
+    },
+    "payment-api": {
+      "title": "Card payment API",
+      "pitch": "Build a serverless payment API for PCI DSS: encrypt card data, stop card-testing bots and check fraud asynchronously.",
+      "tags": [
+        "Security",
+        "Serverless",
+        "WAF",
+        "KMS",
+        "SNS + SQS"
+      ]
+    }
+  },
+  "Rounds": {
+    "first-users": {
+      "title": "Closed beta",
+      "story": "The closed beta just opened to the first testers: about 50 requests per second, mostly page views and saved data.",
+      "concept": "Every request needs a server (EC2) to run code and a database (RDS) to read and write.",
+      "nudge": "Drag in EC2 and RDS, then connect Users → EC2 → RDS."
+    },
+    "scale-up": {
+      "title": "In the local news",
+      "story": "A newspaper mentioned your app. Traffic is up to 350 req/s.",
+      "concept": "Vertical scaling: move to a bigger instance. Quick, but it has a ceiling and is still a single point of failure.",
+      "nudge": "Select EC2 and set Size to Medium. RDS needs Medium too."
+    },
+    "scale-out": {
+      "title": "Top of the App Store",
+      "story": "1,300 req/s. Even the biggest single machine blows the budget.",
+      "concept": "Horizontal scaling: several small servers behind an Application Load Balancer are cheaper and sturdier than one big box.",
+      "nudge": "Users → ALB → EC2 Medium ×3 → RDS Large."
+    },
+    "az-outage": {
+      "title": "An AZ loses power",
+      "story": "Everything runs nicely in us-east-1a… until today.",
+      "concept": "High availability: spread servers across 2+ AZs and turn on RDS Multi-AZ for automatic failover.",
+      "nudge": "EC2 ×2 with AZ \"a+b\" behind the ALB; turn on Multi-AZ for RDS."
+    },
+    "flash-sale": {
+      "title": "Noon flash sale",
+      "story": "Normally 220 req/s, but the flash sale triples it. Paying for the peak all day loses money.",
+      "concept": "Auto Scaling Group: add instances when load rises, remove them when it falls. Pay only for what runs.",
+      "nudge": "Turn on Auto Scaling for EC2 Medium (min 1, max 3). RDS Large handles the peak."
+    },
+    "region-down": {
+      "title": "The whole Region goes down",
+      "story": "Your boss asks: \"What if all of us-east-1 goes down?\" Today you find out.",
+      "concept": "Disaster recovery: run a copy in another Region (warm standby) and let Route 53 fail over when health checks fail. The database must be multi-Region out of the box: Aurora Global Database keeps a copy in the other Region and fails over in ~1 minute, with no manual promotion as with a cross-Region RDS replica.",
+      "nudge": "Users → Route 53 → two ALB → EC2 stacks; put the second stack in eu-west-1. Use one Aurora, turn on Aurora Global Database, and link the EC2 in both Regions to it."
+    },
+    "cache-it": {
+      "title": "Lots of reads, few writes",
+      "story": "95% of requests read the same hot data. The database is straining.",
+      "concept": "Caching: ElastiCache answers most reads in 1–2 ms so the database can shrink.",
+      "nudge": "Connect EC2 to both ElastiCache and RDS. The cache answers 85% of reads, so RDS Medium is enough."
+    },
+    "cache-crash": {
+      "title": "The cache crashes",
+      "story": "The cache saves a lot, but what if it dies?",
+      "concept": "Caches need HA too: use a Multi-AZ replica, or keep a database that survives without the cache.",
+      "nudge": "Turn on Multi-AZ for ElastiCache (or add read replicas to take reads)."
+    },
+    "static-files": {
+      "title": "Images, images, images",
+      "story": "The app is now all images: 85% of 4,000 req/s are static files.",
+      "concept": "Do not make servers send static files: store them in S3 and serve them from CloudFront edges.",
+      "nudge": "Users → CloudFront; CloudFront → S3 (static) and → ALB → EC2 → RDS (dynamic)."
+    },
+    "global-users": {
+      "title": "Users all over the world",
+      "story": "70% of users are in Europe, but the system lives in us-east-1. Target: 140 ms or less.",
+      "concept": "Distance means latency: bring content to the edge (CloudFront) and ride the AWS backbone (Global Accelerator).",
+      "nudge": "Put CloudFront in front of everything, turn on \"Cache API responses\", use S3 for static files."
+    },
+    "background-jobs": {
+      "title": "Emails and PDF exports",
+      "story": "30% of requests are heavy jobs: emails and PDF invoices. Users wait 400 ms each time.",
+      "concept": "Decoupling: push heavy work onto SQS, answer the user right away, let workers do it later.",
+      "nudge": "Web EC2 → SQS → worker EC2 → RDS. The web tier still talks to RDS for reads and writes."
+    },
+    "fan-out": {
+      "title": "One order, many systems",
+      "story": "Every order must reach both email and analytics, and one failing must not take down the other.",
+      "concept": "Fan-out: SNS pushes one message to many SQS queues, each with its own worker.",
+      "nudge": "EC2 → SNS → 2 SQS queues → one EC2 Medium worker each."
+    },
+    "lock-it-down": {
+      "title": "Security audit",
+      "story": "The auditor opens your board and frowns: the database faces the internet, unencrypted.",
+      "concept": "Defense in depth: databases in private subnets, servers behind a load balancer, data encrypted with KMS.",
+      "nudge": "Delete the Users → RDS wire, put an ALB in front of EC2, turn on encryption for RDS."
+    },
+    "bot-attack": {
+      "title": "Bot attack",
+      "story": "A botnet fires junk requests at 6× your real traffic.",
+      "concept": "Block at the edge: WAF filters bots and floods before they reach servers. Buying more servers just pays the attacker.",
+      "nudge": "Users → WAF → ALB → EC2 → RDS."
+    },
+    "serverless": {
+      "title": "Side project, thin wallet",
+      "story": "Only 20 req/s and a $12/month budget. One EC2 + RDS is already over.",
+      "concept": "Serverless: API Gateway + Lambda + DynamoDB on-demand, pay per request, almost $0 when idle.",
+      "nudge": "Users → API Gateway → Lambda → DynamoDB."
+    },
+    "spot-workers": {
+      "title": "Cheap workers",
+      "story": "60% of traffic is image processing. On-Demand workers blow the budget.",
+      "concept": "Spot is up to 90% cheaper but can be taken back. With SQS, jobs wait in the queue and catch up later.",
+      "nudge": "Worker EC2 Large ×2 on Spot pricing, fed by SQS."
+    },
+    "steady-table": {
+      "title": "Steady traffic",
+      "story": "2,000 req/s day and night, barely changing. DynamoDB on-demand bills every request.",
+      "concept": "Predictable traffic → provisioned capacity beats on-demand. Unpredictable traffic → on-demand.",
+      "nudge": "Turn on provisioned capacity for DynamoDB, size Large."
+    },
+    "reserved": {
+      "title": "Running 24/7 all year",
+      "story": "A steady 1,000 req/s that will run all year. The budget got cut.",
+      "concept": "A 1–3 year commitment (Reserved Instances / Savings Plans) saves up to ~72% on steady base load.",
+      "nudge": "EC2 Medium ×3 on Reserved pricing; add ElastiCache so RDS can stay Medium."
+    },
+    "final-boss": {
+      "title": "Global launch day",
+      "story": "Everything at once: global users, images, background jobs, a security audit, and an AZ about to fail.",
+      "concept": "Combine it all: edge, multi-AZ HA, caching, decoupling, encryption and sensible cost.",
+      "nudge": "CloudFront (+S3, API cache) → ALB → EC2 (AZ a+b, ASG) → ElastiCache + RDS (Multi-AZ, encrypted); EC2 → SQS → worker."
+    },
+    "short-mvp": {
+      "title": "First version",
+      "story": "A few friends try it: 30 requests/s, mostly clicks (reads) and the odd new link (write). The budget is only $15/month.",
+      "concept": "Low, bursty traffic suits serverless: API Gateway + Lambda + DynamoDB on-demand, paid per request.",
+      "nudge": "Users → API Gateway → Lambda → DynamoDB. One EC2 + RDS already costs $30."
+    },
+    "short-viral": {
+      "title": "A link goes viral",
+      "story": "One link is shared everywhere: 1,200 clicks per second, and pay-per-request Lambda is burning money. Every click on the same link returns the same answer.",
+      "concept": "Redirects are cacheable: CloudFront keeps the response at the edge, so most clicks never reach Lambda.",
+      "nudge": "Put CloudFront in front of API Gateway and turn on \"Cache API responses\"."
+    },
+    "short-global": {
+      "title": "Clicks from everywhere",
+      "story": "60% of clicks come from Europe. Far-away users wait too long; the target is now under 100 ms.",
+      "concept": "CloudFront already answers cacheable clicks at the edge. The rest (new or rare links) needs Global Accelerator to ride the AWS backbone instead of the public internet.",
+      "nudge": "Put Global Accelerator between CloudFront and API Gateway."
+    },
+    "short-spam": {
+      "title": "Spam bots",
+      "story": "A botnet pumps junk requests at 6× real traffic. Lambda and DynamoDB charge per request, so every junk request costs money.",
+      "concept": "Stop bots at the edge with WAF (rate-based rules) so you never pay for attack traffic.",
+      "nudge": "Put WAF right after Users, in front of CloudFront."
+    },
+    "site-1-launch": {
+      "title": "Launch day",
+      "story": "The site is only HTML, CSS and images: 300 requests/s, 30% of visitors abroad. Budget $8/month, target under 60 ms.",
+      "concept": "Static content needs no servers: store it in S3 and serve it through CloudFront, cached close to users.",
+      "nudge": "Users → CloudFront → S3. A single small EC2 already costs $15."
+    },
+    "site-2-contact": {
+      "title": "Contact form",
+      "story": "Marketing wants a contact form and a post list: 400 requests/s, 15% API reads and 5% form posts. Budget $24.",
+      "concept": "A small, bursty dynamic part suits serverless: API Gateway + Lambda + DynamoDB, paid per request.",
+      "nudge": "Keep CloudFront → S3 and add CloudFront → API Gateway → Lambda → DynamoDB."
+    },
+    "site-3-global": {
+      "title": "Visitors worldwide",
+      "story": "An international campaign: 800 requests/s, 70% of visitors in Europe, far from us-east-1. The post list is the same for everyone. Target under 55 ms.",
+      "concept": "CloudFront can also cache read-heavy API responses: half the reads are answered at the edge instead of the Region.",
+      "nudge": "Turn on \"Cache API responses\" on CloudFront."
+    },
+    "site-4-bots": {
+      "title": "Form spam bots",
+      "story": "A botnet pumps junk requests at 6× real traffic into the form. Lambda overloads and API Gateway bills every junk request.",
+      "concept": "AWS WAF rate-based rules stop bots at the edge, before they reach (and get billed by) pay-per-request services.",
+      "nudge": "Put WAF right after Users, in front of CloudFront."
+    },
+    "site-5-encrypt": {
+      "title": "Customer data",
+      "story": "The form now stores emails and phone numbers; legal requires all data encrypted at rest and only code may reach the database. 1,000 requests/s.",
+      "concept": "Encryption at rest with KMS: S3 is encrypted by default, but the DynamoDB table must be too. The database stays behind Lambda.",
+      "nudge": "Turn on encryption on DynamoDB; keep DynamoDB connected only from Lambda."
+    },
+    "site-6-squeeze": {
+      "title": "Cost squeeze",
+      "story": "Traffic has settled at 1,600 requests/s with lots of newsletter sign-ups (writes). The boss cuts the budget to $68.",
+      "concept": "Steady, predictable traffic is cheaper on DynamoDB provisioned capacity than on-demand, which bills every request.",
+      "nudge": "Turn on provisioned capacity on DynamoDB; size Small is enough."
+    },
+    "notif-1-mvp": {
+      "title": "Pilot",
+      "story": "40 requests/s: notification history (reads), settings (writes) and 30% send commands. Budget $7; waiting up to 250 ms is fine.",
+      "concept": "At low traffic serverless is cheapest: API Gateway + Lambda + DynamoDB, no server running all day.",
+      "nudge": "Users → API Gateway → Lambda → DynamoDB. Lambda can send the notifications itself for now."
+    },
+    "notif-2-queue": {
+      "title": "Sending is slow",
+      "story": "Other teams start calling the API: 250 requests/s. Sending inside the request adds 400 ms to every command; the target is now under 100 ms.",
+      "concept": "Take sending out of the request: Lambda drops the command into SQS and answers at once; a worker reads the queue and sends later.",
+      "nudge": "Connect Lambda → SQS → a Medium EC2 worker."
+    },
+    "notif-3-fanout": {
+      "title": "Three channels",
+      "story": "Every command must now go out as push, email and SMS. A slow channel must not hold up the others, and no command may be lost. 300 requests/s.",
+      "concept": "SNS fan-out: Lambda publishes one message to a topic; SNS copies it into three SQS queues, one worker per channel.",
+      "nudge": "Lambda → SNS → three SQS queues (Push, Email, SMS), each with a Medium EC2 worker."
+    },
+    "notif-4-sale": {
+      "title": "Flash sale",
+      "story": "A big customer runs a flash sale: 3× traffic for almost a third of the day. Every notification must still be sent by the end of the day.",
+      "concept": "SQS absorbs the burst; Auto Scaling adds workers while they are busy so the queues drain in time.",
+      "nudge": "Turn on Auto Scaling for all three EC2 workers."
+    },
+    "notif-5-lambda": {
+      "title": "Pay per message",
+      "story": "Outside the flash sale, the EC2 workers sit idle most of the time. The budget is cut to $95.",
+      "concept": "Bursty workers suit Lambda: SQS triggers Lambda, which scales on its own and bills only for the messages it processes.",
+      "nudge": "Replace the three EC2 workers with three Lambdas reading the three SQS queues."
+    },
+    "notif-6-encrypt": {
+      "title": "Emails and phone numbers",
+      "story": "Queued messages hold customer emails and phone numbers; the auditor requires all data encrypted at rest. Traffic grows to 450 requests/s.",
+      "concept": "Encryption at rest with KMS everywhere data is stored: the SQS queues as well as the DynamoDB table.",
+      "nudge": "Turn on encryption on DynamoDB and all three SQS queues."
+    },
+    "sapi-launch": {
+      "title": "Launch day",
+      "story": "The API just went live: about 80 requests/s, 70% reads and 30% writes. Money is tight: $15/month.",
+      "concept": "Small, uneven traffic suits serverless: API Gateway + Lambda + on-demand DynamoDB bill per request, with no idle servers to pay for.",
+      "nudge": "Users → API Gateway → Lambda → DynamoDB. A small EC2 + RDS already costs $30."
+    },
+    "sapi-growth": {
+      "title": "Steady traffic",
+      "story": "Customers arrive: 900 requests/s around the clock. The serverless bill is past $130 and the budget is $120.",
+      "concept": "Per-request pricing grows linearly with traffic. Under high, steady load, EC2 behind an ALB plus provisioned DynamoDB (flat price) beats Lambda and on-demand DynamoDB.",
+      "nudge": "Replace API Gateway + Lambda with ALB → one large EC2, and switch DynamoDB to provisioned (medium)."
+    },
+    "sapi-az": {
+      "title": "An AZ goes down",
+      "story": "Business customers want an uptime promise. That same week an AZ fails, and the only server lives in it.",
+      "concept": "Multi-AZ: run at least two servers in two AZs behind the ALB. Each AZ must carry all 900 requests/s alone when the other is gone. DynamoDB already replicates across AZs.",
+      "nudge": "Set EC2 to 2 large instances in \"AZ a+b\"."
+    },
+    "sapi-cache": {
+      "title": "More reads than writes",
+      "story": "A mobile app joins: 2,000 requests/s, 90% re-reading the same data. The medium DynamoDB table is overloaded, and a large one blows the $200 budget.",
+      "concept": "ElastiCache in front of the database keeps hot data in memory: about 85% of reads never touch DynamoDB, so a small table is enough.",
+      "nudge": "Add a small ElastiCache and connect EC2 → ElastiCache; keep EC2 → DynamoDB for writes and cache misses."
+    },
+    "sapi-reserved": {
+      "title": "Cut the bill",
+      "story": "Investors want the bill under $145/month. Load is still 2,000 requests/s, steady 24/7. Someone suggests Spot, but AWS can reclaim Spot at any moment.",
+      "concept": "Steady, long-running base load belongs on Reserved Instances (or Savings Plans): about 40% cheaper and never reclaimed like Spot. Spot is only for work that tolerates interruption.",
+      "nudge": "Switch the EC2 pricing to Reserved. Do not run the API on Spot."
+    },
+    "sapi-peak": {
+      "title": "Promo campaign",
+      "story": "A normal day is 1,000 requests/s, but a promo triples traffic for a few hours. Budget: $195.",
+      "concept": "Mix pricing models: Reserved for the base load that is always there, Auto Scaling adds on-demand instances for short peaks. Reserving for the peak pays for idle servers.",
+      "nudge": "Keep 2 Reserved instances as the base and turn on Auto Scaling for EC2 (max 4)."
+    },
+    "vault-share": {
+      "title": "Share without going public",
+      "story": "The company needs a place to share contracts and reports: 400 requests/s, 70% file downloads, the rest listing files and permissions. Last year a public bucket leaked customer contracts: this time no bucket may be open to the internet.",
+      "concept": "Turn on S3 Block Public Access for the account and encrypt with SSE-KMS. CloudFront reads the bucket through Origin Access Control; API Gateway + Lambda checks permissions and issues short-lived signed URLs. Staff sign in through Cognito or IAM Identity Center instead of sharing keys.",
+      "nudge": "Users → CloudFront; CloudFront → S3 for files and CloudFront → API Gateway → Lambda → DynamoDB (encrypted)."
+    },
+    "vault-scan": {
+      "title": "Scan uploads for viruses",
+      "story": "Staff start uploading files: 15% of requests are new files that need a virus scan, and each scan takes a few hundred ms. Scanning inside the request slows the whole app, and unscanned files may not be shared.",
+      "concept": "Lambda stores the file as pending and sends a job to an encrypted SQS; another Lambda scans it and marks it clean. On AWS, GuardDuty Malware Protection for S3 can also scan new files without custom code.",
+      "nudge": "Add an encrypted SQS fed by Lambda, and a second Lambda reading from it."
+    },
+    "vault-scrape": {
+      "title": "Scraping bots",
+      "story": "A botnet uses leaked accounts to scrape documents in bulk at 6× real traffic. Lambda is swamped and real staff cannot open files. Security requires every request to pass through WAF.",
+      "concept": "WAF on CloudFront blocks at the edge, before the API: rate-based rules, Bot Control, and geo match if the company only works in a few countries. GuardDuty spots credentials used in unusual ways so the account can be locked in time.",
+      "nudge": "Put WAF between Users and CloudFront."
+    },
+    "vault-region": {
+      "title": "A whole Region fails",
+      "story": "us-east-1 has a major outage for a few hours. Contracts must still open, and the European office (40% of users) needs speed. Copies in another Region must follow the same security rules as the original.",
+      "concept": "S3 Cross-Region Replication to eu-west-1, with the target bucket encrypted and Block Public Access on; a KMS multi-Region key lets both Regions decrypt with the same key. A DynamoDB global table keeps data in both Regions, and Route 53 sends requests to the Region still alive.",
+      "nudge": "Add a second S3 in eu-west-1 behind CloudFront; CloudFront → Route 53 → API Gateway + Lambda + SQS in each Region, and turn on Global for DynamoDB."
+    },
+    "photo-1-launch": {
+      "title": "Fast photo views",
+      "story": "600 requests/s, 75% are image downloads, the rest are feed reads and new photos (writes). 20% of users are in Europe. Target under 80 ms.",
+      "concept": "Images are static content: keep them in S3 and serve them through CloudFront. App servers only handle the API.",
+      "nudge": "CloudFront → S3 for images, CloudFront → ALB → EC2 → RDS for the API."
+    },
+    "photo-2-thumbs": {
+      "title": "Thumbnails",
+      "story": "Every new photo needs thumbnails: 10% of requests are heavy jobs. Done inside the app server, users wait 400 ms more. 800 requests/s, target under 75 ms.",
+      "concept": "Move heavy work out of the request: the server drops a job into SQS and answers at once; a separate worker does it later.",
+      "nudge": "Connect app EC2 → SQS → a Medium EC2 worker."
+    },
+    "photo-3-fanout": {
+      "title": "Notify followers",
+      "story": "For every new photo, besides thumbnails, every follower’s feed must be updated. Two independent jobs; neither may wait for the other. 1,000 requests/s.",
+      "concept": "SNS fan-out: one message published to a topic is copied into several SQS queues, each with its own worker.",
+      "nudge": "App EC2 → SNS → two SQS queues (thumbnails, feed), each with an EC2 worker."
+    },
+    "photo-4-spot": {
+      "title": "Cheap workers",
+      "story": "Traffic stays the same but the budget is cut to $130. Workers process queued jobs; a few seconds of delay is fine.",
+      "concept": "Background work that tolerates interruption is the ideal fit for Spot Instances: up to 70% cheaper than On-Demand.",
+      "nudge": "Switch both EC2 workers to Spot pricing."
+    },
+    "photo-5-interrupt": {
+      "title": "Spot reclaimed",
+      "story": "Midday, AWS reclaims every Spot instance for a while. Jobs pile up in the queues and must all be done by the end of the day.",
+      "concept": "Spot can be reclaimed at any time. SQS keeps the jobs safe, but workers need spare capacity to drain the backlog once they return.",
+      "nudge": "Grow the Spot workers to size Large so they have room to drain the queues."
+    },
+    "photo-6-viral": {
+      "title": "A photo goes viral",
+      "story": "One photo spreads everywhere: traffic climbs from 1,000 to 4,000 requests/s during the day. Feed reads surge and background jobs grow with them.",
+      "concept": "Auto Scaling for both app servers and workers, plus ElastiCache and CloudFront caching so the database does not take every read.",
+      "nudge": "Turn on Auto Scaling for the app EC2 and the workers, add ElastiCache behind the app EC2, and turn on \"Cache API responses\"."
+    },
+    "shop-1-mvp": {
+      "title": "Open the shop",
+      "story": "A handmade-goods shop opens: 250 requests/s, 80% browsing products (reads) and 20% carts and orders (writes). Budget $70/month.",
+      "concept": "The basic setup: EC2 servers run the code, RDS stores the data. Size each for its load, and remember a write costs RDS three times as much as a read.",
+      "nudge": "Users → EC2 → RDS. Small is too small for both: try Medium."
+    },
+    "shop-2-scale-out": {
+      "title": "Scale out",
+      "story": "The shop gets press: 1,200 requests/s. A Large server handles exactly 1,200 units/s before traffic even wobbles. Budget $178/month.",
+      "concept": "Scale out instead of up: put an ALB in front and spread the load over several smaller EC2 instances. A few Medium servers cost less than one XLarge and stop being a single point of failure.",
+      "nudge": "Users → ALB → EC2 Medium ×3 → RDS Large."
+    },
+    "shop-3-az-outage": {
+      "title": "Losing an AZ",
+      "story": "Still 1,200 requests/s, but today us-east-1a loses power for almost half the round, and every server and the database live in AZ a. Budget $320/month.",
+      "concept": "High availability: spread EC2 over 2 AZs in an Auto Scaling Group so it replaces dead instances in the surviving AZ, and turn on RDS Multi-AZ for automatic failover.",
+      "nudge": "EC2 Medium ×4, AZ \"AZ a+b\", Auto Scaling Group on (max 4). RDS Large with Multi-AZ."
+    },
+    "shop-4-catalog-cache": {
+      "title": "Cache the catalog",
+      "story": "Holiday season: 2,000 requests/s, 95% browsing the catalog and product pages, the same data read over and over. Making RDS carry it all takes XLarge with Multi-AZ, far over the $230/month budget.",
+      "concept": "Read-heavy, rarely changing data belongs in a cache: ElastiCache answers ~85% of reads in a few ms, so RDS only sees cache misses and writes.",
+      "nudge": "Connect EC2 → ElastiCache and keep EC2 → RDS. RDS can now be Medium; use 2 Large EC2 instances."
+    },
+    "shop-5-flash-sale": {
+      "title": "Midnight flash sale",
+      "story": "Normally 2,000 requests/s; the midnight flash sale triples it for about a third of the round. Keeping enough servers for the peak all day blows the $480/month budget.",
+      "concept": "An Auto Scaling Group with target tracking adds instances when load passes ~60% and removes them after the sale. The cache and database do not scale by themselves, so size them for the peak.",
+      "nudge": "EC2 Large, min 3, max 8, Auto Scaling Group on. ElastiCache Medium, RDS Large."
+    },
+    "shop-6-launch-day": {
+      "title": "Launch day",
+      "story": "The new collection launches: 2,000 requests/s, a 3× flash sale, and 20% of requests are orders (payment, stock, emails) that take 400 ms each when done inline. The target is under 150 ms, and every order must be processed before the round ends.",
+      "concept": "Take order processing out of the web path: the web tier puts orders on SQS and answers at once, and workers process them at their own pace. The queue absorbs the sale peak, so workers need not be peak-sized.",
+      "nudge": "Web EC2 → SQS → worker EC2 (one XLarge is enough to drain the queue after the sale). Keep web → ElastiCache and RDS."
+    },
+    "tix-1-on-sale": {
+      "title": "A small show goes on sale",
+      "story": "A 2,000-seat show: normally 200 requests/s (60% browsing seats, 40% booking), tripling when sales open. Budget $140/month.",
+      "concept": "An Auto Scaling Group lets the web tier follow the on-sale rush and shrink afterwards. The database does not scale by itself, so size it for the peak; each write costs RDS three reads.",
+      "nudge": "Users → ALB → EC2 Medium (Auto Scaling Group on, max 4) → RDS Large."
+    },
+    "tix-2-write-behind": {
+      "title": "Queue the bookings",
+      "story": "A stadium show: 900 requests/s, 60% of them bookings. When sales open, writes triple and overwhelm even an XLarge RDS. Averaged over the round, though, XLarge keeps up. Budget $460/month.",
+      "concept": "Write-behind: web servers do not write to the database; they put bookings on SQS and workers write them to RDS at a steady pace. Reads go through ElastiCache, and only misses reach RDS. The queue turns a sharp spike into a steady stream.",
+      "nudge": "Remove web EC2 → RDS. Connect web → ElastiCache → RDS (reads) and web → SQS → worker EC2 (Medium ×3) → RDS (writes)."
+    },
+    "tix-3-dynamodb": {
+      "title": "Move to DynamoDB",
+      "story": "A national tour: 2,000 requests/s, still 60% bookings, 3× when sales open. Even with the queue, the average write rate is more than the biggest RDS can take. Budget $650/month.",
+      "concept": "DynamoDB scales out almost without limit. Pick the capacity mode by the shape of the load: on-demand for unpredictable load, provisioned for steady load at a much lower price. Workers behind a queue are exactly that steady load.",
+      "nudge": "Replace RDS with DynamoDB and turn on Provisioned capacity, Large. Worker: one XLarge instance. Web EC2 Large, min 2, max 8."
+    },
+    "tix-4-bots": {
+      "title": "Scalper bots",
+      "story": "Scalpers aim a botnet at the sale, sending 6× the real traffic to grab tickets. The web servers drown and real fans cannot buy.",
+      "concept": "AWS WAF rate-based rules stop bots at the edge, before they reach the ALB and the servers. Much cheaper than adding servers to absorb junk traffic.",
+      "nudge": "Put WAF right after Users, in front of the ALB."
+    },
+    "tix-5-e-tickets": {
+      "title": "Sending e-tickets",
+      "story": "Every ticket sold needs a QR e-ticket generated and emailed: 40% of requests are now heavy jobs on the queue. One worker cannot keep up, and every ticket must go out before the round ends.",
+      "concept": "Workers need to scale too: a heavy job costs a worker three times a write. An Auto Scaling Group for workers adds instances when the queue backs up (in practice, scale on SQS queue depth).",
+      "nudge": "Switch the worker to Large, min 2, max 4, with the Auto Scaling Group on."
+    },
+    "tix-6-world-tour": {
+      "title": "World tour",
+      "story": "A world tour: 2,000 requests/s, 60% of fans in Europe, 3× when sales open. A quarter of requests download seat maps (static files). The target is under 100 ms.",
+      "concept": "CloudFront serves static files from S3 at an edge near each fan and carries the rest to the origin over the faster AWS network. The web servers no longer serve static files.",
+      "nudge": "Add CloudFront after WAF: connect CloudFront → S3 (seat maps) and CloudFront → ALB."
+    },
+    "feed-1-launch": {
+      "title": "Feed launch",
+      "story": "800 requests/s: 90% scrolling the feed (reads), 10% posting and liking (writes). Budget $150/month.",
+      "concept": "A read-heavy app: scale the web tier out behind an ALB, and size the database for reads plus writes (a write costs RDS three reads).",
+      "nudge": "Users → ALB → EC2 Medium ×2 → RDS Large."
+    },
+    "feed-2-read-replica": {
+      "title": "Replicas for reads",
+      "story": "Still 800 requests/s, but one AZ is about to lose power for almost half the round. Multi-AZ on a Large RDS doubles its price and breaks the $275/month budget, and the Multi-AZ standby serves no reads.",
+      "concept": "Multi-AZ to survive, read replicas to scale reads: keep a Medium primary with Multi-AZ and add a Read Replica in AZ b to take part of the reads. A replica does not double the price like Multi-AZ does.",
+      "nudge": "EC2 Medium ×4, \"AZ a+b\", Auto Scaling Group on (max 4). RDS Medium with Multi-AZ plus a Medium Read Replica in AZ b; connect EC2 to both."
+    },
+    "feed-3-cache": {
+      "title": "Cache the feed",
+      "story": "The app takes off: 2,500 requests/s, 95% reads. Adding Large replicas to carry every read blows the $330/month budget.",
+      "concept": "Each person's feed is read again and again: ElastiCache answers ~85% of reads, so the database and replica only see misses and writes. A cache is far cheaper than more replicas.",
+      "nudge": "Add a Small ElastiCache and connect EC2 → ElastiCache. Switch EC2 to Large ×3."
+    },
+    "feed-4-cache-crash": {
+      "title": "The cache crashes",
+      "story": "The only ElastiCache node dies mid-round. All 2,500 requests/s land on the database and replica, which were sized for cache misses only.",
+      "concept": "A cache is a point of failure too. ElastiCache Multi-AZ keeps a replica in another AZ that takes over at once, much cheaper than a database big enough to serve every read.",
+      "nudge": "Turn on Multi-AZ for ElastiCache."
+    },
+    "feed-5-viral": {
+      "title": "A post goes viral",
+      "story": "A post goes viral: traffic climbs steadily from 1,500 to 6,000 requests/s over the round. A fixed fleet cannot keep up, and sizing for the end of the round is wasteful. Budget $680/month.",
+      "concept": "Auto Scaling lets the web tier follow growing traffic. The cache and database do not scale by themselves: move ElastiCache to Medium and the RDS primary to Large to cope with the end of the round.",
+      "nudge": "EC2 Large, min 2, max 8, Auto Scaling Group on. ElastiCache Medium (Multi-AZ), RDS Large (Multi-AZ)."
+    },
+    "feed-6-global": {
+      "title": "Readers worldwide",
+      "story": "The app goes international: 3,000 requests/s, 60% of users in Europe. They wait too long: the target is now under 120 ms, and the budget is down to $550/month.",
+      "concept": "CloudFront can cache API responses too: hot feeds are served at an edge near the reader, and the rest travels to the origin over the AWS network. Faster for far-away users, and less load on EC2, so fewer servers.",
+      "nudge": "Put CloudFront between Users and the ALB and turn on \"Cache API responses\"."
+    },
+    "ehr-private": {
+      "title": "Medical data is sensitive",
+      "story": "The clinic chain puts health records online: 300 requests/s, 70% doctors and patients reading records, 30% updates. Health data rules demand: encrypt all data, keep the database private, and no server may take connections straight from the internet.",
+      "concept": "Three tiers inside a VPC: the ALB in a public subnet, EC2 and RDS in private subnets. The RDS security group only allows port 5432 from the EC2 security group. RDS encrypts at rest with a KMS key, and it must be turned on at creation: a running database cannot be encrypted in place.",
+      "nudge": "Users → ALB → EC2 (medium) → RDS (medium), with encryption on for RDS."
+    },
+    "ehr-scans": {
+      "title": "X-ray images",
+      "story": "Patients can now view X-rays and lab results: traffic grows to 700 requests/s, nearly half of them file downloads. Serving files from EC2 overloads the servers. Security bans public buckets: anyone holding a link could download patient data.",
+      "concept": "Store files in S3 with Block Public Access on, and serve them through CloudFront with Origin Access Control (OAC): the bucket policy only lets CloudFront read. To let only the right patient download, the app issues short-lived signed URLs or signed cookies.",
+      "nudge": "Users → CloudFront; CloudFront → S3 for files and CloudFront → ALB for the rest."
+    },
+    "ehr-cache": {
+      "title": "Doctors need fast lookups",
+      "story": "In the clinic, doctors open records all day: 900 requests/s, mostly re-reading the same records. RDS cannot keep up and the latency target drops to 70 ms. Health data in a cache is still health data.",
+      "concept": "ElastiCache takes repeated reads off RDS. Turn on encryption at rest and in transit (TLS) for the cache, add a Redis AUTH token or RBAC users, and keep the cache in a private subnet that only EC2 can reach.",
+      "nudge": "Add ElastiCache linked from EC2 and turn on its encryption."
+    },
+    "ehr-stuffing": {
+      "title": "Credential stuffing",
+      "story": "Attackers try millions of email/password pairs leaked from other sites (credential stuffing), hitting the portal at 6× real traffic. Auditors also require every request to pass a web application firewall before it reaches a server.",
+      "concept": "Attach AWS WAF to CloudFront: a rate-based rule caps logins per IP, and the Account Takeover Prevention and Bot Control managed rules stop bots. Shield Standard covers the network layer for free; Shield Advanced adds a DDoS response team and cost protection.",
+      "nudge": "Put WAF between Users and CloudFront."
+    },
+    "ehr-audit": {
+      "title": "Record access log",
+      "story": "The law requires logging who viewed which record and sending patients an access report on request: 15% of requests build a report, each taking a few hundred ms. No report may be lost, and the queue holds patient data too.",
+      "concept": "Send report jobs to SQS with SSE-KMS, and let a separate worker build them. CloudTrail records every AWS API call; turn on CloudTrail log file validation and store logs in S3 with Object Lock so nobody can change them.",
+      "nudge": "Add an encrypted SQS fed by the web EC2, and a medium EC2 worker reading from it."
+    },
+    "vid-1-launch": {
+      "title": "First course goes live",
+      "story": "2,000 requests/s: 85% video segments and images, 12% lesson lists, 3% progress saves. Half the students are in Europe, far from us-east-1. Target under 110 ms, budget $115/month.",
+      "concept": "Static content lives in S3 and CloudFront serves it from an edge near each student: servers stop carrying video and far users skip the ~150 ms trip.",
+      "nudge": "Users → CloudFront. CloudFront → S3 for video, and CloudFront → ALB → EC2 → RDS for the rest."
+    },
+    "vid-2-transcode": {
+      "title": "Instructors upload videos",
+      "story": "Traffic grows to 2,500 requests/s and 5% are new videos to transcode into several resolutions. Transcoding inside the web servers adds 400 ms and triples the work. Every job must be done by the end of the round.",
+      "concept": "Move heavy work off the request path: the web tier drops a job into SQS and answers at once, a separate worker fleet pulls jobs and transcodes.",
+      "nudge": "Connect the web server → SQS → a separate EC2 worker (Medium is enough)."
+    },
+    "vid-3-spot": {
+      "title": "Cheaper transcoding",
+      "story": "The budget drops to $135/month. Transcoding is not urgent, a few minutes late is fine, but AWS can reclaim Spot instances mid-round. The queue must still be empty at the end.",
+      "concept": "Queue workers are a perfect fit for Spot (~70% cheaper): when instances are reclaimed, jobs wait safely in SQS. You just need spare capacity to catch up afterwards.",
+      "nudge": "Switch the worker to Spot and size it up to Large so it can clear the backlog after the interruption."
+    },
+    "vid-4-catalog": {
+      "title": "Enrollment season",
+      "story": "4,000 requests/s and students browse the catalog more: 20% are reads. RDS and the web tier are overloaded, the target tightens to 100 ms, budget $200/month.",
+      "concept": "The course catalog looks the same for everyone: cache it at the edge with CloudFront and in the Region with ElastiCache so most reads never reach the database.",
+      "nudge": "Turn on \"Cache API responses\" on CloudFront, add ElastiCache next to RDS, and run 2 Medium web servers."
+    },
+    "vid-5-region": {
+      "title": "A whole Region goes down",
+      "story": "us-east-1 loses power for almost half the round. Its S3, ALB, EC2 and RDS all die, leaving CloudFront with no origin. Half the students are still in Europe. Budget $330/month.",
+      "concept": "Build a second stack in eu-west-1 (S3, ALB, EC2, database) and put Route 53 behind CloudFront: health checks fail over to the live Region and latency routing sends European students to the closer one.",
+      "nudge": "CloudFront → Route 53 → S3 + ALB in both Regions. In eu-west-1: ALB → 2 Medium EC2. Replace RDS with a Small Aurora, turn on Aurora Global Database and link the EC2 in both Regions to it."
+    },
+    "vid-6-sale": {
+      "title": "Big sale day",
+      "story": "The year-end sale triples traffic for a few minutes mid-round, in both Regions. Keeping enough servers for the peak all day blows the $440/month budget.",
+      "concept": "An Auto Scaling Group adds instances as load rises and removes them afterwards, so you only pay for the peak while it lasts.",
+      "nudge": "Turn on Auto Scaling Group (max 5) for the web servers in both Regions."
+    },
+    "dr-1-launch": {
+      "title": "First customers",
+      "story": "Three companies start a trial: 300 requests/s, 80% dashboard reads, 20% writes. Budget $90/month.",
+      "concept": "A basic three-tier design: an ALB in front of EC2, data in RDS. The ALB is a stable entry point you can add servers behind later.",
+      "nudge": "Users → ALB → EC2 (Medium) → RDS (Medium). A Small RDS cannot keep up with the writes."
+    },
+    "dr-2-az": {
+      "title": "A contract with an SLA",
+      "story": "A big customer signs a 99.9% SLA. Traffic is 350 requests/s, and one AZ loses power mid-round. Budget $155/month.",
+      "concept": "High availability inside a Region: EC2 spread over two AZs behind the ALB, and RDS Multi-AZ keeps a synchronous standby that takes over when the primary AZ dies.",
+      "nudge": "Run 2 EC2 in \"AZ a+b\" and turn on Multi-AZ for RDS."
+    },
+    "dr-3-region": {
+      "title": "A DR plan",
+      "story": "The auditor asks: what if all of us-east-1 goes down? This round it is dead for almost half the time. Budget $250/month, target under 150 ms.",
+      "concept": "Warm standby: a scaled-down copy of the system always runs in another Region (eu-west-1). The database is an Aurora Global Database: AWS keeps a copy in eu-west-1 (~1 s behind) and fails over to it in ~1 minute when the primary Region is lost, with no manual promotion as with a cross-Region RDS replica. Route 53 failover uses health checks to move users to eu-west-1, then Auto Scaling grows it to full size.",
+      "nudge": "Users → Route 53 → an ALB in each Region. In eu-west-1: ALB → 1 Medium EC2 with Auto Scaling Group (max 3). Replace RDS with a Small Aurora, turn on Aurora Global Database, and link the EC2 in both Regions to Aurora."
+    },
+    "dr-4-comply": {
+      "title": "Compliance audit",
+      "story": "A bank wants to sign, with conditions: all data encrypted at rest, no exposed database, no server taking requests straight from the internet. us-east-1 can still go down.",
+      "concept": "KMS encryption at rest must cover every data store; with Aurora Global Database the copy in eu-west-1 uses a KMS key in that Region. Databases are reachable only from the app tier, and EC2 sits behind the ALB in private subnets.",
+      "nudge": "Turn on \"Encryption at rest (KMS)\" for Aurora."
+    },
+    "dr-5-active": {
+      "title": "European customers",
+      "story": "Traffic grows to 1,000 requests/s, 40% from Europe, and the target tightens to 120 ms. Route 53 sends them to eu-west-1, which is closer, so the scaled-down copy is overloaded even without an outage.",
+      "concept": "From warm standby to active-active: Route 53 latency routing serves each user from the nearest Region, so both Regions need real capacity. An encrypted ElastiCache in each Region takes reads off the database.",
+      "nudge": "Give both Regions 2 Medium EC2 with Auto Scaling Group (max 4), and add an encrypted ElastiCache in each Region."
+    },
+    "dr-6-reserved": {
+      "title": "Trim the bill",
+      "story": "Finance wants the bill down to $280/month without giving up a Region. The base servers run 24/7 and will for years.",
+      "concept": "Steady, long-lived base load should be Reserved (~40% cheaper), while the extra Auto Scaling instances at peak stay On-Demand. Spot does not suit a customer-facing web tier because it can be reclaimed at any time.",
+      "nudge": "Switch the EC2 pricing in both Regions to Reserved."
+    },
+    "iot-1-pilot": {
+      "title": "Pilot",
+      "story": "A few hundred sensors in one factory send 200 readings/s, all writes. Budget $45/month.",
+      "concept": "Each reading is a small item keyed by device and time: a natural fit for DynamoDB. At low load, API Gateway + Lambda + on-demand DynamoDB is cheap and serverless.",
+      "nudge": "Users → API Gateway → Lambda → DynamoDB. A Small RDS cannot take 200 writes/s."
+    },
+    "iot-2-steady": {
+      "title": "Steady stream",
+      "story": "The whole factory chain is online: 1,500 writes/s, steady day and night. One Lambda cannot keep up, and paying per request on DynamoDB is now too expensive. Budget $250/month.",
+      "concept": "For steady, predictable traffic, DynamoDB provisioned capacity (a fixed price per WCU/RCU) is much cheaper than on-demand.",
+      "nudge": "ALB → 2 Large EC2 → DynamoDB with Provisioned capacity, size Large."
+    },
+    "iot-3-storm": {
+      "title": "Reconnect storm",
+      "story": "After a firmware update every device reconnects at once and replays its data: traffic triples for a few minutes. Sizing the database for the peak blows the $400/month budget.",
+      "concept": "Use SQS as a buffer: API Gateway writes straight into the queue and workers pull at the pace the database can take. The spike is spread out over time and the database keeps its size.",
+      "nudge": "Users → API Gateway → SQS → 3 Large EC2 workers → DynamoDB (Provisioned, Large)."
+    },
+    "iot-4-growth": {
+      "title": "Rapid growth",
+      "story": "New contracts bring devices online every day: traffic climbs from 1,500 to 6,000 writes/s during the round. The queue must be empty at the end; no reading may wait forever.",
+      "concept": "A queue postpones work, it does not remove it. When load keeps growing, the worker fleet must grow with it (Auto Scaling) and the database must fit the final write rate.",
+      "nudge": "Turn on Auto Scaling Group for the workers (2 instances, max 5) and size DynamoDB up to XLarge."
+    },
+    "iot-5-dash": {
+      "title": "Customer dashboards",
+      "story": "Traffic settles at 5,000 requests/s: 60% sensor readings, 40% customers opening dashboards with the latest numbers. Reading straight from DynamoDB needs an XLarge table and blows the $720/month budget.",
+      "concept": "Dashboards read the same numbers again and again: ElastiCache answers most reads in a few ms and DynamoDB only sees the misses, so the table stays smaller.",
+      "nudge": "API Gateway → ALB → 2 Large EC2 for dashboards → ElastiCache → DynamoDB. Connect the dashboard servers to SQS too. Workers: 4 Large EC2; DynamoDB Provisioned, Large."
+    },
+    "iot-6-cache-crash": {
+      "title": "The cache fails",
+      "story": "The ElastiCache node dies mid-round. Without the cache, every dashboard load either fails or lands on DynamoDB.",
+      "concept": "A cache is a single point of failure too. ElastiCache Multi-AZ keeps a replica in another AZ that takes over when the primary node dies, so dashboards keep working.",
+      "nudge": "Turn on Multi-AZ (replica) for ElastiCache."
+    },
+    "lb-hot": {
+      "title": "Hot leaderboard",
+      "story": "The game just launched: 2,500 requests/s, 92% opening the leaderboard and 8% posting scores. Everyone looks at the same top 100. Budget: $260.",
+      "concept": "Constantly read data like a leaderboard belongs in ElastiCache (Redis sorted sets). The cache serves most reads, so DynamoDB only takes writes and cache misses.",
+      "nudge": "Add ElastiCache next to EC2, then switch DynamoDB to provisioned (medium) instead of paying per request."
+    },
+    "lb-global": {
+      "title": "Players everywhere",
+      "story": "The game tops the charts in Europe: 60% of players are far from us-east-1. Gamers complain about lag; the target is now under 80 ms.",
+      "concept": "CloudFront caches API responses (a leaderboard that changes every second still caches well for a moment) at the edge. The rest, like score posts, rides the AWS backbone through Global Accelerator.",
+      "nudge": "Users → CloudFront (\"Cache API responses\" on) → Global Accelerator → ALB. The edge takes reads off the servers, so 2 EC2 instances are enough."
+    },
+    "lb-ddos": {
+      "title": "Bots crash the tournament",
+      "story": "Mid-tournament, a botnet floods junk requests at 6× real traffic to take the game servers down. CloudFront bills the junk too.",
+      "concept": "AWS WAF with rate-based rules blocks bots at the edge, before they reach CloudFront and EC2. Shield Standard already covers network-layer floods; WAF handles the application layer.",
+      "nudge": "Put WAF right after Users, in front of CloudFront."
+    },
+    "lb-cachecrash": {
+      "title": "Cache dies mid-season",
+      "story": "New season: 3,600 requests/s. Mid-match, the only ElastiCache node dies. Every read falls through to DynamoDB and the table is overloaded.",
+      "concept": "ElastiCache Multi-AZ keeps a replica in another AZ and fails over automatically, so the cache never disappears. Much cheaper than sizing DynamoDB for a cache outage.",
+      "nudge": "Turn on Multi-AZ for ElastiCache and raise EC2 to 3 large instances for the new traffic."
+    },
+    "lb-region": {
+      "title": "A whole Region fails",
+      "story": "A major incident takes us-east-1 down for hours. 60% of players are still far away, so a second Region near them also cuts latency.",
+      "concept": "Multi-Region active-active: one ALB + EC2 + ElastiCache stack per Region, sharing one DynamoDB global table that has a copy in both Regions and takes writes in either. Route 53 sends players to the nearest Region and moves everyone to the surviving one when a Region fails.",
+      "nudge": "Add Route 53 after Global Accelerator, build a second stack in eu-west-1 (2 large EC2 per side is enough) and point Route 53 at both ALBs. Turn on Global Tables for DynamoDB and link the EC2 in both Regions to it."
+    },
+    "lb-finals": {
+      "title": "World finals",
+      "story": "The final is livestreamed: traffic triples for a few hours, then drops back to 3,600 requests/s. The $650 budget cannot run peak capacity all night.",
+      "concept": "Auto Scaling in each Region adds instances as load rises and removes them after the peak. eu-west-1 serves 60% of players, so it gets more room to grow.",
+      "nudge": "Turn on Auto Scaling for EC2 in both Regions (max 5 and 6)."
+    },
+    "bank-secure": {
+      "title": "Day-one audit",
+      "story": "The bank opens its online portal: 400 requests/s, 70% checking balances and history, 30% transfers. Compliance demands from day one: encrypt all data, keep the database private, and no server may take connections straight from the internet.",
+      "concept": "Defense in depth: only the ALB sits in a public subnet; EC2 and RDS live in private subnets and accept traffic only from the layer in front (security groups). RDS encrypts at rest with KMS.",
+      "nudge": "Users → ALB → EC2 (medium) → RDS (medium), and turn on encryption for RDS."
+    },
+    "bank-az": {
+      "title": "An AZ loses power",
+      "story": "An AZ loses power during business hours. The banking portal must not stop: one server and one database in the same AZ is not enough.",
+      "concept": "Multi-AZ on both tiers: EC2 across two AZs behind the ALB, and RDS Multi-AZ keeps a synchronous standby in another AZ with automatic failover.",
+      "nudge": "Set EC2 to 2 instances in \"AZ a+b\", then turn on Multi-AZ for RDS."
+    },
+    "bank-attack": {
+      "title": "Login attack",
+      "story": "A botnet hammers the login page with junk at 6× real traffic. The ALB forwards it all to EC2, and real customers cannot get in.",
+      "concept": "AWS WAF in front of the ALB filters application-layer traffic: rate-based rules plus managed rules against SQL injection and bots. Blocked requests never reach the servers.",
+      "nudge": "Put WAF between Users and the ALB."
+    },
+    "bank-statements": {
+      "title": "PDF statements",
+      "story": "Customers can download PDF statements: 15% of requests create one, and each takes a few hundred ms. Doing it inside the request pushes the whole portal past 120 ms, and no statement may be lost.",
+      "concept": "Move heavy work off the web path: EC2 sends jobs to SQS (encrypted), and a separate worker pulls them. The web tier answers at once while the queue holds jobs until they are done.",
+      "nudge": "Add an encrypted SQS fed by EC2, and a small EC2 worker reading from SQS."
+    },
+    "bank-far": {
+      "title": "Customers abroad",
+      "story": "The bank opens international branches: 600 requests/s, 40% from customers in Europe, far from us-east-1. A third of requests are static page files (JS, CSS, logos). The latency target is 80 ms.",
+      "concept": "CloudFront serves static files from S3 at the edge. Account data is private, so it is not cached; Global Accelerator instead brings those requests onto the AWS backbone close to the customer.",
+      "nudge": "WAF → CloudFront (API caching off) → S3 for static files, and CloudFront → Global Accelerator → ALB for the rest."
+    },
+    "bank-payday": {
+      "title": "Payday",
+      "story": "On payday, traffic triples for a few hours: everyone checks balances, sends money and downloads statements. The $320 budget cannot run payday capacity all month.",
+      "concept": "Auto Scaling adds web instances as load rises and removes them after the peak. What does not scale on its own (RDS, the worker) must be sized for the peak.",
+      "nudge": "Turn on Auto Scaling for the web EC2 (max 6), raise RDS to large and the worker to medium."
+    },
+    "pay-launch": {
+      "title": "First transactions",
+      "story": "A digital wallet opens a payment API to merchants: 300 requests/s, half creating payments and half checking status. The team wants serverless so nobody runs servers. PCI DSS requires card data to be encrypted at rest.",
+      "concept": "API Gateway → Lambda → DynamoDB. Lambda gets least privilege through its IAM execution role (only PutItem/GetItem on that one table). DynamoDB encrypts with a KMS key; use a customer managed key when you need your own rotation and a CloudTrail record of who used the key.",
+      "nudge": "Users → API Gateway → Lambda → DynamoDB, with encryption on for DynamoDB."
+    },
+    "pay-card-testing": {
+      "title": "Card-testing bots",
+      "story": "Fraudsters use the API to test stolen card numbers in bulk (card testing): junk requests jump 6×. Lambda concurrency runs out and real payments are declined. PCI DSS also requires a web application firewall in front of every public API.",
+      "concept": "Attach AWS WAF to API Gateway: IP rate-based rules, Bot Control, and rules that block odd request patterns. Add usage plans with API keys and per-merchant throttling, and reserved concurrency so one function cannot eat the whole account limit.",
+      "nudge": "Put WAF between Users and API Gateway."
+    },
+    "pay-fraud": {
+      "title": "Fraud scoring",
+      "story": "Every payment must now pass a fraud model that takes a few hundred ms: 20% of requests need scoring. Doing it inside the request keeps merchants waiting too long, and no payment may skip the check.",
+      "concept": "Lambda stores the payment as pending and sends a job to SQS with SSE-KMS; another Lambda pulls jobs and scores them. The queue KMS key policy must allow both functions, or the messages cannot be read.",
+      "nudge": "Add an encrypted SQS fed by Lambda, and a second Lambda reading from it."
+    },
+    "pay-receipts": {
+      "title": "Receipts and reconciliation",
+      "story": "Besides fraud scoring, every payment must send the customer a receipt and post to the reconciliation system. The two jobs are independent: one being slow must not slow the other.",
+      "concept": "Lambda publishes to SNS, which fans out to two SQS queues, each with its own Lambda. Encrypt both queues; the SNS topic also supports SSE with KMS, and each queue access policy only lets that one topic send to it.",
+      "nudge": "Replace SQS with SNS → 2 SQS (encrypted), each with its own Lambda."
+    }
+  }
+}

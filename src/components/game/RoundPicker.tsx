@@ -1,13 +1,12 @@
 'use client';
 
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Stars } from '@/components/Stars';
 import { ROUNDS } from '@/game/rounds';
 import type { Round } from '@/game/rounds';
 import { Link } from '@/libs/I18nNavigation';
-import { inLocale } from '@/libs/Localize';
 import { useProgress } from '@/libs/Progress';
 
 /** Returns the Learn chapter of a round, or nothing for design problem rounds. */
@@ -20,7 +19,7 @@ const chapterOf = (round: Round | undefined) => ROUNDS.find((item) => item.id ==
 export const RoundPicker = (props: { sequence: Round[]; current: Round; roundHref: (id: string) => string }) => {
   const t = useTranslations('Game');
   const tc = useTranslations('Chapters');
-  const locale = useLocale();
+  const tr = useTranslations('Rounds');
   const progress = useProgress();
   const [open, setOpen] = useState(false);
 
@@ -50,7 +49,7 @@ export const RoundPicker = (props: { sequence: Round[]; current: Round; roundHre
                 >
                   <span>
                     <span className="mr-2 font-mono text-muted">{index + 1}</span>
-                    {inLocale(round.text, locale).title}
+                    {tr(`${round.id}.title`)}
                   </span>
                   <Stars count={progress.stars[round.id] ?? 0} />
                 </Link>

@@ -20,7 +20,7 @@ export default async function FlashcardsPage(props: { params: Promise<{ locale: 
     <PageShell title={t('title')}>
       <h1 className="text-3xl font-bold">{t('title')}</h1>
       <p className="mt-2 mb-6 text-muted">{t('intro')}</p>
-      <FlashcardsClient cards={getFlashcards(locale)} />
+      <FlashcardsClient cards={await getFlashcards(locale)} />
     </PageShell>
   );
 }

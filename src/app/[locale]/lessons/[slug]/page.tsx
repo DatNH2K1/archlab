@@ -5,24 +5,23 @@ import { KeywordCards } from '@/components/lesson/KeywordCards';
 import { LessonMarkdown, lessonHeadings } from '@/components/lesson/LessonMarkdown';
 import { MarkReadButton } from '@/components/LessonReadBadge';
 import { PageShell } from '@/components/PageShell';
-import { getLessons, getQuestions } from '@/content';
+import { getLessons, getQuestions, LESSON_SLUGS } from '@/content';
 import { DOMAINS } from '@/content/types';
 import { ALL_ROUNDS, roundHref } from '@/game/tracks';
 import { Link } from '@/libs/I18nNavigation';
 import { routing } from '@/libs/I18nRouting';
-import { inLocale } from '@/libs/Localize';
 
 type LessonPageProps = { params: Promise<{ locale: string; slug: string }> };
 
 export function generateStaticParams() {
   return routing.locales.flatMap((locale) =>
-    getLessons(locale).map((lesson) => ({ locale, slug: lesson.slug })),
+    LESSON_SLUGS.map((slug) => ({ locale, slug })),
   );
 }
 
 export async function generateMetadata(props: LessonPageProps): Promise<Metadata> {
   const { locale, slug } = await props.params;
-  const lesson = getLessons(locale).find((item) => item.slug === slug);
+  const lesson = (await getLessons(locale)).find((item) => item.slug === slug);
 
   return { title: lesson?.title, description: lesson?.summary };
 }
@@ -32,7 +31,8 @@ export default async function LessonPage(props: LessonPageProps) {
   setRequestLocale(locale);
   const t = await getTranslations('LessonsPage');
   const td = await getTranslations('Domains');
-  const lessons = getLessons(locale);
+  const lessons = await getLessons(locale);
+  const tr = await getTranslations('Rounds');
   const index = lessons.findIndex((item) => item.slug === slug);
   const lesson = lessons[index];
 
@@ -40,7 +40,7 @@ export default async function LessonPage(props: LessonPageProps) {
     notFound();
   }
 
-  const questionCount = getQuestions(locale).filter((question) => question.lesson === slug).length;
+  const questionCount = (await getQuestions(locale)).filter((question) => question.lesson === slug).length;
   const rounds = ALL_ROUNDS.filter((round) => round.lessons.some((item) => item === slug));
   const previous = lessons[index - 1];
   const next = lessons[index + 1];
@@ -71,7 +71,7 @@ export default async function LessonPage(props: LessonPageProps) {
                 href={roundHref(round.id)}
                 className="rounded-lg bg-accent px-3 py-1 text-sm font-bold text-ink"
               >
-                {inLocale(round.text, locale).title}
+                {tr(`${round.id}.title`)}
               </Link>
             ))}
           </div>
