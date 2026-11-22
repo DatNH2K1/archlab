@@ -46,7 +46,7 @@ export const SandboxPanel = (props: { scenario: Scenario; onChange: (scenario: S
   const set = (patch: Partial<Scenario>) => props.onChange({ ...s, ...patch });
 
   return (
-    <section className="w-72 rounded-xl border border-line bg-panel/95 p-3 text-sm shadow-xl backdrop-blur">
+    <section className="w-72 overflow-y-auto rounded-xl border border-line bg-panel/95 p-3 text-sm shadow-xl backdrop-blur">
       <button type="button" className="flex w-full items-center justify-between font-bold" onClick={() => setOpen(!open)}>
         {t('settings')}
         <span className="text-muted">{open ? '−' : '+'}</span>

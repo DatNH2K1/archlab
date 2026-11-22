@@ -570,7 +570,7 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
         )}
       </header>
 
-      <div className="pointer-events-none absolute top-16 left-3 z-10 flex max-w-[min(26rem,calc(100vw-1.5rem))] flex-col gap-2">
+      <div className="pointer-events-none absolute top-16 left-3 z-10 flex max-h-[calc(100dvh-5rem)] max-w-[min(26rem,calc(100vw-1.5rem))] flex-col gap-2">
         <div className="pointer-events-auto flex items-start gap-2 rounded-xl border border-line bg-panel/95 px-3 py-2 text-sm shadow-lg">
           <span
             className={`mt-0.5 grid size-4 shrink-0 place-items-center rounded-full text-[10px] font-bold text-ink ${
@@ -588,7 +588,7 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
           </div>
         )}
         {props.mode === 'sandbox' && (
-          <div className="pointer-events-auto">
+          <div className="pointer-events-auto flex min-h-0">
             <SandboxPanel
               scenario={sandbox}
               onChange={(next) => {
