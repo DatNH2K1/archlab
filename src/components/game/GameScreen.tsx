@@ -30,7 +30,6 @@ const SANDBOX_SCENARIO: Scenario = {
   traffic: 200,
   mix: { read: 0.7, write: 0.3 },
   audience: { 'us-east-1': 1 },
-  outageRegion: 'us-east-1',
   latencyTarget: 300,
   requirements: [],
 };
@@ -582,7 +581,7 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
         {twistNow && (
           <div className="pointer-events-auto rounded-xl border border-warn/60 bg-warn/15 px-3 py-2 text-sm shadow-lg">
             <span className="font-bold text-warn">📟 {t('paged')} </span>
-            {tt(`${twistNow}.page`, { region: scenario.outageRegion ?? '' })}
+            {tt(`${twistNow}.page`, { region: run?.result.outageRegion ?? '' })}
           </div>
         )}
         {props.mode === 'sandbox' && (

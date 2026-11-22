@@ -50,7 +50,7 @@ export const RoundIntro = (props: { round: Round; number: number; heading: strin
         {s.twist && (
           <p className="mt-3 rounded-lg border border-warn/40 bg-warn/10 p-3 text-sm">
             <span className="font-bold text-warn">{t('heads_up')} </span>
-            {tt(`${s.twist}.heads_up`, { region: s.outageRegion ?? '' })}
+            {tt(`${s.twist}.heads_up`)}
           </p>
         )}
         {s.requirements.length > 0 && (

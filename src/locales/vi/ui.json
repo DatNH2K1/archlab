@@ -192,7 +192,7 @@
     },
     "regionOutage": {
       "name": "Mất cả Region",
-      "heads_up": "Có tin cả Region {region} sắp gặp sự cố lớn và kéo dài.",
+      "heads_up": "Có tin Region đang chạy nhiều thành phần nhất của hệ thống sắp gặp sự cố lớn và kéo dài.",
       "page": "Mọi endpoint ở {region} ngừng phản hồi."
     },
     "spotInterruption": {
@@ -324,7 +324,6 @@
     "mix_static": "Tải file tĩnh",
     "mix_job": "Tác vụ nền",
     "users_near": "Người dùng gần {region}",
-    "outage_region": "Region bị sập",
     "twist": "Sự cố",
     "no_twist": "Không có",
     "rules": "Quy định"

@@ -2,7 +2,7 @@ import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { NodeSpec } from '@/game/board';
 import type { Track } from '@/game/rounds';
-import { ComponentType } from '@/game/types';
+import { ComponentType, Twist } from '@/game/types';
 import type { NodeConfig } from '@/game/types';
 
 type Cfg = Partial<NodeConfig>;
@@ -154,7 +154,7 @@ export const photoSharing: Track = {
         traffic: 1000,
         mix: mixWithJobs,
         audience: { 'us-east-1': 0.8, 'eu-west-1': 0.2 },
-        twist: 'spotInterruption',
+        twist: Twist.SpotInterruption,
         latencyTarget: 75,
         budget: 150,
         requirements: ['fanOut', 'drainQueue'],
@@ -170,7 +170,7 @@ export const photoSharing: Track = {
         traffic: 1000,
         mix: mixWithJobs,
         audience: { 'us-east-1': 0.8, 'eu-west-1': 0.2 },
-        twist: 'viral',
+        twist: Twist.Viral,
         latencyTarget: 80,
         budget: 270,
         requirements: ['fanOut', 'drainQueue'],

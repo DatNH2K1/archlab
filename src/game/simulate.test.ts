@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { makeBoard } from './board';
 import { simulate } from './simulate';
-import { ComponentType } from './types';
+import { ComponentType, Twist } from './types';
 import type { Scenario } from './types';
 
 const scenario: Scenario = { traffic: 100, mix: { read: 0.7, write: 0.3 }, audience: { 'us-east-1': 1 }, latencyTarget: 300, requirements: [] };
@@ -167,7 +167,7 @@ describe('simulate', () => {
           ['web2', 'db'],
         ],
       );
-    const outage: Scenario = { ...scenario, twist: 'regionOutage', outageRegion: 'us-east-1' };
+    const outage: Scenario = { ...scenario, twist: Twist.RegionOutage };
 
     it('fails when the only database lives in the Region that goes down', () => {
       const result = simulate(standby({ db: ComponentType.Rds, globalDb: false }), outage);
@@ -188,6 +188,14 @@ describe('simulate', () => {
 
       expect(result.passed).toBe(true);
       expect(result.ticks.at(-1)?.nodes.db?.primaryRegion).toBeUndefined();
+    });
+
+    it('takes down the Region running the most components', () => {
+      const board = standby({ db: ComponentType.Rds, globalDb: false });
+      const moved = { ...board, nodes: board.nodes.map((node) => (node.id === 'db' ? { ...node, config: { ...node.config, region: 'eu-west-1' as const } } : node)) };
+
+      expect(simulate(board, outage).outageRegion).toBe('us-east-1');
+      expect(simulate(moved, outage).outageRegion).toBe('eu-west-1');
     });
 
     it('bills a global database twice', () => {

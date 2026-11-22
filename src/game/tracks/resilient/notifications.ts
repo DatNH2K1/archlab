@@ -2,7 +2,7 @@ import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { NodeSpec } from '@/game/board';
 import type { Track } from '@/game/rounds';
-import { ComponentType } from '@/game/types';
+import { ComponentType, Twist } from '@/game/types';
 import type { NodeConfig } from '@/game/types';
 
 type Cfg = Partial<NodeConfig>;
@@ -132,7 +132,7 @@ export const notifications: Track = {
         traffic: 300,
         mix: MIX,
         audience: { 'us-east-1': 1 },
-        twist: 'flashSale',
+        twist: Twist.FlashSale,
         latencyTarget: 120,
         budget: 260,
         requirements: ['fanOut', 'drainQueue'],
@@ -148,7 +148,7 @@ export const notifications: Track = {
         traffic: 300,
         mix: MIX,
         audience: { 'us-east-1': 1 },
-        twist: 'flashSale',
+        twist: Twist.FlashSale,
         latencyTarget: 120,
         budget: 95,
         requirements: ['fanOut', 'drainQueue'],

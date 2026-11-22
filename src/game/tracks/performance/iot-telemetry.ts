@@ -1,7 +1,7 @@
 import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
-import { ComponentType } from '@/game/types';
+import { ComponentType, Twist } from '@/game/types';
 import type { NodeConfig } from '@/game/types';
 
 type Cfg = Partial<NodeConfig>;
@@ -123,7 +123,7 @@ export const iotTelemetry: Track = {
     },
     {
       id: 'iot-3-storm',
-      scenario: { traffic: 1500, mix: { write: 1 }, audience: { 'us-east-1': 1 }, twist: 'flashSale', latencyTarget: 150, budget: 400, requirements: [] },
+      scenario: { traffic: 1500, mix: { write: 1 }, audience: { 'us-east-1': 1 }, twist: Twist.FlashSale, latencyTarget: 150, budget: 400, requirements: [] },
       unlocks: [],
       lessons: [LessonSlug.DecouplingMessaging],
       solution: storm,
@@ -131,7 +131,7 @@ export const iotTelemetry: Track = {
     },
     {
       id: 'iot-4-growth',
-      scenario: { traffic: 1500, mix: { write: 1 }, audience: { 'us-east-1': 1 }, twist: 'viral', latencyTarget: 150, budget: 780, requirements: ['drainQueue'] },
+      scenario: { traffic: 1500, mix: { write: 1 }, audience: { 'us-east-1': 1 }, twist: Twist.Viral, latencyTarget: 150, budget: 780, requirements: ['drainQueue'] },
       unlocks: [],
       lessons: [LessonSlug.AutoScaling, LessonSlug.DecouplingMessaging],
       solution: growth,
@@ -147,7 +147,7 @@ export const iotTelemetry: Track = {
     },
     {
       id: 'iot-6-cache-crash',
-      scenario: { traffic: 5000, mix: { write: 0.6, read: 0.4 }, audience: { 'us-east-1': 1 }, twist: 'cacheCrash', latencyTarget: 150, budget: 720, requirements: ['drainQueue'] },
+      scenario: { traffic: 5000, mix: { write: 0.6, read: 0.4 }, audience: { 'us-east-1': 1 }, twist: Twist.CacheCrash, latencyTarget: 150, budget: 720, requirements: ['drainQueue'] },
       unlocks: [],
       lessons: [LessonSlug.NoSqlCaching, LessonSlug.HighAvailabilityMultiAz],
       solution: resilient,

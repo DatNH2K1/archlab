@@ -1,7 +1,7 @@
 import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
-import { ComponentType } from '@/game/types';
+import { ComponentType, Twist } from '@/game/types';
 import type { RequirementId } from '@/game/types';
 
 /** Patient-data rules that hold in every round. */
@@ -205,7 +205,7 @@ export const healthRecords: Track = {
         traffic: 900,
         mix: { static: 0.3, read: 0.6, write: 0.1 },
         audience: { 'us-east-1': 1 },
-        twist: 'ddos',
+        twist: Twist.Ddos,
         latencyTarget: 80,
         budget: 150,
         requirements: [...RULES, 'privateBucket', 'webFirewall'],
@@ -221,7 +221,7 @@ export const healthRecords: Track = {
         traffic: 900,
         mix: { static: 0.3, read: 0.45, write: 0.1, job: 0.15 },
         audience: { 'us-east-1': 1 },
-        twist: 'ddos',
+        twist: Twist.Ddos,
         latencyTarget: 80,
         budget: 185,
         requirements: [...RULES, 'privateBucket', 'webFirewall', 'drainQueue'],

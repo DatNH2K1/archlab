@@ -69,17 +69,20 @@ export type TrafficClass = 'read' | 'write' | 'static' | 'job';
 
 export type RequestClass = TrafficClass | 'attack';
 
-export const TWISTS = [
-  'azOutage',
-  'regionOutage',
-  'spotInterruption',
-  'flashSale',
-  'ddos',
-  'cacheCrash',
-  'viral',
-] as const;
+/**
+ * Incidents that can hit a round mid-run. Values are the keys of their texts in `Twists`.
+ */
+export const Twist = {
+  AzOutage: 'azOutage',
+  RegionOutage: 'regionOutage',
+  SpotInterruption: 'spotInterruption',
+  FlashSale: 'flashSale',
+  Ddos: 'ddos',
+  CacheCrash: 'cacheCrash',
+  Viral: 'viral',
+} as const;
 
-export type TwistId = (typeof TWISTS)[number];
+export type Twist = (typeof Twist)[keyof typeof Twist];
 
 export const REQUIREMENTS = [
   'encryptData',
@@ -100,9 +103,7 @@ export type Scenario = {
   mix: Partial<Record<TrafficClass, number>>;
   /** Share of users closest to each Region, summing to 1. */
   audience: Partial<Record<Region, number>>;
-  twist?: TwistId;
-  /** Region taken down by the `regionOutage` twist. */
-  outageRegion?: Region;
+  twist?: Twist;
   /** Highest allowed average response time in ms. */
   latencyTarget: number;
   /** Highest allowed monthly cost in $. No budget in the sandbox. */
@@ -179,4 +180,6 @@ export type SimResult = {
     requirements: { id: RequirementId; ok: boolean }[];
   };
   passed: boolean;
+  /** Region taken down by the `regionOutage` twist. */
+  outageRegion?: Region;
 };

@@ -1,7 +1,7 @@
 import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
-import { ComponentType } from '@/game/types';
+import { ComponentType, Twist } from '@/game/types';
 
 const origin = makeBoard(
   [
@@ -147,7 +147,7 @@ export const videoStreaming: Track = {
     },
     {
       id: 'vid-3-spot',
-      scenario: { traffic: 2500, mix: { static: 0.8, read: 0.12, write: 0.03, job: 0.05 }, audience: { 'us-east-1': 0.5, 'eu-west-1': 0.5 }, twist: 'spotInterruption', latencyTarget: 110, budget: 135, requirements: ['drainQueue'] },
+      scenario: { traffic: 2500, mix: { static: 0.8, read: 0.12, write: 0.03, job: 0.05 }, audience: { 'us-east-1': 0.5, 'eu-west-1': 0.5 }, twist: Twist.SpotInterruption, latencyTarget: 110, budget: 135, requirements: ['drainQueue'] },
       unlocks: [],
       lessons: [LessonSlug.Ec2PricingModels],
       solution: spot,
@@ -163,7 +163,7 @@ export const videoStreaming: Track = {
     },
     {
       id: 'vid-5-region',
-      scenario: { traffic: 4000, mix: { static: 0.72, read: 0.2, write: 0.03, job: 0.05 }, audience: { 'us-east-1': 0.5, 'eu-west-1': 0.5 }, twist: 'regionOutage', outageRegion: 'us-east-1', latencyTarget: 120, budget: 330, requirements: ['drainQueue'] },
+      scenario: { traffic: 4000, mix: { static: 0.72, read: 0.2, write: 0.03, job: 0.05 }, audience: { 'us-east-1': 0.5, 'eu-west-1': 0.5 }, twist: Twist.RegionOutage, latencyTarget: 120, budget: 330, requirements: ['drainQueue'] },
       unlocks: [],
       lessons: [LessonSlug.DisasterRecovery, LessonSlug.Route53Routing],
       solution: failover,
@@ -171,7 +171,7 @@ export const videoStreaming: Track = {
     },
     {
       id: 'vid-6-sale',
-      scenario: { traffic: 4000, mix: { static: 0.72, read: 0.2, write: 0.03, job: 0.05 }, audience: { 'us-east-1': 0.5, 'eu-west-1': 0.5 }, twist: 'flashSale', latencyTarget: 120, budget: 440, requirements: ['drainQueue'] },
+      scenario: { traffic: 4000, mix: { static: 0.72, read: 0.2, write: 0.03, job: 0.05 }, audience: { 'us-east-1': 0.5, 'eu-west-1': 0.5 }, twist: Twist.FlashSale, latencyTarget: 120, budget: 440, requirements: ['drainQueue'] },
       unlocks: [],
       lessons: [LessonSlug.AutoScaling],
       solution: sale,

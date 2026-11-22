@@ -1,7 +1,7 @@
 import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
-import { ComponentType } from '@/game/types';
+import { ComponentType, Twist } from '@/game/types';
 
 const cdnOnly = makeBoard(
   [
@@ -140,7 +140,7 @@ export const staticWebsite: Track = {
         traffic: 800,
         mix: { static: 0.75, read: 0.2, write: 0.05 },
         audience: { 'us-east-1': 0.3, 'eu-west-1': 0.7 },
-        twist: 'ddos',
+        twist: Twist.Ddos,
         latencyTarget: 60,
         budget: 45,
         requirements: [],

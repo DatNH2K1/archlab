@@ -1,7 +1,7 @@
 import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
-import { ComponentType } from '@/game/types';
+import { ComponentType, Twist } from '@/game/types';
 import type { NodeConfig, RequirementId } from '@/game/types';
 
 /** Card-data rules that hold in every round. */
@@ -103,7 +103,7 @@ export const paymentApi: Track = {
         traffic: 300,
         mix: { read: 0.5, write: 0.5 },
         audience: { 'us-east-1': 1 },
-        twist: 'ddos',
+        twist: Twist.Ddos,
         latencyTarget: 150,
         budget: 80,
         requirements: [...RULES, 'webFirewall'],
@@ -119,7 +119,7 @@ export const paymentApi: Track = {
         traffic: 300,
         mix: { read: 0.4, write: 0.4, job: 0.2 },
         audience: { 'us-east-1': 1 },
-        twist: 'ddos',
+        twist: Twist.Ddos,
         latencyTarget: 150,
         budget: 90,
         requirements: [...RULES, 'webFirewall', 'drainQueue'],
@@ -135,7 +135,7 @@ export const paymentApi: Track = {
         traffic: 300,
         mix: { read: 0.4, write: 0.4, job: 0.2 },
         audience: { 'us-east-1': 1 },
-        twist: 'ddos',
+        twist: Twist.Ddos,
         latencyTarget: 150,
         budget: 100,
         requirements: [...RULES, 'webFirewall', 'drainQueue', 'fanOut'],

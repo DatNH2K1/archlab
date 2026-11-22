@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Checkbox } from '@/components/Checkbox';
 import { Select } from '@/components/Select';
 import type { RequirementId, Scenario, TrafficClass } from '@/game/types';
-import { REGIONS, REQUIREMENTS, TWISTS } from '@/game/types';
+import { REGIONS, REQUIREMENTS, Twist } from '@/game/types';
 
 const CLASSES: TrafficClass[] = ['read', 'write', 'static', 'job'];
 
@@ -110,20 +110,11 @@ export const SandboxPanel = (props: { scenario: Scenario; onChange: (scenario: S
             value={s.twist ?? 'none'}
             options={[
               { value: 'none', label: t('no_twist') },
-              ...TWISTS.map((twist) => ({ value: twist, label: tt(`${twist}.name`) })),
+              ...Object.values(Twist).map((twist) => ({ value: twist, label: tt(`${twist}.name`) })),
             ]}
             disabled={props.disabled}
             onChange={(twist) => set({ twist: twist === 'none' ? undefined : twist })}
           />
-          {s.twist === 'regionOutage' && (
-            <Select
-              label={t('outage_region')}
-              value={s.outageRegion ?? REGIONS[0]}
-              options={REGIONS.map((region) => ({ value: region, label: region }))}
-              disabled={props.disabled}
-              onChange={(outageRegion) => set({ outageRegion })}
-            />
-          )}
           <div>
             <span>{t('rules')}</span>
             {REQUIREMENTS.map((id: RequirementId) => (

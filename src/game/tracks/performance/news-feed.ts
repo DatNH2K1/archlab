@@ -2,7 +2,7 @@ import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { NodeSpec } from '@/game/board';
 import type { Track } from '@/game/rounds';
-import { ComponentType } from '@/game/types';
+import { ComponentType, Twist } from '@/game/types';
 
 type NodeConfig = NonNullable<NodeSpec['config']>;
 
@@ -108,7 +108,7 @@ export const newsFeed: Track = {
         traffic: 800,
         mix: { read: 0.9, write: 0.1 },
         audience: { 'us-east-1': 1 },
-        twist: 'azOutage',
+        twist: Twist.AzOutage,
         latencyTarget: 250,
         budget: 275,
         requirements: [],
@@ -158,7 +158,7 @@ export const newsFeed: Track = {
         traffic: 2500,
         mix: { read: 0.95, write: 0.05 },
         audience: { 'us-east-1': 1 },
-        twist: 'cacheCrash',
+        twist: Twist.CacheCrash,
         latencyTarget: 250,
         budget: 340,
         requirements: [],
@@ -174,7 +174,7 @@ export const newsFeed: Track = {
         traffic: 1500,
         mix: { read: 0.95, write: 0.05 },
         audience: { 'us-east-1': 1 },
-        twist: 'viral',
+        twist: Twist.Viral,
         latencyTarget: 250,
         budget: 680,
         requirements: [],

@@ -1,7 +1,7 @@
 import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
-import { ComponentType } from '@/game/types';
+import { ComponentType, Twist } from '@/game/types';
 
 const serverless = makeBoard(
   [
@@ -150,7 +150,7 @@ export const startupApi: Track = {
         traffic: 900,
         mix: { read: 0.8, write: 0.2 },
         audience: { 'us-east-1': 1 },
-        twist: 'azOutage',
+        twist: Twist.AzOutage,
         latencyTarget: 300,
         budget: 180,
         requirements: [],
@@ -181,7 +181,7 @@ export const startupApi: Track = {
         traffic: 2000,
         mix: { read: 0.9, write: 0.1 },
         audience: { 'us-east-1': 1 },
-        twist: 'spotInterruption',
+        twist: Twist.SpotInterruption,
         latencyTarget: 300,
         budget: 145,
         requirements: [],
@@ -197,7 +197,7 @@ export const startupApi: Track = {
         traffic: 1000,
         mix: { read: 0.9, write: 0.1 },
         audience: { 'us-east-1': 1 },
-        twist: 'flashSale',
+        twist: Twist.FlashSale,
         latencyTarget: 300,
         budget: 195,
         requirements: [],

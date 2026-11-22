@@ -2,7 +2,7 @@ import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { NodeSpec } from '@/game/board';
 import type { Track } from '@/game/rounds';
-import { ComponentType } from '@/game/types';
+import { ComponentType, Twist } from '@/game/types';
 
 const onSale = makeBoard(
   [
@@ -110,7 +110,7 @@ export const ticketing: Track = {
         traffic: 200,
         mix: { read: 0.6, write: 0.4 },
         audience: { 'us-east-1': 1 },
-        twist: 'flashSale',
+        twist: Twist.FlashSale,
         latencyTarget: 300,
         budget: 140,
         requirements: [],
@@ -138,7 +138,7 @@ export const ticketing: Track = {
         traffic: 900,
         mix: { read: 0.4, write: 0.6 },
         audience: { 'us-east-1': 1 },
-        twist: 'flashSale',
+        twist: Twist.FlashSale,
         latencyTarget: 300,
         budget: 460,
         requirements: [],
@@ -166,7 +166,7 @@ export const ticketing: Track = {
         traffic: 2000,
         mix: { read: 0.4, write: 0.6 },
         audience: { 'us-east-1': 1 },
-        twist: 'flashSale',
+        twist: Twist.FlashSale,
         latencyTarget: 300,
         budget: 650,
         requirements: [],
@@ -182,7 +182,7 @@ export const ticketing: Track = {
         traffic: 2000,
         mix: { read: 0.4, write: 0.6 },
         audience: { 'us-east-1': 1 },
-        twist: 'ddos',
+        twist: Twist.Ddos,
         latencyTarget: 300,
         budget: 650,
         requirements: [],
@@ -213,7 +213,7 @@ export const ticketing: Track = {
         traffic: 2000,
         mix: { read: 0.2, write: 0.3, job: 0.25, static: 0.25 },
         audience: { 'us-east-1': 0.4, 'eu-west-1': 0.6 },
-        twist: 'flashSale',
+        twist: Twist.FlashSale,
         latencyTarget: 100,
         budget: 760,
         requirements: ['drainQueue'],

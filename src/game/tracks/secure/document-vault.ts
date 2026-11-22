@@ -1,7 +1,7 @@
 import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
-import { ComponentType } from '@/game/types';
+import { ComponentType, Twist } from '@/game/types';
 import type { NodeConfig, RequirementId } from '@/game/types';
 
 /** Rules for company documents that hold in every round. */
@@ -149,7 +149,7 @@ export const documentVault: Track = {
         traffic: 400,
         mix: { static: 0.6, read: 0.15, write: 0.1, job: 0.15 },
         audience: { 'us-east-1': 1 },
-        twist: 'ddos',
+        twist: Twist.Ddos,
         latencyTarget: 80,
         budget: 55,
         requirements: [...RULES, 'drainQueue', 'webFirewall'],
@@ -165,8 +165,7 @@ export const documentVault: Track = {
         traffic: 400,
         mix: { static: 0.6, read: 0.15, write: 0.1, job: 0.15 },
         audience: { 'us-east-1': 0.6, 'eu-west-1': 0.4 },
-        twist: 'regionOutage',
-        outageRegion: 'us-east-1',
+        twist: Twist.RegionOutage,
         latencyTarget: 80,
         budget: 70,
         requirements: [...RULES, 'drainQueue', 'webFirewall'],

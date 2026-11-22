@@ -1,7 +1,7 @@
 import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
-import { ComponentType } from '@/game/types';
+import { ComponentType, Twist } from '@/game/types';
 import type { RequirementId } from '@/game/types';
 
 /** Compliance rules that hold in every round. */
@@ -164,7 +164,7 @@ export const bankingPortal: Track = {
         traffic: 400,
         mix: { read: 0.7, write: 0.3 },
         audience: { 'us-east-1': 1 },
-        twist: 'azOutage',
+        twist: Twist.AzOutage,
         latencyTarget: 200,
         budget: 150,
         requirements: RULES,
@@ -180,7 +180,7 @@ export const bankingPortal: Track = {
         traffic: 400,
         mix: { read: 0.7, write: 0.3 },
         audience: { 'us-east-1': 1 },
-        twist: 'ddos',
+        twist: Twist.Ddos,
         latencyTarget: 200,
         budget: 155,
         requirements: RULES,
@@ -226,7 +226,7 @@ export const bankingPortal: Track = {
         traffic: 600,
         mix: { static: 0.35, read: 0.4, write: 0.15, job: 0.1 },
         audience: { 'us-east-1': 0.6, 'eu-west-1': 0.4 },
-        twist: 'flashSale',
+        twist: Twist.FlashSale,
         latencyTarget: 90,
         budget: 320,
         requirements: [...RULES, 'drainQueue'],

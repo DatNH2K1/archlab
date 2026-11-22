@@ -14,7 +14,7 @@ import {
   REQUEST_PRICE,
   SIZE_PRICE,
 } from './catalog';
-import { ComponentType, REGIONS } from './types';
+import { ComponentType, REGIONS, Twist } from './types';
 import type {
   Board,
   BoardNode,
@@ -28,7 +28,6 @@ import type {
   SimResult,
   TickSample,
   TrafficClass,
-  TwistId,
 } from './types';
 
 /** Parents that put a server straight on the internet. */
@@ -55,14 +54,14 @@ const WAF_BLOCK = 0.98;
 const SECONDS_PER_MONTH_FACTOR = 1 / 100;
 
 /** Share of the round each twist is active, as [start, end). */
-const TWIST_WINDOW: Record<TwistId, [number, number]> = {
-  azOutage: [0.35, 0.75],
-  regionOutage: [0.4, 0.8],
-  spotInterruption: [0.3, 0.6],
-  flashSale: [0.4, 0.7],
-  ddos: [0.3, 0.7],
-  cacheCrash: [0.4, 0.65],
-  viral: [0, 1],
+const TWIST_WINDOW: Record<Twist, [number, number]> = {
+  [Twist.AzOutage]: [0.35, 0.75],
+  [Twist.RegionOutage]: [0.4, 0.8],
+  [Twist.SpotInterruption]: [0.3, 0.6],
+  [Twist.FlashSale]: [0.4, 0.7],
+  [Twist.Ddos]: [0.3, 0.7],
+  [Twist.CacheCrash]: [0.4, 0.65],
+  [Twist.Viral]: [0, 1],
 };
 
 type Flow = {
@@ -141,7 +140,7 @@ type Runtime = {
   writes: number;
 };
 
-const inWindow = (twist: TwistId | undefined, id: TwistId, t: number) => {
+const inWindow = (twist: Twist | undefined, id: Twist, t: number) => {
   if (twist !== id) {
     return false;
   }
@@ -163,6 +162,26 @@ const initialInstances = (node: BoardNode) => {
   }
 
   return node.config.az === 'b' ? { a: 0, b: count } : { a: count, b: 0 };
+};
+
+/**
+ * Picks the Region a `regionOutage` takes down: the one running the most Regional components users reach, so the
+ * player cannot dodge it by guessing. Ties go to the Region with more users, then to the first Region.
+ * @param nodes Components users reach.
+ * @param audience Share of users closest to each Region.
+ * @returns The Region that goes down.
+ */
+const pickOutageRegion = (nodes: BoardNode[], audience: Scenario['audience']) => {
+  const regional = nodes.filter((node) => !CATALOG[node.type].global);
+  const count = (region: Region) => regional.filter((node) => node.config.region === region).length;
+  const score = (region: Region) => [count(region), audience[region] ?? 0] as const;
+
+  return REGIONS.reduce((best, region) => {
+    const [bestCount, bestShare] = score(best);
+    const [regionCount, regionShare] = score(region);
+
+    return regionCount > bestCount || (regionCount === bestCount && regionShare > bestShare) ? region : best;
+  });
 };
 
 /**
@@ -273,20 +292,22 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
   let t = 0;
   const { twist } = scenario;
+  const outageRegion =
+    twist === Twist.RegionOutage ? pickOutageRegion(board.nodes.filter((node) => reached.has(node.id)), scenario.audience) : undefined;
 
   const aliveFraction = (node: BoardNode): number => {
     const spec = CATALOG[node.type];
     const regionDown =
-      inWindow(twist, 'regionOutage', t) && !spec.global && !isGlobalDb(node) && node.config.region === scenario.outageRegion;
+      inWindow(twist, Twist.RegionOutage, t) && !spec.global && !isGlobalDb(node) && node.config.region === outageRegion;
 
     if (regionDown) {
       return 0;
     }
 
-    const azDown = inWindow(twist, 'azOutage', t);
+    const azDown = inWindow(twist, Twist.AzOutage, t);
 
     if (node.type === ComponentType.Ec2) {
-      if (node.config.pricing === 'spot' && inWindow(twist, 'spotInterruption', t)) {
+      if (node.config.pricing === 'spot' && inWindow(twist, Twist.SpotInterruption, t)) {
         return 0;
       }
 
@@ -298,7 +319,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     }
 
     if (node.type === ComponentType.ElastiCache) {
-      const crashed = inWindow(twist, 'cacheCrash', t) || (azDown && !node.config.multiAz);
+      const crashed = inWindow(twist, Twist.CacheCrash, t) || (azDown && !node.config.multiAz);
 
       if (crashed && !node.config.multiAz) {
         return 0;
@@ -335,7 +356,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
     if (sized !== undefined) {
       // A global database serves from a copy in each Region, so it has two Regions' worth until one is lost.
-      const copies = isGlobalDb(node) && !inWindow(twist, 'regionOutage', t) ? 2 : 1;
+      const copies = isGlobalDb(node) && !inWindow(twist, Twist.RegionOutage, t) ? 2 : 1;
 
       return sized * copies * aliveFraction(node);
     }
@@ -682,7 +703,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     }
 
     if (!alive(node)) {
-      const regionDown = inWindow(twist, 'regionOutage', t) && node.config.region === scenario.outageRegion;
+      const regionDown = inWindow(twist, Twist.RegionOutage, t) && node.config.region === outageRegion;
 
       return failed(regionDown && DATABASE_TYPES.has(node.type) ? 'db_region_down' : 'down', node.id, flow.rate, flow.cls);
     }
@@ -737,7 +758,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       }
 
       const own = state(node.id);
-      const azDown = inWindow(twist, 'azOutage', t);
+      const azDown = inWindow(twist, Twist.AzOutage, t);
       const ready = own.pending.filter((p) => p.readyAt <= t);
 
       own.pending = own.pending.filter((p) => p.readyAt > t);
@@ -847,14 +868,14 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
   /** Aurora Global Database promotes its copy in the other Region once the primary Region goes down. */
   const failover = () => {
-    if (!inWindow(twist, 'regionOutage', t)) {
+    if (!inWindow(twist, Twist.RegionOutage, t)) {
       return;
     }
 
     for (const db of board.nodes) {
       const region = writeRegion.get(db.id) ?? db.config.region;
 
-      if (db.type === ComponentType.Aurora && isGlobalDb(db) && region === scenario.outageRegion) {
+      if (db.type === ComponentType.Aurora && isGlobalDb(db) && region === outageRegion) {
         writeRegion.set(db.id, REGIONS.find((item) => item !== region) ?? region);
         failoverAt.set(db.id, t);
       }
@@ -867,13 +888,13 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
     const wave = 1 + 0.08 * Math.sin(t / 3);
     // The sale ramps up over six ticks, so Auto Scaling has a chance to follow.
-    const saleStart = Math.ceil(TWIST_WINDOW.flashSale[0] * TICKS);
-    const surge = inWindow(twist, 'flashSale', t)
+    const saleStart = Math.ceil(TWIST_WINDOW[Twist.FlashSale][0] * TICKS);
+    const surge = inWindow(twist, Twist.FlashSale, t)
       ? 1 + 2 * Math.min(1, (t - saleStart + 1) / 6)
       : 1;
-    const growth = twist === 'viral' ? 1 + (3 * t) / TICKS : 1;
+    const growth = twist === Twist.Viral ? 1 + (3 * t) / TICKS : 1;
     const traffic = scenario.traffic * wave * surge * growth;
-    const attack = inWindow(twist, 'ddos', t) ? scenario.traffic * 6 : 0;
+    const attack = inWindow(twist, Twist.Ddos, t) ? scenario.traffic * 6 : 0;
     let tickOk = 0;
     let tickLat = 0;
     let tickSent = 0;
@@ -985,7 +1006,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       traffic: tickSent,
       answered: tickSent > 0 ? Math.max(0, tickOk) / tickSent : 1,
       latency: tickOk > 0 ? BASE_LATENCY + tickLat / tickOk : 0,
-      twistActive: twist ? inWindow(twist, twist, t) && twist !== 'viral' : false,
+      twistActive: twist ? inWindow(twist, twist, t) && twist !== Twist.Viral : false,
       nodes,
     });
   }
@@ -1252,5 +1273,6 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       costOk &&
       integrityOk &&
       requirementChecks.every((check) => check.ok),
+    outageRegion,
   };
 };

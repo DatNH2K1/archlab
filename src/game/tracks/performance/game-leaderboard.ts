@@ -1,7 +1,7 @@
 import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
-import { ComponentType } from '@/game/types';
+import { ComponentType, Twist } from '@/game/types';
 
 const cached = makeBoard(
   [
@@ -206,7 +206,7 @@ export const gameLeaderboard: Track = {
         traffic: 2500,
         mix: { read: 0.92, write: 0.08 },
         audience: { 'us-east-1': 0.4, 'eu-west-1': 0.6 },
-        twist: 'ddos',
+        twist: Twist.Ddos,
         latencyTarget: 80,
         budget: 260,
         requirements: [],
@@ -222,7 +222,7 @@ export const gameLeaderboard: Track = {
         traffic: 3600,
         mix: { read: 0.92, write: 0.08 },
         audience: { 'us-east-1': 0.4, 'eu-west-1': 0.6 },
-        twist: 'cacheCrash',
+        twist: Twist.CacheCrash,
         latencyTarget: 80,
         budget: 340,
         requirements: [],
@@ -238,8 +238,7 @@ export const gameLeaderboard: Track = {
         traffic: 3600,
         mix: { read: 0.92, write: 0.08 },
         audience: { 'us-east-1': 0.4, 'eu-west-1': 0.6 },
-        twist: 'regionOutage',
-        outageRegion: 'us-east-1',
+        twist: Twist.RegionOutage,
         latencyTarget: 85,
         budget: 480,
         requirements: [],
@@ -255,7 +254,7 @@ export const gameLeaderboard: Track = {
         traffic: 3600,
         mix: { read: 0.92, write: 0.08 },
         audience: { 'us-east-1': 0.4, 'eu-west-1': 0.6 },
-        twist: 'flashSale',
+        twist: Twist.FlashSale,
         latencyTarget: 85,
         budget: 650,
         requirements: [],

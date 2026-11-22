@@ -1,7 +1,7 @@
 import type { Messages } from 'next-intl';
 import { LessonSlug } from '@/content/types';
 import { makeBoard } from './board';
-import { ComponentType } from './types';
+import { ComponentType, Twist } from './types';
 import type { Board, Scenario } from './types';
 
 export const CHAPTERS = [
@@ -130,7 +130,7 @@ export const ROUNDS: LearnRound[] = [
       traffic: 400,
       mix: { read: 0.8, write: 0.2 },
       audience: { 'us-east-1': 1 },
-      twist: 'azOutage',
+      twist: Twist.AzOutage,
       latencyTarget: 300,
       budget: 150,
       requirements: [],
@@ -158,7 +158,7 @@ export const ROUNDS: LearnRound[] = [
       traffic: 220,
       mix: { read: 0.8, write: 0.2 },
       audience: { 'us-east-1': 1 },
-      twist: 'flashSale',
+      twist: Twist.FlashSale,
       latencyTarget: 300,
       budget: 130,
       requirements: [],
@@ -186,8 +186,7 @@ export const ROUNDS: LearnRound[] = [
       traffic: 300,
       mix: { read: 0.8, write: 0.2 },
       audience: { 'us-east-1': 1 },
-      twist: 'regionOutage',
-      outageRegion: 'us-east-1',
+      twist: Twist.RegionOutage,
       latencyTarget: 300,
       budget: 220,
       requirements: [],
@@ -252,7 +251,7 @@ export const ROUNDS: LearnRound[] = [
       traffic: 2000,
       mix: { read: 0.95, write: 0.05 },
       audience: { 'us-east-1': 1 },
-      twist: 'cacheCrash',
+      twist: Twist.CacheCrash,
       latencyTarget: 300,
       budget: 215,
       requirements: [],
@@ -452,7 +451,7 @@ export const ROUNDS: LearnRound[] = [
       traffic: 300,
       mix: { read: 0.8, write: 0.2 },
       audience: { 'us-east-1': 1 },
-      twist: 'ddos',
+      twist: Twist.Ddos,
       latencyTarget: 300,
       budget: 110,
       requirements: [],
@@ -509,7 +508,7 @@ export const ROUNDS: LearnRound[] = [
       traffic: 300,
       mix: { read: 0.3, write: 0.1, job: 0.6 },
       audience: { 'us-east-1': 1 },
-      twist: 'spotInterruption',
+      twist: Twist.SpotInterruption,
       latencyTarget: 150,
       budget: 120,
       requirements: ['drainQueue'],
@@ -598,7 +597,7 @@ export const ROUNDS: LearnRound[] = [
       traffic: 1500,
       mix: { static: 0.5, read: 0.35, write: 0.05, job: 0.1 },
       audience: { 'us-east-1': 0.6, 'eu-west-1': 0.4 },
-      twist: 'azOutage',
+      twist: Twist.AzOutage,
       latencyTarget: 150,
       budget: 330,
       requirements: ['encryptData', 'privateData', 'noPublicServers', 'drainQueue'],

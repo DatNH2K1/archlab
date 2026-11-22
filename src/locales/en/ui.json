@@ -192,7 +192,7 @@
     },
     "regionOutage": {
       "name": "Region outage",
-      "heads_up": "Word is {region} is about to have a long, major outage.",
+      "heads_up": "Word is a long, major outage is coming to the Region that runs most of your system.",
       "page": "Every endpoint in {region} stopped answering."
     },
     "spotInterruption": {
@@ -324,7 +324,6 @@
     "mix_static": "Static files",
     "mix_job": "Background jobs",
     "users_near": "Users near {region}",
-    "outage_region": "Region that goes down",
     "twist": "Twist",
     "no_twist": "None",
     "rules": "Rules"

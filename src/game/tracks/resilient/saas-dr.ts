@@ -1,7 +1,7 @@
 import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
-import { ComponentType } from '@/game/types';
+import { ComponentType, Twist } from '@/game/types';
 import type { NodeConfig } from '@/game/types';
 
 type Cfg = Partial<NodeConfig>;
@@ -123,7 +123,7 @@ export const saasDr: Track = {
     },
     {
       id: 'dr-2-az',
-      scenario: { traffic: 350, mix: { read: 0.8, write: 0.2 }, audience: { 'us-east-1': 1 }, twist: 'azOutage', latencyTarget: 200, budget: 155, requirements: [] },
+      scenario: { traffic: 350, mix: { read: 0.8, write: 0.2 }, audience: { 'us-east-1': 1 }, twist: Twist.AzOutage, latencyTarget: 200, budget: 155, requirements: [] },
       unlocks: [],
       lessons: [LessonSlug.HighAvailabilityMultiAz],
       solution: multiAz,
@@ -131,7 +131,7 @@ export const saasDr: Track = {
     },
     {
       id: 'dr-3-region',
-      scenario: { traffic: 350, mix: { read: 0.8, write: 0.2 }, audience: { 'us-east-1': 1 }, twist: 'regionOutage', outageRegion: 'us-east-1', latencyTarget: 150, budget: 250, requirements: [] },
+      scenario: { traffic: 350, mix: { read: 0.8, write: 0.2 }, audience: { 'us-east-1': 1 }, twist: Twist.RegionOutage, latencyTarget: 150, budget: 250, requirements: [] },
       unlocks: [],
       lessons: [LessonSlug.DisasterRecovery, LessonSlug.Route53Routing],
       solution: warm,
@@ -139,7 +139,7 @@ export const saasDr: Track = {
     },
     {
       id: 'dr-4-comply',
-      scenario: { traffic: 350, mix: { read: 0.8, write: 0.2 }, audience: { 'us-east-1': 1 }, twist: 'regionOutage', outageRegion: 'us-east-1', latencyTarget: 150, budget: 250, requirements: [...compliance] },
+      scenario: { traffic: 350, mix: { read: 0.8, write: 0.2 }, audience: { 'us-east-1': 1 }, twist: Twist.RegionOutage, latencyTarget: 150, budget: 250, requirements: [...compliance] },
       unlocks: [],
       lessons: [LessonSlug.DataEncryptionKms, LessonSlug.VpcNetworkingSecurity],
       solution: locked,
@@ -147,7 +147,7 @@ export const saasDr: Track = {
     },
     {
       id: 'dr-5-active',
-      scenario: { traffic: 1000, mix: { read: 0.85, write: 0.15 }, audience: { 'us-east-1': 0.6, 'eu-west-1': 0.4 }, twist: 'regionOutage', outageRegion: 'us-east-1', latencyTarget: 120, budget: 330, requirements: [...compliance] },
+      scenario: { traffic: 1000, mix: { read: 0.85, write: 0.15 }, audience: { 'us-east-1': 0.6, 'eu-west-1': 0.4 }, twist: Twist.RegionOutage, latencyTarget: 120, budget: 330, requirements: [...compliance] },
       unlocks: [],
       lessons: [LessonSlug.Route53Routing, LessonSlug.NoSqlCaching],
       solution: active,
@@ -155,7 +155,7 @@ export const saasDr: Track = {
     },
     {
       id: 'dr-6-reserved',
-      scenario: { traffic: 1000, mix: { read: 0.85, write: 0.15 }, audience: { 'us-east-1': 0.6, 'eu-west-1': 0.4 }, twist: 'regionOutage', outageRegion: 'us-east-1', latencyTarget: 120, budget: 280, requirements: [...compliance] },
+      scenario: { traffic: 1000, mix: { read: 0.85, write: 0.15 }, audience: { 'us-east-1': 0.6, 'eu-west-1': 0.4 }, twist: Twist.RegionOutage, latencyTarget: 120, budget: 280, requirements: [...compliance] },
       unlocks: [],
       lessons: [LessonSlug.Ec2PricingModels, LessonSlug.CostManagementTools],
       solution: reserved,

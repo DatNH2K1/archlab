@@ -1,7 +1,7 @@
 import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
-import { ComponentType } from '@/game/types';
+import { ComponentType, Twist } from '@/game/types';
 
 const serverless = makeBoard(
   [
@@ -115,7 +115,7 @@ export const urlShortener: Track = {
         traffic: 1500,
         mix: { read: 0.97, write: 0.03 },
         audience: { 'us-east-1': 0.4, 'eu-west-1': 0.6 },
-        twist: 'ddos',
+        twist: Twist.Ddos,
         latencyTarget: 120,
         budget: 160,
         requirements: [],

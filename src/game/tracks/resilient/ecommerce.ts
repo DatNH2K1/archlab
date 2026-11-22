@@ -1,7 +1,7 @@
 import { LessonSlug } from '@/content/types';
 import { makeBoard } from '@/game/board';
 import type { Track } from '@/game/rounds';
-import { ComponentType } from '@/game/types';
+import { ComponentType, Twist } from '@/game/types';
 
 const single = makeBoard(
   [
@@ -141,7 +141,7 @@ export const ecommerce: Track = {
         traffic: 1200,
         mix: { read: 0.85, write: 0.15 },
         audience: { 'us-east-1': 1 },
-        twist: 'azOutage',
+        twist: Twist.AzOutage,
         latencyTarget: 250,
         budget: 320,
         requirements: [],
@@ -189,7 +189,7 @@ export const ecommerce: Track = {
         traffic: 2000,
         mix: { read: 0.95, write: 0.05 },
         audience: { 'us-east-1': 1 },
-        twist: 'flashSale',
+        twist: Twist.FlashSale,
         latencyTarget: 250,
         budget: 480,
         requirements: [],
@@ -219,7 +219,7 @@ export const ecommerce: Track = {
         traffic: 2000,
         mix: { read: 0.75, write: 0.05, job: 0.2 },
         audience: { 'us-east-1': 1 },
-        twist: 'flashSale',
+        twist: Twist.FlashSale,
         latencyTarget: 150,
         budget: 620,
         requirements: ['drainQueue'],
