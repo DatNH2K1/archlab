@@ -20,6 +20,7 @@ import { Inspector } from './Inspector';
 import { NODE_H, NODE_W } from './NodeBox';
 import { Palette } from './Palette';
 import { ResultCard } from './ResultCard';
+import { RoundPicker } from './RoundPicker';
 import { RoundIntro } from './RoundIntro';
 import { SandboxPanel } from './SandboxPanel';
 
@@ -506,15 +507,10 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
         <div className="pointer-events-auto flex items-center gap-2">
           {play?.back && <BackLink href={play.back.href} label={play.back.label} />}
           <AppMenu title={play ? play.heading : t('sandbox')} />
+          {play && <RoundPicker sequence={play.sequence} current={play.round} roundHref={play.roundHref} />}
         </div>
         <dl className="pointer-events-auto flex items-stretch gap-4 font-mono">
-          {round && (
-            <div className="hidden sm:block">
-              <dt className="text-[10px] font-bold tracking-widest text-muted">{t('round')}</dt>
-              <dd className="text-xl leading-6 font-bold">{roundIndex + 1}</dd>
-            </div>
-          )}
-          <div className="border-line sm:border-l sm:pl-4">
+          <div>
             <dt className="text-[10px] font-bold tracking-widest text-muted">{t('traffic')}</dt>
             <dd className="text-sm">{Math.round(live?.traffic ?? scenario.traffic)} req/s</dd>
           </div>

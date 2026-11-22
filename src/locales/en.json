@@ -54,6 +54,8 @@
     "learn": "Learn",
     "sandbox": "Sandbox",
     "round": "STAGE",
+    "pick_round": "Choose a stage",
+    "pick_round_close": "Close the stage list",
     "traffic": "TRAFFIC",
     "budget": "BUDGET",
     "twist": "INCIDENT",
