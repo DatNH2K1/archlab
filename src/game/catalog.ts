@@ -4,7 +4,7 @@ import type { NodeConfig, RequestClass, Size } from './types';
 type ComponentCategory = 'entry' | 'edge' | 'network' | 'compute' | 'data' | 'messaging';
 
 /** Inspector settings a component exposes. */
-type ConfigField =
+export type ConfigField =
   | 'size'
   | 'count'
   | 'az'

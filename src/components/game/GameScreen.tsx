@@ -7,6 +7,7 @@ import { BackLink } from '@/components/BackLink';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { canAdd, canConnect, createNode, emptyBoard, newId } from '@/game/board';
 import { CATALOG, COMPONENT_TYPES_IN_PALETTE, LINKS, MAX_PER_BOARD, WRITE_DATABASE_TYPES } from '@/game/catalog';
+import type { ConfigField } from '@/game/catalog';
 import type { Round } from '@/game/rounds';
 import { simulate, TICKS } from '@/game/simulate';
 import { ComponentType } from '@/game/types';
@@ -66,6 +67,8 @@ export type PlayProps = {
   /** Rounds of the same chapter list or design problem, in order. */
   sequence: Round[];
   palette: ComponentType[];
+  /** Inspector settings the player can change; all of them when absent. */
+  fields?: ConfigField[];
   /** Chapter or design problem name, shown in the brief. */
   heading: string;
   /** Link to another round of the same sequence. */
@@ -602,6 +605,7 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
         {selectedNode ? (
           <Inspector
             node={selectedNode}
+            fields={play?.fields}
             cost={estimate.costByNode[selectedNode.id] ?? 0}
             locked={locked}
             onChange={(config) => {

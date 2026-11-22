@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { COMPONENT_TYPES_IN_PALETTE } from '@/game/catalog';
-import { ROUNDS, unlockedAt } from '@/game/rounds';
+import { fieldsUnlockedAt, ROUNDS, unlockedAt } from '@/game/rounds';
 import { TRACKS } from '@/game/tracks';
 import { useProgress, useProgressReady } from '@/libs/Progress';
 import { GameScreen } from './GameScreen';
@@ -50,6 +50,7 @@ const LearnGame = (props: { requested: string | null }) => {
       round={round}
       sequence={ROUNDS}
       palette={unlockedAt(ROUNDS.indexOf(round))}
+      fields={fieldsUnlockedAt(ROUNDS.indexOf(round))}
       heading={tc(round.chapter)}
       roundHref={(id) => `/?round=${id}`}
     />

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { makeBoard } from './board';
-import { ROUNDS } from './rounds';
+import { CATALOG, defaultConfig } from './catalog';
+import { fieldsUnlockedAt, ROUNDS } from './rounds';
 import { simulate } from './simulate';
 import { ComponentType } from './types';
 import type { Board, NodeConfig } from './types';
@@ -35,6 +36,21 @@ describe('Rounds', () => {
     expect(result.issues.filter((issue) => issue.code !== 'overloaded')).toEqual([]);
     expect(result.passed).toBe(true);
   });
+
+  it.each(ROUNDS.map((item, index) => [item.id, item, index] as const))(
+    'solves %s with unlocked settings only',
+    (_, item, index) => {
+      const unlocked = fieldsUnlockedAt(index);
+
+      for (const node of item.solution.nodes) {
+        const changed = CATALOG[node.type].fields.filter(
+          (field) => node.config[field] !== defaultConfig(node.type)[field],
+        );
+
+        expect(changed.filter((field) => !unlocked.includes(field))).toEqual([]);
+      }
+    },
+  );
 
   it('starts every round with users on the board', () => {
     for (const item of ROUNDS) {

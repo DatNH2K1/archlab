@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { Checkbox } from '@/components/Checkbox';
 import { CAPACITY, CATALOG, SIZES } from '@/game/catalog';
+import type { ConfigField } from '@/game/catalog';
 import type { BoardNode, NodeConfig } from '@/game/types';
 import { ComponentType, REGIONS } from '@/game/types';
 import { Link } from '@/libs/I18nNavigation';
@@ -122,10 +123,12 @@ const Stepper = (props: {
 
 /**
  * Shows and edits the settings of the selected component.
- * @param props The node, its monthly cost and change handlers.
+ * @param props The node, its monthly cost, the settings unlocked so far and change handlers.
  */
 export const Inspector = (props: {
   node: BoardNode;
+  /** Settings the player can change; all of them when absent. */
+  fields?: ConfigField[];
   cost: number;
   locked: boolean;
   onChange: (config: Partial<NodeConfig>) => void;
@@ -137,8 +140,14 @@ export const Inspector = (props: {
   const tg = useTranslations('Game');
   const { node } = props;
   const spec = CATALOG[node.type];
-  const has = (field: (typeof spec.fields)[number]) => spec.fields.includes(field);
   const c = node.config;
+  // DynamoDB on-demand capacity has no size to pick.
+  const fields = spec.fields.filter(
+    (field) =>
+      (!props.fields || props.fields.includes(field)) &&
+      (field !== 'size' || node.type !== ComponentType.DynamoDb || c.provisioned),
+  );
+  const has = (field: ConfigField) => fields.includes(field);
   const capacity = CAPACITY[node.type];
 
   return (
@@ -169,150 +178,152 @@ export const Inspector = (props: {
         </Link>
       </details>
 
-      <div className="mt-4 space-y-3 border-t border-line pt-3">
-        {has('size') && (node.type !== ComponentType.DynamoDb || c.provisioned) && (
-          <Segmented
-            label={capacity ? t('size_with_capacity', { capacity: capacity[c.size] }) : t('size')}
-            value={c.size}
-            disabled={props.locked}
-            options={SIZES.map((size) => ({ value: size, label: t(`size_${size}`) }))}
-            onChange={(size) => {
-              props.onChange({ size });
-            }}
-          />
-        )}
-        {has('count') && (
-          <Stepper
-            label={c.autoScaling ? t('min_count') : t('count')}
-            value={c.count}
-            min={1}
-            max={8}
-            disabled={props.locked}
-            onChange={(count) => {
-              props.onChange({ count, maxCount: Math.max(c.maxCount, count) });
-            }}
-          />
-        )}
-        {has('autoScaling') && (
-          <Toggle
-            label={t('auto_scaling')}
-            hint={t('auto_scaling_hint')}
-            value={c.autoScaling}
-            disabled={props.locked}
-            onChange={(autoScaling) => {
-              props.onChange({ autoScaling });
-            }}
-          />
-        )}
-        {has('autoScaling') && c.autoScaling && (
-          <Stepper
-            label={t('max_count')}
-            value={Math.max(c.maxCount, c.count)}
-            min={c.count}
-            max={12}
-            disabled={props.locked}
-            onChange={(maxCount) => {
-              props.onChange({ maxCount });
-            }}
-          />
-        )}
-        {has('az') && (
-          <Segmented
-            label={t('az')}
-            value={node.type === ComponentType.ReadReplica && c.az === 'spread' ? 'a' : c.az}
-            disabled={props.locked}
-            options={[
-              { value: 'a', label: 'AZ a' },
-              { value: 'b', label: 'AZ b' },
-              ...(node.type === ComponentType.Ec2 ? [{ value: 'spread' as const, label: t('az_spread') }] : []),
-            ]}
-            onChange={(az) => {
-              props.onChange({ az });
-            }}
-          />
-        )}
-        {has('pricing') && (
-          <Segmented
-            label={t('pricing')}
-            value={c.pricing}
-            disabled={props.locked}
-            options={[
-              { value: 'onDemand', label: t('pricing_onDemand') },
-              { value: 'reserved', label: t('pricing_reserved') },
-              { value: 'spot', label: t('pricing_spot') },
-            ]}
-            onChange={(pricing) => {
-              props.onChange({ pricing });
-            }}
-          />
-        )}
-        {has('multiAz') && (
-          <Toggle
-            label={node.type === ComponentType.Rds ? t('multi_az_rds') : t('multi_az_cache')}
-            hint={node.type === ComponentType.Rds ? t('multi_az_rds_hint') : t('multi_az_cache_hint')}
-            value={c.multiAz}
-            disabled={props.locked}
-            onChange={(multiAz) => {
-              props.onChange({ multiAz });
-            }}
-          />
-        )}
-        {has('provisioned') && (
-          <Toggle
-            label={node.type === ComponentType.Lambda ? t('provisioned_lambda') : t('provisioned_dynamodb')}
-            hint={
-              node.type === ComponentType.Lambda ? t('provisioned_lambda_hint') : t('provisioned_dynamodb_hint')
-            }
-            value={c.provisioned}
-            disabled={props.locked}
-            onChange={(provisioned) => {
-              props.onChange({ provisioned });
-            }}
-          />
-        )}
-        {has('globalDb') && (
-          <Toggle
-            label={node.type === ComponentType.Aurora ? t('global_aurora') : t('global_dynamodb')}
-            hint={node.type === ComponentType.Aurora ? t('global_aurora_hint') : t('global_dynamodb_hint')}
-            value={c.globalDb}
-            disabled={props.locked}
-            onChange={(globalDb) => props.onChange({ globalDb })}
-          />
-        )}
-        {has('cacheApi') && (
-          <Toggle
-            label={t('cache_api')}
-            hint={t('cache_api_hint')}
-            value={c.cacheApi}
-            disabled={props.locked}
-            onChange={(cacheApi) => {
-              props.onChange({ cacheApi });
-            }}
-          />
-        )}
-        {has('encrypted') && (
-          <Toggle
-            label={t('encrypted')}
-            hint={t('encrypted_hint')}
-            value={c.encrypted}
-            disabled={props.locked}
-            onChange={(encrypted) => {
-              props.onChange({ encrypted });
-            }}
-          />
-        )}
-        {has('region') && (
-          <Segmented
-            label={t('region')}
-            value={c.region}
-            disabled={props.locked}
-            options={REGIONS.map((region) => ({ value: region, label: t(`region_${region}`) }))}
-            onChange={(region) => {
-              props.onChange({ region });
-            }}
-          />
-        )}
-      </div>
+      {fields.length > 0 && (
+        <div className="mt-4 space-y-3 border-t border-line pt-3">
+          {has('size') && (
+            <Segmented
+              label={capacity ? t('size_with_capacity', { capacity: capacity[c.size] }) : t('size')}
+              value={c.size}
+              disabled={props.locked}
+              options={SIZES.map((size) => ({ value: size, label: t(`size_${size}`) }))}
+              onChange={(size) => {
+                props.onChange({ size });
+              }}
+            />
+          )}
+          {has('count') && (
+            <Stepper
+              label={c.autoScaling ? t('min_count') : t('count')}
+              value={c.count}
+              min={1}
+              max={8}
+              disabled={props.locked}
+              onChange={(count) => {
+                props.onChange({ count, maxCount: Math.max(c.maxCount, count) });
+              }}
+            />
+          )}
+          {has('autoScaling') && (
+            <Toggle
+              label={t('auto_scaling')}
+              hint={t('auto_scaling_hint')}
+              value={c.autoScaling}
+              disabled={props.locked}
+              onChange={(autoScaling) => {
+                props.onChange({ autoScaling });
+              }}
+            />
+          )}
+          {has('autoScaling') && c.autoScaling && (
+            <Stepper
+              label={t('max_count')}
+              value={Math.max(c.maxCount, c.count)}
+              min={c.count}
+              max={12}
+              disabled={props.locked}
+              onChange={(maxCount) => {
+                props.onChange({ maxCount });
+              }}
+            />
+          )}
+          {has('az') && (
+            <Segmented
+              label={t('az')}
+              value={node.type === ComponentType.ReadReplica && c.az === 'spread' ? 'a' : c.az}
+              disabled={props.locked}
+              options={[
+                { value: 'a', label: 'AZ a' },
+                { value: 'b', label: 'AZ b' },
+                ...(node.type === ComponentType.Ec2 ? [{ value: 'spread' as const, label: t('az_spread') }] : []),
+              ]}
+              onChange={(az) => {
+                props.onChange({ az });
+              }}
+            />
+          )}
+          {has('pricing') && (
+            <Segmented
+              label={t('pricing')}
+              value={c.pricing}
+              disabled={props.locked}
+              options={[
+                { value: 'onDemand', label: t('pricing_onDemand') },
+                { value: 'reserved', label: t('pricing_reserved') },
+                { value: 'spot', label: t('pricing_spot') },
+              ]}
+              onChange={(pricing) => {
+                props.onChange({ pricing });
+              }}
+            />
+          )}
+          {has('multiAz') && (
+            <Toggle
+              label={node.type === ComponentType.Rds ? t('multi_az_rds') : t('multi_az_cache')}
+              hint={node.type === ComponentType.Rds ? t('multi_az_rds_hint') : t('multi_az_cache_hint')}
+              value={c.multiAz}
+              disabled={props.locked}
+              onChange={(multiAz) => {
+                props.onChange({ multiAz });
+              }}
+            />
+          )}
+          {has('provisioned') && (
+            <Toggle
+              label={node.type === ComponentType.Lambda ? t('provisioned_lambda') : t('provisioned_dynamodb')}
+              hint={
+                node.type === ComponentType.Lambda ? t('provisioned_lambda_hint') : t('provisioned_dynamodb_hint')
+              }
+              value={c.provisioned}
+              disabled={props.locked}
+              onChange={(provisioned) => {
+                props.onChange({ provisioned });
+              }}
+            />
+          )}
+          {has('globalDb') && (
+            <Toggle
+              label={node.type === ComponentType.Aurora ? t('global_aurora') : t('global_dynamodb')}
+              hint={node.type === ComponentType.Aurora ? t('global_aurora_hint') : t('global_dynamodb_hint')}
+              value={c.globalDb}
+              disabled={props.locked}
+              onChange={(globalDb) => props.onChange({ globalDb })}
+            />
+          )}
+          {has('cacheApi') && (
+            <Toggle
+              label={t('cache_api')}
+              hint={t('cache_api_hint')}
+              value={c.cacheApi}
+              disabled={props.locked}
+              onChange={(cacheApi) => {
+                props.onChange({ cacheApi });
+              }}
+            />
+          )}
+          {has('encrypted') && (
+            <Toggle
+              label={t('encrypted')}
+              hint={t('encrypted_hint')}
+              value={c.encrypted}
+              disabled={props.locked}
+              onChange={(encrypted) => {
+                props.onChange({ encrypted });
+              }}
+            />
+          )}
+          {has('region') && (
+            <Segmented
+              label={t('region')}
+              value={c.region}
+              disabled={props.locked}
+              options={REGIONS.map((region) => ({ value: region, label: t(`region_${region}`) }))}
+              onChange={(region) => {
+                props.onChange({ region });
+              }}
+            />
+          )}
+        </div>
+      )}
 
       {node.type !== ComponentType.Users && (
         <footer className="mt-4 flex items-center justify-between border-t border-line pt-3">

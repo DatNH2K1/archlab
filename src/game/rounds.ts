@@ -1,6 +1,7 @@
 import type { Messages } from 'next-intl';
 import { LessonSlug } from '@/content/types';
 import { makeBoard } from './board';
+import type { ConfigField } from './catalog';
 import { ComponentType, Twist } from './types';
 import type { Board, Scenario } from './types';
 
@@ -35,7 +36,11 @@ export type Round = {
   naive?: Board;
 };
 
-export type LearnRound = Round & { chapter: ChapterId };
+export type LearnRound = Round & {
+  chapter: ChapterId;
+  /** Inspector settings shown from this round on; earlier rounds keep them hidden at their defaults. */
+  fieldUnlocks?: ConfigField[];
+};
 
 /** A design problem: several rounds on one product, like a system design interview. */
 export type Track = {
@@ -73,6 +78,7 @@ export const ROUNDS: LearnRound[] = [
   },
   {
     id: 'scale-up',
+    fieldUnlocks: ['size'],
     chapter: 'basics',
     scenario: {
       traffic: 350,
@@ -98,6 +104,7 @@ export const ROUNDS: LearnRound[] = [
   },
   {
     id: 'scale-out',
+    fieldUnlocks: ['count'],
     chapter: 'basics',
     scenario: {
       traffic: 1300,
@@ -125,6 +132,7 @@ export const ROUNDS: LearnRound[] = [
   },
   {
     id: 'az-outage',
+    fieldUnlocks: ['az', 'multiAz'],
     chapter: 'resilience',
     scenario: {
       traffic: 400,
@@ -153,6 +161,7 @@ export const ROUNDS: LearnRound[] = [
   },
   {
     id: 'flash-sale',
+    fieldUnlocks: ['autoScaling'],
     chapter: 'resilience',
     scenario: {
       traffic: 220,
@@ -181,6 +190,7 @@ export const ROUNDS: LearnRound[] = [
   },
   {
     id: 'region-down',
+    fieldUnlocks: ['region', 'globalDb'],
     chapter: 'resilience',
     scenario: {
       traffic: 300,
@@ -307,6 +317,7 @@ export const ROUNDS: LearnRound[] = [
   },
   {
     id: 'global-users',
+    fieldUnlocks: ['cacheApi'],
     chapter: 'performance',
     scenario: {
       traffic: 800,
@@ -407,6 +418,7 @@ export const ROUNDS: LearnRound[] = [
   },
   {
     id: 'lock-it-down',
+    fieldUnlocks: ['encrypted'],
     chapter: 'security',
     scenario: {
       traffic: 300,
@@ -503,6 +515,7 @@ export const ROUNDS: LearnRound[] = [
   },
   {
     id: 'spot-workers',
+    fieldUnlocks: ['pricing'],
     chapter: 'cost',
     scenario: {
       traffic: 300,
@@ -536,6 +549,7 @@ export const ROUNDS: LearnRound[] = [
   },
   {
     id: 'steady-table',
+    fieldUnlocks: ['provisioned'],
     chapter: 'cost',
     scenario: {
       traffic: 2000,
@@ -644,3 +658,11 @@ export const ROUNDS: LearnRound[] = [
  */
 export const unlockedAt = (index: number) =>
   ROUNDS.slice(0, index + 1).flatMap((round) => round.unlocks);
+
+/**
+ * Lists the Inspector settings a player can change in a Learn round.
+ * @param index Position of the round in the campaign.
+ * @returns Unlocked settings, oldest first.
+ */
+export const fieldsUnlockedAt = (index: number) =>
+  ROUNDS.slice(0, index + 1).flatMap((round) => round.fieldUnlocks ?? []);
