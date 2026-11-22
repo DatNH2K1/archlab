@@ -14,10 +14,10 @@ import {
   REQUEST_PRICE,
   SIZE_PRICE,
 } from './catalog';
+import { REGIONS } from './types';
 import type {
   Board,
   BoardNode,
-  DbRole,
   ComponentType,
   Issue,
   IssueCode,
@@ -88,7 +88,7 @@ const ISSUE_RANK: Record<IssueCode, number> = {
   nowhere_job: 1,
   replica_write: 1,
   data_split: 1,
-  stale_data: 1,
+  db_region_down: 2,
   queue_no_consumer: 1,
   alb_target: 2,
   no_balancer: 2,
@@ -128,7 +128,6 @@ type Runtime = {
   latShare: number;
   coldStarts: number;
   writes: number;
-  staleHits: number;
 };
 
 const inWindow = (twist: TwistId | undefined, id: TwistId, t: number) => {
@@ -191,36 +190,12 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     }
   }
 
-  // Databases linked by replication hold one dataset.
-  const datasetOf = new Map<string, string>();
-  const dataset = (id: string): string => {
-    const up = datasetOf.get(id) ?? id;
-
-    return up === id ? id : dataset(up);
-  };
-
-  for (const edge of board.edges) {
-    const from = byId.get(edge.from);
-    const to = byId.get(edge.to);
-
-    if (from && to && DATABASE_TYPES.has(from.type) && DATABASE_TYPES.has(to.type)) {
-      datasetOf.set(dataset(to.id), dataset(from.id));
-    }
-  }
-
-  /** Replication role of each database; a replication target starts as a read-only copy. */
-  const roles = new Map<string, DbRole>(
-    board.nodes
-      .filter((node) => DATABASE_TYPES.has(node.type))
-      .map((node) => [
-        node.id,
-        (parents.get(node.id) ?? []).some((parent) => DATABASE_TYPES.has(parent.type))
-          ? 'replica'
-          : 'primary',
-      ]),
-  );
-  const initialRoles = new Map(roles);
-  const role = (db: BoardNode) => roles.get(db.id) ?? 'primary';
+  /** Aurora Global Database or a DynamoDB global table: a managed copy in the other Region. */
+  const isGlobalDb = (node: BoardNode) => (node.type === 'aurora' || node.type === 'dynamodb') && node.config.globalDb;
+  /** Region each Aurora Global Database writes in; a managed failover moves it for good. */
+  const writeRegion = new Map<string, Region>();
+  /** Tick of each Aurora Global Database failover, when writes pause for about a minute. */
+  const failoverAt = new Map<string, number>();
 
   /** Without a load balancer, or a queue polled by workers, every request lands on the same instance. */
   const balanced = (node: BoardNode) =>
@@ -245,7 +220,6 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
         latShare: 0,
         coldStarts: 0,
         writes: 0,
-        staleHits: 0,
       },
     ]),
   );
@@ -292,9 +266,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
   const aliveFraction = (node: BoardNode): number => {
     const spec = CATALOG[node.type];
     const regionDown =
-      inWindow(twist, 'regionOutage', t) &&
-      !spec.global &&
-      node.config.region === scenario.outageRegion;
+      inWindow(twist, 'regionOutage', t) && !spec.global && !isGlobalDb(node) && node.config.region === scenario.outageRegion;
 
     if (regionDown) {
       return 0;
@@ -351,7 +323,10 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     const sized = CAPACITY[node.type]?.[node.config.size];
 
     if (sized !== undefined) {
-      return sized * aliveFraction(node);
+      // A global database serves from a copy in each Region, so it has two Regions' worth until one is lost.
+      const copies = isGlobalDb(node) && !inWindow(twist, 'regionOutage', t) ? 2 : 1;
+
+      return sized * copies * aliveFraction(node);
     }
 
     return (FIXED_CAPACITY[node.type] ?? Number.POSITIVE_INFINITY) * aliveFraction(node);
@@ -375,12 +350,25 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
   const alive = (node: BoardNode) => aliveFraction(node) > 0;
 
+  /** A global database reads from the copy in the caller's Region; Aurora still writes in one Region. */
+  const servingRegion = (node: BoardNode, flow: Flow) => {
+    if (!isGlobalDb(node) || !flow.region) {
+      return node.config.region;
+    }
+
+    if (node.type === 'aurora' && flow.cls === 'write') {
+      return writeRegion.get(node.id) ?? node.config.region;
+    }
+
+    return flow.region;
+  };
+
   const farPenalty = (node: BoardNode, flow: Flow) => {
     if (CATALOG[node.type].global) {
       return 0;
     }
 
-    const away = flow.origin !== null && node.config.region !== flow.origin;
+    const away = flow.origin !== null && servingRegion(node, flow) !== flow.origin;
 
     return away ? FAR_PENALTY * flow.reach : 0;
   };
@@ -463,26 +451,15 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     return forward(node, flow, path, targets);
   };
 
-  /** DynamoDB global tables take writes in every Region; other copies are read-only until promoted. A stale database still takes writes, as in AWS. */
-  const writable = (db: BoardNode) => {
-    if (db.type === 'readReplica') {
-      return false;
-    }
-
-    return db.type === 'dynamodb' || role(db) !== 'replica';
-  };
-
-  /** Databases a server can use: current data first, then healthy, then in its own Region. */
+  /** Databases a server can use: healthy ones first, then those in its own Region. Read Replicas take no writes. */
   const databases = (node: BoardNode, cls: 'read' | 'write') => {
     const linked = (children.get(node.id) ?? []).filter(
-      (child) => DATABASE_TYPES.has(child.type) && (cls === 'read' || writable(child)),
+      (child) => DATABASE_TYPES.has(child.type) && (cls === 'read' || child.type !== 'readReplica'),
     );
-    const current = linked.filter((db) => role(db) !== 'stale');
-    const dbs = current.length > 0 ? current : linked;
-    const up = dbs.filter(alive);
-    const local = up.filter((db) => db.config.region === node.config.region);
+    const up = linked.filter(alive);
+    const local = up.filter((db) => isGlobalDb(db) || db.config.region === node.config.region);
 
-    return local.length > 0 ? local : (up.length > 0 ? up : dbs);
+    return local.length > 0 ? local : up.length > 0 ? up : linked;
   };
 
   const readFromData = (node: BoardNode, flow: Flow, path: string[]): Outcome => {
@@ -694,13 +671,20 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     }
 
     if (!alive(node)) {
-      return failed('down', node.id, flow.rate, flow.cls);
+      const regionDown = inWindow(twist, 'regionOutage', t) && node.config.region === scenario.outageRegion;
+
+      return failed(regionDown && DATABASE_TYPES.has(node.type) ? 'db_region_down' : 'down', node.id, flow.rate, flow.cls);
+    }
+
+    // Writes pause for the managed failover; expected, so not a design issue.
+    if (flow.cls === 'write' && failoverAt.get(node.id) === t) {
+      return failed(null, node.id, flow.rate, flow.cls);
     }
 
     const own = state(node.id);
     const spec = CATALOG[node.type];
-    const hop =
-      flow.region && !spec.global && node.config.region !== flow.region ? CROSS_REGION : 0;
+    const region = servingRegion(node, flow);
+    const hop = flow.region && !spec.global && region !== flow.region ? CROSS_REGION : 0;
 
     own.load += flow.rate * weight(node.type, flow.cls);
 
@@ -711,10 +695,6 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
       if (flow.cls === 'write' && DATABASE_TYPES.has(node.type)) {
         own.writes += flow.rate;
       }
-
-      if (role(node) === 'stale' && flow.cls !== 'attack') {
-        own.staleHits += flow.rate;
-      }
     }
 
     const dropped = flow.rate * own.drop;
@@ -722,7 +702,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
     const next: Flow = {
       ...flow,
       rate: flow.rate - dropped,
-      region: spec.global ? flow.region : node.config.region,
+      region: spec.global ? flow.region : region,
     };
     const result = behave(node, next, [...path, node.id]);
     const delay = spec.latency * (1 + 4 * Math.min(own.util, 1.2) ** 4) + hop;
@@ -854,27 +834,18 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
   const mix = Object.entries(scenario.mix) as [TrafficClass, number][];
   const audience = Object.entries(scenario.audience) as [Region, number][];
 
-  /**
-   * Promotes a healthy copy when the primary of a dataset fails. The promotion sticks: a promoted RDS replica leaves
-   * replication, so the old primary returns stale; Aurora Global Database adds the old primary back as a read-only copy.
-   */
+  /** Aurora Global Database promotes its copy in the other Region once the primary Region goes down. */
   const failover = () => {
+    if (!inWindow(twist, 'regionOutage', t)) {
+      return;
+    }
+
     for (const db of board.nodes) {
-      if (db.type === 'dynamodb' || role(db) !== 'primary' || alive(db)) {
-        continue;
-      }
+      const region = writeRegion.get(db.id) ?? db.config.region;
 
-      const copy = board.nodes.find(
-        (other) =>
-          other.type === db.type &&
-          role(other) === 'replica' &&
-          alive(other) &&
-          dataset(other.id) === dataset(db.id),
-      );
-
-      if (copy) {
-        roles.set(copy.id, 'primary');
-        roles.set(db.id, db.type === 'aurora' ? 'replica' : 'stale');
+      if (db.type === 'aurora' && isGlobalDb(db) && region === scenario.outageRegion) {
+        writeRegion.set(db.id, REGIONS.find((item) => item !== region) ?? region);
+        failoverAt.set(db.id, t);
       }
     }
   };
@@ -991,7 +962,7 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
         alive: alive(node),
         instances: node.type === 'ec2' ? Math.round(instances * aliveFraction(node)) : undefined,
         backlog: node.type === 'sqs' ? own.backlog : undefined,
-        dbRole: roles.get(node.id) === initialRoles.get(node.id) ? undefined : roles.get(node.id),
+        primaryRegion: writeRegion.get(node.id),
       };
     }
 
@@ -1073,6 +1044,11 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
     if (node.type === 'lambda' && node.config.provisioned) {
       price += PROVISIONED_CONCURRENCY_PRICE;
+    }
+
+    // A global database pays for its copy in the other Region.
+    if (isGlobalDb(node)) {
+      price *= 2;
     }
 
     costByNode[node.id] = Math.round(price * 100) / 100;
@@ -1157,19 +1133,12 @@ export const simulate = (board: Board, scenario: Scenario): SimResult => {
 
   const integrityOk = checkIntegrity();
 
-  /** Writes must all land in one dataset: databases linked by replication count as one. */
+  /** Writes must all land in one database; a global database keeps its own copies in sync. */
   function checkIntegrity() {
-    const stale = board.nodes.filter((node) => state(node.id).staleHits > 0);
-
-    for (const node of stale) {
-      report('stale_data', node.id, state(node.id).staleHits);
-    }
-
     const written = board.nodes.filter((node) => state(node.id).writes > 0);
-    const datasets = new Set(written.map((node) => dataset(node.id)));
 
-    if (datasets.size <= 1) {
-      return stale.length === 0;
+    if (written.length <= 1) {
+      return true;
     }
 
     const least = written.reduce((a, b) => (state(b.id).writes < state(a.id).writes ? b : a));

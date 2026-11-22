@@ -270,6 +270,15 @@ export const Inspector = (props: {
             }}
           />
         )}
+        {has('globalDb') && (
+          <Toggle
+            label={node.type === 'aurora' ? t('global_aurora') : t('global_dynamodb')}
+            hint={node.type === 'aurora' ? t('global_aurora_hint') : t('global_dynamodb_hint')}
+            value={c.globalDb}
+            disabled={props.locked}
+            onChange={(globalDb) => props.onChange({ globalDb })}
+          />
+        )}
         {has('cacheApi') && (
           <Toggle
             label={t('cache_api')}

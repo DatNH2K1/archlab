@@ -46,6 +46,8 @@ export type NodeConfig = {
   provisioned: boolean;
   /** CloudFront also caches API reads. */
   cacheApi: boolean;
+  /** Aurora Global Database or a DynamoDB global table: a managed copy in the other Region. */
+  globalDb: boolean;
 };
 
 export type BoardNode = {
@@ -114,7 +116,7 @@ const ISSUE_CODES = [
   'no_balancer',
   'replica_write',
   'data_split',
-  'stale_data',
+  'db_region_down',
   'queue_no_consumer',
   'down',
   'overloaded',
@@ -132,9 +134,6 @@ export type IssueCode = (typeof ISSUE_CODES)[number];
 
 export type Issue = { code: IssueCode; nodeId?: string; count: number };
 
-/** Replication role of a database: the writable primary, a read-only copy, or an old primary cut off by failover. */
-export type DbRole = 'primary' | 'replica' | 'stale';
-
 export type NodeTick = {
   util: number;
   /** Work units per second on the node; a database write or a background job costs more than a read. */
@@ -144,8 +143,8 @@ export type NodeTick = {
   alive: boolean;
   instances?: number;
   backlog?: number;
-  /** Database role, set only once failover changed it. */
-  dbRole?: DbRole;
+  /** Region an Aurora Global Database writes in, set only once failover moved it. */
+  primaryRegion?: Region;
 };
 
 export type TickSample = {

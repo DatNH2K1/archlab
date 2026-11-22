@@ -39,4 +39,14 @@ describe('canAdd', () => {
   it('allows any number of servers', () => {
     expect(canAdd(board, 'ec2')).toBe(true);
   });
+
+  it('refuses a second database that takes writes', () => {
+    expect(canAdd(board, 'rds')).toBe(false);
+    expect(canAdd(board, 'aurora')).toBe(false);
+    expect(canAdd(board, 'dynamodb')).toBe(false);
+  });
+
+  it('allows Read Replicas next to the write database', () => {
+    expect(canAdd(board, 'readReplica')).toBe(true);
+  });
 });

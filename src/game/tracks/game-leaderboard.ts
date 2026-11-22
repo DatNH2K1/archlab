@@ -91,11 +91,11 @@ const twoRegions = makeBoard(
     ['lb1', 'alb', 800, 140],
     ['game1', 'ec2', 980, 140, { size: 'large', count: 2, az: 'spread' }],
     ['board1', 'elasticache', 1180, 60, { multiAz: true }],
-    ['scores1', 'dynamodb', 1180, 220, { provisioned: true, size: 'medium' }],
+    // DynamoDB global table: one table with a copy in each Region, both taking writes.
+    ['scores', 'dynamodb', 1180, 300, { provisioned: true, size: 'medium', globalDb: true }],
     ['lb2', 'alb', 800, 460, { region: 'eu-west-1' }],
     ['game2', 'ec2', 980, 460, { size: 'large', count: 2, az: 'spread', region: 'eu-west-1' }],
     ['board2', 'elasticache', 1180, 380, { multiAz: true, region: 'eu-west-1' }],
-    ['scores2', 'dynamodb', 1180, 540, { provisioned: true, size: 'medium', region: 'eu-west-1' }],
   ],
   [
     ['users', 'shield'],
@@ -106,12 +106,10 @@ const twoRegions = makeBoard(
     ['dns', 'lb2'],
     ['lb1', 'game1'],
     ['game1', 'board1'],
-    ['game1', 'scores1'],
+    ['game1', 'scores'],
     ['lb2', 'game2'],
     ['game2', 'board2'],
-    ['game2', 'scores2'],
-    // DynamoDB global table: both Regions take writes and replicate to each other.
-    ['scores1', 'scores2'],
+    ['game2', 'scores'],
   ],
 );
 
@@ -125,7 +123,8 @@ const finals = makeBoard(
     ['lb1', 'alb', 800, 140],
     ['game1', 'ec2', 980, 140, { size: 'large', count: 2, az: 'spread', autoScaling: true, maxCount: 5 }],
     ['board1', 'elasticache', 1180, 60, { multiAz: true }],
-    ['scores1', 'dynamodb', 1180, 220, { provisioned: true, size: 'medium' }],
+    // DynamoDB global table: one table with a copy in each Region, both taking writes.
+    ['scores', 'dynamodb', 1180, 300, { provisioned: true, size: 'medium', globalDb: true }],
     ['lb2', 'alb', 800, 460, { region: 'eu-west-1' }],
     [
       'game2',
@@ -142,7 +141,6 @@ const finals = makeBoard(
       },
     ],
     ['board2', 'elasticache', 1180, 380, { multiAz: true, region: 'eu-west-1' }],
-    ['scores2', 'dynamodb', 1180, 540, { provisioned: true, size: 'medium', region: 'eu-west-1' }],
   ],
   [
     ['users', 'shield'],
@@ -153,12 +151,10 @@ const finals = makeBoard(
     ['dns', 'lb2'],
     ['lb1', 'game1'],
     ['game1', 'board1'],
-    ['game1', 'scores1'],
+    ['game1', 'scores'],
     ['lb2', 'game2'],
     ['game2', 'board2'],
-    ['game2', 'scores2'],
-    // DynamoDB global table: both Regions take writes and replicate to each other.
-    ['scores1', 'scores2'],
+    ['game2', 'scores'],
   ],
 );
 
@@ -338,18 +334,18 @@ export const gameLeaderboard: Track = {
           story:
             'Một sự cố lớn làm cả us-east-1 ngừng hoạt động nhiều giờ. Người chơi ở xa vẫn chiếm 60%, nên một Region thứ hai gần họ còn giúp giảm độ trễ.',
           concept:
-            'Multi-Region active-active: một bộ ALB + EC2 + ElastiCache + DynamoDB (Global Tables) ở mỗi Region. Route 53 gửi người chơi tới Region gần nhất và chuyển hết sang Region còn sống khi một Region sập.',
+            'Multi-Region active-active: một bộ ALB + EC2 + ElastiCache ở mỗi Region, dùng chung một bảng DynamoDB Global Tables có bản sao ở cả hai Region và Region nào cũng ghi được. Route 53 gửi người chơi tới Region gần nhất và chuyển hết sang Region còn sống khi một Region sập.',
           nudge:
-            'Thêm Route 53 sau Global Accelerator, dựng bộ thứ hai ở eu-west-1 (2 EC2 kích cỡ Lớn mỗi bên là đủ) và nối Route 53 tới cả hai ALB. Nối hai bảng DynamoDB với nhau để thành Global Table.',
+            'Thêm Route 53 sau Global Accelerator, dựng bộ thứ hai ở eu-west-1 (2 EC2 kích cỡ Lớn mỗi bên là đủ) và nối Route 53 tới cả hai ALB. Bật Global Tables cho DynamoDB và nối EC2 ở cả hai Region tới nó.',
         },
         en: {
           title: 'A whole Region fails',
           story:
             'A major incident takes us-east-1 down for hours. 60% of players are still far away, so a second Region near them also cuts latency.',
           concept:
-            'Multi-Region active-active: one ALB + EC2 + ElastiCache + DynamoDB (Global Tables) stack per Region. Route 53 sends players to the nearest Region and moves everyone to the surviving one when a Region fails.',
+            'Multi-Region active-active: one ALB + EC2 + ElastiCache stack per Region, sharing one DynamoDB global table that has a copy in both Regions and takes writes in either. Route 53 sends players to the nearest Region and moves everyone to the surviving one when a Region fails.',
           nudge:
-            'Add Route 53 after Global Accelerator, build a second stack in eu-west-1 (2 large EC2 per side is enough) and point Route 53 at both ALBs. Link the two DynamoDB tables to make a global table.',
+            'Add Route 53 after Global Accelerator, build a second stack in eu-west-1 (2 large EC2 per side is enough) and point Route 53 at both ALBs. Turn on Global Tables for DynamoDB and link the EC2 in both Regions to it.',
         },
       },
       scenario: {

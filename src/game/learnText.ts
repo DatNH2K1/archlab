@@ -76,14 +76,14 @@ export const LEARN_TEXT: Record<string, { vi: RoundText; en: RoundText }> = {
     vi: {
       title: 'Cả Region sập',
       story: 'Sếp hỏi: "Nếu cả us-east-1 sập thì sao?" Hôm nay là lúc kiểm chứng câu trả lời.',
-      concept: 'Khôi phục sau thảm hoạ (DR): dựng sẵn một bản ở Region khác (warm standby) và để Route 53 chuyển sang khi health check báo lỗi. Khi failover, database ở Region DR được promote thành bản chính và giữ vai trò đó; Region chính sống lại thì Route 53 đưa người dùng về, nên EC2 ở đó cũng phải ghi được vào bản chính mới. Aurora Global Database tự đưa cluster cũ vào lại làm bản sao.',
-      nudge: 'Người dùng → Route 53 → hai bộ ALB → EC2 → Aurora; bộ thứ hai đặt ở eu-west-1. Nối Aurora us-east-1 → Aurora eu-west-1 để sao chép dữ liệu, và nối EC2 us-east-1 tới cả Aurora eu-west-1 để vẫn ghi được sau failover.',
+      concept: 'Khôi phục sau thảm hoạ (DR): dựng sẵn một bản ở Region khác (warm standby) và để Route 53 chuyển sang khi health check báo lỗi. Database phải là loại multi-Region có sẵn: Aurora Global Database giữ bản sao ở Region kia và tự failover trong ~1 phút, không cần promote bằng tay như bản sao RDS khác Region.',
+      nudge: 'Người dùng → Route 53 → hai bộ ALB → EC2; bộ thứ hai đặt ở eu-west-1. Dùng một Aurora, bật Aurora Global Database, và nối EC2 ở cả hai Region tới nó.',
     },
     en: {
       title: 'The whole Region goes down',
       story: 'Your boss asks: "What if all of us-east-1 goes down?" Today you find out.',
-      concept: 'Disaster recovery: run a copy in another Region (warm standby) and let Route 53 fail over when health checks fail. On failover the DR database is promoted to primary and stays primary; when the primary Region recovers, Route 53 sends users back, so its EC2 must be able to write to the new primary too. Aurora Global Database adds the old cluster back as a copy.',
-      nudge: 'Users → Route 53 → two ALB → EC2 → Aurora stacks; put the second stack in eu-west-1. Link the us-east-1 Aurora → the eu-west-1 Aurora to replicate the data, and link the us-east-1 EC2 to the eu-west-1 Aurora too so it can still write after failover.',
+      concept: 'Disaster recovery: run a copy in another Region (warm standby) and let Route 53 fail over when health checks fail. The database must be multi-Region out of the box: Aurora Global Database keeps a copy in the other Region and fails over in ~1 minute, with no manual promotion as with a cross-Region RDS replica.',
+      nudge: 'Users → Route 53 → two ALB → EC2 stacks; put the second stack in eu-west-1. Use one Aurora, turn on Aurora Global Database, and link the EC2 in both Regions to it.',
     },
   },
   'cache-it': {

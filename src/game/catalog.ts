@@ -13,7 +13,8 @@ type ConfigField =
   | 'multiAz'
   | 'encrypted'
   | 'provisioned'
-  | 'cacheApi';
+  | 'cacheApi'
+  | 'globalDb';
 
 type ComponentSpec = {
   category: ComponentCategory;
@@ -136,7 +137,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     category: 'data',
     label: 'Aurora',
     accepts: ['read', 'write'],
-    fields: ['size', 'encrypted', 'region'],
+    fields: ['size', 'encrypted', 'region', 'globalDb'],
     regional: true,
     global: false,
     latency: 8,
@@ -154,7 +155,7 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
     category: 'data',
     label: 'DynamoDB',
     accepts: ['read', 'write'],
-    fields: ['provisioned', 'size', 'encrypted', 'region'],
+    fields: ['provisioned', 'size', 'encrypted', 'region', 'globalDb'],
     regional: true,
     global: false,
     latency: 6,
@@ -190,6 +191,8 @@ export const CATALOG: Record<ComponentType, ComponentSpec> = {
 
 export const COMPUTE_TYPES = new Set<ComponentType>(['ec2', 'lambda']);
 export const DATABASE_TYPES = new Set<ComponentType>(['rds', 'aurora', 'readReplica', 'dynamodb']);
+/** Databases that take writes; a design holds one, as in gonnacrash. Read Replicas are copies of it. */
+export const WRITE_DATABASE_TYPES = new Set<ComponentType>(['rds', 'aurora', 'dynamodb']);
 export const DATA_STORE_TYPES = new Set<ComponentType>([...DATABASE_TYPES, 'elasticache', 's3']);
 export const QUEUE_TYPES = new Set<ComponentType>(['sqs', 'sns']);
 /** Components that only send traffic to healthy targets. */
@@ -224,11 +227,11 @@ export const LINKS: Record<ComponentType, ComponentType[]> = {
   ec2: SERVER_TARGETS,
   lambda: SERVER_TARGETS,
   elasticache: ['rds', 'aurora', 'readReplica', 'dynamodb'],
-  // A link between databases is replication to a copy, often in another Region.
-  rds: ['rds', 'readReplica'],
-  aurora: ['aurora', 'readReplica'],
+  // A link to a Read Replica is asynchronous replication to a read-only copy.
+  rds: ['readReplica'],
+  aurora: ['readReplica'],
   readReplica: [],
-  dynamodb: ['dynamodb'],
+  dynamodb: [],
   s3: [],
   sqs: ['ec2', 'lambda'],
   sns: ['sqs', 'lambda'],
@@ -315,6 +318,7 @@ export const defaultConfig = (type: ComponentType): NodeConfig => ({
   encrypted: type === 's3',
   provisioned: false,
   cacheApi: false,
+  globalDb: false,
 });
 
 /** Every component the player can place, in palette order. */

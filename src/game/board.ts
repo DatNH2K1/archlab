@@ -1,4 +1,4 @@
-import { defaultConfig, LINKS, MAX_PER_BOARD } from './catalog';
+import { defaultConfig, LINKS, MAX_PER_BOARD, WRITE_DATABASE_TYPES } from './catalog';
 import type { Board, BoardNode, ComponentType, NodeConfig } from './types';
 
 /**
@@ -69,7 +69,12 @@ export const canConnect = (board: Board, from: string, to: string) => {
  * Checks whether one more component of a type fits on the board.
  * @param board The current board.
  * @param type The component type to add.
- * @returns True when the type is under its limit.
+ * @returns True when the type is under its limit and the board has no write database yet when adding one.
  */
-export const canAdd = (board: Board, type: ComponentType) =>
-  board.nodes.filter((node) => node.type === type).length < (MAX_PER_BOARD[type] ?? Number.POSITIVE_INFINITY);
+export const canAdd = (board: Board, type: ComponentType) => {
+  if (WRITE_DATABASE_TYPES.has(type) && board.nodes.some((node) => WRITE_DATABASE_TYPES.has(node.type))) {
+    return false;
+  }
+
+  return board.nodes.filter((node) => node.type === type).length < (MAX_PER_BOARD[type] ?? Number.POSITIVE_INFINITY);
+};

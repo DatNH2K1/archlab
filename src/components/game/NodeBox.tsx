@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { CATALOG, defaultConfig } from '@/game/catalog';
-import type { BoardNode, DbRole, NodeTick, Region } from '@/game/types';
+import type { BoardNode, NodeTick, Region } from '@/game/types';
 import { ComponentIcon } from './ComponentIcon';
 
 export const NODE_W = 150;
@@ -48,12 +48,6 @@ export const dotPosition = (node: BoardNode, side: Side) => {
 const SIDES: Side[] = ['top', 'right', 'bottom', 'left'];
 
 const REGION_TONE: Record<Region, string> = { 'us-east-1': 'text-info', 'eu-west-1': 'text-warn' };
-
-const DB_ROLE_TONE: Record<DbRole, string> = {
-  primary: 'bg-info',
-  replica: 'bg-muted',
-  stale: 'bg-bad',
-};
 
 /** Prints a load compactly, such as 850 or 12.4k. */
 const formatLoad = (load: number) =>
@@ -122,6 +116,10 @@ const useBadges = (node: BoardNode, showRegion: boolean) => {
 
   if (spec.fields.includes('pricing') && c.pricing !== 'onDemand') {
     badges.push({ label: t(`pricing_${c.pricing}`), tone: 'text-info' });
+  }
+
+  if (spec.fields.includes('globalDb') && c.globalDb) {
+    badges.push({ label: tg('badge_global'), tone: 'text-good' });
   }
 
   if (spec.fields.includes('encrypted') && c.encrypted) {
@@ -220,11 +218,9 @@ export const NodeBox = (props: {
               />
             </div>
           )}
-          {live?.dbRole && !down && (
-            <span
-              className={`absolute top-1 right-8 rounded px-1 font-mono text-[9px] font-bold text-ink ${DB_ROLE_TONE[live.dbRole]}`}
-            >
-              {t(`db_${live.dbRole}`)}
+          {live?.primaryRegion && !down && (
+            <span className="absolute top-1 right-8 rounded bg-info px-1 font-mono text-[9px] font-bold text-ink">
+              {t('db_write_region', { region: live.primaryRegion })}
             </span>
           )}
           {props.idle && (

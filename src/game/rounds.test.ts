@@ -60,7 +60,7 @@ describe('Rounds', () => {
       ],
       ['az-outage', () => tweak(tweak(round('az-outage').solution, 'web', { az: 'a' }), 'db', { multiAz: false })],
       ['flash-sale', () => tweak(round('flash-sale').solution, 'web', { autoScaling: false, count: 2 })],
-      ['region-down', () => without(round('region-down').solution, ['lb2', 'web2', 'db2'])],
+      ['region-down', () => tweak(round('region-down').solution, 'db', { globalDb: false })],
       ['cache-it', () => tweak(without(round('cache-it').solution, ['cache']), 'db', { size: 'xlarge' })],
       ['cache-crash', () => tweak(round('cache-crash').solution, 'cache', { multiAz: false })],
       ['static-files', () => without(round('static-files').solution, ['cdn', 'files'], [['users', 'lb']])],

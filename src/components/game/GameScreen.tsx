@@ -6,7 +6,7 @@ import { AppMenu } from '@/components/AppMenu';
 import { BackLink } from '@/components/BackLink';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { canAdd, canConnect, createNode, emptyBoard, newId } from '@/game/board';
-import { CATALOG, COMPONENT_TYPES_IN_PALETTE, LINKS, MAX_PER_BOARD } from '@/game/catalog';
+import { CATALOG, COMPONENT_TYPES_IN_PALETTE, LINKS, MAX_PER_BOARD, WRITE_DATABASE_TYPES } from '@/game/catalog';
 import type { Round } from '@/game/rounds';
 import { simulate, TICKS } from '@/game/simulate';
 import type { Board, ComponentType, NodeConfig, Scenario, SimResult } from '@/game/types';
@@ -276,7 +276,11 @@ export const GameScreen = (props: PlayProps | { mode: 'sandbox' }) => {
     const x = Math.round(((clientX - rect.left - view.x) / view.zoom - NODE_W / 2) / 10) * 10;
     const y = Math.round(((clientY - rect.top - view.y) / view.zoom - NODE_H / 2) / 10) * 10;
     if (!canAdd(board, type)) {
-      setNotice(t('limit_reached', { name: CATALOG[type].label, count: MAX_PER_BOARD[type] ?? 0 }));
+      setNotice(
+        WRITE_DATABASE_TYPES.has(type) && MAX_PER_BOARD[type] === undefined
+          ? t('limit_write_db')
+          : t('limit_reached', { name: CATALOG[type].label, count: MAX_PER_BOARD[type] ?? 0 }),
+      );
 
       return;
     }

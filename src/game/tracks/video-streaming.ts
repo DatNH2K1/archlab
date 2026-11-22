@@ -86,7 +86,7 @@ const catalog = (webs: Record<string, unknown>) => makeBoard(
 );
 const browse = catalog({ size: 'medium', count: 2 });
 
-const twoRegions = (web: Record<string, unknown>, web2: Record<string, unknown>, db2: Record<string, unknown> = { size: 'medium' }) =>
+const twoRegions = (web: Record<string, unknown>, web2: Record<string, unknown>) =>
   makeBoard(
     [
       ['users', 'users', 80, 340],
@@ -96,13 +96,13 @@ const twoRegions = (web: Record<string, unknown>, web2: Record<string, unknown>,
       ['lb', 'alb', 600, 200],
       ['web', 'ec2', 800, 200, web],
       ['cache', 'elasticache', 1000, 100],
-      ['db', 'rds', 1000, 240, { size: 'medium' }],
+      // Aurora Global Database: one cluster with a managed copy in eu-west-1.
+      ['db', 'aurora', 1000, 240, { size: 'small', globalDb: true }],
       ['queue', 'sqs', 800, 360],
       ['worker', 'ec2', 1000, 380, { size: 'large', pricing: 'spot' }],
       ['files2', 's3', 600, 500, { region: 'eu-west-1' }],
       ['lb2', 'alb', 600, 640, { region: 'eu-west-1' }],
       ['web2', 'ec2', 800, 640, { ...web2, region: 'eu-west-1' }],
-      ['db2', 'rds', 1000, 640, { ...db2, region: 'eu-west-1' }],
     ],
     [
       ['users', 'cdn'],
@@ -117,16 +117,11 @@ const twoRegions = (web: Record<string, unknown>, web2: Record<string, unknown>,
       ['web', 'queue'],
       ['queue', 'worker'],
       ['lb2', 'web2'],
-      ['web2', 'db2'],
-      // db2 is a cross-Region replica of db: eu-west-1 reads it locally and sends writes to the primary.
-      ['db', 'db2'],
       ['web2', 'db'],
-      // After failover db is stale and db2 is the new primary for both Regions.
-      ['web', 'db2'],
     ],
   );
 const failover = twoRegions({ size: 'medium', count: 2 }, { size: 'medium', count: 2 });
-const sale = twoRegions({ size: 'medium', count: 2, autoScaling: true, maxCount: 5 }, { size: 'medium', count: 2, autoScaling: true, maxCount: 5 }, { size: 'large' });
+const sale = twoRegions({ size: 'medium', count: 2, autoScaling: true, maxCount: 5 }, { size: 'medium', count: 2, autoScaling: true, maxCount: 5 });
 
 export const videoStreaming: Track = {
   id: 'video-streaming',
@@ -239,13 +234,13 @@ export const videoStreaming: Track = {
           title: 'Cả Region sập',
           story: 'us-east-1 mất điện trong gần nửa vòng chơi. S3, ALB, EC2 và RDS ở đó đều chết, CloudFront không còn nơi nào để lấy nội dung. Học viên ở châu Âu vẫn chiếm một nửa. Ngân sách $330/tháng.',
           concept: 'Dựng một stack thứ hai ở eu-west-1 (S3, ALB, EC2, database) và đặt Route 53 sau CloudFront: health check chuyển sang Region còn sống, còn latency routing đưa học viên châu Âu về Region gần họ.',
-          nudge: 'CloudFront → Route 53 → S3 + ALB ở cả hai Region. Ở eu-west-1: ALB → 2 EC2 Vừa → RDS Vừa, là bản sao của RDS us-east-1. Nối EC2 mỗi Region tới cả hai RDS: ghi vào bản chính, kể cả khi bản chính đã chuyển sang eu-west-1 sau failover.',
+          nudge: 'CloudFront → Route 53 → S3 + ALB ở cả hai Region. Ở eu-west-1: ALB → 2 EC2 Vừa. Thay RDS bằng Aurora Nhỏ, bật Aurora Global Database và nối EC2 ở cả hai Region tới nó.',
         },
         en: {
           title: 'A whole Region goes down',
           story: 'us-east-1 loses power for almost half the round. Its S3, ALB, EC2 and RDS all die, leaving CloudFront with no origin. Half the students are still in Europe. Budget $330/month.',
           concept: 'Build a second stack in eu-west-1 (S3, ALB, EC2, database) and put Route 53 behind CloudFront: health checks fail over to the live Region and latency routing sends European students to the closer one.',
-          nudge: 'CloudFront → Route 53 → S3 + ALB in both Regions. In eu-west-1: ALB → 2 Medium EC2 → Medium RDS, a replica of the us-east-1 RDS. Link the EC2 in each Region to both RDS: writes go to the primary, even after failover moves it to eu-west-1.',
+          nudge: 'CloudFront → Route 53 → S3 + ALB in both Regions. In eu-west-1: ALB → 2 Medium EC2. Replace RDS with a Small Aurora, turn on Aurora Global Database and link the EC2 in both Regions to it.',
         },
       },
       scenario: { traffic: 4000, mix: { static: 0.72, read: 0.2, write: 0.03, job: 0.05 }, audience: { 'us-east-1': 0.5, 'eu-west-1': 0.5 }, twist: 'regionOutage', outageRegion: 'us-east-1', latencyTarget: 120, budget: 330, requirements: ['drainQueue'] },
@@ -260,14 +255,14 @@ export const videoStreaming: Track = {
         vi: {
           title: 'Ngày hội giảm giá',
           story: 'Đợt giảm giá cuối năm làm lưu lượng tăng gấp ba trong vài phút giữa vòng chơi, ở cả hai Region. Giữ đủ máy cho đỉnh cả ngày thì vượt ngân sách $440/tháng.',
-          concept: 'Auto Scaling Group thêm máy khi tải tăng và bớt máy khi hết đợt, nên chỉ trả cho đỉnh lúc nó xảy ra. Database ở eu-west-1 cũng phải chịu được phần tăng của học viên châu Âu.',
-          nudge: 'Bật Auto Scaling Group (tối đa 5 máy) cho máy chủ web ở cả hai Region và nâng RDS dự phòng lên kích cỡ Lớn.',
+          concept: 'Auto Scaling Group thêm máy khi tải tăng và bớt máy khi hết đợt, nên chỉ trả cho đỉnh lúc nó xảy ra.',
+          nudge: 'Bật Auto Scaling Group (tối đa 5 máy) cho máy chủ web ở cả hai Region.',
         },
         en: {
           title: 'Big sale day',
           story: 'The year-end sale triples traffic for a few minutes mid-round, in both Regions. Keeping enough servers for the peak all day blows the $440/month budget.',
-          concept: 'An Auto Scaling Group adds instances as load rises and removes them afterwards, so you only pay for the peak while it lasts. The eu-west-1 database must also absorb the European surge.',
-          nudge: 'Turn on Auto Scaling Group (max 5) for the web servers in both Regions and size the eu-west-1 RDS up to Large.',
+          concept: 'An Auto Scaling Group adds instances as load rises and removes them afterwards, so you only pay for the peak while it lasts.',
+          nudge: 'Turn on Auto Scaling Group (max 5) for the web servers in both Regions.',
         },
       },
       scenario: { traffic: 4000, mix: { static: 0.72, read: 0.2, write: 0.03, job: 0.05 }, audience: { 'us-east-1': 0.5, 'eu-west-1': 0.5 }, twist: 'flashSale', latencyTarget: 120, budget: 440, requirements: ['drainQueue'] },
