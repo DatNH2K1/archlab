@@ -2,7 +2,7 @@
  * Small text diagrams written inside lesson Markdown as fenced code blocks.
  *
  * Every kind takes an optional first line `# caption`.
- * - `flow`: one chain per line, `A -> B -[label]-> C (note)`.
+ * - `flow`: one chain per line, `A -> B -[label]-> C (note)`; naming a node again on a later line branches from it.
  * - `groups`: one box per line, `Title: item, *highlighted item`; an optional `[Frame title]` line wraps them all.
  * - `layers`: stacked bands from the outermost layer to the innermost, `Layer: item, *highlighted item`.
  * - `ladder`: ordered steps from hot to cold, `Label | detail | badge`.

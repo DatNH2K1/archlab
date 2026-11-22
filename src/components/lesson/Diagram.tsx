@@ -1,5 +1,7 @@
 import { ComponentIcon } from '@/components/game/ComponentIcon';
 import type { Diagram, DiagramItem, DiagramNode } from '@/content/diagrams';
+import { layoutFlow } from '@/content/flowLayout';
+import type { FlowCell, FlowEnd, FlowSegment } from '@/content/flowLayout';
 import { CATALOG } from '@/game/catalog';
 import type { ComponentType } from '@/game/types';
 
@@ -9,20 +11,11 @@ const ICONS = (Object.keys(CATALOG) as ComponentType[])
 
 const iconFor = (label: string) => ICONS.find((icon) => icon.pattern.test(label))?.type;
 
-const Arrow = (props: { label?: string }) => (
-  <div className="flex shrink-0 flex-col items-center px-1 text-muted">
-    {props.label && <span className="text-[10px] leading-none whitespace-nowrap text-accent">{props.label}</span>}
-    <svg viewBox="0 0 32 12" className="h-3 w-8" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-      <path d="M1 6h29M25 1l5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  </div>
-);
-
 const Node = (props: { node: DiagramNode }) => {
   const icon = iconFor(props.node.label);
 
   return (
-    <div className="flex min-w-20 items-center gap-2 rounded-lg border border-line bg-panel-2 px-3 py-2">
+    <div className="flex w-full max-w-32 min-w-16 items-center gap-1.5 rounded-lg border border-line bg-panel-2 px-2 py-1.5">
       {icon && <ComponentIcon type={icon} className="size-5 shrink-0 text-accent" />}
       <div>
         <p className="text-sm leading-tight font-semibold">{props.node.label}</p>
@@ -45,20 +38,90 @@ const Item = (props: { item: DiagramItem }) => {
   );
 };
 
-const Flow = (props: { diagram: Extract<Diagram, { kind: 'flow' }> }) => (
-  <div className="space-y-3">
-    {props.diagram.rows.map((row, r) => (
-      <div key={`${r}-${row.nodes.map((node) => node.label).join('>')}`} className="flex flex-wrap items-center gap-y-2">
-        {row.nodes.map((node, i) => (
-          <div key={`${node.label}-${i}`} className="flex items-center">
-            {i > 0 && <Arrow label={row.edges[i - 1]} />}
-            <Node node={node} />
+/** Draws the forks of one column: a curve from each source lane to each target lane. */
+const Bends = (props: { segments: FlowSegment[]; cells: FlowCell[]; slots: number }) => {
+  const y = (id: number) => (props.cells[id]!.slot + 0.5) * 100;
+
+  return (
+    <svg
+      viewBox={`0 0 100 ${props.slots * 100}`}
+      preserveAspectRatio="none"
+      className="absolute inset-y-0 left-0 h-full w-3 text-muted"
+      fill="none"
+      stroke="currentColor"
+      aria-hidden="true"
+    >
+      {props.segments.map((segment) => (
+        <path
+          key={`${segment.from}-${segment.to}`}
+          d={`M0 ${y(segment.from)} C60 ${y(segment.from)} 40 ${y(segment.to)} 100 ${y(segment.to)}`}
+          strokeWidth="1.5"
+          vectorEffect="non-scaling-stroke"
+        />
+      ))}
+    </svg>
+  );
+};
+
+/** Draws the straight end of the edges entering one lane, with their labels above the line. */
+const EdgeEnd = (props: { end: FlowEnd }) => (
+  <div className="relative grid min-w-10 grid-rows-2 pr-1.5 pl-4">
+    <div className="flex flex-col items-center justify-end pb-0.5">
+      {props.end.labels.map((label, i) => (
+        <span key={`${i}-${label}`} className="max-w-24 text-center text-[10px] leading-tight text-accent">
+          {label}
+        </span>
+      ))}
+    </div>
+    {props.end.line && <span className="absolute top-1/2 right-0 left-3 h-[1.5px] -translate-y-1/2 bg-muted" />}
+    {props.end.arrow && (
+      <svg viewBox="0 0 6 10" className="absolute top-1/2 right-0 h-2.5 w-1.5 -translate-y-1/2 text-muted" aria-hidden="true">
+        <path d="M0 0l6 5-6 5z" fill="currentColor" />
+      </svg>
+    )}
+  </div>
+);
+
+const Flow = (props: { diagram: Extract<Diagram, { kind: 'flow' }> }) => {
+  const layout = layoutFlow(props.diagram.rows);
+
+  return (
+    <div className="-mx-4 overflow-x-auto px-4">
+      <div
+        className="mx-auto grid w-max"
+        style={{ gridTemplateColumns: `repeat(${layout.ranks * 2 - 1}, auto)`, gridTemplateRows: `repeat(${layout.slots * 2}, 1fr)` }}
+      >
+        {Array.from({ length: layout.ranks - 1 }, (_, rank) => (
+          <div key={`bends-${rank}`} className="relative" style={{ gridColumn: rank * 2 + 2, gridRow: '1 / -1' }}>
+            <Bends
+              segments={layout.segments.filter((segment) => layout.cells[segment.from]!.rank === rank)}
+              cells={layout.cells}
+              slots={layout.slots}
+            />
+          </div>
+        ))}
+        {layout.ends.map((end) => (
+          <div key={`end-${end.rank}-${end.slot}`} className="grid" style={{ gridColumn: end.rank * 2, gridRow: `${end.slot * 2 + 1} / span 2` }}>
+            <EdgeEnd end={end} />
+          </div>
+        ))}
+        {layout.cells.map((cell) => (
+          <div
+            key={`cell-${cell.id}`}
+            className="flex items-center py-1.5"
+            style={{ gridColumn: cell.rank * 2 + 1, gridRow: `${cell.slot * 2 + 1} / span 2` }}
+          >
+            {cell.label === undefined ? (
+              <span className="h-[1.5px] w-full bg-muted" />
+            ) : (
+              <Node node={{ label: cell.label, note: cell.note }} />
+            )}
           </div>
         ))}
       </div>
-    ))}
-  </div>
-);
+    </div>
+  );
+};
 
 const Groups = (props: { diagram: Extract<Diagram, { kind: 'groups' }> }) => {
   const grid = (
