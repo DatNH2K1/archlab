@@ -129,3 +129,19 @@ export type Comparison = ComparisonData & {
   /** Phrases in a question that point to one answer. */
   keywords: { trigger: string; answer: string }[];
 };
+
+/** The language-neutral part of a quick-pick tip group; texts live in the `Tips` namespace. */
+export type TipGroupData = {
+  id: keyof Messages['Tips'];
+  /** Exam domain; absent for general exam strategy. */
+  domain?: DomainId;
+  /** Slugs of lessons with more detail. */
+  lessons: LessonSlug[];
+};
+
+/** A group of exam phrases with the answer they point to and why. */
+export type TipGroup = TipGroupData & {
+  title: string;
+  intro: string;
+  tips: { trigger: string; answer: string; why: string }[];
+};

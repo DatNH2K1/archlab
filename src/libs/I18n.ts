@@ -13,7 +13,7 @@ import { routing } from './I18nRouting';
 // 3. Every 24 hours at 5am, the workflow will run automatically
 
 /** Message files of each locale folder, merged into one set of namespaces. */
-const MESSAGE_FILES = ['ui', 'game', 'lessons', 'questions', 'flashcards', 'comparisons'];
+const MESSAGE_FILES = ['ui', 'game', 'lessons', 'questions', 'flashcards', 'comparisons', 'tips'];
 
 export default getRequestConfig(async ({ requestLocale }) => {
   // Typically corresponds to the `[locale]` segment

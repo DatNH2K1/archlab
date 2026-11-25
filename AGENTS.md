@@ -42,7 +42,7 @@ Tailwind v4 utility classes. Reuse shared components. Responsive. No unnecessary
 
 ## i18n (next-intl)
 - Never hard-code user-visible strings. Page namespaces end with `Page`.
-- Messages live in `src/locales/{vi,en}/*.json` (`ui`, `game`, `lessons`, `questions`, `flashcards`, `comparisons`). Data files in `src/game` and `src/content` keep only language-neutral fields, keyed by id.
+- Messages live in `src/locales/{vi,en}/*.json` (`ui`, `game`, `lessons`, `questions`, `flashcards`, `comparisons`, `tips`). Data files in `src/game` and `src/content` keep only language-neutral fields, keyed by id.
 - Server: `getTranslations`; Client: `useTranslations`.
 - Context-specific keys (`card_title`, `meta_description`). Use `t.rich(...)` for markup.
 - Use sentence case for translations.

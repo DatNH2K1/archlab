@@ -36,6 +36,7 @@ const ICONS = {
     </>
   ),
   compare: <path d="M9 4v16M15 4v16M4 8h5M4 12h5M4 16h5M15 8h5M15 12h5M15 16h5" />,
+  tips: <path d="M13 3L5 14h6l-1 7 8-11h-6z" />,
   progress: <path d="M4 19h16M7 16v-4M12 16V8M17 16V5" />,
   how_to_play: (
     <>
@@ -52,6 +53,7 @@ const ITEMS = [
   { href: '/sandbox', key: 'sandbox' },
   { href: '/lessons', key: 'lessons' },
   { href: '/compare', key: 'compare' },
+  { href: '/tips', key: 'tips' },
   { href: '/practice', key: 'practice' },
   { href: '/flashcards', key: 'flashcards' },
   { href: '/progress', key: 'progress' },

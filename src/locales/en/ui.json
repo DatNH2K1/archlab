@@ -19,7 +19,8 @@
     "credit": "Simulation-game idea inspired by gonnacrash.com. A personal study project, not affiliated with gonnacrash.com or AWS. Progress is kept in your browser.",
     "switch_language": "Switch language",
     "scenarios": "Design problems",
-    "compare": "Service comparisons"
+    "compare": "Service comparisons",
+    "tips": "Quick picks"
   },
   "Game": {
     "users": "Users",
@@ -558,6 +559,13 @@
     "intro": "Services the exam likes to put side by side to trip you up. Each entry has a comparison table, when to pick which, and the phrases in a question that give it away.",
     "pick_when": "Pick when",
     "jump_to": "Jump to"
+  },
+  "TipsPage": {
+    "title": "SAA-C03 quick picks",
+    "intro": "Phrases in a question and the answer they almost always point to, with the reason that rules out the trap. Skim it before the exam.",
+    "jump_to": "Jump to group",
+    "general": "General",
+    "tip_count": "{count, plural, one {# tip} other {# tips}}"
   },
   "Glossary": {
     "ACM": {

@@ -19,7 +19,8 @@
     "credit": "Ý tưởng game mô phỏng lấy cảm hứng từ gonnacrash.com. Dự án học tập cá nhân, không liên kết với gonnacrash.com hay AWS. Tiến độ lưu trong trình duyệt.",
     "switch_language": "Đổi ngôn ngữ",
     "scenarios": "Bài toán thiết kế",
-    "compare": "So sánh dịch vụ"
+    "compare": "So sánh dịch vụ",
+    "tips": "Mẹo chọn nhanh"
   },
   "Game": {
     "users": "Người dùng",
@@ -558,6 +559,13 @@
     "intro": "Các cặp, nhóm dịch vụ mà đề thi hay đặt cạnh nhau để gài bẫy. Mỗi mục có bảng so sánh, khi nào chọn cái nào và cụm từ gợi ý trong câu hỏi.",
     "pick_when": "Chọn khi",
     "jump_to": "Đi tới mục"
+  },
+  "TipsPage": {
+    "title": "Mẹo chọn nhanh SAA-C03",
+    "intro": "Cụm từ trong câu hỏi và đáp án nó gần như luôn trỏ tới, kèm lý do để loại đáp án bẫy. Đọc lướt trước giờ thi.",
+    "jump_to": "Đi tới nhóm",
+    "general": "Chung",
+    "tip_count": "{count} mẹo"
   },
   "Glossary": {
     "ACM": {

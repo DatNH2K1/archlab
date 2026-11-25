@@ -1,0 +1,458 @@
+{
+  "Tips": {
+    "strategy": {
+      "title": "Reading the question",
+      "intro": "SAA-C03 questions often have two answers that both work; the constraint phrase at the end of the question decides which one is right.",
+      "tips": [
+        {
+          "trigger": "LEAST operational overhead",
+          "answer": "Managed or serverless services: Lambda, Fargate, DynamoDB, Aurora Serverless, S3",
+          "why": "Drop answers that install software on EC2, run cron scripts or need you to patch."
+        },
+        {
+          "trigger": "MOST cost-effective",
+          "answer": "The cheapest option that still meets every other requirement",
+          "why": "A cheaper answer that loses the required HA, durability or performance is the trap."
+        },
+        {
+          "trigger": "Minimal changes to the application",
+          "answer": "Move to a compatible service: RDS with the same engine, EFS for NFS, FSx for SMB, MGN to rehost",
+          "why": "Rewriting for DynamoDB or Lambda is usually wrong even if the architecture is nicer."
+        },
+        {
+          "trigger": "Highly available",
+          "answer": "Spread across at least 2 AZs: ALB + multi-AZ Auto Scaling, RDS Multi-AZ",
+          "why": "Go multi-Region only when the question mentions a Region outage or global users."
+        },
+        {
+          "trigger": "Survive a Region outage with very low RTO/RPO",
+          "answer": "Aurora Global Database, DynamoDB global tables, S3 CRR, Route 53 failover",
+          "why": "Multi-AZ only protects within one Region."
+        },
+        {
+          "trigger": "Decouple, traffic spikes, must not lose requests",
+          "answer": "Put SQS between the tiers",
+          "why": "The queue holds requests while the next tier is slow or down; consumers work at their own pace."
+        },
+        {
+          "trigger": "Real-time, need to replay the stream",
+          "answer": "Kinesis Data Streams",
+          "why": "Near real-time delivery into S3, Redshift or OpenSearch with no code is Data Firehose."
+        },
+        {
+          "trigger": "Choose TWO / Choose THREE",
+          "answer": "Check each option against the requirements on its own",
+          "why": "Each correct answer usually solves part of the problem; don't drop one because two look alike."
+        },
+        {
+          "trigger": "An answer that works but needs custom code or more services than necessary",
+          "answer": "Usually a trap",
+          "why": "AWS prefers built-in features: turning on an option beats building it yourself."
+        }
+      ]
+    },
+    "identity": {
+      "title": "Identity and access",
+      "intro": "Who can do what, in which account, and how they get credentials.",
+      "tips": [
+        {
+          "trigger": "EC2 or Lambda needs access to S3 or DynamoDB",
+          "answer": "IAM role (instance profile, execution role)",
+          "why": "Never pick an answer that stores access keys in code or on the machine."
+        },
+        {
+          "trigger": "Restrict every account in the organization, even admins and root",
+          "answer": "SCP in AWS Organizations",
+          "why": "SCPs only cap permissions, they don't grant any; IAM policies still need to allow."
+        },
+        {
+          "trigger": "Access resources from another AWS account",
+          "answer": "Cross-account IAM role (sts:AssumeRole) or a resource-based policy",
+          "why": "Don't create a shared IAM user for the other account."
+        },
+        {
+          "trigger": "App users sign up, sign in, use social login",
+          "answer": "Cognito User Pool",
+          "why": "User Pools handle identity; they don't hand out AWS credentials."
+        },
+        {
+          "trigger": "App users get temporary credentials to call S3 directly",
+          "answer": "Cognito Identity Pool",
+          "why": "Identity Pools trade a sign-in token for a temporary IAM role."
+        },
+        {
+          "trigger": "Employees SSO into many accounts with corporate logins",
+          "answer": "IAM Identity Center (connected to Active Directory if any)",
+          "why": "Cognito is for an app's end users, not the workforce."
+        },
+        {
+          "trigger": "Developers create roles but must not escalate privileges",
+          "answer": "Permissions boundary",
+          "why": "A boundary caps the maximum permissions of the role or user it's attached to."
+        },
+        {
+          "trigger": "S3 bucket reachable only from a VPC or a specific endpoint",
+          "answer": "Bucket policy with an aws:SourceVpce or aws:SourceVpc condition",
+          "why": "Security groups can't be attached to S3."
+        }
+      ]
+    },
+    "data-protection": {
+      "title": "Encryption, secrets and threat detection",
+      "intro": "Where keys and secrets belong, and which detection service reads which data.",
+      "tips": [
+        {
+          "trigger": "Rotate database credentials automatically",
+          "answer": "Secrets Manager",
+          "why": "Parameter Store has no built-in rotation for RDS."
+        },
+        {
+          "trigger": "Store config and parameters cheaply, no rotation",
+          "answer": "SSM Parameter Store (SecureString if sensitive)",
+          "why": "The standard tier is free."
+        },
+        {
+          "trigger": "Own the key policy, enable rotation, audit who uses the key",
+          "answer": "KMS customer managed key",
+          "why": "AWS managed keys don't let you edit the key policy."
+        },
+        {
+          "trigger": "Single-tenant HSM, only the customer holds the keys",
+          "answer": "CloudHSM",
+          "why": "KMS is a shared service run by AWS."
+        },
+        {
+          "trigger": "Block SQL injection, XSS, rate-limit by IP, block by country",
+          "answer": "AWS WAF on CloudFront, ALB or API Gateway",
+          "why": "WAF can't be attached to an NLB."
+        },
+        {
+          "trigger": "DDoS protection with a response team and cost protection",
+          "answer": "Shield Advanced",
+          "why": "Shield Standard is free and always on but has neither."
+        },
+        {
+          "trigger": "Find personal data (PII) in S3",
+          "answer": "Macie",
+          "why": "GuardDuty finds suspicious behaviour; Inspector scans EC2, ECR and Lambda for vulnerabilities."
+        },
+        {
+          "trigger": "Who called this API, and when",
+          "answer": "CloudTrail",
+          "why": "Resource configuration history and compliance rules are AWS Config."
+        },
+        {
+          "trigger": "Free HTTPS certificate that renews itself",
+          "answer": "ACM attached to ALB, CloudFront or API Gateway",
+          "why": "Certificates for CloudFront must be in us-east-1."
+        }
+      ]
+    },
+    "networking": {
+      "title": "VPC networking and connectivity",
+      "intro": "How traffic gets out to the internet, to AWS services, between VPCs and back on-premises.",
+      "tips": [
+        {
+          "trigger": "Private subnet instances need outbound-only internet",
+          "answer": "NAT Gateway in a public subnet, one per AZ",
+          "why": "A NAT instance is self-managed; one NAT Gateway for several AZs is a single point of failure."
+        },
+        {
+          "trigger": "Reach S3 or DynamoDB privately and cut NAT charges",
+          "answer": "Gateway VPC endpoint",
+          "why": "Gateway endpoints are free and exist only for S3 and DynamoDB."
+        },
+        {
+          "trigger": "Call other AWS services or SaaS privately",
+          "answer": "Interface endpoint (PrivateLink)",
+          "why": "It adds an ENI with a private IP in the subnet, billed by the hour and by data."
+        },
+        {
+          "trigger": "Block one specific IP",
+          "answer": "Network ACL Deny rule",
+          "why": "Security groups only allow."
+        },
+        {
+          "trigger": "Connect many VPCs and on-premises with transitive routing",
+          "answer": "Transit Gateway",
+          "why": "VPC peering isn't transitive and must be set up pair by pair."
+        },
+        {
+          "trigger": "Share a service with other VPCs or accounts with overlapping CIDRs",
+          "answer": "PrivateLink (endpoint service behind an NLB)",
+          "why": "Peering doesn't work when CIDRs overlap."
+        },
+        {
+          "trigger": "Consistent, private bandwidth to on-premises",
+          "answer": "Direct Connect (add a VPN if it must be encrypted)",
+          "why": "Need it within hours over the internet: Site-to-Site VPN; DX takes weeks to provision."
+        },
+        {
+          "trigger": "Static global IPs, TCP/UDP, fast Region failover",
+          "answer": "Global Accelerator",
+          "why": "Caching HTTP content at the edge is CloudFront."
+        },
+        {
+          "trigger": "Serve S3 content only through CloudFront",
+          "answer": "Origin Access Control (OAC) + bucket policy",
+          "why": "Keep the bucket private; don't turn on public static website hosting."
+        }
+      ]
+    },
+    "resilience": {
+      "title": "High availability and disaster recovery",
+      "intro": "Load balancing, scaling, failover, and picking a DR strategy by RTO/RPO.",
+      "tips": [
+        {
+          "trigger": "RDS fails over automatically to a synchronous standby",
+          "answer": "RDS Multi-AZ",
+          "why": "The standby of a Multi-AZ instance doesn't serve reads."
+        },
+        {
+          "trigger": "Offload read traffic from the database",
+          "answer": "Read replica (or ElastiCache)",
+          "why": "Replicas are asynchronous, so they don't replace Multi-AZ for HA."
+        },
+        {
+          "trigger": "Multi-Region relational, RPO in seconds, RTO under a minute",
+          "answer": "Aurora Global Database",
+          "why": "RDS cross-Region read replicas lag more and need a manual promote."
+        },
+        {
+          "trigger": "Cheapest DR, an RTO of hours is fine",
+          "answer": "Backup & restore",
+          "why": "Rising cost, falling RTO: backup & restore → pilot light → warm standby → active/active."
+        },
+        {
+          "trigger": "Only the database runs in the DR Region, the rest starts when needed",
+          "answer": "Pilot light",
+          "why": "Warm standby runs the whole stack at small scale."
+        },
+        {
+          "trigger": "Send users to another Region when the primary fails",
+          "answer": "Route 53 failover routing + health checks",
+          "why": "Latency routing picks the fastest Region; geolocation goes by country; weighted splits by percentage."
+        },
+        {
+          "trigger": "Route by URL path or host, HTTP",
+          "answer": "ALB",
+          "why": "Static IP, TCP/UDP, millions of requests per second is NLB; third-party firewall appliances is GWLB."
+        },
+        {
+          "trigger": "Daily peak hours are known in advance",
+          "answer": "Scheduled scaling",
+          "why": "Holding CPU near a level is target tracking; recurring patterns for ML to forecast is predictive scaling."
+        },
+        {
+          "trigger": "Central backup policy across services and accounts",
+          "answer": "AWS Backup (Vault Lock to prevent deletion)",
+          "why": "Don't write snapshot Lambdas for each service."
+        }
+      ]
+    },
+    "integration": {
+      "title": "Compute and application integration",
+      "intro": "Where the code runs and how the pieces talk to each other.",
+      "tips": [
+        {
+          "trigger": "Keep order, process exactly once",
+          "answer": "SQS FIFO",
+          "why": "SQS Standard can deliver duplicates and out of order."
+        },
+        {
+          "trigger": "One event goes to many consumers",
+          "answer": "SNS fan-out to several SQS queues",
+          "why": "Each consumer gets its own queue, so a slow one loses nothing."
+        },
+        {
+          "trigger": "Route events from AWS services or SaaS by rules, or run on a schedule",
+          "answer": "EventBridge",
+          "why": "EventBridge filters on event content and has a Scheduler."
+        },
+        {
+          "trigger": "Multi-step workflow with retries and human approval",
+          "answer": "Step Functions",
+          "why": "Don't chain Lambdas calling each other."
+        },
+        {
+          "trigger": "Run containers without managing servers",
+          "answer": "Fargate (ECS or EKS)",
+          "why": "If the question says they already use Kubernetes, pick EKS."
+        },
+        {
+          "trigger": "Jobs that run longer than 15 minutes",
+          "answer": "ECS/Fargate or AWS Batch",
+          "why": "Lambda maxes out at 15 minutes."
+        },
+        {
+          "trigger": "Lambda opens too many connections to RDS",
+          "answer": "RDS Proxy",
+          "why": "The proxy pools connections and fails over faster."
+        },
+        {
+          "trigger": "Lowest network latency between instances (HPC)",
+          "answer": "Cluster placement group",
+          "why": "To reduce correlated failures, use a spread placement group."
+        },
+        {
+          "trigger": "Legacy app uses JMS, AMQP or MQTT, no rewrite wanted",
+          "answer": "Amazon MQ",
+          "why": "SQS/SNS need code changes to AWS APIs."
+        }
+      ]
+    },
+    "storage": {
+      "title": "Storage",
+      "intro": "Block, file or object, and which storage class fits how often data is read.",
+      "tips": [
+        {
+          "trigger": "Many Linux EC2 instances across AZs share a file system",
+          "answer": "EFS",
+          "why": "EBS attaches to one instance in one AZ (Multi-Attach is io1/io2 only, same AZ)."
+        },
+        {
+          "trigger": "Windows SMB file share with Active Directory",
+          "answer": "FSx for Windows File Server",
+          "why": "High-throughput HPC linked to S3 is FSx for Lustre; NetApp or multi-protocol is FSx for ONTAP."
+        },
+        {
+          "trigger": "Lowest-latency scratch disk, losing data on stop is fine",
+          "answer": "Instance store",
+          "why": "Durable with the highest IOPS is EBS io2 Block Express."
+        },
+        {
+          "trigger": "Upload large files faster from far away",
+          "answer": "S3 Transfer Acceleration + multipart upload",
+          "why": "Transfer Acceleration goes through CloudFront edge locations."
+        },
+        {
+          "trigger": "Nobody may delete or change data during retention (WORM)",
+          "answer": "S3 Object Lock in compliance mode",
+          "why": "Governance mode still lets users with special permission delete."
+        },
+        {
+          "trigger": "Unknown or changing access patterns",
+          "answer": "S3 Intelligent-Tiering",
+          "why": "It moves objects between tiers itself with no retrieval fees."
+        },
+        {
+          "trigger": "Rarely read but needed within milliseconds",
+          "answer": "S3 Standard-IA or Glacier Instant Retrieval",
+          "why": "Long-term archive where hours are fine and price is lowest is Glacier Deep Archive."
+        },
+        {
+          "trigger": "On-premises apps use S3 over NFS/SMB with a local cache",
+          "answer": "Storage Gateway (S3 File Gateway)",
+          "why": "Copying data once or on a schedule is DataSync."
+        },
+        {
+          "trigger": "Let an outsider download one object for a short time",
+          "answer": "S3 presigned URL",
+          "why": "Don't make the bucket public."
+        }
+      ]
+    },
+    "data": {
+      "title": "Databases, analytics and data migration",
+      "intro": "The data shape and query pattern pick the engine; volume and bandwidth pick how to move it.",
+      "tips": [
+        {
+          "trigger": "Key-value, millisecond latency at any scale, serverless",
+          "answer": "DynamoDB",
+          "why": "Need microsecond reads on DynamoDB: add DAX."
+        },
+        {
+          "trigger": "Cache sessions and query results, offload the database",
+          "answer": "ElastiCache (Redis/Valkey for replication and persistence)",
+          "why": "Memcached is simple and multithreaded but has no replication."
+        },
+        {
+          "trigger": "Relational with spiky or unpredictable load",
+          "answer": "Aurora Serverless v2",
+          "why": "It scales capacity with the load."
+        },
+        {
+          "trigger": "Ad hoc SQL queries on data in S3",
+          "answer": "Athena",
+          "why": "A warehouse for BI and frequent complex queries is Redshift; dashboards are QuickSight."
+        },
+        {
+          "trigger": "Serverless ETL and a data catalog",
+          "answer": "AWS Glue",
+          "why": "The Glue Data Catalog is the metastore for Athena and Redshift Spectrum."
+        },
+        {
+          "trigger": "Migrate a database with minimal downtime",
+          "answer": "DMS (plus SCT when changing engines)",
+          "why": "DMS replicates continuously (CDC) until cutover."
+        },
+        {
+          "trigger": "Tens of TB to PB over weak bandwidth",
+          "answer": "Snowball Edge",
+          "why": "Online sync to S3, EFS or FSx on a schedule is DataSync."
+        },
+        {
+          "trigger": "Rehost servers onto EC2 with little downtime",
+          "answer": "AWS Application Migration Service (MGN)",
+          "why": "It replicates blocks continuously, then cuts over."
+        },
+        {
+          "trigger": "Graph relationships, MongoDB, time series",
+          "answer": "Neptune, DocumentDB, Timestream",
+          "why": "When the question names a special data shape, pick the purpose-built database."
+        }
+      ]
+    },
+    "cost": {
+      "title": "Cost optimization",
+      "intro": "Pricing models by workload shape, cost tracking tools and data transfer charges.",
+      "tips": [
+        {
+          "trigger": "Steady 24/7 load for 1–3 years",
+          "answer": "Savings Plans or Reserved Instances",
+          "why": "Compute Savings Plans are flexible across EC2, Fargate and Lambda."
+        },
+        {
+          "trigger": "Batch that tolerates interruption, flexible timing",
+          "answer": "Spot Instances",
+          "why": "Up to 90% cheaper but can be reclaimed with a 2-minute warning."
+        },
+        {
+          "trigger": "Short-term, unpredictable, must not be interrupted",
+          "answer": "On-Demand",
+          "why": "No commitment; a long-term commitment would be wasted."
+        },
+        {
+          "trigger": "Per-socket/per-core licences, need to see physical hardware",
+          "answer": "Dedicated Hosts",
+          "why": "Dedicated Instances don't expose sockets and cores."
+        },
+        {
+          "trigger": "Alert when spending passes a threshold",
+          "answer": "AWS Budgets",
+          "why": "Analysing past spend is Cost Explorer; rightsizing advice is Compute Optimizer."
+        },
+        {
+          "trigger": "Cut NAT Gateway charges for traffic to S3",
+          "answer": "Gateway VPC endpoint",
+          "why": "It's free and the traffic skips the NAT."
+        },
+        {
+          "trigger": "Cut data transfer out charges for static content",
+          "answer": "CloudFront",
+          "why": "Transfer from an AWS origin to CloudFront is free."
+        },
+        {
+          "trigger": "Data ages and is deleted after some days",
+          "answer": "S3 Lifecycle rule",
+          "why": "It transitions and expires objects automatically, no Lambda needed."
+        },
+        {
+          "trigger": "Dev/test environments idle outside working hours",
+          "answer": "Stop on a schedule (Instance Scheduler, scheduled scaling to 0)",
+          "why": "Pay only for the hours actually used."
+        }
+      ]
+    }
+  }
+}

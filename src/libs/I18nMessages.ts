@@ -1,7 +1,7 @@
 import type { Messages } from 'next-intl';
 
 /** Namespaces read only by server pages, which pass resolved texts to client components as props. */
-const SERVER_ONLY = new Set(['Questions', 'Flashcards', 'Comparisons']);
+const SERVER_ONLY = new Set(['Questions', 'Flashcards', 'Comparisons', 'Tips']);
 
 /**
  * Keeps the messages client components need, so long study texts stay out of every page payload.

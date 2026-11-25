@@ -8,7 +8,7 @@ export const dynamic = 'force-static';
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = getBaseUrl();
 
-  const allRoutes = ['', '/scenarios', '/compare', '/sandbox', '/lessons', '/practice', '/flashcards', '/progress', '/how-to-play'];
+  const allRoutes = ['', '/scenarios', '/compare', '/tips', '/sandbox', '/lessons', '/practice', '/flashcards', '/progress', '/how-to-play'];
 
 
   return allRoutes.map((route) => ({

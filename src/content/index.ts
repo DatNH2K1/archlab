@@ -6,7 +6,8 @@ import { costQuestions } from './questions/cost';
 import { performanceQuestions } from './questions/performance';
 import { resilientQuestions } from './questions/resilient';
 import { secureQuestions } from './questions/secure';
-import type { Comparison, Flashcard, Lesson, Question } from './types';
+import { TIP_GROUPS } from './tips';
+import type { Comparison, Flashcard, Lesson, Question, TipGroup } from './types';
 
 const QUESTIONS = [...secureQuestions, ...resilientQuestions, ...performanceQuestions, ...costQuestions];
 
@@ -55,6 +56,17 @@ export const getComparisons = async (locale: string): Promise<Comparison[]> => {
   const messages = await getMessages({ locale });
 
   return COMPARISONS.map((comparison) => ({ ...comparison, ...messages.Comparisons[comparison.id] }));
+};
+
+/**
+ * Returns the quick-pick tip groups in a language.
+ * @param locale The page locale.
+ * @returns Tip groups, exam strategy first, then by domain.
+ */
+export const getTipGroups = async (locale: string): Promise<TipGroup[]> => {
+  const messages = await getMessages({ locale });
+
+  return TIP_GROUPS.map((group) => ({ ...group, ...messages.Tips[group.id] }));
 };
 
 /** Number of lessons, questions and flashcards, the same in every language. */
