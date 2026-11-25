@@ -330,6 +330,52 @@
         }
       ]
     },
+    "instance-types": {
+      "title": "Choose an instance family",
+      "intro": "Look at whether the load is CPU, memory, GPU or local-disk heavy; the first letter of the type is the family:",
+      "tips": [
+        {
+          "when": "Balanced load: web servers, app servers, dev environments",
+          "pick": "M (general purpose)"
+        },
+        {
+          "when": "Low baseline with occasional bursts, cheap",
+          "pick": "T (burstable, uses CPU credits)"
+        },
+        {
+          "when": "CPU-heavy: batch, HPC, video encoding, game servers",
+          "pick": "C (compute optimized)"
+        },
+        {
+          "when": "Memory-heavy: in-memory databases, caches, real-time analytics",
+          "pick": "R (memory optimized)"
+        },
+        {
+          "when": "Huge memory: SAP HANA",
+          "pick": "X or High Memory (u-)"
+        },
+        {
+          "when": "ML training, GPU compute",
+          "pick": "P (GPU) or Trn (Trainium)"
+        },
+        {
+          "when": "Graphics, GPU inference; cheapest inference",
+          "pick": "G; Inf (Inferentia)"
+        },
+        {
+          "when": "Very high random IOPS on local NVMe: NoSQL, OLTP",
+          "pick": "I (storage optimized)"
+        },
+        {
+          "when": "High sequential throughput on local HDD: HDFS, MapReduce",
+          "pick": "D or H (storage optimized)"
+        },
+        {
+          "when": "Best price-performance, ARM is fine",
+          "pick": "Graviton (g suffix: M7g, C7g, R7g)"
+        }
+      ]
+    },
     "storage": {
       "title": "Choose storage",
       "intro": "Look at whether you need block, file or object, how many machines share it and which OS:",
@@ -361,6 +407,48 @@
         {
           "when": "On-premises uses S3 over NFS/SMB with a cache",
           "pick": "Storage Gateway (S3 File Gateway)"
+        }
+      ]
+    },
+    "ebs-types": {
+      "title": "Choose an EBS volume type",
+      "intro": "Look at whether you need IOPS (random access) or throughput (sequential reads), how much, and whether it boots:",
+      "tips": [
+        {
+          "when": "Default for most workloads, boot volumes",
+          "pick": "gp3 (SSD)"
+        },
+        {
+          "when": "Raise IOPS without adding size, cheaper than gp2",
+          "pick": "gp3 (IOPS and throughput set separately)"
+        },
+        {
+          "when": "Critical database, over 16,000 IOPS, consistent latency",
+          "pick": "io2 Block Express (up to 256,000 IOPS)"
+        },
+        {
+          "when": "One volume attached to several instances in one AZ",
+          "pick": "io1/io2 Multi-Attach"
+        },
+        {
+          "when": "Large sequential reads, cheap: big data, logs, warehouses",
+          "pick": "st1 (Throughput Optimized HDD)"
+        },
+        {
+          "when": "Cold, rarely accessed data, cheapest",
+          "pick": "sc1 (Cold HDD)"
+        },
+        {
+          "when": "Boot volume",
+          "pick": "SSD only (gp2/gp3/io1/io2), never st1/sc1"
+        },
+        {
+          "when": "Volumes from a snapshot need full performance at once",
+          "pick": "Fast Snapshot Restore"
+        },
+        {
+          "when": "Keep snapshots long term, rarely restored",
+          "pick": "EBS Snapshots Archive"
         }
       ]
     },

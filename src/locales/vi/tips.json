@@ -330,6 +330,52 @@
         }
       ]
     },
+    "instance-types": {
+      "title": "Chọn instance family",
+      "intro": "Soi tải nặng về CPU, RAM, GPU hay ổ đĩa cục bộ; chữ cái đầu tên instance là family:",
+      "tips": [
+        {
+          "when": "Tải cân bằng: web server, app server, môi trường dev",
+          "pick": "M (general purpose)"
+        },
+        {
+          "when": "Tải thấp, thỉnh thoảng tăng vọt, rẻ",
+          "pick": "T (burstable, dùng CPU credit)"
+        },
+        {
+          "when": "Nặng CPU: batch, HPC, encode video, game server",
+          "pick": "C (compute optimized)"
+        },
+        {
+          "when": "Nặng RAM: in-memory DB, cache, phân tích real-time",
+          "pick": "R (memory optimized)"
+        },
+        {
+          "when": "RAM cực lớn: SAP HANA",
+          "pick": "X hoặc High Memory (u-)"
+        },
+        {
+          "when": "Train ML, tính toán GPU",
+          "pick": "P (GPU) hoặc Trn (Trainium)"
+        },
+        {
+          "when": "Đồ hoạ, inference GPU; inference rẻ nhất",
+          "pick": "G; Inf (Inferentia)"
+        },
+        {
+          "when": "IOPS ngẫu nhiên rất cao trên NVMe cục bộ: NoSQL, OLTP",
+          "pick": "I (storage optimized)"
+        },
+        {
+          "when": "Thông lượng tuần tự lớn trên HDD cục bộ: HDFS, MapReduce",
+          "pick": "D hoặc H (storage optimized)"
+        },
+        {
+          "when": "Giá/hiệu năng tốt nhất, chạy được ARM",
+          "pick": "Graviton (hậu tố g: M7g, C7g, R7g)"
+        }
+      ]
+    },
     "storage": {
       "title": "Chọn lưu trữ",
       "intro": "Soi xem cần block, file hay object, bao nhiêu máy dùng chung và chạy hệ điều hành nào:",
@@ -361,6 +407,48 @@
         {
           "when": "On-prem dùng S3 qua NFS/SMB, có cache",
           "pick": "Storage Gateway (S3 File Gateway)"
+        }
+      ]
+    },
+    "ebs-types": {
+      "title": "Chọn loại EBS volume",
+      "intro": "Soi xem cần IOPS (truy cập ngẫu nhiên) hay thông lượng (đọc tuần tự), mức cao tới đâu và có làm ổ boot không:",
+      "tips": [
+        {
+          "when": "Mặc định cho hầu hết tải, ổ boot",
+          "pick": "gp3 (SSD)"
+        },
+        {
+          "when": "Tăng IOPS mà không tăng dung lượng, rẻ hơn gp2",
+          "pick": "gp3 (IOPS, thông lượng chỉnh riêng)"
+        },
+        {
+          "when": "DB quan trọng, trên 16.000 IOPS, độ trễ ổn định",
+          "pick": "io2 Block Express (tới 256.000 IOPS)"
+        },
+        {
+          "when": "Một volume gắn cho nhiều instance cùng AZ",
+          "pick": "io1/io2 Multi-Attach"
+        },
+        {
+          "when": "Đọc tuần tự lớn, rẻ: big data, log, data warehouse",
+          "pick": "st1 (Throughput Optimized HDD)"
+        },
+        {
+          "when": "Dữ liệu lạnh, ít truy cập, rẻ nhất",
+          "pick": "sc1 (Cold HDD)"
+        },
+        {
+          "when": "Ổ boot",
+          "pick": "Chỉ SSD (gp2/gp3/io1/io2), không st1/sc1"
+        },
+        {
+          "when": "Volume mới từ snapshot phải đạt hiệu năng ngay",
+          "pick": "Fast Snapshot Restore"
+        },
+        {
+          "when": "Giữ snapshot lâu, hiếm khi restore",
+          "pick": "EBS Snapshots Archive"
         }
       ]
     },
