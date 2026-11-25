@@ -831,5 +831,243 @@
         }
       ]
     }
+  },
+  "Mnemonics": {
+    "ai-language": {
+      "title": "Voice and language (listen, speak, translate, chat)",
+      "items": [
+        {
+          "hint": "transcribe = write down speech",
+          "does": "Listens to audio and calls → turns them into text"
+        },
+        {
+          "hint": "Polly the talking parrot; pair Transcribe listens / Polly speaks",
+          "does": "Text → natural-sounding speech"
+        },
+        {
+          "hint": "translate = carry words across languages",
+          "does": "Translates text between languages"
+        },
+        {
+          "hint": "lexicon; the same tech as Alexa",
+          "does": "Text or voice chatbots: Q&A, bookings, intents"
+        },
+        {
+          "hint": "comprehend = understand",
+          "does": "Understands text (NLP): sentiment, entities, topics, PII"
+        }
+      ]
+    },
+    "ai-vision": {
+      "title": "Images and documents (see pictures vs extract documents)",
+      "items": [
+        {
+          "hint": "recognition",
+          "does": "Sees images and video: faces, objects, unsafe content, text on signs"
+        },
+        {
+          "hint": "text + extract",
+          "does": "Reads scans, PDFs, invoices → structured text, forms, tables"
+        },
+        {
+          "hint": "augmented by humans",
+          "does": "Sends low-confidence ML results to human reviewers"
+        }
+      ]
+    },
+    "ai-platform": {
+      "title": "Search, recommendations, forecasts and ML platforms",
+      "items": [
+        {
+          "hint": "think enterprise search",
+          "does": "Intelligent search over internal documents in natural language"
+        },
+        {
+          "hint": "personalize = tailor to each person",
+          "does": "Per-user product and content recommendations"
+        },
+        {
+          "hint": "forecast = predict ahead",
+          "does": "Time-series forecasts: sales, inventory, demand"
+        },
+        {
+          "hint": "a detector that sniffs out fraud",
+          "does": "Flags fraudulent payments and sign-ups"
+        },
+        {
+          "hint": "sage + maker of models",
+          "does": "Build, train and deploy your own ML models"
+        },
+        {
+          "hint": "bedrock = foundation → foundation models",
+          "does": "Foundation models (GenAI) through an API, no infrastructure"
+        }
+      ]
+    },
+    "security": {
+      "title": "Security (guard, inspect, investigate)",
+      "items": [
+        {
+          "hint": "guard on duty",
+          "does": "Reads CloudTrail, VPC Flow Logs and DNS logs to detect threats"
+        },
+        {
+          "hint": "an inspector checks for flaws",
+          "does": "Scans EC2, ECR images and Lambda for CVEs"
+        },
+        {
+          "hint": "remember the trio Macie – S3 – PII",
+          "does": "Uses ML to find sensitive data (PII) in S3"
+        },
+        {
+          "hint": "detective arrives after the incident",
+          "does": "Investigates the root cause of GuardDuty findings"
+        },
+        {
+          "hint": "a shield blocks the flood",
+          "does": "DDoS protection at layers 3/4 (Advanced adds layer 7 and the DRT)"
+        },
+        {
+          "hint": "Web Application Firewall",
+          "does": "Filters layer 7 HTTP requests: SQL injection, XSS, rate limits"
+        },
+        {
+          "hint": "artifact = a document you collect",
+          "does": "Downloads AWS compliance reports: SOC, PCI, ISO"
+        },
+        {
+          "hint": "manager = central control",
+          "does": "Applies WAF, Shield and security groups across Organizations accounts"
+        }
+      ]
+    },
+    "management": {
+      "title": "Management and monitoring",
+      "items": [
+        {
+          "hint": "trail = footprints",
+          "does": "Records who called which API, and when"
+        },
+        {
+          "hint": "watch = keep an eye on",
+          "does": "Metrics, logs, alarms, dashboards"
+        },
+        {
+          "hint": "config = how things are set up",
+          "does": "Resource configuration history and compliance rules"
+        },
+        {
+          "hint": "trusted advisor",
+          "does": "Checks and advice on cost, security, performance, service limits"
+        },
+        {
+          "hint": "manages whole systems",
+          "does": "Patching, run command, Session Manager, Parameter Store for EC2 fleets"
+        },
+        {
+          "hint": "formation = forming infrastructure",
+          "does": "Infrastructure as Code from YAML/JSON templates"
+        },
+        {
+          "hint": "control tower",
+          "does": "Sets up a multi-account landing zone with guardrails"
+        }
+      ]
+    },
+    "analytics": {
+      "title": "Data analytics",
+      "items": [
+        {
+          "hint": "goddess of wisdom who answers anything",
+          "does": "Serverless SQL straight on S3"
+        },
+        {
+          "hint": "astronomy's red shift: massive data",
+          "does": "Columnar data warehouse for BI and complex queries"
+        },
+        {
+          "hint": "glue sticks data sources together",
+          "does": "Serverless ETL and the Data Catalog"
+        },
+        {
+          "hint": "kinetic = in motion",
+          "does": "Real-time streaming data"
+        },
+        {
+          "hint": "a quick look at the data",
+          "does": "BI dashboards and reports"
+        },
+        {
+          "hint": "Elastic MapReduce",
+          "does": "Large Hadoop and Spark clusters"
+        },
+        {
+          "hint": "forming a lake",
+          "does": "Builds an S3 data lake with fine-grained permissions"
+        }
+      ]
+    },
+    "databases": {
+      "title": "Databases",
+      "items": [
+        {
+          "hint": "aurora = dawn, AWS's own relational",
+          "does": "MySQL/PostgreSQL-compatible relational, faster, 6-copy storage"
+        },
+        {
+          "hint": "dynamo = a generator that never stops",
+          "does": "Serverless key-value/document, milliseconds at any scale"
+        },
+        {
+          "hint": "Neptune, a planet of linked orbits",
+          "does": "Graph database: social networks, recommendations, fraud"
+        },
+        {
+          "hint": "time stream",
+          "does": "Time-series database for IoT and metrics"
+        },
+        {
+          "hint": "document → MongoDB",
+          "does": "MongoDB-compatible document database"
+        },
+        {
+          "hint": "keyspace is a Cassandra term",
+          "does": "Serverless, Apache Cassandra-compatible"
+        },
+        {
+          "hint": "memory + DB = Redis as the main database",
+          "does": "Durable Redis/Valkey used as a primary database, not just a cache"
+        }
+      ]
+    },
+    "migration": {
+      "title": "Data migration",
+      "items": [
+        {
+          "hint": "a snowball rolling data along",
+          "does": "Physical devices that ship TB–PB over weak networks; Snowcone is the small one"
+        },
+        {
+          "hint": "data + sync = keep copies in step",
+          "does": "Online file copy and sync to S3, EFS, FSx on a schedule"
+        },
+        {
+          "hint": "gateway between on-premises and cloud",
+          "does": "On-premises use of S3/EBS over NFS, SMB, iSCSI with a local cache"
+        },
+        {
+          "hint": "transfer files the classic way",
+          "does": "Managed SFTP/FTPS/FTP servers writing to S3 or EFS"
+        },
+        {
+          "hint": "Database Migration Service",
+          "does": "Migrates databases with continuous replication (CDC)"
+        },
+        {
+          "hint": "MiGratioN",
+          "does": "Rehosts servers onto EC2 (lift-and-shift)"
+        }
+      ]
+    }
   }
 }

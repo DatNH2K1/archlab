@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { PageShell } from '@/components/PageShell';
 import { TipCard } from '@/components/TipCard';
-import { getLessons, getTipGroups, getTrapGroups } from '@/content';
+import { getLessons, getMnemonicGroups, getTipGroups, getTrapGroups } from '@/content';
 import { DOMAINS } from '@/content/types';
 import type { DomainId, LessonSlug } from '@/content/types';
 
@@ -19,6 +19,7 @@ export default async function TipsPage(props: { params: Promise<{ locale: string
   const t = await getTranslations('TipsPage');
   const td = await getTranslations('Domains');
   const groups = await getTipGroups(locale);
+  const mnemonicGroups = await getMnemonicGroups(locale);
   const trapGroups = await getTrapGroups(locale);
   const lessonTitles = new Map((await getLessons(locale)).map((lesson) => [lesson.slug, lesson.title]));
   const label = (domain?: DomainId) => (domain ? `${DOMAINS[domain].code} · ${td(domain)}` : t('general'));
@@ -35,6 +36,9 @@ export default async function TipsPage(props: { params: Promise<{ locale: string
             {group.title}
           </a>
         ))}
+        <a href="#mnemonics" className="rounded-full border border-info/50 px-3 py-1 text-xs text-info hover:border-info">
+          💡 {t('mnemonics_title')}
+        </a>
         <a href="#traps" className="rounded-full border border-bad/50 px-3 py-1 text-xs text-bad hover:border-bad">
           ⚠ {t('traps_title')}
         </a>
@@ -47,6 +51,24 @@ export default async function TipsPage(props: { params: Promise<{ locale: string
                 <li key={tip.when}>
                   <span className="font-semibold">{tip.when}</span> <span className="text-muted">→</span>{' '}
                   <span className="font-semibold text-accent">{tip.pick}</span>
+                </li>
+              ))}
+            </ul>
+          </TipCard>
+        ))}
+      </div>
+      <h2 id="mnemonics" className="mt-14 scroll-mt-20 text-2xl font-bold">
+        💡 {t('mnemonics_title')}
+      </h2>
+      <p className="mt-2 text-muted">{t('mnemonics_intro')}</p>
+      <div className="mt-6 grid items-start gap-4 md:grid-cols-2">
+        {mnemonicGroups.map((group) => (
+          <TipCard key={group.id} id={`mnemonics-${group.id}`} label={t('mnemonics_title')} title={group.title} lessons={lessons(group.lessons)}>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm marker:text-info">
+              {group.services.map((service, i) => (
+                <li key={service}>
+                  <span className="font-bold text-info">{service}</span> <span className="text-muted italic">({group.items[i]?.hint})</span>:{' '}
+                  {group.items[i]?.does}
                 </li>
               ))}
             </ul>

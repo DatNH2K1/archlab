@@ -6,8 +6,8 @@ import { costQuestions } from './questions/cost';
 import { performanceQuestions } from './questions/performance';
 import { resilientQuestions } from './questions/resilient';
 import { secureQuestions } from './questions/secure';
-import { TIP_GROUPS, TRAP_GROUPS } from './tips';
-import type { Comparison, Flashcard, Lesson, Question, TipGroup, TrapGroup } from './types';
+import { MNEMONIC_GROUPS, TIP_GROUPS, TRAP_GROUPS } from './tips';
+import type { Comparison, Flashcard, Lesson, MnemonicGroup, Question, TipGroup, TrapGroup } from './types';
 
 const QUESTIONS = [...secureQuestions, ...resilientQuestions, ...performanceQuestions, ...costQuestions];
 
@@ -78,6 +78,17 @@ export const getTrapGroups = async (locale: string): Promise<TrapGroup[]> => {
   const messages = await getMessages({ locale });
 
   return TRAP_GROUPS.map((group) => ({ ...group, ...messages.Traps[group.id] }));
+};
+
+/**
+ * Returns the name-mnemonic groups in a language.
+ * @param locale The page locale.
+ * @returns Mnemonic groups by service family.
+ */
+export const getMnemonicGroups = async (locale: string): Promise<MnemonicGroup[]> => {
+  const messages = await getMessages({ locale });
+
+  return MNEMONIC_GROUPS.map((group) => ({ ...group, ...messages.Mnemonics[group.id] }));
 };
 
 /** Number of lessons, questions and flashcards, the same in every language. */

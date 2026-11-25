@@ -161,3 +161,19 @@ export type TrapGroup = TrapGroupData & {
   title: string;
   traps: { trap: string; fact: string }[];
 };
+
+/** The language-neutral part of a name-mnemonic group; texts live in the `Mnemonics` namespace. */
+export type MnemonicGroupData = {
+  id: keyof Messages['Mnemonics'];
+  /** Service names, in the order of the `items` texts. */
+  services: string[];
+  /** Slugs of lessons with more detail. */
+  lessons: LessonSlug[];
+};
+
+/** A group of services with a memory hook for each name and what the service does. */
+export type MnemonicGroup = MnemonicGroupData & {
+  title: string;
+  /** One entry per service, same order as `services`. */
+  items: { hint: string; does: string }[];
+};

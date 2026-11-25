@@ -831,5 +831,243 @@
         }
       ]
     }
+  },
+  "Mnemonics": {
+    "ai-language": {
+      "title": "Giọng nói và ngôn ngữ (nghe, nói, dịch, chat)",
+      "items": [
+        {
+          "hint": "transcribe = ghi chép lại lời nói",
+          "does": "Nghe audio, cuộc gọi → chuyển thành text"
+        },
+        {
+          "hint": "con vẹt Polly biết nói; cặp Transcribe nghe / Polly nói",
+          "does": "Text → giọng nói tự nhiên"
+        },
+        {
+          "hint": "translate = dịch",
+          "does": "Dịch văn bản từ ngôn ngữ này sang ngôn ngữ khác"
+        },
+        {
+          "hint": "lexicon = từ vựng; cùng công nghệ với Alexa",
+          "does": "Chatbot hội thoại text/voice: hỏi đáp, đặt lịch, xử lý intent"
+        },
+        {
+          "hint": "comprehend = hiểu",
+          "does": "Hiểu văn bản (NLP): cảm xúc, thực thể, chủ đề, PII"
+        }
+      ]
+    },
+    "ai-vision": {
+      "title": "Hình ảnh và tài liệu (nhìn ảnh vs bóc tài liệu)",
+      "items": [
+        {
+          "hint": "recognition = nhận diện",
+          "does": "Nhìn ảnh/video: khuôn mặt, vật thể, nội dung nhạy cảm, chữ trên biển báo"
+        },
+        {
+          "hint": "text + extract = trích xuất text",
+          "does": "Đọc tài liệu scan, PDF, hoá đơn → bóc text, form, table có cấu trúc"
+        },
+        {
+          "hint": "augmented = có người tăng cường",
+          "does": "Đưa kết quả ML độ tin cậy thấp cho người duyệt lại"
+        }
+      ]
+    },
+    "ai-platform": {
+      "title": "Tìm kiếm, gợi ý, dự báo và nền tảng ML",
+      "items": [
+        {
+          "hint": "Kendra ~ \"kiếm\" trong kho tài liệu",
+          "does": "Tìm kiếm thông minh trên tài liệu nội bộ bằng câu hỏi tự nhiên"
+        },
+        {
+          "hint": "personalize = cá nhân hoá",
+          "does": "Gợi ý sản phẩm, nội dung theo từng người dùng"
+        },
+        {
+          "hint": "forecast = dự báo",
+          "does": "Dự báo chuỗi thời gian: doanh số, tồn kho, nhu cầu"
+        },
+        {
+          "hint": "fraud detector = máy dò gian lận",
+          "does": "Phát hiện giao dịch, đăng ký tài khoản gian lận"
+        },
+        {
+          "hint": "sage = nhà hiền triết, maker = người làm ra model",
+          "does": "Tự build, train, deploy model ML của mình"
+        },
+        {
+          "hint": "bedrock = nền móng → foundation model",
+          "does": "Dùng foundation model (GenAI) qua API, không quản lý hạ tầng"
+        }
+      ]
+    },
+    "security": {
+      "title": "Bảo mật (gác, thanh tra, điều tra)",
+      "items": [
+        {
+          "hint": "guard on duty = lính gác trực ca",
+          "does": "Đọc CloudTrail, VPC Flow Logs, DNS log để phát hiện mối đe doạ"
+        },
+        {
+          "hint": "inspector = thanh tra",
+          "does": "Quét lỗ hổng CVE trên EC2, image ECR, Lambda"
+        },
+        {
+          "hint": "nhớ bộ ba Macie – S3 – PII",
+          "does": "Dùng ML tìm dữ liệu nhạy cảm (PII) trong S3"
+        },
+        {
+          "hint": "detective = thám tử, đến sau khi có vụ việc",
+          "does": "Điều tra nguyên nhân gốc từ finding của GuardDuty"
+        },
+        {
+          "hint": "shield = khiên",
+          "does": "Chống DDoS tầng 3/4 (Advanced thêm tầng 7, đội DRT)"
+        },
+        {
+          "hint": "Web Application Firewall",
+          "does": "Lọc request HTTP tầng 7: SQL injection, XSS, rate limit"
+        },
+        {
+          "hint": "artifact = tài liệu, hiện vật",
+          "does": "Tải báo cáo tuân thủ của AWS: SOC, PCI, ISO"
+        },
+        {
+          "hint": "manager = quản lý tập trung",
+          "does": "Áp WAF, Shield, Security Group cho mọi account trong Organizations"
+        }
+      ]
+    },
+    "management": {
+      "title": "Quản lý và giám sát",
+      "items": [
+        {
+          "hint": "trail = dấu vết",
+          "does": "Ghi lại ai gọi API nào, lúc nào"
+        },
+        {
+          "hint": "watch = canh chừng",
+          "does": "Metric, log, alarm, dashboard"
+        },
+        {
+          "hint": "config = cấu hình",
+          "does": "Lịch sử cấu hình tài nguyên và rule tuân thủ"
+        },
+        {
+          "hint": "advisor = cố vấn đáng tin",
+          "does": "Kiểm tra và gợi ý về chi phí, bảo mật, hiệu năng, service limit"
+        },
+        {
+          "hint": "quản lý cả hệ thống máy",
+          "does": "Patch, chạy lệnh, Session Manager, Parameter Store cho fleet EC2"
+        },
+        {
+          "hint": "formation = hình thành hạ tầng",
+          "does": "Infrastructure as Code bằng template YAML/JSON"
+        },
+        {
+          "hint": "control tower = tháp điều khiển",
+          "does": "Dựng landing zone nhiều account với guardrail sẵn"
+        }
+      ]
+    },
+    "analytics": {
+      "title": "Phân tích dữ liệu",
+      "items": [
+        {
+          "hint": "nữ thần trí tuệ, hỏi gì đáp nấy",
+          "does": "Truy vấn SQL serverless trực tiếp trên S3"
+        },
+        {
+          "hint": "dịch chuyển đỏ trong thiên văn: dữ liệu khổng lồ",
+          "does": "Data warehouse cột cho BI, truy vấn phức tạp"
+        },
+        {
+          "hint": "glue = keo dán các nguồn dữ liệu",
+          "does": "ETL serverless và Data Catalog"
+        },
+        {
+          "hint": "kinetic = chuyển động",
+          "does": "Dữ liệu stream real-time"
+        },
+        {
+          "hint": "quick sight = nhìn nhanh",
+          "does": "Dashboard BI, báo cáo"
+        },
+        {
+          "hint": "Elastic MapReduce",
+          "does": "Cluster Hadoop, Spark quy mô lớn"
+        },
+        {
+          "hint": "formation = dựng hồ dữ liệu",
+          "does": "Dựng data lake trên S3 và phân quyền chi tiết"
+        }
+      ]
+    },
+    "databases": {
+      "title": "Database",
+      "items": [
+        {
+          "hint": "aurora = bình minh, bản relational AWS tự làm",
+          "does": "Relational tương thích MySQL/PostgreSQL, nhanh hơn, storage 6 bản sao"
+        },
+        {
+          "hint": "dynamo = máy phát chạy không ngừng",
+          "does": "Key-value/document serverless, mili giây ở mọi quy mô"
+        },
+        {
+          "hint": "Neptune = hành tinh với các quỹ đạo liên kết",
+          "does": "Graph database: mạng xã hội, gợi ý, phát hiện gian lận"
+        },
+        {
+          "hint": "time stream = dòng thời gian",
+          "does": "Database chuỗi thời gian cho IoT, metric"
+        },
+        {
+          "hint": "document → MongoDB",
+          "does": "Document database tương thích MongoDB"
+        },
+        {
+          "hint": "keyspace là khái niệm của Cassandra",
+          "does": "Tương thích Apache Cassandra, serverless"
+        },
+        {
+          "hint": "memory + DB = Redis làm database chính",
+          "does": "Redis/Valkey bền vững, dùng làm database chính chứ không chỉ cache"
+        }
+      ]
+    },
+    "migration": {
+      "title": "Di chuyển dữ liệu",
+      "items": [
+        {
+          "hint": "quả bóng tuyết lăn chở dữ liệu",
+          "does": "Thiết bị vật lý chở TB–PB khi mạng yếu; Snowcone là bản nhỏ"
+        },
+        {
+          "hint": "data + sync = đồng bộ dữ liệu",
+          "does": "Chép, đồng bộ file online tới S3, EFS, FSx theo lịch"
+        },
+        {
+          "hint": "gateway = cổng nối on-prem với cloud",
+          "does": "On-prem dùng S3/EBS qua NFS, SMB, iSCSI, có cache cục bộ"
+        },
+        {
+          "hint": "transfer = truyền file kiểu cũ",
+          "does": "Máy chủ SFTP/FTPS/FTP managed ghi vào S3, EFS"
+        },
+        {
+          "hint": "Database Migration Service",
+          "does": "Di chuyển database, replicate liên tục (CDC)"
+        },
+        {
+          "hint": "MiGratioN",
+          "does": "Rehost server lên EC2 (lift-and-shift)"
+        }
+      ]
+    }
   }
 }

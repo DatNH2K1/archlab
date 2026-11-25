@@ -565,6 +565,8 @@
     "intro": "Instead of memorising services one by one, each group is a decision the exam keeps asking: spot the key constraint and the service follows.",
     "jump_to": "Jump to group",
     "general": "General",
+    "mnemonics_title": "Name mnemonics",
+    "mnemonics_intro": "A service name usually says what it does. Remember the name and you remember the job.",
     "traps_title": "Common traps",
     "traps_intro": "Misconceptions the exam plants in wrong answers. Each line is what many people believe and the fact that defuses it."
   },

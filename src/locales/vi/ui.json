@@ -565,6 +565,8 @@
     "intro": "Thay vì nhớ rời rạc tên từng dịch vụ, mỗi nhóm là một quyết định đề hay hỏi: soi ràng buộc chính của bài toán là ra dịch vụ.",
     "jump_to": "Đi tới nhóm",
     "general": "Chung",
+    "mnemonics_title": "Mẹo nhớ tên",
+    "mnemonics_intro": "Nghĩa gốc của tên thường đã nói luôn dịch vụ làm gì. Nhớ cái tên là nhớ chức năng.",
     "traps_title": "Bẫy hay gặp",
     "traps_intro": "Những hiểu lầm đề hay cài vào đáp án sai. Mỗi dòng là điều nhiều người tin và sự thật để gỡ bẫy."
   },
