@@ -562,10 +562,9 @@
   },
   "TipsPage": {
     "title": "SAA-C03 quick picks",
-    "intro": "Phrases in a question and the answer they almost always point to, with the reason that rules out the trap. Skim it before the exam.",
+    "intro": "Instead of memorising services one by one, each group is a decision the exam keeps asking: spot the key constraint and the service follows.",
     "jump_to": "Jump to group",
-    "general": "General",
-    "tip_count": "{count, plural, one {# tip} other {# tips}}"
+    "general": "General"
   },
   "Glossary": {
     "ACM": {

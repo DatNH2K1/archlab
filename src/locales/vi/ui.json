@@ -562,10 +562,9 @@
   },
   "TipsPage": {
     "title": "Mẹo chọn nhanh SAA-C03",
-    "intro": "Cụm từ trong câu hỏi và đáp án nó gần như luôn trỏ tới, kèm lý do để loại đáp án bẫy. Đọc lướt trước giờ thi.",
+    "intro": "Thay vì nhớ rời rạc tên từng dịch vụ, mỗi nhóm là một quyết định đề hay hỏi: soi ràng buộc chính của bài toán là ra dịch vụ.",
     "jump_to": "Đi tới nhóm",
-    "general": "Chung",
-    "tip_count": "{count} mẹo"
+    "general": "Chung"
   },
   "Glossary": {
     "ACM": {

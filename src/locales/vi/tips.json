@@ -1,456 +1,558 @@
 {
   "Tips": {
     "strategy": {
-      "title": "Cách đọc đề",
-      "intro": "Đề SAA-C03 thường có hai đáp án đều chạy được; cụm từ ràng buộc ở cuối câu hỏi mới quyết định đáp án đúng.",
+      "title": "Đọc ràng buộc trong đề",
+      "intro": "Hai đáp án thường đều chạy được; cụm từ ràng buộc ở cuối câu hỏi mới quyết định đáp án đúng:",
       "tips": [
         {
-          "trigger": "LEAST operational overhead, ít công vận hành nhất",
-          "answer": "Dịch vụ managed/serverless: Lambda, Fargate, DynamoDB, Aurora Serverless, S3",
-          "why": "Loại ngay phương án tự cài phần mềm trên EC2, tự viết script cron hay tự lo patch."
+          "when": "LEAST operational overhead",
+          "pick": "Dịch vụ managed/serverless, không tự cài trên EC2"
         },
         {
-          "trigger": "MOST cost-effective, tiết kiệm chi phí nhất",
-          "answer": "Phương án rẻ nhất mà vẫn đáp ứng mọi yêu cầu khác",
-          "why": "Phương án rẻ hơn nhưng bỏ mất HA, độ bền hay hiệu năng mà đề yêu cầu là bẫy."
+          "when": "MOST cost-effective",
+          "pick": "Phương án rẻ nhất mà vẫn đủ mọi yêu cầu khác"
         },
         {
-          "trigger": "Minimal changes to the application, ít sửa code nhất",
-          "answer": "Chuyển sang dịch vụ tương thích: RDS cùng engine, EFS cho NFS, FSx cho SMB, MGN để rehost",
-          "why": "Phương án viết lại sang DynamoDB hay Lambda thường sai dù kiến trúc đẹp hơn."
+          "when": "Minimal changes to the application",
+          "pick": "Dịch vụ tương thích: RDS cùng engine, EFS, FSx, MGN"
         },
         {
-          "trigger": "Highly available, sẵn sàng cao",
-          "answer": "Trải ra ít nhất 2 AZ: ALB + Auto Scaling nhiều AZ, RDS Multi-AZ",
-          "why": "Chỉ chọn multi-Region khi đề nhắc tới sự cố cả Region hoặc người dùng toàn cầu."
+          "when": "Highly available",
+          "pick": "Trải ra ít nhất 2 AZ"
         },
         {
-          "trigger": "Chịu được mất cả Region, RTO/RPO rất thấp",
-          "answer": "Aurora Global Database, DynamoDB global tables, S3 CRR, Route 53 failover",
-          "why": "Multi-AZ chỉ bảo vệ trong một Region."
+          "when": "Chịu được mất cả Region",
+          "pick": "Multi-Region: Aurora Global, DynamoDB global tables, S3 CRR"
         },
         {
-          "trigger": "Decouple, traffic tăng đột biến, không được mất request",
-          "answer": "Đặt SQS giữa các tầng",
-          "why": "Hàng đợi giữ request khi tầng sau chậm hoặc sập, consumer xử lý theo tốc độ của nó."
+          "when": "Decouple, traffic tăng đột biến",
+          "pick": "SQS giữa các tầng"
         },
         {
-          "trigger": "Real-time, cần đọc lại dữ liệu stream",
-          "answer": "Kinesis Data Streams",
-          "why": "Near real-time đổ thẳng vào S3, Redshift, OpenSearch mà không viết code thì là Data Firehose."
-        },
-        {
-          "trigger": "Choose TWO / Choose THREE",
-          "answer": "Xét từng đáp án độc lập với yêu cầu",
-          "why": "Mỗi đáp án đúng thường giải một phần yêu cầu; đừng loại vì hai đáp án trông giống nhau."
-        },
-        {
-          "trigger": "Đáp án chạy được nhưng cần code tự viết hoặc nhiều dịch vụ hơn cần thiết",
-          "answer": "Thường là bẫy",
-          "why": "AWS ưu tiên tính năng có sẵn: cấu hình một tuỳ chọn thắng việc tự dựng giải pháp."
+          "when": "Đáp án cần code tự viết hoặc thừa dịch vụ",
+          "pick": "Thường là bẫy; tính năng có sẵn thắng"
         }
       ]
     },
     "identity": {
-      "title": "Danh tính và phân quyền",
-      "intro": "Ai được làm gì, trên account nào, và lấy credential bằng cách nào.",
+      "title": "Chọn cách cấp quyền",
+      "intro": "Soi xem ai cần quyền (dịch vụ, nhân viên, người dùng app hay account khác) và cần giới hạn ở đâu:",
       "tips": [
         {
-          "trigger": "EC2 hoặc Lambda cần truy cập S3, DynamoDB",
-          "answer": "IAM role (instance profile, execution role)",
-          "why": "Không bao giờ chọn đáp án lưu access key trong code hay trên máy."
+          "when": "EC2/Lambda gọi dịch vụ AWS khác",
+          "pick": "IAM role, không bao giờ access key"
         },
         {
-          "trigger": "Giới hạn mọi account trong tổ chức, kể cả admin và root",
-          "answer": "SCP trong AWS Organizations",
-          "why": "SCP chỉ đặt trần quyền, không cấp quyền; vẫn cần IAM policy để cho phép."
+          "when": "Giới hạn mọi account, kể cả root",
+          "pick": "SCP trong AWS Organizations"
         },
         {
-          "trigger": "Truy cập tài nguyên từ account AWS khác",
-          "answer": "Cross-account IAM role (sts:AssumeRole) hoặc resource-based policy",
-          "why": "Không tạo IAM user dùng chung cho account kia."
+          "when": "Developer tự tạo role nhưng không leo thang quyền",
+          "pick": "Permissions boundary"
         },
         {
-          "trigger": "Người dùng app đăng ký, đăng nhập, social login",
-          "answer": "Cognito User Pool",
-          "why": "User Pool lo danh tính; nó không cấp AWS credential."
+          "when": "Truy cập từ account khác",
+          "pick": "Cross-account role hoặc resource-based policy"
         },
         {
-          "trigger": "Người dùng app nhận credential tạm để gọi thẳng S3",
-          "answer": "Cognito Identity Pool",
-          "why": "Identity Pool đổi token đăng nhập lấy IAM role tạm thời."
+          "when": "Người dùng app đăng ký, đăng nhập, social login",
+          "pick": "Cognito User Pool"
         },
         {
-          "trigger": "Nhân viên SSO vào nhiều account bằng tài khoản công ty",
-          "answer": "IAM Identity Center (nối Active Directory nếu có)",
-          "why": "Cognito dành cho người dùng cuối của app, không phải nhân viên."
+          "when": "Người dùng app cần credential tạm để gọi S3",
+          "pick": "Cognito Identity Pool"
         },
         {
-          "trigger": "Developer tự tạo role nhưng không được leo thang quyền",
-          "answer": "Permissions boundary",
-          "why": "Boundary giới hạn quyền tối đa của role/user được gắn nó."
-        },
-        {
-          "trigger": "Bucket S3 chỉ cho truy cập từ VPC hoặc endpoint cụ thể",
-          "answer": "Bucket policy với điều kiện aws:SourceVpce hoặc aws:SourceVpc",
-          "why": "Security Group không gắn được vào S3."
+          "when": "Nhân viên SSO vào nhiều account",
+          "pick": "IAM Identity Center"
         }
       ]
     },
-    "data-protection": {
-      "title": "Mã hoá, bí mật và phát hiện mối đe doạ",
-      "intro": "Chọn đúng nơi giữ khoá, bí mật, và dịch vụ phát hiện nào đọc dữ liệu gì.",
+    "encryption": {
+      "title": "Chọn nơi giữ khoá và bí mật",
+      "intro": "Soi xem ai phải giữ khoá, có cần xoay vòng tự động không và dữ liệu có được phép sửa xoá không:",
       "tips": [
         {
-          "trigger": "Tự động xoay vòng mật khẩu database",
-          "answer": "Secrets Manager",
-          "why": "Parameter Store không có xoay vòng tích hợp cho RDS."
+          "when": "Mã hoá mặc định, không cần quản lý",
+          "pick": "SSE-S3 hoặc KMS AWS managed key"
         },
         {
-          "trigger": "Lưu cấu hình, tham số rẻ, không cần xoay vòng",
-          "answer": "SSM Parameter Store (SecureString nếu nhạy cảm)",
-          "why": "Tier standard miễn phí."
+          "when": "Tự quản key policy, audit ai dùng key",
+          "pick": "KMS customer managed key"
         },
         {
-          "trigger": "Tự quản key policy, bật xoay vòng, audit ai dùng key",
-          "answer": "KMS customer managed key",
-          "why": "AWS managed key không sửa được key policy."
+          "when": "HSM riêng, chỉ khách hàng giữ khoá",
+          "pick": "CloudHSM"
         },
         {
-          "trigger": "HSM riêng một tenant, chỉ khách hàng giữ khoá",
-          "answer": "CloudHSM",
-          "why": "KMS là dịch vụ dùng chung do AWS vận hành."
+          "when": "Mật khẩu database xoay vòng tự động",
+          "pick": "Secrets Manager"
         },
         {
-          "trigger": "Chặn SQL injection, XSS, giới hạn request theo IP, chặn theo quốc gia",
-          "answer": "AWS WAF trên CloudFront, ALB hoặc API Gateway",
-          "why": "WAF không gắn được vào NLB."
+          "when": "Cấu hình, tham số rẻ, không xoay vòng",
+          "pick": "SSM Parameter Store"
         },
         {
-          "trigger": "Chống DDoS có đội phản ứng và bảo vệ chi phí",
-          "answer": "Shield Advanced",
-          "why": "Shield Standard miễn phí và tự bật nhưng không có hai thứ đó."
+          "when": "Chứng chỉ HTTPS miễn phí, tự gia hạn",
+          "pick": "ACM (us-east-1 nếu dùng cho CloudFront)"
         },
         {
-          "trigger": "Tìm dữ liệu cá nhân (PII) trong S3",
-          "answer": "Macie",
-          "why": "GuardDuty tìm hành vi đáng ngờ; Inspector quét lỗ hổng EC2, ECR, Lambda."
-        },
-        {
-          "trigger": "Ai đã gọi API này, lúc nào",
-          "answer": "CloudTrail",
-          "why": "Lịch sử cấu hình tài nguyên và rule tuân thủ là AWS Config."
-        },
-        {
-          "trigger": "Chứng chỉ HTTPS miễn phí, tự gia hạn",
-          "answer": "ACM gắn vào ALB, CloudFront, API Gateway",
-          "why": "Chứng chỉ cho CloudFront phải nằm ở us-east-1."
+          "when": "Không ai được xoá, sửa dữ liệu (WORM)",
+          "pick": "S3 Object Lock chế độ compliance"
         }
       ]
     },
-    "networking": {
-      "title": "Mạng VPC và kết nối",
-      "intro": "Đường đi của traffic: ra internet, tới dịch vụ AWS, giữa các VPC và về on-prem.",
+    "threats": {
+      "title": "Chọn dịch vụ bảo vệ và phát hiện",
+      "intro": "Soi xem đề muốn chặn tấn công, tìm lỗ hổng, tìm dữ liệu nhạy cảm hay truy vết ai đã làm gì:",
       "tips": [
         {
-          "trigger": "Instance trong private subnet cần ra internet một chiều",
-          "answer": "NAT Gateway trong public subnet, mỗi AZ một cái",
-          "why": "NAT instance tự quản; một NAT Gateway cho nhiều AZ là single point of failure."
+          "when": "SQL injection, XSS, rate limit, chặn quốc gia",
+          "pick": "AWS WAF trên CloudFront, ALB, API Gateway"
         },
         {
-          "trigger": "Truy cập S3 hoặc DynamoDB riêng tư, giảm phí NAT",
-          "answer": "Gateway VPC endpoint",
-          "why": "Gateway endpoint miễn phí và chỉ có cho S3, DynamoDB."
+          "when": "DDoS có đội phản ứng, bảo vệ chi phí",
+          "pick": "Shield Advanced"
         },
         {
-          "trigger": "Gọi dịch vụ AWS khác hoặc SaaS riêng tư",
-          "answer": "Interface endpoint (PrivateLink)",
-          "why": "Tạo ENI có IP riêng trong subnet, tính phí theo giờ và dữ liệu."
+          "when": "Hành vi đáng ngờ từ log, IP độc hại",
+          "pick": "GuardDuty"
         },
         {
-          "trigger": "Chặn một IP cụ thể",
-          "answer": "Network ACL rule Deny",
-          "why": "Security Group chỉ có Allow."
+          "when": "Quét lỗ hổng EC2, ECR, Lambda",
+          "pick": "Inspector"
         },
         {
-          "trigger": "Nối nhiều VPC và on-prem, cần định tuyến bắc cầu",
-          "answer": "Transit Gateway",
-          "why": "VPC peering không bắc cầu và phải nối từng cặp."
+          "when": "Tìm PII trong S3",
+          "pick": "Macie"
         },
         {
-          "trigger": "Chia sẻ dịch vụ cho VPC/account khác, CIDR trùng nhau",
-          "answer": "PrivateLink (endpoint service sau NLB)",
-          "why": "Peering không chạy được khi CIDR chồng nhau."
+          "when": "Ai gọi API nào, lúc nào",
+          "pick": "CloudTrail"
         },
         {
-          "trigger": "Băng thông ổn định, riêng tới on-prem",
-          "answer": "Direct Connect (thêm VPN nếu cần mã hoá)",
-          "why": "Cần nhanh trong vài giờ qua internet thì Site-to-Site VPN; DX mất hàng tuần để có."
+          "when": "Lịch sử cấu hình, rule tuân thủ",
+          "pick": "AWS Config"
         },
         {
-          "trigger": "IP tĩnh toàn cầu, TCP/UDP, failover Region nhanh",
-          "answer": "Global Accelerator",
-          "why": "Cache nội dung HTTP ở edge là CloudFront."
-        },
-        {
-          "trigger": "Chỉ cho xem nội dung S3 qua CloudFront",
-          "answer": "Origin Access Control (OAC) + bucket policy",
-          "why": "Giữ bucket private, không bật static website public."
+          "when": "Gom finding bảo mật nhiều account",
+          "pick": "Security Hub"
         }
       ]
     },
-    "resilience": {
-      "title": "Sẵn sàng cao và khôi phục thảm hoạ",
-      "intro": "Cân bằng tải, tự co giãn, failover và chọn chiến lược DR theo RTO/RPO.",
+    "network": {
+      "title": "Chọn đường đi mạng",
+      "intro": "Soi xem traffic đi đâu (internet, dịch vụ AWS, VPC khác hay on-prem) và có cần riêng tư không:",
       "tips": [
         {
-          "trigger": "RDS tự failover, standby đồng bộ",
-          "answer": "RDS Multi-AZ",
-          "why": "Standby của Multi-AZ instance không phục vụ đọc."
+          "when": "Private subnet ra internet một chiều",
+          "pick": "NAT Gateway, mỗi AZ một cái"
         },
         {
-          "trigger": "Giảm tải đọc cho database",
-          "answer": "Read Replica (hoặc ElastiCache)",
-          "why": "Replica bất đồng bộ nên không thay được Multi-AZ cho HA."
+          "when": "Tới S3/DynamoDB riêng tư, không tốn phí NAT",
+          "pick": "Gateway VPC endpoint (miễn phí)"
         },
         {
-          "trigger": "Relational đa Region, RPO tính bằng giây, RTO dưới 1 phút",
-          "answer": "Aurora Global Database",
-          "why": "Cross-Region read replica của RDS chậm hơn và phải promote tay."
+          "when": "Tới dịch vụ AWS khác hoặc SaaS riêng tư",
+          "pick": "Interface endpoint (PrivateLink)"
         },
         {
-          "trigger": "DR rẻ nhất, RTO vài giờ chấp nhận được",
-          "answer": "Backup & restore",
-          "why": "Thứ tự tăng chi phí, giảm RTO: backup & restore → pilot light → warm standby → active/active."
+          "when": "Chặn một IP cụ thể",
+          "pick": "Network ACL rule Deny"
         },
         {
-          "trigger": "Chỉ database chạy sẵn ở Region DR, phần còn lại bật khi cần",
-          "answer": "Pilot light",
-          "why": "Warm standby thì cả hệ thống chạy sẵn ở quy mô nhỏ."
+          "when": "Vài VPC nối nhau, không bắc cầu",
+          "pick": "VPC peering"
         },
         {
-          "trigger": "Chuyển người dùng sang Region khác khi Region chính hỏng",
-          "answer": "Route 53 failover routing + health check",
-          "why": "Latency routing gửi tới Region nhanh nhất; geolocation theo quốc gia; weighted để chia tỉ lệ."
+          "when": "Nhiều VPC + on-prem, định tuyến tập trung",
+          "pick": "Transit Gateway"
         },
         {
-          "trigger": "Định tuyến theo URL path/host, HTTP",
-          "answer": "ALB",
-          "why": "IP tĩnh, TCP/UDP, hàng triệu request/giây là NLB; appliance firewall bên thứ ba là GWLB."
+          "when": "Kết nối on-prem nhanh, mã hoá qua internet",
+          "pick": "Site-to-Site VPN"
         },
         {
-          "trigger": "Biết trước giờ cao điểm hằng ngày",
-          "answer": "Scheduled scaling",
-          "why": "Giữ CPU quanh một mức là target tracking; mẫu lặp lại để ML dự đoán là predictive scaling."
-        },
-        {
-          "trigger": "Chính sách backup tập trung cho nhiều dịch vụ và account",
-          "answer": "AWS Backup (Vault Lock để chống xoá)",
-          "why": "Không tự viết Lambda snapshot cho từng dịch vụ."
+          "when": "Băng thông riêng, ổn định tới on-prem",
+          "pick": "Direct Connect"
         }
       ]
     },
-    "integration": {
-      "title": "Compute và tích hợp ứng dụng",
-      "intro": "Chọn nơi chạy code và cách các thành phần nói chuyện với nhau.",
+    "messaging": {
+      "title": "Chọn cách nối các thành phần",
+      "intro": "Soi xem có cần giữ thứ tự, gửi cho nhiều bên, đọc lại dữ liệu hay điều phối nhiều bước:",
       "tips": [
         {
-          "trigger": "Giữ thứ tự, xử lý đúng một lần",
-          "answer": "SQS FIFO",
-          "why": "SQS Standard có thể giao trùng và lệch thứ tự."
+          "when": "Hàng đợi đơn giản, chịu được trùng lặp",
+          "pick": "SQS Standard"
         },
         {
-          "trigger": "Một sự kiện gửi tới nhiều consumer",
-          "answer": "SNS fan-out sang nhiều SQS",
-          "why": "Mỗi consumer có hàng đợi riêng nên không mất message khi một bên chậm."
+          "when": "Giữ thứ tự, xử lý đúng một lần",
+          "pick": "SQS FIFO"
         },
         {
-          "trigger": "Định tuyến sự kiện từ dịch vụ AWS, SaaS theo rule, hoặc chạy theo lịch",
-          "answer": "EventBridge",
-          "why": "EventBridge lọc theo nội dung sự kiện và có Scheduler."
+          "when": "Một sự kiện tới nhiều consumer",
+          "pick": "SNS fan-out sang nhiều SQS"
         },
         {
-          "trigger": "Quy trình nhiều bước, retry, chờ người duyệt",
-          "answer": "Step Functions",
-          "why": "Không nối chuỗi Lambda gọi nhau."
+          "when": "Định tuyến sự kiện theo rule, SaaS, theo lịch",
+          "pick": "EventBridge"
         },
         {
-          "trigger": "Chạy container không quản lý server",
-          "answer": "Fargate (ECS hoặc EKS)",
-          "why": "Đề nhắc đã dùng Kubernetes thì chọn EKS."
+          "when": "Stream real-time, nhiều consumer, đọc lại",
+          "pick": "Kinesis Data Streams"
         },
         {
-          "trigger": "Tác vụ chạy lâu hơn 15 phút",
-          "answer": "ECS/Fargate hoặc AWS Batch",
-          "why": "Lambda tối đa 15 phút."
+          "when": "Đổ stream vào S3, Redshift không viết code",
+          "pick": "Data Firehose"
         },
         {
-          "trigger": "Lambda mở quá nhiều kết nối tới RDS",
-          "answer": "RDS Proxy",
-          "why": "Proxy gom kết nối và failover nhanh hơn."
+          "when": "Quy trình nhiều bước, retry, chờ duyệt",
+          "pick": "Step Functions"
         },
         {
-          "trigger": "Mạng độ trễ thấp nhất giữa các instance (HPC)",
-          "answer": "Cluster placement group",
-          "why": "Giảm rủi ro hỏng cùng lúc thì dùng spread placement group."
+          "when": "App cũ dùng JMS, AMQP, MQTT",
+          "pick": "Amazon MQ"
+        }
+      ]
+    },
+    "routing": {
+      "title": "Chọn cách đưa traffic tới ứng dụng",
+      "intro": "Soi xem traffic là HTTP hay TCP/UDP, cần IP tĩnh không và người dùng ở một hay nhiều Region:",
+      "tips": [
+        {
+          "when": "HTTP, định tuyến theo path/host",
+          "pick": "ALB"
         },
         {
-          "trigger": "Ứng dụng cũ dùng JMS, AMQP, MQTT, không muốn viết lại",
-          "answer": "Amazon MQ",
-          "why": "SQS/SNS cần sửa code sang API của AWS."
+          "when": "TCP/UDP, IP tĩnh, hàng triệu request/giây",
+          "pick": "NLB"
+        },
+        {
+          "when": "Appliance firewall bên thứ ba",
+          "pick": "GWLB"
+        },
+        {
+          "when": "Cache nội dung ở edge, giảm độ trễ toàn cầu",
+          "pick": "CloudFront"
+        },
+        {
+          "when": "IP tĩnh toàn cầu, TCP/UDP, failover Region nhanh",
+          "pick": "Global Accelerator"
+        },
+        {
+          "when": "Sang Region dự phòng khi Region chính hỏng",
+          "pick": "Route 53 failover routing"
+        },
+        {
+          "when": "Gửi tới Region nhanh nhất cho người dùng",
+          "pick": "Route 53 latency routing"
+        },
+        {
+          "when": "Theo quốc gia, chia tỉ lệ canary",
+          "pick": "Route 53 geolocation; weighted"
+        }
+      ]
+    },
+    "disaster-recovery": {
+      "title": "Chọn mức sẵn sàng và DR",
+      "intro": "Soi RTO/RPO và phạm vi sự cố (một AZ hay cả Region); RTO càng thấp càng đắt:",
+      "tips": [
+        {
+          "when": "Database tự failover trong Region",
+          "pick": "RDS Multi-AZ"
+        },
+        {
+          "when": "Giảm tải đọc",
+          "pick": "Read Replica hoặc ElastiCache"
+        },
+        {
+          "when": "Relational đa Region, RPO giây, RTO < 1 phút",
+          "pick": "Aurora Global Database"
+        },
+        {
+          "when": "DR rẻ nhất, RTO vài giờ",
+          "pick": "Backup & restore"
+        },
+        {
+          "when": "Chỉ database chạy sẵn ở Region DR",
+          "pick": "Pilot light"
+        },
+        {
+          "when": "Cả hệ thống chạy sẵn ở quy mô nhỏ",
+          "pick": "Warm standby"
+        },
+        {
+          "when": "RTO gần bằng 0",
+          "pick": "Multi-site active/active"
+        },
+        {
+          "when": "Backup tập trung nhiều dịch vụ, account",
+          "pick": "AWS Backup"
+        }
+      ]
+    },
+    "compute": {
+      "title": "Chọn compute",
+      "intro": "Soi thời gian chạy, mức muốn tự quản lý server và hệ sinh thái đang dùng:",
+      "tips": [
+        {
+          "when": "Ngắn theo event (dưới 15 phút), ít vận hành nhất",
+          "pick": "AWS Lambda"
+        },
+        {
+          "when": "Job nặng, dài, có hàng đợi, phụ thuộc",
+          "pick": "AWS Batch"
+        },
+        {
+          "when": "Container, không quản lý server/cluster",
+          "pick": "AWS Fargate trên ECS/EKS"
+        },
+        {
+          "when": "Đã có hệ sinh thái Kubernetes, Helm",
+          "pick": "Amazon EKS"
+        },
+        {
+          "when": "Web app/API từ code hoặc image, ít cấu hình nhất",
+          "pick": "App Runner"
+        },
+        {
+          "when": "Upload code, AWS dựng EC2, ALB, ASG giùm",
+          "pick": "Elastic Beanstalk"
+        },
+        {
+          "when": "Cần GPU, OS riêng, quyền kiểm soát sâu",
+          "pick": "Amazon EC2"
+        },
+        {
+          "when": "HPC, độ trễ mạng thấp nhất giữa instance",
+          "pick": "EC2 cluster placement group"
         }
       ]
     },
     "storage": {
-      "title": "Lưu trữ",
-      "intro": "Block, file hay object, và lớp lưu trữ nào hợp với tần suất truy cập.",
+      "title": "Chọn lưu trữ",
+      "intro": "Soi xem cần block, file hay object, bao nhiêu máy dùng chung và chạy hệ điều hành nào:",
       "tips": [
         {
-          "trigger": "Nhiều EC2 Linux ở nhiều AZ dùng chung file system",
-          "answer": "EFS",
-          "why": "EBS gắn vào một instance trong một AZ (Multi-Attach chỉ io1/io2, cùng AZ)."
+          "when": "Ổ đĩa cho một EC2, bền vững",
+          "pick": "EBS (io2 nếu cần IOPS cao nhất)"
         },
         {
-          "trigger": "File share Windows SMB, tích hợp Active Directory",
-          "answer": "FSx for Windows File Server",
-          "why": "HPC thông lượng cao, liên kết S3 là FSx for Lustre; NetApp, đa giao thức là FSx for ONTAP."
+          "when": "Ổ tạm nhanh nhất, mất khi stop cũng được",
+          "pick": "Instance store"
         },
         {
-          "trigger": "Ổ tạm độ trễ thấp nhất, mất dữ liệu khi stop cũng được",
-          "answer": "Instance store",
-          "why": "Cần bền vững và IOPS cao nhất thì EBS io2 Block Express."
+          "when": "Nhiều EC2 Linux dùng chung, nhiều AZ",
+          "pick": "EFS"
         },
         {
-          "trigger": "Upload file lớn từ nơi xa nhanh hơn",
-          "answer": "S3 Transfer Acceleration + multipart upload",
-          "why": "Transfer Acceleration đi qua edge location của CloudFront."
+          "when": "File share Windows SMB, Active Directory",
+          "pick": "FSx for Windows File Server"
         },
         {
-          "trigger": "Không cho ai xoá, sửa dữ liệu trong thời gian lưu (WORM)",
-          "answer": "S3 Object Lock chế độ compliance",
-          "why": "Chế độ governance vẫn cho người có quyền đặc biệt xoá."
+          "when": "HPC thông lượng cao, liên kết S3",
+          "pick": "FSx for Lustre"
         },
         {
-          "trigger": "Không biết hoặc thay đổi tần suất truy cập",
-          "answer": "S3 Intelligent-Tiering",
-          "why": "Tự chuyển lớp, không tốn phí lấy dữ liệu."
+          "when": "Object, không giới hạn, độ bền 11 số 9",
+          "pick": "S3"
         },
         {
-          "trigger": "Hiếm khi đọc nhưng cần lấy trong mili giây",
-          "answer": "S3 Standard-IA hoặc Glacier Instant Retrieval",
-          "why": "Lưu trữ lâu, chờ hàng giờ được, rẻ nhất là Glacier Deep Archive."
-        },
-        {
-          "trigger": "Ứng dụng on-prem đọc ghi S3 qua NFS/SMB, có cache cục bộ",
-          "answer": "Storage Gateway (S3 File Gateway)",
-          "why": "Chép dữ liệu một lần hoặc theo lịch là DataSync."
-        },
-        {
-          "trigger": "Cho người ngoài tải một object trong thời gian ngắn",
-          "answer": "S3 presigned URL",
-          "why": "Không mở bucket public."
+          "when": "On-prem dùng S3 qua NFS/SMB, có cache",
+          "pick": "Storage Gateway (S3 File Gateway)"
         }
       ]
     },
-    "data": {
-      "title": "Database, phân tích và di chuyển dữ liệu",
-      "intro": "Kiểu dữ liệu và kiểu truy vấn quyết định engine; khối lượng và băng thông quyết định cách di chuyển.",
+    "database": {
+      "title": "Chọn database",
+      "intro": "Soi kiểu dữ liệu, kiểu truy vấn và độ trễ cần có:",
       "tips": [
         {
-          "trigger": "Key-value, độ trễ mili giây ở mọi quy mô, serverless",
-          "answer": "DynamoDB",
-          "why": "Cần đọc micro giây cho DynamoDB thì thêm DAX."
+          "when": "Relational, ít sửa code khi chuyển lên",
+          "pick": "RDS cùng engine"
         },
         {
-          "trigger": "Cache session, kết quả truy vấn, giảm tải database",
-          "answer": "ElastiCache (Redis/Valkey nếu cần replication, persistence)",
-          "why": "Memcached đơn giản, đa luồng nhưng không replication."
+          "when": "Relational hiệu năng cao, tự mở rộng storage",
+          "pick": "Aurora"
         },
         {
-          "trigger": "Relational, tải thất thường hoặc không đoán trước",
-          "answer": "Aurora Serverless v2",
-          "why": "Tự co giãn capacity theo tải."
+          "when": "Relational, tải thất thường",
+          "pick": "Aurora Serverless v2"
         },
         {
-          "trigger": "Truy vấn SQL ad hoc trên dữ liệu trong S3",
-          "answer": "Athena",
-          "why": "Kho dữ liệu cho BI, truy vấn phức tạp thường xuyên là Redshift; dashboard là QuickSight."
+          "when": "Key-value, mili giây ở mọi quy mô",
+          "pick": "DynamoDB"
         },
         {
-          "trigger": "ETL serverless, data catalog",
-          "answer": "AWS Glue",
-          "why": "Glue Data Catalog là metastore cho Athena và Redshift Spectrum."
+          "when": "Đọc micro giây cho DynamoDB",
+          "pick": "DAX"
         },
         {
-          "trigger": "Di chuyển database, downtime tối thiểu",
-          "answer": "DMS (thêm SCT nếu đổi engine)",
-          "why": "DMS replicate liên tục (CDC) tới khi chuyển hẳn."
+          "when": "Cache session, kết quả truy vấn",
+          "pick": "ElastiCache"
         },
         {
-          "trigger": "Hàng chục TB tới PB, băng thông yếu",
-          "answer": "Snowball Edge",
-          "why": "Đồng bộ online tới S3, EFS, FSx theo lịch là DataSync."
-        },
-        {
-          "trigger": "Rehost server lên EC2, ít downtime",
-          "answer": "AWS Application Migration Service (MGN)",
-          "why": "Replicate block liên tục rồi cutover."
-        },
-        {
-          "trigger": "Quan hệ dạng đồ thị, MongoDB, time series",
-          "answer": "Neptune, DocumentDB, Timestream",
-          "why": "Đề nêu kiểu dữ liệu đặc thù thì chọn database chuyên dụng."
+          "when": "Đồ thị; MongoDB; time series",
+          "pick": "Neptune; DocumentDB; Timestream"
         }
       ]
     },
-    "cost": {
-      "title": "Tối ưu chi phí",
-      "intro": "Mô hình giá theo kiểu tải, công cụ theo dõi chi phí và các khoản phí truyền dữ liệu.",
+    "analytics": {
+      "title": "Chọn dịch vụ phân tích",
+      "intro": "Soi xem truy vấn ad hoc hay thường xuyên, dữ liệu nằm ở đâu và có cần biến đổi trước không:",
       "tips": [
         {
-          "trigger": "Tải ổn định 24/7 trong 1–3 năm",
-          "answer": "Savings Plans hoặc Reserved Instances",
-          "why": "Compute Savings Plans linh hoạt giữa EC2, Fargate và Lambda."
+          "when": "SQL ad hoc trên dữ liệu trong S3",
+          "pick": "Athena"
         },
         {
-          "trigger": "Batch chịu được gián đoạn, linh hoạt thời gian",
-          "answer": "Spot Instances",
-          "why": "Rẻ tới 90% nhưng có thể bị thu hồi với báo trước 2 phút."
+          "when": "Kho dữ liệu, BI, truy vấn phức tạp thường xuyên",
+          "pick": "Redshift"
         },
         {
-          "trigger": "Ngắn hạn, không đoán trước, không được gián đoạn",
-          "answer": "On-Demand",
-          "why": "Không cam kết; cam kết dài hạn sẽ lãng phí."
+          "when": "ETL serverless, data catalog",
+          "pick": "AWS Glue"
         },
         {
-          "trigger": "License theo socket/core, cần thấy phần cứng vật lý",
-          "answer": "Dedicated Hosts",
-          "why": "Dedicated Instances không cho thấy socket/core."
+          "when": "Spark, Hadoop quy mô lớn",
+          "pick": "EMR"
         },
         {
-          "trigger": "Cảnh báo khi chi tiêu vượt ngưỡng",
-          "answer": "AWS Budgets",
-          "why": "Phân tích chi phí đã qua là Cost Explorer; gợi ý rightsizing là Compute Optimizer."
+          "when": "Dashboard, báo cáo",
+          "pick": "QuickSight"
         },
         {
-          "trigger": "Giảm phí NAT Gateway cho traffic tới S3",
-          "answer": "Gateway VPC endpoint",
-          "why": "Miễn phí và traffic không đi qua NAT."
+          "when": "Tìm kiếm full-text, phân tích log",
+          "pick": "OpenSearch Service"
+        }
+      ]
+    },
+    "migration": {
+      "title": "Chọn cách di chuyển lên AWS",
+      "intro": "Soi khối lượng dữ liệu, băng thông và downtime chấp nhận được:",
+      "tips": [
+        {
+          "when": "Database, downtime tối thiểu",
+          "pick": "DMS (thêm SCT nếu đổi engine)"
         },
         {
-          "trigger": "Giảm phí data transfer out cho nội dung tĩnh",
-          "answer": "CloudFront",
-          "why": "Truyền từ origin AWS tới CloudFront không tính phí."
+          "when": "Rehost server lên EC2",
+          "pick": "Application Migration Service (MGN)"
         },
         {
-          "trigger": "Dữ liệu cũ dần, xoá sau một số ngày",
-          "answer": "S3 Lifecycle rule",
-          "why": "Chuyển lớp và xoá tự động, không cần Lambda."
+          "when": "Đồng bộ file online tới S3, EFS, FSx theo lịch",
+          "pick": "DataSync"
         },
         {
-          "trigger": "Môi trường dev/test chạy không ngoài giờ làm việc",
-          "answer": "Tắt theo lịch (Instance Scheduler, scheduled scaling về 0)",
-          "why": "Chỉ trả tiền giờ thực sự dùng."
+          "when": "Hàng chục TB tới PB, băng thông yếu",
+          "pick": "Snowball Edge"
+        },
+        {
+          "when": "Đối tác gửi file qua SFTP/FTPS vào S3",
+          "pick": "Transfer Family"
+        }
+      ]
+    },
+    "pricing": {
+      "title": "Chọn mô hình giá compute",
+      "intro": "Soi xem tải ổn định hay thất thường, có chịu gián đoạn không và cam kết được bao lâu:",
+      "tips": [
+        {
+          "when": "Ngắn hạn, không đoán trước, không gián đoạn",
+          "pick": "On-Demand"
+        },
+        {
+          "when": "Ổn định 24/7 trong 1–3 năm",
+          "pick": "Savings Plans hoặc Reserved Instances"
+        },
+        {
+          "when": "Cam kết nhưng linh hoạt EC2, Fargate, Lambda",
+          "pick": "Compute Savings Plans"
+        },
+        {
+          "when": "Batch chịu gián đoạn",
+          "pick": "Spot Instances"
+        },
+        {
+          "when": "License theo socket/core",
+          "pick": "Dedicated Hosts"
+        },
+        {
+          "when": "Giữ chỗ capacity ở một AZ, không cam kết dài",
+          "pick": "On-Demand Capacity Reservation"
+        }
+      ]
+    },
+    "s3-classes": {
+      "title": "Chọn lớp lưu trữ S3",
+      "intro": "Soi tần suất đọc, thời gian chờ lấy dữ liệu chấp nhận được và có cần nhiều AZ không:",
+      "tips": [
+        {
+          "when": "Đọc thường xuyên",
+          "pick": "S3 Standard"
+        },
+        {
+          "when": "Không biết tần suất truy cập",
+          "pick": "S3 Intelligent-Tiering"
+        },
+        {
+          "when": "Ít đọc, cần lấy ngay",
+          "pick": "S3 Standard-IA"
+        },
+        {
+          "when": "Ít đọc, tạo lại được, một AZ cũng được",
+          "pick": "S3 One Zone-IA"
+        },
+        {
+          "when": "Lưu trữ, đọc vài lần/năm trong mili giây",
+          "pick": "Glacier Instant Retrieval"
+        },
+        {
+          "when": "Lưu trữ, chờ vài phút tới vài giờ",
+          "pick": "Glacier Flexible Retrieval"
+        },
+        {
+          "when": "Lưu trữ lâu dài rẻ nhất, chờ tới 12 giờ",
+          "pick": "Glacier Deep Archive"
+        },
+        {
+          "when": "Tự chuyển lớp, xoá sau N ngày",
+          "pick": "S3 Lifecycle rule"
+        }
+      ]
+    },
+    "cost-tools": {
+      "title": "Chọn công cụ và cách giảm chi phí",
+      "intro": "Soi xem đề muốn cảnh báo, phân tích, gợi ý rightsizing hay cắt phí truyền dữ liệu:",
+      "tips": [
+        {
+          "when": "Cảnh báo khi chi tiêu vượt ngưỡng",
+          "pick": "AWS Budgets"
+        },
+        {
+          "when": "Phân tích, dự báo chi phí",
+          "pick": "Cost Explorer"
+        },
+        {
+          "when": "Gợi ý rightsizing EC2, Lambda, EBS",
+          "pick": "Compute Optimizer"
+        },
+        {
+          "when": "Chia chi phí theo team, dự án",
+          "pick": "Cost allocation tags"
+        },
+        {
+          "when": "Giảm phí NAT cho traffic tới S3",
+          "pick": "Gateway VPC endpoint"
+        },
+        {
+          "when": "Giảm phí data transfer out",
+          "pick": "CloudFront"
+        },
+        {
+          "when": "Dev/test không chạy ngoài giờ",
+          "pick": "Tắt theo lịch (Instance Scheduler)"
         }
       ]
     }

@@ -139,9 +139,10 @@ export type TipGroupData = {
   lessons: LessonSlug[];
 };
 
-/** A group of exam phrases with the answer they point to and why. */
+/** One decision the exam asks for, as a list of key constraints and the service each one points to. */
 export type TipGroup = TipGroupData & {
   title: string;
+  /** What to look for in the question, in one sentence. */
   intro: string;
-  tips: { trigger: string; answer: string; why: string }[];
+  tips: { when: string; pick: string }[];
 };

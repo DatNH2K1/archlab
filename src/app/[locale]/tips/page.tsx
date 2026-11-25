@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { PageShell } from '@/components/PageShell';
-import { KeywordCards } from '@/components/lesson/KeywordCards';
 import { getLessons, getTipGroups } from '@/content';
 import { DOMAINS } from '@/content/types';
 import { Link } from '@/libs/I18nNavigation';
@@ -33,27 +32,34 @@ export default async function TipsPage(props: { params: Promise<{ locale: string
           </a>
         ))}
       </nav>
-      {groups.map((group) => (
-        <section key={group.id} id={group.id} className="mt-12 scroll-mt-20">
-          <p className="font-mono text-xs tracking-widest text-accent uppercase">
-            {group.domain ? `${DOMAINS[group.domain].code} · ${td(group.domain)}` : t('general')} · {t('tip_count', { count: group.tips.length })}
-          </p>
-          <h2 className="mt-1 text-2xl font-bold">{group.title}</h2>
-          <p className="mt-2 text-chalk/85">{group.intro}</p>
-          <div className="mt-4">
-            <KeywordCards keywords={group.tips} />
-          </div>
-          {group.lessons.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {group.lessons.map((slug) => (
-                <Link key={slug} href={`/lessons/${slug}`} className="rounded-full border border-line px-3 py-1 text-xs hover:border-accent">
-                  📖 {lessonTitles.get(slug) ?? slug}
-                </Link>
+      <div className="mt-8 grid items-start gap-4 md:grid-cols-2">
+        {groups.map((group) => (
+          <section key={group.id} id={group.id} className="scroll-mt-20 rounded-xl border border-line bg-panel p-4">
+            <p className="font-mono text-xs tracking-widest text-accent uppercase">
+              {group.domain ? `${DOMAINS[group.domain].code} · ${td(group.domain)}` : t('general')}
+            </p>
+            <h2 className="mt-1 text-xl font-bold">{group.title}</h2>
+            <p className="mt-1 text-sm text-muted">{group.intro}</p>
+            <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm marker:text-accent">
+              {group.tips.map((tip) => (
+                <li key={tip.when}>
+                  <span className="font-semibold">{tip.when}</span> <span className="text-muted">→</span>{' '}
+                  <span className="font-semibold text-accent">{tip.pick}</span>
+                </li>
               ))}
-            </div>
-          )}
-        </section>
-      ))}
+            </ul>
+            {group.lessons.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {group.lessons.map((slug) => (
+                  <Link key={slug} href={`/lessons/${slug}`} className="rounded-full border border-line px-2.5 py-0.5 text-xs text-muted hover:border-accent hover:text-chalk">
+                    📖 {lessonTitles.get(slug) ?? slug}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        ))}
+      </div>
     </PageShell>
   );
 }
