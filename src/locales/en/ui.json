@@ -564,7 +564,9 @@
     "title": "SAA-C03 quick picks",
     "intro": "Instead of memorising services one by one, each group is a decision the exam keeps asking: spot the key constraint and the service follows.",
     "jump_to": "Jump to group",
-    "general": "General"
+    "general": "General",
+    "traps_title": "Common traps",
+    "traps_intro": "Misconceptions the exam plants in wrong answers. Each line is what many people believe and the fact that defuses it."
   },
   "Glossary": {
     "ACM": {

@@ -564,7 +564,9 @@
     "title": "Mẹo chọn nhanh SAA-C03",
     "intro": "Thay vì nhớ rời rạc tên từng dịch vụ, mỗi nhóm là một quyết định đề hay hỏi: soi ràng buộc chính của bài toán là ra dịch vụ.",
     "jump_to": "Đi tới nhóm",
-    "general": "Chung"
+    "general": "Chung",
+    "traps_title": "Bẫy hay gặp",
+    "traps_intro": "Những hiểu lầm đề hay cài vào đáp án sai. Mỗi dòng là điều nhiều người tin và sự thật để gỡ bẫy."
   },
   "Glossary": {
     "ACM": {

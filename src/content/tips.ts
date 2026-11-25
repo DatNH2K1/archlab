@@ -1,5 +1,5 @@
 import { LessonSlug } from '@/content/types';
-import type { TipGroupData } from '@/content/types';
+import type { TipGroupData, TrapGroupData } from '@/content/types';
 
 /** Quick-pick decisions, exam strategy first, then by domain; texts live in the locale files. */
 export const TIP_GROUPS: TipGroupData[] = [
@@ -21,4 +21,13 @@ export const TIP_GROUPS: TipGroupData[] = [
   { id: 'pricing', domain: 'cost', lessons: [LessonSlug.Ec2PricingModels, LessonSlug.CostComputeServerlessContainers] },
   { id: 's3-classes', domain: 'cost', lessons: [LessonSlug.S3StorageClasses] },
   { id: 'cost-tools', domain: 'cost', lessons: [LessonSlug.CostManagementTools, LessonSlug.CostNetworkTransfer] },
+];
+
+/** Common-trap groups, exam strategy first, then by domain; texts live in the locale files. */
+export const TRAP_GROUPS: TrapGroupData[] = [
+  { id: 'strategy', lessons: [] },
+  { id: 'secure', domain: 'secure', lessons: [LessonSlug.VpcNetworkingSecurity, LessonSlug.IamOrganizationsScp, LessonSlug.DataEncryptionKms] },
+  { id: 'resilient', domain: 'resilient', lessons: [LessonSlug.HighAvailabilityMultiAz, LessonSlug.DecouplingMessaging, LessonSlug.Route53Routing] },
+  { id: 'performance', domain: 'performance', lessons: [LessonSlug.BlockFileStorage, LessonSlug.NoSqlCaching, LessonSlug.EdgeNetworking] },
+  { id: 'cost', domain: 'cost', lessons: [LessonSlug.Ec2PricingModels, LessonSlug.S3StorageClasses, LessonSlug.CostNetworkTransfer] },
 ];

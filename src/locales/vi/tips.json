@@ -644,5 +644,192 @@
         }
       ]
     }
+  },
+  "Traps": {
+    "strategy": {
+      "title": "Bẫy khi đọc đề",
+      "traps": [
+        {
+          "trap": "Đáp án nhiều dịch vụ trông chuyên nghiệp hơn",
+          "fact": "Đề thường chọn phương án đơn giản nhất mà đủ yêu cầu"
+        },
+        {
+          "trap": "Chọn đáp án đúng kỹ thuật, bỏ qua LEAST/MOST",
+          "fact": "Hai đáp án đều chạy được; cụm ràng buộc mới quyết định"
+        },
+        {
+          "trap": "Highly available nghĩa là multi-Region",
+          "fact": "HA là Multi-AZ; multi-Region chỉ khi đề nhắc mất Region hay người dùng toàn cầu"
+        },
+        {
+          "trap": "Minimal changes nhưng chọn viết lại sang serverless",
+          "fact": "Giữ nguyên engine và giao thức: RDS cùng engine, EFS, FSx, MGN"
+        },
+        {
+          "trap": "Tự viết Lambda hay cron cho việc AWS có sẵn",
+          "fact": "Dùng tính năng có sẵn: Lifecycle rule, AWS Backup, EventBridge Scheduler"
+        }
+      ]
+    },
+    "secure": {
+      "title": "Bẫy bảo mật",
+      "traps": [
+        {
+          "trap": "Security Group chặn được một IP",
+          "fact": "SG chỉ có Allow; chặn IP dùng NACL Deny hoặc WAF"
+        },
+        {
+          "trap": "NACL stateful như Security Group",
+          "fact": "NACL stateless; phải mở cả ephemeral port cho chiều về"
+        },
+        {
+          "trap": "SCP cấp quyền cho account",
+          "fact": "SCP chỉ đặt trần; vẫn cần IAM policy Allow"
+        },
+        {
+          "trap": "SCP giới hạn được management account",
+          "fact": "SCP không tác dụng lên management account"
+        },
+        {
+          "trap": "Cognito User Pool cấp AWS credential",
+          "fact": "Chỉ Identity Pool cấp credential; User Pool lo đăng nhập"
+        },
+        {
+          "trap": "Parameter Store tự xoay vòng mật khẩu RDS",
+          "fact": "Xoay vòng tích hợp là Secrets Manager"
+        },
+        {
+          "trap": "Chứng chỉ ACM cho CloudFront tạo ở Region của app",
+          "fact": "Phải tạo ở us-east-1"
+        },
+        {
+          "trap": "Gắn WAF vào NLB",
+          "fact": "WAF gắn vào CloudFront, ALB, API Gateway, AppSync, Cognito; không có NLB"
+        },
+        {
+          "trap": "Bật mã hoá thẳng cho RDS đang chạy",
+          "fact": "Snapshot → copy có mã hoá → restore thành instance mới"
+        }
+      ]
+    },
+    "resilient": {
+      "title": "Bẫy sẵn sàng cao và tách rời",
+      "traps": [
+        {
+          "trap": "Standby của RDS Multi-AZ phục vụ đọc",
+          "fact": "Standby của Multi-AZ instance không đọc được; cần đọc thêm dùng Read Replica"
+        },
+        {
+          "trap": "Read Replica thay được Multi-AZ cho HA",
+          "fact": "Replica bất đồng bộ, phải promote; dùng để scale đọc"
+        },
+        {
+          "trap": "SQS Standard giữ thứ tự",
+          "fact": "Chỉ best-effort và có thể trùng; cần thứ tự dùng FIFO"
+        },
+        {
+          "trap": "Visibility timeout ngắn hơn thời gian xử lý",
+          "fact": "Message hiện lại và bị xử lý trùng; đặt dài hơn thời gian xử lý"
+        },
+        {
+          "trap": "VPC peering A–B và B–C thì A nói được với C",
+          "fact": "Peering không bắc cầu; dùng Transit Gateway"
+        },
+        {
+          "trap": "Một NAT Gateway là đủ cho nhiều AZ",
+          "fact": "NAT Gateway nằm trong một AZ; HA cần mỗi AZ một cái"
+        },
+        {
+          "trap": "Route 53 simple routing tự bỏ endpoint hỏng",
+          "fact": "Simple không có health check; dùng failover, weighted, latency kèm health check"
+        },
+        {
+          "trap": "Lambda chạy được job vài giờ",
+          "fact": "Tối đa 15 phút; job dài dùng Fargate hoặc Batch"
+        }
+      ]
+    },
+    "performance": {
+      "title": "Bẫy hiệu năng và lưu trữ",
+      "traps": [
+        {
+          "trap": "EBS gắn được cho EC2 ở AZ khác",
+          "fact": "EBS chỉ gắn trong cùng AZ; sang AZ khác qua snapshot"
+        },
+        {
+          "trap": "Instance store giữ dữ liệu khi stop",
+          "fact": "Mất khi stop hoặc terminate; chỉ giữ qua reboot"
+        },
+        {
+          "trap": "st1/sc1 làm ổ boot được",
+          "fact": "Ổ boot chỉ là SSD (gp2/gp3/io1/io2)"
+        },
+        {
+          "trap": "EFS dùng cho Windows",
+          "fact": "EFS chỉ NFS cho Linux; Windows dùng FSx for Windows"
+        },
+        {
+          "trap": "DAX tăng tốc RDS",
+          "fact": "DAX chỉ cho DynamoDB; RDS dùng ElastiCache"
+        },
+        {
+          "trap": "Cache giải quyết tải ghi nặng",
+          "fact": "Cache giảm tải đọc; ghi nặng cần scale DB hoặc đệm bằng SQS"
+        },
+        {
+          "trap": "CloudFront cho UDP và IP tĩnh",
+          "fact": "Đó là Global Accelerator"
+        },
+        {
+          "trap": "Data Firehose real-time và đọc lại được",
+          "fact": "Firehose near real-time, không replay; cần replay dùng Data Streams"
+        },
+        {
+          "trap": "Cluster placement group chịu lỗi tốt",
+          "fact": "Cluster dồn instance sát nhau; chịu lỗi dùng spread"
+        }
+      ]
+    },
+    "cost": {
+      "title": "Bẫy chi phí",
+      "traps": [
+        {
+          "trap": "Reserved Instances cho tải vài tuần",
+          "fact": "RI/Savings Plans cam kết 1–3 năm; ngắn hạn dùng On-Demand hoặc Spot"
+        },
+        {
+          "trap": "Spot cho database hay tải không được gián đoạn",
+          "fact": "Spot bị thu hồi với báo trước 2 phút"
+        },
+        {
+          "trap": "Glacier Deep Archive cho dữ liệu cần lấy nhanh",
+          "fact": "Deep Archive chờ tới 12 giờ; cần ngay dùng Glacier Instant Retrieval"
+        },
+        {
+          "trap": "One Zone-IA cho dữ liệu không tạo lại được",
+          "fact": "Mất AZ là mất dữ liệu"
+        },
+        {
+          "trap": "Standard-IA cho object nhỏ, đọc thường xuyên",
+          "fact": "IA tính phí lấy dữ liệu, tối thiểu 128 KB và 30 ngày"
+        },
+        {
+          "trap": "Dedicated Instances cho license theo socket",
+          "fact": "Cần thấy socket/core là Dedicated Hosts"
+        },
+        {
+          "trap": "Cost Explorer gửi cảnh báo vượt ngân sách",
+          "fact": "Cảnh báo là AWS Budgets; Cost Explorer để phân tích"
+        },
+        {
+          "trap": "Traffic tới S3 qua NAT Gateway là miễn phí",
+          "fact": "NAT tính phí xử lý theo GB; dùng gateway endpoint miễn phí"
+        },
+        {
+          "trap": "Đưa dữ liệu vào AWS tốn phí",
+          "fact": "Data in miễn phí; tốn phí khi ra internet và giữa AZ hoặc Region"
+        }
+      ]
+    }
   }
 }

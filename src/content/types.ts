@@ -146,3 +146,18 @@ export type TipGroup = TipGroupData & {
   intro: string;
   tips: { when: string; pick: string }[];
 };
+
+/** The language-neutral part of a common-trap group; texts live in the `Traps` namespace. */
+export type TrapGroupData = {
+  id: keyof Messages['Traps'];
+  /** Exam domain; absent for general exam strategy. */
+  domain?: DomainId;
+  /** Slugs of lessons with more detail. */
+  lessons: LessonSlug[];
+};
+
+/** A group of wrong beliefs the exam baits, each with the fact that defuses it. */
+export type TrapGroup = TrapGroupData & {
+  title: string;
+  traps: { trap: string; fact: string }[];
+};

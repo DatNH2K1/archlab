@@ -6,8 +6,8 @@ import { costQuestions } from './questions/cost';
 import { performanceQuestions } from './questions/performance';
 import { resilientQuestions } from './questions/resilient';
 import { secureQuestions } from './questions/secure';
-import { TIP_GROUPS } from './tips';
-import type { Comparison, Flashcard, Lesson, Question, TipGroup } from './types';
+import { TIP_GROUPS, TRAP_GROUPS } from './tips';
+import type { Comparison, Flashcard, Lesson, Question, TipGroup, TrapGroup } from './types';
 
 const QUESTIONS = [...secureQuestions, ...resilientQuestions, ...performanceQuestions, ...costQuestions];
 
@@ -67,6 +67,17 @@ export const getTipGroups = async (locale: string): Promise<TipGroup[]> => {
   const messages = await getMessages({ locale });
 
   return TIP_GROUPS.map((group) => ({ ...group, ...messages.Tips[group.id] }));
+};
+
+/**
+ * Returns the common-trap groups in a language.
+ * @param locale The page locale.
+ * @returns Trap groups, exam strategy first, then by domain.
+ */
+export const getTrapGroups = async (locale: string): Promise<TrapGroup[]> => {
+  const messages = await getMessages({ locale });
+
+  return TRAP_GROUPS.map((group) => ({ ...group, ...messages.Traps[group.id] }));
 };
 
 /** Number of lessons, questions and flashcards, the same in every language. */

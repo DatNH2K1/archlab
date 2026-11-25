@@ -644,5 +644,192 @@
         }
       ]
     }
+  },
+  "Traps": {
+    "strategy": {
+      "title": "Question-reading traps",
+      "traps": [
+        {
+          "trap": "An answer with more services looks more professional",
+          "fact": "The exam usually rewards the simplest option that meets the requirements"
+        },
+        {
+          "trap": "Picking a technically valid answer and ignoring LEAST/MOST",
+          "fact": "Two answers both work; the constraint phrase decides"
+        },
+        {
+          "trap": "Highly available means multi-Region",
+          "fact": "HA means Multi-AZ; go multi-Region only when the question mentions a Region outage or global users"
+        },
+        {
+          "trap": "Minimal changes, yet picking a serverless rewrite",
+          "fact": "Keep the engine and protocol: RDS with the same engine, EFS, FSx, MGN"
+        },
+        {
+          "trap": "Writing a Lambda or cron job for something AWS already does",
+          "fact": "Use the built-in feature: Lifecycle rules, AWS Backup, EventBridge Scheduler"
+        }
+      ]
+    },
+    "secure": {
+      "title": "Security traps",
+      "traps": [
+        {
+          "trap": "A security group can block one IP",
+          "fact": "Security groups only allow; block an IP with a NACL Deny or WAF"
+        },
+        {
+          "trap": "NACLs are stateful like security groups",
+          "fact": "NACLs are stateless; open the ephemeral ports for return traffic too"
+        },
+        {
+          "trap": "An SCP grants permissions to an account",
+          "fact": "SCPs only set a ceiling; an IAM policy must still allow"
+        },
+        {
+          "trap": "An SCP restricts the management account",
+          "fact": "SCPs don't apply to the management account"
+        },
+        {
+          "trap": "A Cognito User Pool hands out AWS credentials",
+          "fact": "Only Identity Pools issue credentials; User Pools handle sign-in"
+        },
+        {
+          "trap": "Parameter Store rotates RDS passwords on its own",
+          "fact": "Built-in rotation is Secrets Manager"
+        },
+        {
+          "trap": "An ACM certificate for CloudFront lives in the app's Region",
+          "fact": "It must be in us-east-1"
+        },
+        {
+          "trap": "Attaching WAF to an NLB",
+          "fact": "WAF attaches to CloudFront, ALB, API Gateway, AppSync, Cognito; not NLB"
+        },
+        {
+          "trap": "Turning on encryption for a running RDS instance",
+          "fact": "Snapshot → encrypted copy → restore to a new instance"
+        }
+      ]
+    },
+    "resilient": {
+      "title": "Resilience and decoupling traps",
+      "traps": [
+        {
+          "trap": "The RDS Multi-AZ standby serves reads",
+          "fact": "A Multi-AZ instance standby can't be read; add read replicas for reads"
+        },
+        {
+          "trap": "A read replica replaces Multi-AZ for HA",
+          "fact": "Replicas are asynchronous and need a promote; they scale reads"
+        },
+        {
+          "trap": "SQS Standard keeps order",
+          "fact": "Only best-effort, with possible duplicates; use FIFO for order"
+        },
+        {
+          "trap": "Visibility timeout shorter than processing time",
+          "fact": "Messages reappear and get processed twice; set it longer than processing time"
+        },
+        {
+          "trap": "Peering A–B and B–C lets A reach C",
+          "fact": "Peering isn't transitive; use Transit Gateway"
+        },
+        {
+          "trap": "One NAT Gateway is enough for several AZs",
+          "fact": "A NAT Gateway lives in one AZ; HA needs one per AZ"
+        },
+        {
+          "trap": "Route 53 simple routing drops unhealthy endpoints",
+          "fact": "Simple has no health checks; use failover, weighted or latency with health checks"
+        },
+        {
+          "trap": "Lambda can run jobs for hours",
+          "fact": "15 minutes max; use Fargate or Batch for long jobs"
+        }
+      ]
+    },
+    "performance": {
+      "title": "Performance and storage traps",
+      "traps": [
+        {
+          "trap": "EBS can attach to an instance in another AZ",
+          "fact": "EBS attaches within one AZ; move it via a snapshot"
+        },
+        {
+          "trap": "Instance store keeps data on stop",
+          "fact": "Lost on stop or terminate; it only survives a reboot"
+        },
+        {
+          "trap": "st1/sc1 can be boot volumes",
+          "fact": "Boot volumes must be SSD (gp2/gp3/io1/io2)"
+        },
+        {
+          "trap": "EFS works for Windows",
+          "fact": "EFS is NFS for Linux; Windows uses FSx for Windows"
+        },
+        {
+          "trap": "DAX speeds up RDS",
+          "fact": "DAX is for DynamoDB only; RDS uses ElastiCache"
+        },
+        {
+          "trap": "A cache fixes heavy write load",
+          "fact": "Caches offload reads; heavy writes need a bigger DB or an SQS buffer"
+        },
+        {
+          "trap": "CloudFront for UDP and static IPs",
+          "fact": "That's Global Accelerator"
+        },
+        {
+          "trap": "Data Firehose is real-time and replayable",
+          "fact": "Firehose is near real-time with no replay; use Data Streams to replay"
+        },
+        {
+          "trap": "A cluster placement group is fault tolerant",
+          "fact": "Cluster packs instances together; use spread for fault tolerance"
+        }
+      ]
+    },
+    "cost": {
+      "title": "Cost traps",
+      "traps": [
+        {
+          "trap": "Reserved Instances for a few weeks of load",
+          "fact": "RIs and Savings Plans commit for 1–3 years; short-term is On-Demand or Spot"
+        },
+        {
+          "trap": "Spot for databases or work that can't be interrupted",
+          "fact": "Spot can be reclaimed with a 2-minute warning"
+        },
+        {
+          "trap": "Glacier Deep Archive for data needed quickly",
+          "fact": "Deep Archive takes up to 12 hours; use Glacier Instant Retrieval for instant access"
+        },
+        {
+          "trap": "One Zone-IA for data that can't be re-created",
+          "fact": "Losing the AZ loses the data"
+        },
+        {
+          "trap": "Standard-IA for small, frequently read objects",
+          "fact": "IA charges retrieval fees, with a 128 KB and 30-day minimum"
+        },
+        {
+          "trap": "Dedicated Instances for per-socket licences",
+          "fact": "Seeing sockets and cores needs Dedicated Hosts"
+        },
+        {
+          "trap": "Cost Explorer sends over-budget alerts",
+          "fact": "Alerts are AWS Budgets; Cost Explorer is for analysis"
+        },
+        {
+          "trap": "Traffic to S3 through a NAT Gateway is free",
+          "fact": "NAT charges per GB processed; use a free gateway endpoint"
+        },
+        {
+          "trap": "Moving data into AWS costs money",
+          "fact": "Data in is free; you pay for data out to the internet and across AZs or Regions"
+        }
+      ]
+    }
   }
 }
